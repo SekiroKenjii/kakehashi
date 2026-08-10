@@ -41,10 +41,15 @@ jobs:
         if: github.event_name == 'pull_request'
         run: buf breaking --against "https://github.com/${{ github.repository }}.git#branch=main"
 
+      # Read out of server/go.mod rather than pinned to @latest. Every generated file records the
+      # generator version in its header, so @latest makes this check fail the day either project
+      # ships a release, on a repository nobody has touched. Taking the version from go.mod also
+      # keeps the generator and the runtime it generates against as one version by construction.
       - name: Install the code generators
+        working-directory: server
         run: |
-          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
       # The generated code is committed so a fresh clone builds without buf. This is what keeps
       # the committed copy honest: regenerate, and fail if anything moved.
@@ -134,6 +139,23 @@ jobs:
       # Compiler + analyzer warnings fail the build (TreatWarningsAsErrors).
       - name: Build
         run: dotnet build Kakehashi.slnx -c Release --no-restore
+
+      # The test projects are unpackaged WinUI executables, so the SDK compiles its bootstrapper
+      # into them as a module initializer — and when no matching runtime is installed it calls
+      # Environment.Exit, killing the test host before the first test runs. A developer machine has
+      # the runtime; a fresh runner does not. The version is read from Directory.Packages.props so
+      # this cannot drift away from the package the client actually builds against.
+      - name: Install the Windows App Runtime
+        run: |
+          $props = [xml](Get-Content Directory.Packages.props)
+          $node = $props.SelectSingleNode("//PackageVersion[@Include='Microsoft.WindowsAppSDK']")
+          $version = $node.Version
+          $channel = ($version -split '\.')[0..1] -join '.'
+          $url = "https://aka.ms/windowsappsdk/$channel/$version/windowsappruntimeinstall-x64.exe"
+          $installer = Join-Path $env:RUNNER_TEMP 'WindowsAppRuntimeInstall.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          & $installer --quiet
+          if ($LASTEXITCODE -ne 0) { throw "the runtime installer exited $LASTEXITCODE" }
 
       - name: Test
         run: dotnet test Kakehashi.slnx -c Release --no-build --verbosity normal
