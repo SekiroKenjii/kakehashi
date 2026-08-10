@@ -1,0 +1,195 @@
+syntax = "proto3";
+
+// Navigation: where a client's destinations sit, and in what order.
+//
+// Two sources of truth meet here, and the split between them is the whole design. Which
+// destinations EXIST is code: a destination is a compiled page behind a permission, and no row in a
+// table can create one. Where they are PLACED is data: which heading a destination sits under, in
+// what order, under what label, whether it shows at all. An administrator moves things at runtime;
+// nobody deploys to rename a heading.
+//
+// Said the other way round: the database decides how the app is arranged, the code decides what it
+// protects. Permissions are absent from every write below on purpose — they are enforced by the
+// route gate from what the modules declare, so no amount of rearranging can open a door.
+package kakehashi.navigation.v1;
+
+// Group is one heading in the pane.
+message Group {
+  // A slug — "utilities", "administration". Stable: it is what an item stores to say where it
+  // sits, so renaming one is a move, not an edit.
+  string id = 1;
+
+  string title = 2;
+  int32 sort_order = 3;
+
+  // Ships with the product. Renamable and re-orderable, never deletable: deleting the heading
+  // every administrative screen lives under would leave a deployment with nowhere to put them.
+  bool is_system = 4;
+}
+
+// Item is one destination as the caller should see it drawn.
+message Item {
+  // The destination's stable id — "notes", "account.users". Not the module's: one module can own
+  // several destinations, and the account module owning both the Account page and the Users page
+  // is the ordinary case rather than the exception.
+  string id = 1;
+
+  // The module that owns it, which is what its default access permission comes from.
+  string module_id = 2;
+
+  string title = 3;
+
+  // A semantic name — "note", "people" — not a glyph. Which glyph draws it is the client's
+  // business, and a server that shipped Segoe code points would be deciding what a Windows font
+  // looks like on behalf of clients that may not have it.
+  string icon = 4;
+
+  // False means draw it disabled. The caller lacks the permission, and seeing that the product has
+  // something they have not been given is worth more than pretending it does not exist — the same
+  // reason a server answers 403 rather than 404.
+  bool enabled = 5;
+}
+
+// GroupedItems is a heading and what sits under it, in order.
+message GroupedItems {
+  string group_id = 1;
+  string title = 2;
+  repeated Item items = 3;
+}
+
+message GetNavigationRequest {}
+
+message GetNavigationResponse {
+  // Destinations with no heading. Drawn first, above every group, beside whatever fixed
+  // destinations the client owns.
+  repeated Item ungrouped = 1;
+
+  // Headings in their configured order. A heading whose every destination was hidden from this
+  // caller is absent, not empty: a client should not have to know that an empty group means
+  // "draw nothing".
+  repeated GroupedItems groups = 2;
+}
+
+// NavigationService is what a client reads to draw its pane. Any signed-in caller.
+service NavigationService {
+  // GetNavigation returns the pane as this caller should see it: placement from the database,
+  // filtered and disabled according to what the caller may do.
+  rpc GetNavigation(GetNavigationRequest) returns (GetNavigationResponse);
+}
+
+// ItemConfig is a destination as an administrator manages it — the stored configuration, plus what
+// the code says about the same destination so the two can be told apart on screen.
+message ItemConfig {
+  string id = 1;
+  string module_id = 2;
+
+  // Empty means ungrouped: the destination sits above every heading. Also where a destination
+  // lands when the group holding it is deleted.
+  string group_id = 3;
+
+  // Overrides. Empty means "whatever the code says", which is why they are separate from the
+  // defaults below rather than resolved into them: a stored empty title follows the code when a
+  // page is renamed, and a stored one deliberately does not.
+  string title = 4;
+  string icon = 5;
+
+  string default_title = 6;
+  string default_icon = 7;
+
+  int32 sort_order = 8;
+  bool is_visible = 9;
+
+  // A stored row whose destination this build no longer has. Kept rather than deleted, because a
+  // destination that comes back — a rollback, a feature turned on again — should come back where
+  // the administrator put it. Skipped when the pane is built.
+  bool is_orphan = 10;
+
+  // What the code enforces, sent so the screen can say why something is invisible to somebody.
+  // Read-only in every sense: there is no request below that carries them.
+  string required_permission = 11;
+  bool hide_when_denied = 12;
+}
+
+message ListGroupsRequest {}
+
+message ListGroupsResponse {
+  repeated Group groups = 1;
+}
+
+message CreateGroupRequest {
+  // Optional. Empty means derive it from the title, which is what the screen does — an
+  // administrator naming a heading should not have to invent a slug as well.
+  string id = 1;
+
+  string title = 2;
+  int32 sort_order = 3;
+}
+
+message CreateGroupResponse {
+  Group group = 1;
+}
+
+message UpdateGroupRequest {
+  string id = 1;
+  string title = 2;
+  int32 sort_order = 3;
+}
+
+message UpdateGroupResponse {
+  Group group = 1;
+}
+
+message DeleteGroupRequest {
+  string id = 1;
+}
+
+message DeleteGroupResponse {}
+
+message ListItemsRequest {}
+
+message ListItemsResponse {
+  repeated ItemConfig items = 1;
+}
+
+// MoveItemRequest changes where a destination sits. Group and order together, because they are one
+// action: an item dropped into a group has landed somewhere in it.
+message MoveItemRequest {
+  string id = 1;
+
+  // Empty moves it out of every group, to the ungrouped set.
+  string group_id = 2;
+
+  int32 sort_order = 3;
+}
+
+message MoveItemResponse {
+  ItemConfig item = 1;
+}
+
+// UpdateItemRequest overrides how a destination reads, and whether it is offered at all.
+message UpdateItemRequest {
+  string id = 1;
+
+  // Empty clears the override and returns the destination to what the code calls it.
+  string title = 2;
+  string icon = 3;
+
+  bool is_visible = 4;
+}
+
+message UpdateItemResponse {
+  ItemConfig item = 1;
+}
+
+// NavigationAdminService is the runtime layout surface. Gated once, on the route, by
+// navigation.manage — so every procedure added here later inherits the check.
+service NavigationAdminService {
+  rpc ListGroups(ListGroupsRequest) returns (ListGroupsResponse);
+  rpc CreateGroup(CreateGroupRequest) returns (CreateGroupResponse);
+  rpc UpdateGroup(UpdateGroupRequest) returns (UpdateGroupResponse);
+  rpc DeleteGroup(DeleteGroupRequest) returns (DeleteGroupResponse);
+
+  rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
+  rpc MoveItem(MoveItemRequest) returns (MoveItemResponse);
+  rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse);
+}

@@ -1,0 +1,22 @@
+# The contract between the WinUI client and the Go server.
+#
+# `buf lint` keeps the schema idiomatic. `buf breaking` is the part that matters: it is to the
+# network boundary what tools/archlint is to the server's module boundaries, and like archlint it
+# runs in CI and fails the build.
+#
+# The breaking category is WIRE_JSON rather than WIRE because the server speaks Connect's JSON
+# protocol as well as gRPC. Over JSON a field is identified by its name, so renaming one breaks a
+# client even though the field number never moved. WIRE alone would wave that through.
+
+version: v2
+
+modules:
+  - path: proto
+
+lint:
+  use:
+    - STANDARD
+
+breaking:
+  use:
+    - WIRE_JSON

@@ -1,0 +1,489 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Profile Flyout — Redesigned</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --accent: #343231;
+        --accent-hover: #343231;
+        --text-primary: rgba(0, 0, 0, 0.8956);
+        --text-secondary: rgba(0, 0, 0, 0.6063);
+        --text-tertiary: rgba(0, 0, 0, 0.4458);
+        --bg-subtle: rgba(0, 0, 0, 0.0373);
+        --bg-subtle-hover: rgba(0, 0, 0, 0.0586);
+        --stroke: rgba(0, 0, 0, 0.0578);
+        --stroke-2: rgba(0, 0, 0, 0.1);
+        --success: #107c10;
+        --success-bg: #dff6dd;
+        --danger: #c42b1c;
+        --danger-bg: #fde7e9;
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+      }
+      body {
+        font-family:
+          "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse at top left, #d4e4f7 0%, transparent 50%),
+          radial-gradient(ellipse at bottom right, #f0e0d4 0%, transparent 50%),
+          linear-gradient(135deg, #e8ecf3 0%, #f5f3ef 100%);
+        min-height: 100vh;
+        display: flex;
+        align-items: flex-end;
+        justify-content: flex-start;
+        padding: 60px;
+        color: var(--text-primary);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+
+      /* Simulated app sidebar context */
+      .context-hint {
+        position: fixed;
+        bottom: 60px;
+        left: 60px;
+        font-size: 12px;
+        color: var(--text-tertiary);
+      }
+
+      /* Flyout */
+      .flyout {
+        width: 320px;
+        background: rgba(252, 252, 253, 0.92);
+        backdrop-filter: blur(60px) saturate(140%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: var(--radius-lg);
+        box-shadow:
+          0 20px 48px rgba(0, 0, 0, 0.22),
+          0 4px 12px rgba(0, 0, 0, 0.1),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        overflow: hidden;
+      }
+
+      /* Hero */
+      .flyout-hero {
+        padding: 18px 18px 16px;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        background: linear-gradient(
+          135deg,
+          rgba(52, 50, 49, 0.06),
+          rgba(52, 50, 49, 0.04)
+        );
+        border-bottom: 1px solid var(--stroke);
+      }
+      .hero-avatar {
+        width: 52px;
+        height: 52px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, var(--accent), var(--accent));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 19px;
+        font-weight: 700;
+        flex-shrink: 0;
+        box-shadow: 0 4px 12px rgba(52, 50, 49, 0.3);
+        position: relative;
+      }
+      .hero-avatar .presence {
+        position: absolute;
+        bottom: 1px;
+        right: 1px;
+        width: 13px;
+        height: 13px;
+        border-radius: 50%;
+        background: var(--success);
+        border: 2.5px solid #fcfcfd;
+      }
+      .hero-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .hero-name {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin-bottom: 2px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .hero-email {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-family: "Cascadia Mono", Consolas, monospace;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-bottom: 6px;
+      }
+      .hero-role {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 2px 9px;
+        border-radius: 10px;
+        font-size: 11px;
+        font-weight: 600;
+        background: rgba(52, 50, 49, 0.25);
+        color: var(--accent);
+        border: 1px solid var(--accent);
+      }
+      .hero-role .icon {
+        width: 10px;
+        height: 10px;
+      }
+
+      /* Session info strip */
+      .session-strip {
+        display: flex;
+        padding: 10px 18px;
+        gap: 16px;
+        border-bottom: 1px solid var(--stroke);
+        background: rgba(255, 255, 255, 0.4);
+      }
+      .session-stat {
+        flex: 1;
+      }
+      .session-stat .label {
+        font-size: 10px;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 2px;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .session-stat .label .icon {
+        width: 10px;
+        height: 10px;
+      }
+      .session-stat .value {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .session-stat .value.online {
+        color: var(--success);
+        display: flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .session-stat .value.online .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--success);
+      }
+
+      /* Menu */
+      .flyout-menu {
+        padding: 8px;
+      }
+      .menu-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 9px 12px;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        transition: background 0.1s;
+        color: var(--text-primary);
+        font-size: 13px;
+      }
+      .menu-item:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .menu-item .icon {
+        color: var(--text-secondary);
+        width: 17px;
+        height: 17px;
+      }
+      .menu-item .label {
+        flex: 1;
+      }
+      .menu-item .shortcut {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+      .menu-item .chevron {
+        color: var(--text-tertiary);
+        width: 13px;
+        height: 13px;
+      }
+      .menu-item.has-toggle {
+        cursor: default;
+      }
+      .menu-item.has-toggle:hover {
+        background: transparent;
+      }
+
+      .menu-divider {
+        height: 1px;
+        background: var(--stroke);
+        margin: 6px 12px;
+      }
+
+      /* Theme toggle segment */
+      .theme-segment {
+        display: flex;
+        background: var(--bg-subtle);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-sm);
+        padding: 2px;
+        gap: 2px;
+      }
+      .theme-segment button {
+        border: none;
+        background: transparent;
+        width: 30px;
+        height: 24px;
+        border-radius: 3px;
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+      }
+      .theme-segment button:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .theme-segment button.active {
+        background: white;
+        color: var(--accent);
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .theme-segment button .icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Sign out */
+      .flyout-footer {
+        padding: 8px;
+        border-top: 1px solid var(--stroke);
+      }
+      .signout-btn {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 10px;
+        background: transparent;
+        border: 1px solid rgba(196, 43, 28, 0.25);
+        border-radius: var(--radius-sm);
+        color: var(--danger);
+        font-family: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .signout-btn:hover {
+        background: var(--danger-bg);
+      }
+      .signout-btn .icon {
+        width: 16px;
+        height: 16px;
+      }
+
+      .label-row {
+        display: flex;
+        flex-direction: column;
+        gap: 1px;
+      }
+      .label-row .sub {
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="i-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z" />
+        </symbol>
+        <symbol id="i-key" viewBox="0 0 24 24">
+          <circle cx="7.5" cy="15.5" r="4.5" />
+          <path d="m10.5 12.5 8-8M16 7l3 3M21 2l-2.5 2.5" />
+        </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+          />
+        </symbol>
+        <symbol id="i-activity" viewBox="0 0 24 24">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </symbol>
+        <symbol id="i-signout" viewBox="0 0 24 24">
+          <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+          <path d="m16 17 5-5-5-5M21 12H9" />
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+          <path d="m9 6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-sun" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="4" />
+          <path
+            d="M12 2v2M12 20v2M4 12H2M22 12h-2M6 6 4.5 4.5M19.5 19.5 18 18M6 18l-1.5 1.5M19.5 4.5 18 6"
+          />
+        </symbol>
+        <symbol id="i-moon" viewBox="0 0 24 24">
+          <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z" />
+        </symbol>
+        <symbol id="i-auto" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="13" rx="2" />
+          <path d="M8 21h8M12 17v4" />
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M12 7v5l3 2" />
+        </symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+        </symbol>
+        <symbol id="i-help" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M9.5 9a2.5 2.5 0 0 1 4.5 1.5c0 1.5-2 2-2 3M12 17v.5" />
+        </symbol>
+        <symbol id="i-desktop" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="12" rx="1" />
+          <path d="M2 20h20M9 16v4M15 16v4" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="context-hint">
+      ↙ Flyout xuất hiện khi nhấn avatar ở góc dưới sidebar
+    </div>
+
+    <div class="flyout">
+      <!-- Hero -->
+      <div class="flyout-hero">
+        <div class="hero-avatar">
+          SA
+          <div class="presence"></div>
+        </div>
+        <div class="hero-info">
+          <div class="hero-name">System Administrator</div>
+          <div class="hero-email">admin@thiqah.sa</div>
+          <span class="hero-role">
+            <svg class="icon"><use href="#i-shield" /></svg>
+            Admin
+          </span>
+        </div>
+      </div>
+
+      <!-- Session strip -->
+      <div class="session-strip">
+        <div class="session-stat">
+          <div class="label">
+            <svg class="icon"><use href="#i-activity" /></svg> Status
+          </div>
+          <div class="value online"><span class="dot"></span> Online</div>
+        </div>
+        <div class="session-stat">
+          <div class="label">
+            <svg class="icon"><use href="#i-clock" /></svg> Signed in
+          </div>
+          <div class="value">2h 14m ago</div>
+        </div>
+      </div>
+
+      <!-- Menu -->
+      <div class="flyout-menu">
+        <div class="menu-item">
+          <svg class="icon"><use href="#i-user" /></svg>
+          <span class="label">View profile</span>
+          <svg class="icon chevron"><use href="#i-chevron-right" /></svg>
+        </div>
+        <div class="menu-item">
+          <svg class="icon"><use href="#i-key" /></svg>
+          <span class="label">Change password</span>
+          <svg class="icon chevron"><use href="#i-chevron-right" /></svg>
+        </div>
+        <div class="menu-item">
+          <svg class="icon"><use href="#i-desktop" /></svg>
+          <div class="label-row" style="flex: 1">
+            <span>Active sessions</span>
+            <span class="sub">2 devices · this + iOS mobile</span>
+          </div>
+          <svg class="icon chevron"><use href="#i-chevron-right" /></svg>
+        </div>
+        <div class="menu-item">
+          <svg class="icon"><use href="#i-activity" /></svg>
+          <span class="label">My activity log</span>
+          <svg class="icon chevron"><use href="#i-chevron-right" /></svg>
+        </div>
+
+        <div class="menu-divider"></div>
+
+        <div class="menu-item has-toggle">
+          <svg class="icon"><use href="#i-sun" /></svg>
+          <span class="label">Appearance</span>
+          <div class="theme-segment">
+            <button title="Light">
+              <svg class="icon"><use href="#i-sun" /></svg>
+            </button>
+            <button title="Dark">
+              <svg class="icon"><use href="#i-moon" /></svg>
+            </button>
+            <button class="active" title="System">
+              <svg class="icon"><use href="#i-auto" /></svg>
+            </button>
+          </div>
+        </div>
+        <div class="menu-item">
+          <svg class="icon"><use href="#i-settings" /></svg>
+          <span class="label">Settings</span>
+          <span class="shortcut">Ctrl+,</span>
+        </div>
+        <div class="menu-item">
+          <svg class="icon"><use href="#i-help" /></svg>
+          <span class="label">Help & support</span>
+          <svg class="icon chevron"><use href="#i-chevron-right" /></svg>
+        </div>
+      </div>
+
+      <!-- Sign out -->
+      <div class="flyout-footer">
+        <button class="signout-btn">
+          <svg class="icon"><use href="#i-signout" /></svg>
+          Sign out
+        </button>
+      </div>
+    </div>
+  </body>
+</html>

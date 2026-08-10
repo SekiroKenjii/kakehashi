@@ -1,0 +1,78 @@
+<Project>
+
+  <PropertyGroup>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+    <CentralPackageTransitivePinningEnabled>true</CentralPackageTransitivePinningEnabled>
+  </PropertyGroup>
+
+  <ItemGroup Label="WinUI / Windows App SDK">
+    <PackageVersion Include="Microsoft.WindowsAppSDK" Version="2.3.1" />
+    <PackageVersion Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2526" />
+    <PackageVersion Include="Microsoft.Xaml.Behaviors.WinUI.Managed" Version="3.0.1" />
+    <PackageVersion Include="WinUIEx" Version="2.9.2" />
+  </ItemGroup>
+
+  <ItemGroup Label="MVVM">
+    <PackageVersion Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Animations" Version="8.3.260402-preview2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Controls.SettingsControls" Version="8.3.260402-preview2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Controls.Sizers" Version="8.3.260402-preview2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Converters" Version="8.3.260402-preview2" />
+    <PackageVersion Include="CommunityToolkit.WinUI.Helpers" Version="8.3.260402-preview2" />
+  </ItemGroup>
+
+  <ItemGroup Label="Dependency Injection / Hosting / Logging / Configuration">
+    <PackageVersion Include="Microsoft.Extensions.Configuration" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Abstractions" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Configuration.Binder" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Http" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Abstractions" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Logging.Debug" Version="10.0.10" />
+    <PackageVersion Include="Microsoft.Extensions.Options.ConfigurationExtensions" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Backend client transport (HTTP + gRPC)">
+    <PackageVersion Include="Google.Protobuf" Version="3.35.0" />
+    <PackageVersion Include="Grpc.Net.Client" Version="2.83.0" />
+    <PackageVersion Include="Grpc.Net.ClientFactory" Version="2.83.0" />
+  </ItemGroup>
+
+  <!-- Build-only protobuf/gRPC codegen. GlobalPackageReference is implicitly private and is not
+       pinned transitively, which avoids NU1008 in projects that reference the gRPC-enabled library. -->
+  <ItemGroup>
+    <GlobalPackageReference Include="Grpc.Tools" Version="2.83.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Observability (OpenTelemetry)">
+    <PackageVersion Include="OpenTelemetry" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.Console" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Exporter.OpenTelemetryProtocol" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Extensions.Hosting" Version="1.15.3" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Http" Version="1.15.1" />
+    <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.15.1" />
+  </ItemGroup>
+
+  <ItemGroup Label="System">
+    <PackageVersion Include="Microsoft.Windows.CsWin32" Version="0.3.298" />
+    <PackageVersion Include="System.Reactive" Version="7.0.0" />
+  </ItemGroup>
+
+  <ItemGroup Label="Authentication (OIDC client for native apps, RFC 8252)">
+    <PackageVersion Include="Duende.IdentityModel" Version="8.1.0" />
+    <PackageVersion Include="Duende.IdentityModel.OidcClient" Version="7.1.0" />
+    <PackageVersion Include="System.Security.Cryptography.ProtectedData" Version="10.0.10" />
+  </ItemGroup>
+
+  <ItemGroup Label="Testing">
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="18.8.1" />
+    <PackageVersion Include="xunit.v3" Version="3.2.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="3.1.5" />
+    <PackageVersion Include="NSubstitute" Version="6.0.0" />
+    <PackageVersion Include="coverlet.collector" Version="10.0.1" />
+  </ItemGroup>
+
+</Project>

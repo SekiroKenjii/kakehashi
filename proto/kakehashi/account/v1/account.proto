@@ -1,0 +1,182 @@
+syntax = "proto3";
+
+// Accounts, as an administrator sees them.
+//
+// The module's other two surfaces are not here and will not be: OpenID Connect is a specified
+// protocol served at fixed URLs, and the seven /account/* endpoints are a caller acting on their
+// own account over plain JSON. This file is the third audience — somebody acting on everybody
+// else's — and it is a separate service because that is the unit the server puts a permission
+// check on.
+package kakehashi.account.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// Account is one person, as the administration screen lists them.
+//
+// Note what is absent: no password hash, no token, no roles. The first two never leave the module;
+// the third belongs to the authorization module, and asking this one would be asking the wrong
+// service a question two places would then have to agree about.
+message Account {
+  string id = 1;
+  string email = 2;
+  string display_name = 3;
+  string phone = 4;
+
+  // What a team-scoped grant resolves against. Empty means the account is in no team, and a
+  // team-scoped grant then reaches nothing — the safe reading.
+  string team_id = 5;
+
+  // Switched off by an administrator. A deactivated account cannot sign in and its sessions are
+  // revoked; everything it did stays readable, which is the point of deactivating rather than
+  // deleting.
+  bool is_active = 6;
+
+  // Unset when the account has never signed in. A screen renders that as "Never", and it must be
+  // able to tell it apart from a sign-in long ago — which is why it is an absent timestamp rather
+  // than a zero one.
+  google.protobuf.Timestamp last_sign_in_at = 7;
+
+  google.protobuf.Timestamp created_at = 8;
+
+  // How many sessions are open right now. On the message because the list screen shows it per row,
+  // and one query answering it for everybody beats one call per row.
+  int32 active_session_count = 9;
+}
+
+// AccountAdminService is the administrator's surface over other people's accounts.
+//
+// Everything here requires users.manage, applied to the whole service by the route rather than by
+// each procedure — so a procedure added later inherits the check instead of needing somebody to
+// remember it.
+// Session is one live sign-in, as the detail panel lists them.
+message Session {
+  string id = 1;
+
+  // The OAuth client the session was created for.
+  string client = 2;
+
+  // Whatever the user agent claimed. Untrusted, and shown only as a hint.
+  string device = 3;
+
+  string ip_address = 4;
+  google.protobuf.Timestamp created_at = 5;
+  google.protobuf.Timestamp last_seen_at = 6;
+
+  // True when this session is the caller's own — an administrator looking at their own account
+  // sees "this device" on the row they are sitting in.
+  bool is_current = 7;
+}
+
+service AccountAdminService {
+  // ListAccounts returns every account, newest first.
+  //
+  // Unpaged, and that is a bounded decision rather than an oversight: the screen it serves is a
+  // filterable table over the whole set. A deployment large enough for that to hurt needs paging
+  // in this contract, not a silent limit the client cannot see.
+  rpc ListAccounts(ListAccountsRequest) returns (ListAccountsResponse);
+
+  // SetAccountActive switches an account on or off.
+  //
+  // Switching off revokes the account's sessions in the same call. Without that the account keeps
+  // working until its tokens expire — minutes in which an administrator believes they have shut
+  // somebody out and have not.
+  rpc SetAccountActive(SetAccountActiveRequest) returns (SetAccountActiveResponse);
+
+  // CreateAccount adds an account with a password an administrator chooses.
+  //
+  // The password is set rather than mailed, because this server has no mail. Whoever creates the
+  // account has to hand it over, and the first thing its owner should do is change it — which the
+  // account page already lets them do.
+  rpc CreateAccount(CreateAccountRequest) returns (CreateAccountResponse);
+
+  // UpdateAccount edits another account's profile: display name, phone, team.
+  //
+  // Not the email address. That is the account's identifier to its owner and to every audit row
+  // that names them; changing it belongs behind a verification flow rather than behind a text box
+  // an administrator can tab past.
+  rpc UpdateAccount(UpdateAccountRequest) returns (UpdateAccountResponse);
+
+  // ResetPassword sets a new password and signs the account out everywhere.
+  //
+  // The current password is not required — an administrator does not have it, which is the whole
+  // reason this exists. Revoking the sessions is the half that matters: a reset that left the old
+  // sessions running would change the lock and leave the keys in the door.
+  rpc ResetPassword(ResetPasswordRequest) returns (ResetPasswordResponse);
+
+  // ListAccountSessions returns one account's live sessions, most recently seen first.
+  rpc ListAccountSessions(ListAccountSessionsRequest) returns (ListAccountSessionsResponse);
+
+  // RevokeAccountSession ends one of another account's sessions.
+  rpc RevokeAccountSession(RevokeAccountSessionRequest) returns (RevokeAccountSessionResponse);
+
+  // DeleteAccount removes an account permanently: the row, its sessions, its security events.
+  //
+  // Deactivation is the recommended path — it keeps the history — and the screen says so. This
+  // exists for the case deactivation cannot cover: a record that must actually go away. Deleting
+  // your own account is refused for the reason deactivating it is.
+  rpc DeleteAccount(DeleteAccountRequest) returns (DeleteAccountResponse);
+}
+
+message ListAccountsRequest {}
+
+message ListAccountsResponse {
+  repeated Account accounts = 1;
+}
+
+message SetAccountActiveRequest {
+  string account_id = 1;
+  bool is_active = 2;
+}
+
+message SetAccountActiveResponse {}
+
+message CreateAccountRequest {
+  string email = 1;
+  string display_name = 2;
+  string password = 3;
+}
+
+message CreateAccountResponse {
+  Account account = 1;
+}
+
+message UpdateAccountRequest {
+  string account_id = 1;
+  string display_name = 2;
+  string phone = 3;
+
+  // Empty clears the team, which is a real choice: it narrows every team-scoped grant to nothing.
+  string team_id = 4;
+}
+
+message UpdateAccountResponse {
+  Account account = 1;
+}
+
+message ResetPasswordRequest {
+  string account_id = 1;
+  string new_password = 2;
+}
+
+message ResetPasswordResponse {}
+
+message RevokeAccountSessionRequest {
+  string account_id = 1;
+  string session_id = 2;
+}
+
+message RevokeAccountSessionResponse {}
+
+message ListAccountSessionsRequest {
+  string account_id = 1;
+}
+
+message ListAccountSessionsResponse {
+  repeated Session sessions = 1;
+}
+
+message DeleteAccountRequest {
+  string account_id = 1;
+}
+
+message DeleteAccountResponse {}

@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<Page
+    x:Class="Kakehashi.App.UI.SettingsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="using:Kakehashi.UI.Common.Behaviors"
+    xmlns:controls="using:CommunityToolkit.WinUI.Controls"
+    xmlns:converters="using:Kakehashi.UI.Common.Converters"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:winui="using:CommunityToolkit.WinUI"
+    behaviors:NavigationViewHeaderBehavior.HeaderMode="Never"
+    mc:Ignorable="d">
+
+    <Grid>
+        <ScrollViewer>
+            <StackPanel Margin="24" Spacing="12">
+                <!--  Appearance settings  -->
+                <TextBlock
+                    Margin="0,28,0,4"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    Text="Appearance" />
+                <controls:SettingsCard
+                    Description="Choose the colors that appear in the app."
+                    Header="Theme"
+                    HeaderIcon="{winui:FontIcon Glyph=&#xE790;}">
+                    <ComboBox MinWidth="150" SelectedIndex="{x:Bind ViewModel.ThemeIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="System default" />
+                        <ComboBoxItem Content="Light" />
+                        <ComboBoxItem Content="Dark" />
+                    </ComboBox>
+                </controls:SettingsCard>
+
+                <!--  General settings  -->
+                <TextBlock
+                    Margin="0,28,0,4"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    Text="General" />
+<!--
+                    This card used to offer an "Error reporting" switch that promised to help the
+                    developer fix issues, and whose change handler was empty: nothing was sent
+                    anywhere and nothing was even persisted. A switch that does nothing is worse than
+                    an absent one, because somebody turns it on and believes they have helped.
+                    What the app really does is written down instead — and it is genuinely useful,
+                    because the first question after any crash report is where the log is.
+                -->
+                <controls:SettingsCard
+                    Description="Every error is written to a log file on this machine. Nothing is sent anywhere."
+                    Header="Diagnostics"
+                    HeaderIcon="{winui:FontIcon Glyph=&#xEBE8;}">
+                    <Button
+                        AutomationProperties.Name="Open the log folder"
+                        Command="{x:Bind ViewModel.OpenLogFolderCommand}"
+                        Content="Open log folder" />
+                </controls:SettingsCard>
+
+                <!--  Donation  -->
+                <TextBlock
+                    Margin="0,28,0,4"
+                    Style="{ThemeResource BodyStrongTextBlockStyle}"
+                    Text="Support the development" />
+                <controls:SettingsCard
+                    Description="If you like my work, please consider buying me a coffee."
+                    Header="Support me"
+                    HeaderIcon="{winui:FontIcon Glyph=&#xF133;}">
+                    <Button
+                        x:Name="ShowQRCodeButton"
+                        Content="Show QR Code"
+                        Style="{ThemeResource AccentButtonStyle}">
+                        <Button.Flyout>
+                            <Flyout Placement="Bottom">
+                                <Image
+                                    Height="400"
+                                    Source="ms-appx:///Assets/QRCode.png"
+                                    Stretch="Uniform" />
+                            </Flyout>
+                        </Button.Flyout>
+                    </Button>
+                </controls:SettingsCard>
+            </StackPanel>
+        </ScrollViewer>
+    </Grid>
+</Page>

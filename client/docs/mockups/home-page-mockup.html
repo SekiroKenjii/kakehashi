@@ -1,0 +1,1220 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Home Page — Kakehashi</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        /* Monochrome Kakehashi theme */
+        --primary: #2b2b2b;
+        --primary-hover: #1a1a1a;
+        --text-primary: rgba(0, 0, 0, 0.8956);
+        --text-secondary: rgba(0, 0, 0, 0.6063);
+        --text-tertiary: rgba(0, 0, 0, 0.4458);
+        --bg-card: rgba(255, 255, 255, 0.85);
+        --bg-card-2: rgba(255, 255, 255, 0.55);
+        --bg-subtle: rgba(0, 0, 0, 0.0373);
+        --bg-subtle-hover: rgba(0, 0, 0, 0.0586);
+        --stroke: rgba(0, 0, 0, 0.0578);
+        --stroke-2: rgba(0, 0, 0, 0.1);
+        --control-fill: rgba(255, 255, 255, 0.7);
+        --control-stroke: rgba(0, 0, 0, 0.0578);
+        --control-stroke-bottom: rgba(0, 0, 0, 0.1622);
+        --success: #107c10;
+        --success-bg: #dff6dd;
+        --warning: #ca5010;
+        --warning-bg: #fff4ce;
+        --danger: #c42b1c;
+        --danger-bg: #fde7e9;
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+      }
+      body {
+        font-family:
+          "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse at top right, #ece6f8 0%, transparent 55%),
+          radial-gradient(ellipse at bottom left, #e8e2f5 0%, transparent 50%),
+          linear-gradient(135deg, #f2f0f7 0%, #ece9f3 100%);
+        min-height: 100vh;
+        padding: 24px;
+        color: var(--text-primary);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+
+      .window {
+        max-width: 1480px;
+        margin: 0 auto;
+        background: rgba(250, 250, 251, 0.92);
+        backdrop-filter: blur(60px) saturate(125%);
+        border: 1px solid rgba(255, 255, 255, 0.5);
+        border-radius: 8px;
+        box-shadow:
+          0 32px 64px rgba(40, 30, 70, 0.14),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        overflow: hidden;
+        display: grid;
+        grid-template-columns: 64px 1fr;
+      }
+      .titlebar {
+        grid-column: 1 / -1;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 12px;
+      }
+      .titlebar-left {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 13px;
+      }
+      .titlebar-left .nav-btn {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-primary);
+      }
+      .titlebar-left .nav-btn:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .app-badge {
+        width: 24px;
+        height: 24px;
+        border-radius: 6px;
+        background: var(--primary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .app-badge .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+        align-items: flex-start;
+      }
+      .app-badge .bars .bar {
+        height: 2.5px;
+        background: white;
+        border-radius: 2px;
+      }
+      .app-badge .bars .bar:nth-child(1) {
+        width: 11px;
+      }
+      .app-badge .bars .bar:nth-child(2) {
+        width: 7px;
+      }
+      .app-badge .bars .bar:nth-child(3) {
+        width: 9px;
+      }
+      .app-title {
+        font-weight: 600;
+      }
+      .app-channel {
+        color: var(--text-tertiary);
+        font-size: 12px;
+      }
+      .titlebar-controls {
+        display: flex;
+        height: 40px;
+      }
+      .titlebar-controls button {
+        width: 46px;
+        height: 40px;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .titlebar-controls button:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .titlebar-controls button.close:hover {
+        background: var(--danger);
+        color: white;
+      }
+      .titlebar-controls .icon {
+        width: 10px;
+        height: 10px;
+        stroke-width: 1.2;
+      }
+
+      /* Nav rail */
+      .nav-rail {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 8px 0 12px;
+        gap: 4px;
+      }
+      .nav-item {
+        width: 44px;
+        height: 40px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        position: relative;
+      }
+      .nav-item:hover {
+        background: var(--bg-subtle-hover);
+        color: var(--text-primary);
+      }
+      .nav-item.active {
+        background: var(--bg-subtle);
+        color: var(--text-primary);
+      }
+      .nav-item.active::before {
+        content: "";
+        position: absolute;
+        left: -10px;
+        top: 10px;
+        bottom: 10px;
+        width: 3px;
+        background: var(--primary);
+        border-radius: 2px;
+      }
+      .nav-item .icon {
+        width: 18px;
+        height: 18px;
+      }
+      .nav-spacer {
+        flex: 1;
+      }
+      .nav-avatar {
+        width: 36px;
+        height: 36px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        position: relative;
+        margin-bottom: 4px;
+      }
+      .nav-avatar .presence {
+        position: absolute;
+        bottom: -1px;
+        right: -1px;
+        width: 11px;
+        height: 11px;
+        border-radius: 50%;
+        background: var(--success);
+        border: 2px solid #fafafb;
+      }
+
+      /* Content */
+      .content {
+        padding: 4px 24px 24px;
+        overflow-y: auto;
+        max-height: calc(100vh - 110px);
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+      }
+
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 14px;
+        margin-bottom: 16px;
+      }
+      .breadcrumb .crumb {
+        padding: 5px 8px;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+      }
+      .breadcrumb .crumb:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .breadcrumb .crumb.active {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .breadcrumb .sep {
+        color: var(--text-tertiary);
+        display: inline-flex;
+        align-items: center;
+      }
+      .breadcrumb .sep .icon {
+        width: 12px;
+        height: 12px;
+      }
+
+      .home-grid {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 16px;
+        max-width: 1240px;
+      }
+      .col {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+      }
+
+      /* Greeting hero */
+      .hero-card {
+        padding: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 20px;
+        background:
+          linear-gradient(
+            135deg,
+            rgba(120, 100, 180, 0.06),
+            rgba(160, 150, 200, 0.03)
+          ),
+          var(--bg-card);
+      }
+      .hero-left {
+        display: flex;
+        align-items: center;
+        gap: 18px;
+      }
+      .hero-avatar {
+        width: 64px;
+        height: 64px;
+        border-radius: 50%;
+        background: var(--primary);
+        color: white;
+        font-size: 20px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.18);
+        position: relative;
+        flex-shrink: 0;
+      }
+      .hero-avatar .presence {
+        position: absolute;
+        bottom: 2px;
+        right: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--success);
+        border: 3px solid white;
+      }
+      .hero-greeting {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        margin-bottom: 3px;
+      }
+      .hero-sub {
+        font-size: 13px;
+        color: var(--text-secondary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .hero-sub .mono {
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 12px;
+      }
+      .hero-sub .ok {
+        color: var(--success);
+        font-weight: 600;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 14px;
+        font-size: 13px;
+        font-family: inherit;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+        min-height: 32px;
+        white-space: nowrap;
+      }
+      .btn:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .btn.primary {
+        background: var(--primary);
+        color: white;
+        border-color: var(--primary);
+        font-weight: 600;
+      }
+      .btn.primary:hover {
+        background: var(--primary-hover);
+      }
+      .btn .icon {
+        color: inherit;
+        width: 14px;
+        height: 14px;
+      }
+
+      .section-card {
+        padding: 18px 20px;
+      }
+      .section-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .section-title .title-left {
+        display: flex;
+        align-items: center;
+        gap: 7px;
+      }
+      .section-title .icon {
+        width: 14px;
+        height: 14px;
+        color: var(--text-tertiary);
+      }
+      .dismiss-btn {
+        width: 24px;
+        height: 24px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-tertiary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .dismiss-btn:hover {
+        background: var(--bg-subtle-hover);
+        color: var(--text-primary);
+      }
+      .dismiss-btn .icon {
+        width: 12px;
+        height: 12px;
+      }
+
+      /* Getting started */
+      .gs-progress-row {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        margin-bottom: 14px;
+      }
+      .gs-progress-track {
+        flex: 1;
+        height: 6px;
+        background: var(--bg-subtle);
+        border-radius: 3px;
+        overflow: hidden;
+      }
+      .gs-progress-fill {
+        height: 100%;
+        width: 25%;
+        background: var(--primary);
+        border-radius: 3px;
+      }
+      .gs-progress-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-weight: 600;
+        white-space: nowrap;
+      }
+      .gs-steps {
+        display: flex;
+        flex-direction: column;
+      }
+      .gs-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--stroke);
+        cursor: pointer;
+      }
+      .gs-step:last-child {
+        border-bottom: none;
+      }
+      .gs-step:hover .gs-step-title {
+        text-decoration: underline;
+      }
+      .gs-check {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        border: 1.5px solid var(--stroke-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        color: transparent;
+        font-size: 12px;
+      }
+      .gs-step.done .gs-check {
+        background: var(--success);
+        border-color: var(--success);
+        color: white;
+      }
+      .gs-check .icon {
+        width: 13px;
+        height: 13px;
+      }
+      .gs-step-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .gs-step-title {
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+      .gs-step.done .gs-step-title {
+        color: var(--text-tertiary);
+        text-decoration: line-through;
+        font-weight: 400;
+      }
+      .gs-step-sub {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 1px;
+      }
+      .gs-step.done .gs-step-sub {
+        color: var(--text-tertiary);
+      }
+      .gs-step-arrow {
+        color: var(--text-tertiary);
+      }
+      .gs-step-arrow .icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Module cards */
+      .modules-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+      }
+      .module-card {
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        padding: 16px;
+        cursor: pointer;
+        transition:
+          box-shadow 0.15s,
+          transform 0.15s;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .module-card:hover {
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+        transform: translateY(-1px);
+      }
+      .module-head {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .module-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        background: var(--primary);
+        color: white;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+      }
+      .module-icon .icon {
+        width: 18px;
+        height: 18px;
+      }
+      .module-name {
+        font-size: 14px;
+        font-weight: 600;
+      }
+      .module-tag {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        background: var(--bg-subtle);
+        border: 1px solid var(--stroke-2);
+        padding: 1px 7px;
+        border-radius: 8px;
+        margin-left: auto;
+        text-transform: uppercase;
+        letter-spacing: 0.3px;
+      }
+      .module-desc {
+        font-size: 12.5px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        flex: 1;
+      }
+      .module-foot {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--text-tertiary);
+      }
+      .module-open {
+        color: var(--text-primary);
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .module-open .icon {
+        width: 13px;
+        height: 13px;
+      }
+      .module-card.ghost {
+        border: 1.5px dashed var(--stroke-2);
+        background: transparent;
+        align-items: center;
+        justify-content: center;
+        text-align: center;
+        color: var(--text-secondary);
+        min-height: 140px;
+        box-shadow: none;
+      }
+      .module-card.ghost:hover {
+        background: var(--bg-card-2);
+        transform: none;
+      }
+      .ghost-icon {
+        width: 38px;
+        height: 38px;
+        border-radius: 9px;
+        border: 1.5px dashed var(--stroke-2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-tertiary);
+        margin-bottom: 4px;
+      }
+      .ghost-icon .icon {
+        width: 17px;
+        height: 17px;
+      }
+      .ghost-title {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .ghost-sub {
+        font-size: 11.5px;
+        color: var(--text-tertiary);
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+
+      /* Status card */
+      .status-row {
+        display: grid;
+        grid-template-columns: 130px 1fr;
+        padding: 8px 0;
+        font-size: 13px;
+        border-bottom: 1px solid var(--stroke);
+        gap: 12px;
+        align-items: center;
+      }
+      .status-row:last-child {
+        border-bottom: none;
+      }
+      .status-key {
+        color: var(--text-secondary);
+        font-size: 12.5px;
+      }
+      .status-val {
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 12px;
+      }
+      .status-val.ok {
+        color: var(--success);
+        font-weight: 600;
+      }
+
+      /* Activity feed */
+      .activity-item {
+        display: flex;
+        gap: 12px;
+        padding: 10px 0;
+        border-bottom: 1px solid var(--stroke);
+      }
+      .activity-item:last-child {
+        border-bottom: none;
+      }
+      .activity-icon {
+        width: 30px;
+        height: 30px;
+        border-radius: 8px;
+        background: var(--bg-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+      }
+      .activity-icon .icon {
+        width: 14px;
+        height: 14px;
+      }
+      .activity-icon.ok {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .activity-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .activity-title {
+        font-size: 12.5px;
+        font-weight: 600;
+      }
+      .activity-meta {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 1px;
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+      .activity-time {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        white-space: nowrap;
+        padding-top: 2px;
+      }
+
+      .view-all {
+        font-size: 11px;
+        color: var(--text-primary);
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 600;
+        text-transform: none;
+        letter-spacing: 0;
+      }
+      .view-all:hover {
+        text-decoration: underline;
+      }
+
+      /* Docs links */
+      .doc-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 9px 0;
+        border-bottom: 1px solid var(--stroke);
+        cursor: pointer;
+        font-size: 13px;
+        color: var(--text-primary);
+      }
+      .doc-link:last-child {
+        border-bottom: none;
+      }
+      .doc-link:hover {
+        color: var(--primary);
+      }
+      .doc-link:hover .doc-title {
+        text-decoration: underline;
+      }
+      .doc-link .icon {
+        width: 14px;
+        height: 14px;
+        color: var(--text-tertiary);
+      }
+      .doc-title {
+        flex: 1;
+        font-weight: 600;
+        font-size: 12.5px;
+      }
+      .doc-ext {
+        color: var(--text-tertiary);
+      }
+      .doc-ext .icon {
+        width: 12px;
+        height: 12px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="i-menu" viewBox="0 0 24 24">
+          <path d="M4 6h16M4 12h16M4 18h16" />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </symbol>
+        <symbol id="i-minimize" viewBox="0 0 24 24">
+          <path d="M5 12h14" />
+        </symbol>
+        <symbol id="i-maximize" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="1" />
+        </symbol>
+        <symbol id="i-home" viewBox="0 0 24 24">
+          <path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z" />
+          <path d="M9 22V12h6v10" />
+        </symbol>
+        <symbol id="i-cart" viewBox="0 0 24 24">
+          <circle cx="9" cy="20" r="1.5" />
+          <circle cx="18" cy="20" r="1.5" />
+          <path d="M2 3h2.5l2.5 12h11l2.5-8H6" />
+        </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+          />
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+          <path d="m9 6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="m5 12 5 5L20 7" />
+        </symbol>
+        <symbol id="i-x" viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </symbol>
+        <symbol id="i-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </symbol>
+        <symbol id="i-globe" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" />
+        </symbol>
+        <symbol id="i-activity" viewBox="0 0 24 24">
+          <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+        </symbol>
+        <symbol id="i-login" viewBox="0 0 24 24">
+          <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4" />
+          <path d="m10 17 5-5-5-5M15 12H3" />
+        </symbol>
+        <symbol id="i-rocket" viewBox="0 0 24 24">
+          <path d="M5 15c-1.5 1.3-2 5-2 5s3.7-.5 5-2" />
+          <path
+            d="M12 15 9 12c1-3.5 3.5-6.5 6.5-8.5 2-1.3 4.5-1.5 5.5-.5s.8 3.5-.5 5.5C18.5 11.5 15.5 14 12 15z"
+          />
+          <circle cx="15" cy="9" r="1.5" />
+        </symbol>
+        <symbol id="i-grid" viewBox="0 0 24 24">
+          <rect x="3" y="3" width="7" height="7" rx="1" />
+          <rect x="14" y="3" width="7" height="7" rx="1" />
+          <rect x="3" y="14" width="7" height="7" rx="1" />
+          <rect x="14" y="14" width="7" height="7" rx="1" />
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" />
+        </symbol>
+        <symbol id="i-palette" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <circle cx="8.5" cy="9.5" r="1" fill="currentColor" />
+          <circle cx="12" cy="7.5" r="1" fill="currentColor" />
+          <circle cx="15.5" cy="9.5" r="1" fill="currentColor" />
+          <path d="M12 21a9 9 0 0 0 0-18v18z" opacity="0.2" />
+        </symbol>
+        <symbol id="i-book" viewBox="0 0 24 24">
+          <path
+            d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20V2H6.5A2.5 2.5 0 0 0 4 4.5z"
+          />
+          <path d="M4 19.5A2.5 2.5 0 0 0 6.5 22H20v-5" />
+        </symbol>
+        <symbol id="i-external" viewBox="0 0 24 24">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <path d="M15 3h6v6M10 14 21 3" />
+        </symbol>
+        <symbol id="i-arrow-right" viewBox="0 0 24 24">
+          <path d="M5 12h14M12 5l7 7-7 7" />
+        </symbol>
+        <symbol id="i-git" viewBox="0 0 24 24">
+          <circle cx="6" cy="6" r="2.5" />
+          <circle cx="6" cy="18" r="2.5" />
+          <circle cx="18" cy="12" r="2.5" />
+          <path d="M6 8.5v7M8.5 6.5 15.5 11" />
+        </symbol>
+        <symbol id="i-changelog" viewBox="0 0 24 24">
+          <path
+            d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"
+          />
+          <path d="M14 2v6h6M9 13h6M9 17h4" />
+        </symbol>
+        <symbol id="i-update" viewBox="0 0 24 24">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 4v5h-5" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="window">
+      <div class="titlebar">
+        <div class="titlebar-left">
+          <button class="nav-btn">
+            <svg class="icon"><use href="#i-menu" /></svg>
+          </button>
+          <div class="app-badge">
+            <div class="bars">
+              <div class="bar"></div>
+              <div class="bar"></div>
+              <div class="bar"></div>
+            </div>
+          </div>
+          <span class="app-title">Kakehashi</span>
+          <span class="app-channel">Experimental</span>
+        </div>
+        <div class="titlebar-controls">
+          <button>
+            <svg class="icon"><use href="#i-minimize" /></svg>
+          </button>
+          <button>
+            <svg class="icon"><use href="#i-maximize" /></svg>
+          </button>
+          <button class="close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Nav rail -->
+      <div class="nav-rail">
+        <button class="nav-item active">
+          <svg class="icon"><use href="#i-home" /></svg>
+        </button>
+        <button class="nav-item">
+          <svg class="icon"><use href="#i-cart" /></svg>
+        </button>
+        <div class="nav-spacer"></div>
+        <div class="nav-avatar">
+          VT
+          <div class="presence"></div>
+        </div>
+        <button class="nav-item">
+          <svg class="icon"><use href="#i-settings" /></svg>
+        </button>
+      </div>
+
+      <!-- Content -->
+      <div class="content">
+        <div class="breadcrumb">
+          <span class="crumb">Kakehashi</span>
+          <span class="sep"
+            ><svg class="icon"><use href="#i-chevron-right" /></svg
+          ></span>
+          <span class="crumb active">Home</span>
+        </div>
+
+        <div class="home-grid">
+          <!-- LEFT column -->
+          <div class="col">
+            <!-- Greeting hero -->
+            <div class="card hero-card">
+              <div class="hero-left">
+                <div class="hero-avatar">
+                  VT
+                  <div class="presence"></div>
+                </div>
+                <div>
+                  <div class="hero-greeting">Good morning, VT</div>
+                  <div class="hero-sub">
+                    <span>Friday, June 12</span>
+                  </div>
+                </div>
+              </div>
+              <button class="btn primary">
+                <svg class="icon"><use href="#i-grid" /></svg> Explore modules
+              </button>
+            </div>
+
+            <!-- Getting started -->
+            <div class="card section-card">
+              <div class="section-title">
+                <div class="title-left">
+                  <svg class="icon"><use href="#i-rocket" /></svg>
+                  <span>Getting started</span>
+                </div>
+                <button class="dismiss-btn" title="Dismiss">
+                  <svg class="icon"><use href="#i-x" /></svg>
+                </button>
+              </div>
+
+              <div class="gs-progress-row">
+                <div class="gs-progress-track">
+                  <div class="gs-progress-fill"></div>
+                </div>
+                <div class="gs-progress-label">1 of 4 complete</div>
+              </div>
+
+              <div class="gs-steps">
+                <div class="gs-step done">
+                  <div class="gs-check">
+                    <svg class="icon"><use href="#i-check" /></svg>
+                  </div>
+                  <div class="gs-step-body">
+                    <div class="gs-step-title">Sign in with company SSO</div>
+                    <div class="gs-step-sub">
+                      OAuth 2.0 browser flow · completed 2h ago
+                    </div>
+                  </div>
+                </div>
+                <div class="gs-step">
+                  <div class="gs-check"></div>
+                  <div class="gs-step-body">
+                    <div class="gs-step-title">Explore the sample module</div>
+                    <div class="gs-step-sub">
+                      Open Account module to view active sessions, recent
+                      sign-ins and more.
+                    </div>
+                  </div>
+                  <div class="gs-step-arrow">
+                    <svg class="icon"><use href="#i-chevron-right" /></svg>
+                  </div>
+                </div>
+                <div class="gs-step">
+                  <div class="gs-check"></div>
+                  <div class="gs-step-body">
+                    <div class="gs-step-title">Customize the app theme</div>
+                    <div class="gs-step-sub">
+                      Light / Dark / System — in Settings → Appearance
+                    </div>
+                  </div>
+                  <div class="gs-step-arrow">
+                    <svg class="icon"><use href="#i-chevron-right" /></svg>
+                  </div>
+                </div>
+                <div class="gs-step">
+                  <div class="gs-check"></div>
+                  <div class="gs-step-body">
+                    <div class="gs-step-title">Register your first module</div>
+                    <div class="gs-step-sub">
+                      Implement INavigationModule and it appears in the nav rail
+                    </div>
+                  </div>
+                  <div class="gs-step-arrow">
+                    <svg class="icon"><use href="#i-chevron-right" /></svg>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Feature modules -->
+            <div class="card section-card">
+              <div class="section-title">
+                <div class="title-left">
+                  <svg class="icon"><use href="#i-grid" /></svg>
+                  <span>Feature modules (2)</span>
+                </div>
+              </div>
+              <div class="modules-grid">
+                <div class="module-card">
+                  <div class="module-head">
+                    <div class="module-icon">
+                      <svg class="icon"><use href="#i-user" /></svg>
+                    </div>
+                    <div class="module-name">Account</div>
+                    <span class="module-tag">Core</span>
+                  </div>
+                  <div class="module-desc">
+                    Identity, security activity and session management — sign
+                    out here or everywhere.
+                  </div>
+                  <div class="module-foot">
+                    <span>2 active sessions</span>
+                    <span class="module-open"
+                      >Open <svg class="icon"><use href="#i-arrow-right" /></svg
+                    ></span>
+                  </div>
+                </div>
+
+                <div class="module-card">
+                  <div class="module-head">
+                    <div class="module-icon">
+                      <svg class="icon"><use href="#i-settings" /></svg>
+                    </div>
+                    <div class="module-name">Settings</div>
+                    <span class="module-tag">Core</span>
+                  </div>
+                  <div class="module-desc">
+                    Theme, language, startup behavior and diagnostics for the
+                    application shell.
+                  </div>
+                  <div class="module-foot">
+                    <span>Theme: System</span>
+                    <span class="module-open"
+                      >Open <svg class="icon"><use href="#i-arrow-right" /></svg
+                    ></span>
+                  </div>
+                </div>
+
+                <div class="module-card ghost">
+                  <div class="ghost-icon">
+                    <svg class="icon"><use href="#i-plus" /></svg>
+                  </div>
+                  <div class="ghost-title">Register your module</div>
+                  <div class="ghost-sub">INavigationModule → nav rail</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RIGHT column -->
+          <div class="col">
+            <!-- Backend status -->
+            <div class="card section-card">
+              <div class="section-title">
+                <div class="title-left">
+                  <svg class="icon"><use href="#i-globe" /></svg>
+                  <span>Backend</span>
+                </div>
+              </div>
+              <div class="status-row">
+                <div class="status-key">Status</div>
+                <div class="status-val ok">● Connected · 24ms</div>
+              </div>
+              <div class="status-row">
+                <div class="status-key">Endpoint</div>
+                <div class="status-val">be-pod.gke:443</div>
+              </div>
+              <div class="status-row">
+                <div class="status-key">Version</div>
+                <div class="status-val">v1.1.2 · up 14h 2m</div>
+              </div>
+              <div class="status-row">
+                <div class="status-key">Client</div>
+                <div class="status-val">v1.1.2 · build 50866</div>
+              </div>
+            </div>
+
+            <!-- Recent activity -->
+            <div class="card section-card">
+              <div class="section-title">
+                <div class="title-left">
+                  <svg class="icon"><use href="#i-activity" /></svg>
+                  <span>Recent activity</span>
+                </div>
+                <a class="view-all">View all →</a>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon ok">
+                  <svg class="icon"><use href="#i-login" /></svg>
+                </div>
+                <div class="activity-body">
+                  <div class="activity-title">Signed in · this device</div>
+                  <div class="activity-meta">Windows · 10.115.2.45</div>
+                </div>
+                <div class="activity-time">2h ago</div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <svg class="icon"><use href="#i-update" /></svg>
+                </div>
+                <div class="activity-body">
+                  <div class="activity-title">App updated</div>
+                  <div class="activity-meta">v1.1.1 → v1.1.2</div>
+                </div>
+                <div class="activity-time">1d ago</div>
+              </div>
+
+              <div class="activity-item">
+                <div class="activity-icon">
+                  <svg class="icon"><use href="#i-palette" /></svg>
+                </div>
+                <div class="activity-body">
+                  <div class="activity-title">Theme changed</div>
+                  <div class="activity-meta">Dark → System</div>
+                </div>
+                <div class="activity-time">3d ago</div>
+              </div>
+            </div>
+
+            <!-- Resources -->
+            <div class="card section-card">
+              <div class="section-title">
+                <div class="title-left">
+                  <svg class="icon"><use href="#i-book" /></svg>
+                  <span>Resources</span>
+                </div>
+              </div>
+              <div class="doc-link">
+                <svg class="icon"><use href="#i-book" /></svg>
+                <span class="doc-title">Template documentation</span>
+                <span class="doc-ext"
+                  ><svg class="icon"><use href="#i-external" /></svg
+                ></span>
+              </div>
+              <div class="doc-link">
+                <svg class="icon"><use href="#i-git" /></svg>
+                <span class="doc-title">Source repository</span>
+                <span class="doc-ext"
+                  ><svg class="icon"><use href="#i-external" /></svg
+                ></span>
+              </div>
+              <div class="doc-link">
+                <svg class="icon"><use href="#i-changelog" /></svg>
+                <span class="doc-title">Changelog · v1.1.2</span>
+                <span class="doc-ext"
+                  ><svg class="icon"><use href="#i-external" /></svg
+                ></span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

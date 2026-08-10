@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Kakehashi.Contracts</RootNamespace>
+    <AssemblyName>Kakehashi.Contracts</AssemblyName>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.Client" />
+  </ItemGroup>
+
+  <!-- Every contract in the repository, generated once, from proto/ itself. There is no copy of
+       the schema on this side to drift from the one the Go server compiles against: a pull request
+       that changes a field changes both halves' generated code in the same CI run.
+
+       Why one project rather than one per module, which would have been the tidier mirror of the
+       server's per-module rpc/ package: protoc has to run somewhere, and inside a WinUI project it
+       runs in the RID-specific inner build the Windows App SDK spawns. The generated files land
+       under the other platform's obj\ directory while the compiler reads this one's, and the only
+       symptom is "the type or namespace does not exist". A plain library has no inner build and no
+       such problem.
+
+       Confinement is not lost, it just moves: NotesLayeringTests asserts that no Application layer
+       references this assembly, which is the same rule the server states as "only rpc/ may import
+       internal/gen" and enforces with archlint. -->
+  <ItemGroup>
+    <Protobuf Include="..\..\..\..\proto\**\*.proto"
+              ProtoRoot="..\..\..\..\proto"
+              GrpcServices="Client" />
+  </ItemGroup>
+
+</Project>

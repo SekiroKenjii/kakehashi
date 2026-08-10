@@ -1,0 +1,17 @@
+# Normalize line endings to LF in the repository for every text file, matching .editorconfig.
+# This keeps diffs and formatting consistent across all developers regardless of OS settings.
+* text=auto eol=lf
+
+# Treat known binary assets as binary (never normalized).
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pfx binary
+*.snk binary
+*.cer binary
+
+# Generated protobuf/Connect code is committed so `go build` works without buf, but it is
+# machine-written: keep it out of diffs and language statistics.
+server/internal/gen/** linguist-generated=true

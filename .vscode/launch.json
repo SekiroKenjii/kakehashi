@@ -1,0 +1,29 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Client (WinUI)",
+      "type": "coreclr",
+      "request": "launch",
+      "preLaunchTask": "build-client",
+      "program": "${workspaceFolder}/client/src/App/Kakehashi.App/bin/x64/Debug/net10.0-windows10.0.19041.0/Kakehashi.App.exe",
+      "args": [],
+      "cwd": "${workspaceFolder}/client/src/App/Kakehashi.App",
+      "stopAtEntry": false,
+      "justMyCode": true
+    },
+    {
+      "name": "Server (Go)",
+      "type": "go",
+      "request": "launch",
+      "mode": "debug",
+      "program": "${workspaceFolder}/server/cmd/server",
+      "env": {
+        "KAKEHASHI_SQLSERVER_DSN": "sqlserver://sa:Kakehashi!Dev1@localhost:1433?database=kakehashi&encrypt=disable",
+        "KAKEHASHI_MONGO_URI": "mongodb://localhost:27017",
+        "KAKEHASHI_LOG_FORMAT": "text",
+        "KAKEHASHI_LOG_LEVEL": "debug"
+      }
+    }
+  ]
+}

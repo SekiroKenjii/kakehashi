@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Kakehashi.Modules.Notes.Domain</RootNamespace>
+    <AssemblyName>Kakehashi.Modules.Notes.Domain</AssemblyName>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\Kakehashi.SharedKernel\Kakehashi.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

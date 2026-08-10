@@ -1,0 +1,73 @@
+## ---------------------------------------------------------------------------
+##  Go (server/)
+## ---------------------------------------------------------------------------
+/server/bin/
+/server/vendor/
+coverage.out
+*.test
+
+## ---------------------------------------------------------------------------
+##  .NET / Visual Studio (client/)
+## ---------------------------------------------------------------------------
+bin/
+obj/
+.vs/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+ARM/
+ARM64/
+[Bb]in/
+[Oo]bj/
+
+## Build / publish output
+artifacts/
+publish/
+*.binlog
+project.lock.json
+project.fragment.lock.json
+
+## WinUI 3 / MSIX packaging
+AppPackages/
+BundleArtifacts/
+*.appx
+*.appxbundle
+*.appxupload
+*.msix
+*.msixbundle
+*.cer
+*.pfx
+GeneratedArtifacts/
+_pkginfo.txt
+Generated Files/
+
+## Test / coverage
+[Tt]est[Rr]esult*/
+coverage/
+*.coverage
+*.coveragexml
+TestResults/
+
+## ---------------------------------------------------------------------------
+##  Editors / OS
+## ---------------------------------------------------------------------------
+.idea/
+*.DotSettings.user
+Thumbs.db
+.DS_Store
+
+## ---------------------------------------------------------------------------
+##  Local, machine-specific configuration (never committed)
+## ---------------------------------------------------------------------------
+appsettings.Development.json
+.env
+.env.local
+
+## Claude Code local (user-specific) settings
+.claude/settings.local.json
+.claude/scheduled_tasks.lock

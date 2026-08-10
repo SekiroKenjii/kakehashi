@@ -1,0 +1,10 @@
+# Everything the build does not need. Keeping the context small is not only about speed: anything
+# copied in is a layer someone can extract, so local .env files and build output stay out.
+bin/
+vendor/
+coverage.out
+*.test
+.env
+.env.local
+Dockerfile
+.dockerignore

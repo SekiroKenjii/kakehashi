@@ -1,0 +1,23 @@
+<Project>
+
+  <!--
+    Single source of truth for the product version (SemVer major.minor.patch).
+    Imported by Directory.Build.props and flowed into every assembly's
+    Version / AssemblyVersion / FileVersion / InformationalVersion.
+
+    Do NOT hand-edit during a release; use the helper instead, which also keeps
+    the MSIX manifest in sync and (optionally) creates the matching git tag:
+
+      pwsh scripts/version.ps1 -Bump patch        # 0.1.0 -> 0.1.1
+      pwsh scripts/version.ps1 -Bump minor        # 0.1.1 -> 0.2.0
+      pwsh scripts/version.ps1 -Bump major        # 0.2.0 -> 1.0.0
+      pwsh scripts/version.ps1 -Set 1.4.2
+      pwsh scripts/version.ps1 -Bump patch -Tag   # also create annotated tag vX.Y.Z
+  -->
+  <PropertyGroup>
+    <VersionMajor>0</VersionMajor>
+    <VersionMinor>1</VersionMinor>
+    <VersionPatch>0</VersionPatch>
+  </PropertyGroup>
+
+</Project>

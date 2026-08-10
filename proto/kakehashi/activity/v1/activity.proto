@@ -1,0 +1,80 @@
+syntax = "proto3";
+
+// Activity: what has happened to an account, collected from every module and readable from any
+// device.
+//
+// It is the feature that justifies the server. The client's desktop ancestor wrote sign-ins into
+// local settings, so the only machine that knew about a sign-in was the machine that performed it.
+// Here the entries live server-side, which is the whole difference: sign in on one device and the
+// next device you open already knows.
+package kakehashi.activity.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// ActivityService is the activity module's entire remote surface.
+//
+// Read-only, and it must stay that way. Entries are written by the module itself, reacting to
+// events the other modules publish. An endpoint that let a caller append to their own history
+// would be an endpoint that lets a caller rewrite it, and a history anyone can write proves
+// nothing.
+service ActivityService {
+  // ListActivity returns the caller's own entries, newest first.
+  //
+  // Which feed that is comes from the bearer token, so there is no user id in the request and no
+  // way to ask for somebody else's. A call with no verified caller is UNAUTHENTICATED rather than
+  // an empty list: those two answers look identical on a screen and mean opposite things.
+  rpc ListActivity(ListActivityRequest) returns (ListActivityResponse);
+}
+
+// Entry is one thing that happened.
+message Entry {
+  // A stable PascalCase label such as "SignedIn" or "PasswordChanged", unique across the feed.
+  //
+  // A string rather than an enum because the set is open. Every module a user of this boilerplate
+  // writes contributes kinds of its own, and an enum would put all of them in this file — the
+  // activity contract would have to name every feature anyone ever adds, which is the coupling the
+  // module boundaries exist to prevent, moved from the import graph into the schema where archlint
+  // cannot see it. Degradation decides it too: an unrecognised string is printable, greppable and
+  // loggable, while an unrecognised enum value arrives as a bare number.
+  //
+  // The client switches on this to choose a label and an icon, exactly as it already does for the
+  // account module's security events. Kinds are contract: add them freely, never redefine one,
+  // because entries already written keep the meaning they were stored with.
+  string kind = 1;
+
+  // Whatever the user agent claimed when the entry was recorded. Untrusted, possibly empty, and
+  // shown only as a hint — the same caveat the account module attaches to the identical value.
+  //
+  // It earns its place by answering the only question a reader of this feed is actually asking,
+  // which is "was that me?". A row that says "Signed in" and nothing else cannot.
+  string device = 2;
+
+  // The other half of "was that me?", and the half that still helps when device is a shared or
+  // spoofed string. Possibly empty.
+  string ip_address = 3;
+
+  // When it happened, which is not when it was stored and not when it was read.
+  google.protobuf.Timestamp occurred_at = 4;
+}
+
+message ListActivityRequest {
+  // How many of the newest entries to return. Anything less than one means the server's default,
+  // and anything unreasonably large is clamped rather than rejected: a client that asks for a
+  // million rows deserves an answer rather than an error.
+  //
+  // A cap, not a cursor. A note list is bounded by how many notes a person writes; a feed only
+  // ever grows, so "return everything" is wrong from the first week rather than eventually. The
+  // cursor is still deliberately absent, for the reason the notes contract gives: paging is easy
+  // to get wrong early and additive later — page_token here and next_page_token below both are.
+  //
+  // When it does arrive it must be keyset, never skip and limit. New rows land at the head of this
+  // collection between every pair of reads, which is precisely the case offset paging gets wrong,
+  // and it is the case a note list never hits. The collection's index already ends in _id so that
+  // cursor is index-served the day someone adds it.
+  int32 page_size = 1;
+}
+
+message ListActivityResponse {
+  // Newest first.
+  repeated Entry entries = 1;
+}

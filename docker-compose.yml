@@ -1,0 +1,107 @@
+# The local development stack: SQL Server, MongoDB, and the server that uses them.
+#
+# The credentials below are development credentials, committed on purpose so that a fresh clone
+# starts with one command. They are only ever reachable on localhost. Production reads the same
+# variables from somewhere that is not a git repository.
+
+name: kakehashi
+
+x-mssql-password: &mssql-password ${MSSQL_SA_PASSWORD:-Kakehashi!Dev1}
+
+services:
+  mssql:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    environment:
+      ACCEPT_EULA: "Y"
+      MSSQL_SA_PASSWORD: *mssql-password
+      MSSQL_PID: Developer
+    ports:
+      - "1433:1433"
+    volumes:
+      - mssql-data:/var/opt/mssql
+    healthcheck:
+      # -C trusts the self-signed certificate the container generates for itself. Without it every
+      # connection fails on certificate validation, which reads like an authentication problem.
+      test:
+        - CMD-SHELL
+        - /opt/mssql-tools18/bin/sqlcmd -S localhost -U sa -P "$$MSSQL_SA_PASSWORD" -C -Q "SELECT 1"
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      # SQL Server takes a while to come up the first time, and a healthcheck that starts counting
+      # failures immediately will exhaust its retries before the server has finished starting.
+      start_period: 45s
+
+  # Creating the database is deliberately not the server's job. Doing it at boot would mean the
+  # application's own credentials need permission to create databases, which is a large thing to
+  # grant for something that happens once.
+  mssql-init:
+    image: mcr.microsoft.com/mssql/server:2022-latest
+    depends_on:
+      mssql:
+        condition: service_healthy
+    environment:
+      MSSQL_SA_PASSWORD: *mssql-password
+    entrypoint:
+      - /bin/bash
+      - -c
+      - >
+        /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C
+        -Q "IF DB_ID('kakehashi') IS NULL CREATE DATABASE kakehashi;"
+    restart: "no"
+
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+      start_period: 10s
+
+  server:
+    build:
+      context: ./server
+    depends_on:
+      # Not service_healthy: this one is a one-shot job, and the server must not start until it has
+      # finished creating the database the first migration is about to write to.
+      mssql-init:
+        condition: service_completed_successfully
+      mongo:
+        condition: service_healthy
+    environment:
+      KAKEHASHI_ADDR: ":8080"
+      # The OpenID Connect issuer, and therefore the origin every client must dial. Testing from a
+      # second machine needs a LAN address here and the identical value in that client's
+      # Auth:Authority, or the token it receives is rejected on issuer mismatch. Overridable rather
+      # than edited, so a single-machine clone still starts with one command and no LAN address is
+      # ever committed.
+      KAKEHASHI_PUBLIC_URL: ${KAKEHASHI_PUBLIC_URL:-http://localhost:8080}
+      # encrypt=disable because the container's certificate is self-signed and nothing here leaves
+      # the compose network. Never carry this setting into a deployment.
+      KAKEHASHI_SQLSERVER_DSN: >-
+        sqlserver://sa:${MSSQL_SA_PASSWORD:-Kakehashi!Dev1}@mssql:1433?database=kakehashi&encrypt=disable
+      KAKEHASHI_MONGO_URI: "mongodb://mongo:27017"
+      KAKEHASHI_MONGO_DATABASE: "kakehashi"
+      KAKEHASHI_LOG_LEVEL: "debug"
+      KAKEHASHI_LOG_FORMAT: "text"
+      # The development sign-in. Seeded on first boot, idempotent after; the WinUI client's
+      # appsettings point at this account. Development-only, like the SA password above.
+      KAKEHASHI_ACCOUNT_SEED_EMAIL: "dev@kakehashi.local"
+      KAKEHASHI_ACCOUNT_SEED_PASSWORD: "kakehashi dev passphrase"
+      KAKEHASHI_ACCOUNT_SEED_NAME: "Kakehashi Developer"
+      # The first administrator. Every module is gated and roles come from the database, so a
+      # deployment with nobody holding Admin refuses everyone — including on the screen that would
+      # fix it. This is the one grant configuration makes rather than the product.
+      KAKEHASHI_AUTHZ_BOOTSTRAP_ADMIN: "dev@kakehashi.local"
+    ports:
+      - "8080:8080"
+    restart: unless-stopped
+
+volumes:
+  mssql-data:
+  mongo-data:

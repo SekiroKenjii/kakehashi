@@ -1,0 +1,920 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Navigation Management — Kakehashi</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #2b2b2b;
+    --primary-hover: #1a1a1a;
+    --text-primary: rgba(0,0,0,0.8956);
+    --text-secondary: rgba(0,0,0,0.6063);
+    --text-tertiary: rgba(0,0,0,0.4458);
+    --bg-card: rgba(255,255,255,0.85);
+    --bg-card-2: rgba(255,255,255,0.55);
+    --bg-subtle: rgba(0,0,0,0.0373);
+    --bg-subtle-hover: rgba(0,0,0,0.0586);
+    --stroke: rgba(0,0,0,0.0578);
+    --stroke-2: rgba(0,0,0,0.1);
+    --control-fill: rgba(255,255,255,0.7);
+    --control-stroke: rgba(0,0,0,0.0578);
+    --control-stroke-bottom: rgba(0,0,0,0.1622);
+    --success: #107c10;
+    --success-bg: #dff6dd;
+    --warning: #ca5010;
+    --warning-bg: #fff4ce;
+    --danger: #c42b1c;
+    --danger-bg: #fde7e9;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+  body {
+    font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at top right, #ece6f8 0%, transparent 55%),
+      radial-gradient(ellipse at bottom left, #e8e2f5 0%, transparent 50%),
+      linear-gradient(135deg, #f2f0f7 0%, #ece9f3 100%);
+    min-height: 100vh;
+    padding: 24px;
+    color: var(--text-primary);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .icon {
+    width: 16px; height: 16px;
+    display: inline-block; flex-shrink: 0;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    vertical-align: middle;
+  }
+
+  .window {
+    max-width: 1480px; margin: 0 auto;
+    background: rgba(250,250,251,0.92);
+    backdrop-filter: blur(60px) saturate(125%);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 8px;
+    box-shadow: 0 32px 64px rgba(40,30,70,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 64px 1fr;
+  }
+  .titlebar {
+    grid-column: 1 / -1;
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-left: 12px;
+  }
+  .titlebar-left { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .titlebar-left .nav-btn {
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+  }
+  .titlebar-left .nav-btn:hover { background: var(--bg-subtle-hover); }
+  .app-badge {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .app-badge .bars { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+  .app-badge .bars .bar { height: 2.5px; background: white; border-radius: 2px; }
+  .app-badge .bars .bar:nth-child(1) { width: 11px; }
+  .app-badge .bars .bar:nth-child(2) { width: 7px; }
+  .app-badge .bars .bar:nth-child(3) { width: 9px; }
+  .app-title { font-weight: 600; }
+  .app-channel { color: var(--text-tertiary); font-size: 12px; }
+  .titlebar-controls { display: flex; height: 40px; }
+  .titlebar-controls button {
+    width: 46px; height: 40px; border: none; background: transparent;
+    color: var(--text-primary); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .titlebar-controls button:hover { background: var(--bg-subtle-hover); }
+  .titlebar-controls button.close:hover { background: var(--danger); color: white; }
+  .titlebar-controls .icon { width: 10px; height: 10px; stroke-width: 1.2; }
+
+  /* Nav rail (collapsed, matches app) */
+  .nav-rail {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 8px 0 12px;
+    gap: 4px;
+  }
+  .nav-item {
+    width: 44px; height: 40px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    position: relative;
+  }
+  .nav-item:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--bg-subtle); color: var(--text-primary); }
+  .nav-item.active::before {
+    content: '';
+    position: absolute;
+    left: -10px; top: 10px; bottom: 10px;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  .nav-item .icon { width: 18px; height: 18px; }
+  .nav-spacer { flex: 1; }
+  .nav-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    position: relative;
+    margin-bottom: 4px;
+  }
+  .nav-avatar .presence {
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid #fafafb;
+  }
+
+  /* Content */
+  .content {
+    padding: 4px 24px 24px;
+    overflow-y: auto;
+    max-height: calc(100vh - 110px);
+  }
+  .page-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 12px;
+    gap: 16px;
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 2px; font-size: 14px; }
+  .breadcrumb .crumb { padding: 5px 8px; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; }
+  .breadcrumb .crumb:hover { background: var(--bg-subtle-hover); }
+  .breadcrumb .crumb.active { color: var(--text-primary); font-weight: 600; }
+  .breadcrumb .sep { color: var(--text-tertiary); display: inline-flex; align-items: center; }
+  .breadcrumb .sep .icon { width: 12px; height: 12px; }
+  .commandbar {
+    display: flex; gap: 2px;
+    background: var(--bg-card); border: 1px solid var(--stroke);
+    border-radius: var(--radius-md); padding: 2px;
+  }
+  .cmd-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border: none; background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 13px;
+    color: var(--text-primary); cursor: pointer;
+    min-height: 28px;
+  }
+  .cmd-btn:hover { background: var(--bg-subtle-hover); }
+  .cmd-btn .icon { color: var(--text-secondary); width: 14px; height: 14px; }
+  .cmd-btn.primary { background: var(--primary); color: white; }
+  .cmd-btn.primary:hover { background: var(--primary-hover); }
+  .cmd-btn.primary .icon { color: white; }
+  .cmd-divider { width: 1px; background: var(--stroke); margin: 4px 2px; }
+  .role-select {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    border-radius: var(--radius-sm);
+  }
+  .role-select:hover { background: var(--bg-subtle-hover); }
+  .role-select .label { color: var(--text-secondary); font-size: 12px; }
+  .role-select .icon { width: 13px; height: 13px; color: var(--text-secondary); }
+
+  /* Pending bar */
+  .pending-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(202,80,16,0.1), rgba(242,154,77,0.06));
+    border: 1px solid rgba(202,80,16,0.25);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+  }
+  .pending-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--warning); font-weight: 600; }
+  .pending-info .icon { width: 15px; height: 15px; }
+  .pending-info .normal { color: var(--text-secondary); font-weight: 400; }
+  .pending-info .normal strong { color: var(--text-primary); font-weight: 600; }
+  .pending-actions { display: flex; gap: 6px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 6px 12px;
+    font-size: 13px; font-family: inherit;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary); cursor: pointer;
+    min-height: 30px;
+  }
+  .btn:hover { background: var(--bg-subtle-hover); }
+  .btn.primary { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+  .btn.primary:hover { background: var(--primary-hover); }
+  .btn .icon { color: inherit; width: 13px; height: 13px; }
+
+  /* Info banner (dismissible) */
+  .info-banner {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-card-2);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    margin-bottom: 14px;
+    font-size: 12.5px;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+  .info-banner .icon { width: 15px; height: 15px; color: var(--text-tertiary); margin-top: 1px; }
+  .info-banner strong { color: var(--text-primary); font-weight: 600; }
+  .info-dismiss {
+    margin-left: auto;
+    width: 24px; height: 24px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-tertiary);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .info-dismiss:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .info-dismiss .icon { width: 12px; height: 12px; margin: 0; }
+
+  /* Layout */
+  .nav-grid {
+    display: grid;
+    grid-template-columns: 400px 1fr;
+    gap: 14px;
+    max-width: 1240px;
+  }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+
+  /* ===== STRUCTURE PANEL ===== */
+  .panel-header {
+    padding: 14px 16px 10px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .panel-title {
+    font-size: 12px; font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    display: flex; align-items: center; gap: 7px;
+  }
+  .panel-title .icon { width: 14px; height: 14px; color: var(--text-tertiary); }
+  .panel-hint { font-size: 11px; color: var(--text-tertiary); }
+
+  .structure { padding: 4px 10px 14px; }
+
+  .heading-group { margin-bottom: 8px; }
+  .heading-row {
+    display: flex; align-items: center; gap: 8px;
+    padding: 8px 8px;
+    border-radius: var(--radius-sm);
+    background: var(--bg-card-2);
+    border: 1px solid var(--stroke);
+  }
+  .drag-handle { color: var(--text-tertiary); cursor: grab; display: inline-flex; }
+  .drag-handle .icon { width: 13px; height: 13px; }
+  .heading-name { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; flex: 1; }
+  .builtin-tag {
+    font-size: 9px; font-weight: 700;
+    color: var(--text-tertiary);
+    border: 1px solid var(--stroke-2);
+    padding: 1px 6px;
+    border-radius: 7px;
+    letter-spacing: 0.4px;
+  }
+  .heading-count {
+    font-size: 10.5px; color: var(--text-tertiary);
+    background: white;
+    border: 1px solid var(--stroke);
+    padding: 0 7px;
+    border-radius: 8px;
+  }
+  .row-icon-btn {
+    width: 24px; height: 24px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-tertiary);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .row-icon-btn:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .row-icon-btn.danger:hover { background: var(--danger-bg); color: var(--danger); }
+  .row-icon-btn .icon { width: 13px; height: 13px; }
+
+  .screen-list { padding: 4px 0 0 18px; display: flex; flex-direction: column; gap: 2px; }
+  .screen-row {
+    display: flex; align-items: center; gap: 9px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    border: 1px solid transparent;
+  }
+  .screen-row:hover { background: var(--bg-subtle-hover); }
+  .screen-row.selected {
+    background: var(--bg-subtle);
+    border-color: var(--stroke-2);
+    position: relative;
+  }
+  .screen-row.selected::before {
+    content: '';
+    position: absolute;
+    left: -1px; top: 8px; bottom: 8px;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  .screen-row.hidden-item { opacity: 0.45; }
+  .screen-icon {
+    width: 28px; height: 28px;
+    border-radius: 7px;
+    background: var(--bg-subtle);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+    flex-shrink: 0;
+  }
+  .screen-icon .icon { width: 15px; height: 15px; }
+  .screen-label { flex: 1; font-size: 13px; font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .screen-label .modified-dot {
+    display: inline-block;
+    width: 6px; height: 6px;
+    border-radius: 50%;
+    background: var(--warning);
+    margin-left: 6px;
+    vertical-align: 2px;
+  }
+  .perm-chip {
+    font-size: 10px;
+    font-family: 'Cascadia Mono', Consolas, monospace;
+    color: var(--text-tertiary);
+    background: white;
+    border: 1px solid var(--stroke);
+    padding: 1px 7px;
+    border-radius: 8px;
+    white-space: nowrap;
+  }
+  .eye-btn {
+    width: 26px; height: 26px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-tertiary);
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .eye-btn:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .eye-btn .icon { width: 14px; height: 14px; }
+
+  .empty-drop {
+    margin: 6px 0 0 18px;
+    padding: 12px;
+    border: 1.5px dashed var(--stroke-2);
+    border-radius: var(--radius-sm);
+    text-align: center;
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+  }
+  .empty-drop strong { color: var(--text-secondary); font-weight: 600; }
+
+  /* ===== EDITOR PANEL ===== */
+  .editor-header {
+    display: flex; align-items: center; gap: 14px;
+    padding: 18px 20px 14px;
+    border-bottom: 1px solid var(--stroke);
+  }
+  .editor-icon-preview {
+    width: 52px; height: 52px;
+    border-radius: 12px;
+    background: var(--primary);
+    color: white;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .editor-icon-preview .icon { width: 24px; height: 24px; }
+  .editor-title { font-size: 18px; font-weight: 700; letter-spacing: -0.2px; }
+  .editor-sub { font-size: 12px; color: var(--text-secondary); margin-top: 2px; font-family: 'Cascadia Mono', Consolas, monospace; }
+  .editor-actions { margin-left: auto; }
+
+  .editor-body { padding: 16px 20px 20px; display: flex; flex-direction: column; gap: 16px; }
+  .field-section {
+    background: var(--bg-card-2);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+  .field-section-title {
+    font-size: 11px; font-weight: 600;
+    color: var(--text-secondary);
+    text-transform: uppercase; letter-spacing: 0.5px;
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .field-section-title .icon { width: 13px; height: 13px; color: var(--text-tertiary); }
+
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .field { display: flex; flex-direction: column; gap: 5px; }
+  .field.full { grid-column: 1 / -1; }
+  .field-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .field-input {
+    display: flex; align-items: center; gap: 8px;
+    padding: 7px 10px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+  }
+  .field-input input { flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 13px; }
+  .field-input.mono input { font-family: 'Cascadia Mono', Consolas, monospace; font-size: 12px; }
+  .field-input .inline-icon-preview {
+    width: 22px; height: 22px;
+    border-radius: 5px;
+    background: var(--primary);
+    color: white;
+    display: inline-flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .field-input .inline-icon-preview .icon { width: 12px; height: 12px; }
+  .field-input .status-ok { color: var(--success); }
+  .field-input .status-ok .icon { width: 13px; height: 13px; }
+  .field-hint { font-size: 11px; color: var(--text-tertiary); }
+  .field-hint.changed { color: var(--warning); font-weight: 600; }
+
+  .icon-suggestions { display: flex; gap: 5px; margin-top: 6px; }
+  .icon-suggestion {
+    width: 30px; height: 30px;
+    border-radius: 7px;
+    background: white;
+    border: 1px solid var(--stroke);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    cursor: pointer;
+  }
+  .icon-suggestion:hover { border-color: var(--stroke-2); color: var(--text-primary); }
+  .icon-suggestion.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .icon-suggestion .icon { width: 15px; height: 15px; }
+
+  .select-input {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 7px 10px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .select-input .icon { width: 13px; height: 13px; color: var(--text-secondary); }
+
+  .position-control { display: flex; align-items: center; gap: 8px; }
+  .pos-btn {
+    width: 30px; height: 30px;
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    background: var(--control-fill);
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+  }
+  .pos-btn:hover { background: var(--bg-subtle-hover); }
+  .pos-btn .icon { width: 13px; height: 13px; }
+  .pos-label { font-size: 12.5px; color: var(--text-secondary); }
+  .pos-label strong { color: var(--text-primary); font-weight: 600; }
+
+  .toggle-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+  }
+  .toggle-info .toggle-label { font-size: 13px; font-weight: 600; }
+  .toggle-info .toggle-sub { font-size: 11.5px; color: var(--text-secondary); margin-top: 2px; line-height: 1.45; }
+  .toggle {
+    width: 40px; height: 21px;
+    background: var(--success);
+    border-radius: 11px;
+    position: relative;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .toggle::after {
+    content: '';
+    position: absolute;
+    width: 15px; height: 15px;
+    background: white;
+    border-radius: 50%;
+    top: 3px; right: 3px;
+  }
+
+  /* Owned-by-code card */
+  .code-card {
+    background: #fafbfc;
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+  }
+  .code-row {
+    display: grid;
+    grid-template-columns: 140px 1fr;
+    padding: 6px 0;
+    font-size: 12.5px;
+    gap: 12px;
+    align-items: center;
+    border-bottom: 1px solid var(--stroke);
+  }
+  .code-row:last-child { border-bottom: none; }
+  .code-key { color: var(--text-secondary); display: flex; align-items: center; gap: 6px; }
+  .code-key .icon { width: 12px; height: 12px; color: var(--text-tertiary); }
+  .code-val { font-family: 'Cascadia Mono', Consolas, monospace; font-size: 12px; }
+  .lock-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px;
+    font-family: 'Cascadia Mono', Consolas, monospace;
+    font-weight: 600;
+    background: white;
+    border: 1px solid var(--stroke-2);
+    padding: 2px 9px;
+    border-radius: 9px;
+    color: var(--text-primary);
+  }
+  .lock-chip .icon { width: 11px; height: 11px; color: var(--text-tertiary); }
+  .code-note {
+    margin-top: 10px;
+    font-size: 11.5px;
+    color: var(--text-tertiary);
+    line-height: 1.5;
+    display: flex; gap: 7px;
+  }
+  .code-note .icon { width: 13px; height: 13px; margin-top: 1px; flex-shrink: 0; }
+
+  /* Pane preview strip */
+  .pane-preview {
+    display: flex; align-items: center; gap: 12px;
+  }
+  .pane-preview-label { font-size: 12px; font-weight: 600; color: var(--text-secondary); }
+  .pane-preview-box {
+    flex: 1;
+    background: white;
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    padding: 8px 10px;
+  }
+  .preview-heading { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-tertiary); padding: 2px 10px 6px; }
+  .preview-item {
+    display: flex; align-items: center; gap: 11px;
+    padding: 8px 10px;
+    border-radius: var(--radius-sm);
+    font-size: 13px;
+    color: var(--text-primary);
+  }
+  .preview-item.highlight { background: var(--bg-subtle); font-weight: 600; position: relative; }
+  .preview-item.highlight::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 8px; bottom: 8px;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  .preview-item .icon { width: 16px; height: 16px; color: var(--text-secondary); }
+  .preview-item.highlight .icon { color: var(--text-primary); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 15.5a5.5 5.5 0 0 1 5.5 4.5"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.5 12.5 8-8M16 7l3 3M21 2l-2.5 2.5"/></symbol>
+    <symbol id="i-nav-list" viewBox="0 0 24 24"><path d="M8 6h13M8 12h13M8 18h13"/><circle cx="4" cy="6" r="1" fill="currentColor"/><circle cx="4" cy="12" r="1" fill="currentColor"/><circle cx="4" cy="18" r="1" fill="currentColor"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-chevron-up" viewBox="0 0 24 24"><path d="m6 15 6-6 6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+    <symbol id="i-drag" viewBox="0 0 24 24"><circle cx="9" cy="6" r="1.4" fill="currentColor"/><circle cx="9" cy="12" r="1.4" fill="currentColor"/><circle cx="9" cy="18" r="1.4" fill="currentColor"/><circle cx="15" cy="6" r="1.4" fill="currentColor"/><circle cx="15" cy="12" r="1.4" fill="currentColor"/><circle cx="15" cy="18" r="1.4" fill="currentColor"/></symbol>
+    <symbol id="i-eye" viewBox="0 0 24 24"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></symbol>
+    <symbol id="i-eye-off" viewBox="0 0 24 24"><path d="M17 17a10 10 0 0 1-5 1c-7 0-11-7-11-7a18 18 0 0 1 5-5"/><path d="M9 5a10 10 0 0 1 3 0c7 0 11 7 11 7a18 18 0 0 1-3 4"/><path d="m1 1 22 22"/></symbol>
+    <symbol id="i-edit" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></symbol>
+    <symbol id="i-trash" viewBox="0 0 24 24"><path d="M4 7h16"/><path d="M10 11v6M14 11v6"/><path d="M5 7l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13"/><path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/></symbol>
+    <symbol id="i-undo" viewBox="0 0 24 24"><path d="M3 7v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></symbol>
+    <symbol id="i-save" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><path d="M17 21v-8H7v8M7 3v5h8"/></symbol>
+    <symbol id="i-diff" viewBox="0 0 24 24"><path d="M12 3v18M5 8l-2 4 2 4M19 8l2 4-2 4"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+    <symbol id="i-code" viewBox="0 0 24 24"><path d="m8 6-6 6 6 6M16 6l6 6-6 6"/></symbol>
+    <symbol id="i-tag" viewBox="0 0 24 24"><path d="m20 12-8 8a2 2 0 0 1-3 0l-7-7V4h9z"/><path d="M7 7h.01"/></symbol>
+    <symbol id="i-route" viewBox="0 0 24 24"><circle cx="6" cy="19" r="2.5"/><circle cx="18" cy="5" r="2.5"/><path d="M8.5 19H15a3 3 0 0 0 0-6H9a3 3 0 0 1 0-6h6.5"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></symbol>
+    <symbol id="i-user-single" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-users-alt" viewBox="0 0 24 24"><circle cx="12" cy="7" r="3"/><path d="M5 21a7 7 0 0 1 14 0"/><path d="M19 8a3 3 0 1 0-2-5"/></symbol>
+    <symbol id="i-id-card" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><circle cx="8" cy="11" r="2"/><path d="M5 16a3.5 3.5 0 0 1 6 0M14 9h5M14 13h5"/></symbol>
+  </defs>
+</svg>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <button class="nav-btn"><svg class="icon"><use href="#i-back"/></svg></button>
+      <button class="nav-btn"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <div class="app-badge"><div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>
+      <span class="app-title">Kakehashi</span>
+      <span class="app-channel">Experimental</span>
+    </div>
+    <div class="titlebar-controls">
+      <button><svg class="icon"><use href="#i-minimize"/></svg></button>
+      <button><svg class="icon"><use href="#i-maximize"/></svg></button>
+      <button class="close"><svg class="icon"><use href="#i-close"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Nav rail -->
+  <div class="nav-rail">
+    <button class="nav-item"><svg class="icon"><use href="#i-home"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-notes"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-activity"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-people"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-key"/></svg></button>
+    <button class="nav-item active"><svg class="icon"><use href="#i-nav-list"/></svg></button>
+    <div class="nav-spacer"></div>
+    <div class="nav-avatar">KA<div class="presence"></div></div>
+    <button class="nav-item"><svg class="icon"><use href="#i-settings"/></svg></button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="page-head">
+      <div class="breadcrumb">
+        <span class="crumb">Kakehashi</span>
+        <span class="sep"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+        <span class="crumb">Administration</span>
+        <span class="sep"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+        <span class="crumb active">Navigation</span>
+      </div>
+      <div class="commandbar">
+        <div class="role-select">
+          <span class="label">Preview as:</span>
+          <strong>Administrator</strong>
+          <svg class="icon"><use href="#i-chevron-down"/></svg>
+        </div>
+        <div class="cmd-divider"></div>
+        <button class="cmd-btn primary"><svg class="icon"><use href="#i-plus"/></svg> New heading</button>
+        <button class="cmd-btn"><svg class="icon"><use href="#i-refresh"/></svg></button>
+      </div>
+    </div>
+
+    <!-- Pending changes -->
+    <div class="pending-bar">
+      <div class="pending-info">
+        <svg class="icon"><use href="#i-warn"/></svg>
+        <span>3 unsaved changes</span>
+        <span class="normal">— <strong>Users</strong> renamed · <strong>Notes</strong> hidden · <strong>Activity</strong> moved to Utilities</span>
+      </div>
+      <div class="pending-actions">
+        <button class="btn"><svg class="icon"><use href="#i-diff"/></svg> View diff</button>
+        <button class="btn"><svg class="icon"><use href="#i-undo"/></svg> Discard</button>
+        <button class="btn primary"><svg class="icon"><use href="#i-save"/></svg> Apply changes</button>
+      </div>
+    </div>
+
+    <!-- Info banner -->
+    <div class="info-banner">
+      <svg class="icon"><use href="#i-shield"/></svg>
+      <span><strong>Arranging the pane never changes who may open a screen.</strong> Each screen's permission is declared beside its code and enforced on every request — the worst a change here can do is hide something.</span>
+      <button class="info-dismiss"><svg class="icon"><use href="#i-close"/></svg></button>
+    </div>
+
+    <div class="nav-grid">
+
+      <!-- LEFT: Structure -->
+      <div class="card">
+        <div class="panel-header">
+          <div class="panel-title"><svg class="icon"><use href="#i-layout"/></svg> Pane structure</div>
+          <span class="panel-hint">Drag to reorder or move between headings</span>
+        </div>
+        <div class="structure">
+
+          <!-- Utilities -->
+          <div class="heading-group">
+            <div class="heading-row">
+              <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+              <span class="heading-name">Utilities</span>
+              <span class="builtin-tag">BUILT IN</span>
+              <span class="heading-count">2</span>
+            </div>
+            <div class="screen-list">
+              <div class="screen-row hidden-item">
+                <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+                <span class="screen-icon"><svg class="icon"><use href="#i-notes"/></svg></span>
+                <span class="screen-label">Notes<span class="modified-dot"></span></span>
+                <span class="perm-chip">notes.access</span>
+                <button class="eye-btn" title="Hidden — click to show"><svg class="icon"><use href="#i-eye-off"/></svg></button>
+              </div>
+              <div class="screen-row">
+                <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+                <span class="screen-icon"><svg class="icon"><use href="#i-activity"/></svg></span>
+                <span class="screen-label">Activity<span class="modified-dot"></span></span>
+                <span class="perm-chip">activity.access</span>
+                <button class="eye-btn" title="Visible"><svg class="icon"><use href="#i-eye"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Administration -->
+          <div class="heading-group">
+            <div class="heading-row">
+              <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+              <span class="heading-name">Administration</span>
+              <span class="builtin-tag">BUILT IN</span>
+              <span class="heading-count">2</span>
+            </div>
+            <div class="screen-list">
+              <div class="screen-row selected">
+                <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+                <span class="screen-icon"><svg class="icon"><use href="#i-people"/></svg></span>
+                <span class="screen-label">Team members<span class="modified-dot"></span></span>
+                <span class="perm-chip">users.manage</span>
+                <button class="eye-btn" title="Visible"><svg class="icon"><use href="#i-eye"/></svg></button>
+              </div>
+              <div class="screen-row">
+                <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+                <span class="screen-icon"><svg class="icon"><use href="#i-key"/></svg></span>
+                <span class="screen-label">Role permissions</span>
+                <span class="perm-chip">roles.manage</span>
+                <button class="eye-btn" title="Visible"><svg class="icon"><use href="#i-eye"/></svg></button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Experimental (custom) -->
+          <div class="heading-group">
+            <div class="heading-row">
+              <span class="drag-handle"><svg class="icon"><use href="#i-drag"/></svg></span>
+              <span class="heading-name">Experimental</span>
+              <span class="heading-count">0</span>
+              <button class="row-icon-btn" title="Rename"><svg class="icon"><use href="#i-edit"/></svg></button>
+              <button class="row-icon-btn danger" title="Delete heading"><svg class="icon"><use href="#i-trash"/></svg></button>
+            </div>
+            <div class="empty-drop">
+              <strong>No screens yet</strong><br>
+              Drop screens here — empty headings are not shown in the pane
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- RIGHT: Screen editor -->
+      <div class="card">
+        <div class="editor-header">
+          <div class="editor-icon-preview"><svg class="icon"><use href="#i-people"/></svg></div>
+          <div>
+            <div class="editor-title">Team members</div>
+            <div class="editor-sub">screen · account.users</div>
+          </div>
+          <div class="editor-actions">
+            <button class="btn"><svg class="icon"><use href="#i-undo"/></svg> Reset to code defaults</button>
+          </div>
+        </div>
+
+        <div class="editor-body">
+
+          <!-- Display -->
+          <div class="field-section">
+            <div class="field-section-title"><svg class="icon"><use href="#i-edit"/></svg> Display</div>
+            <div class="field-grid">
+              <div class="field">
+                <label class="field-label">Display name</label>
+                <div class="field-input">
+                  <input value="Team members">
+                </div>
+                <span class="field-hint changed">Changed — code default: "Users"</span>
+              </div>
+              <div class="field">
+                <label class="field-label">Icon</label>
+                <div class="field-input mono">
+                  <span class="inline-icon-preview"><svg class="icon"><use href="#i-people"/></svg></span>
+                  <input value="people">
+                  <span class="status-ok" title="Icon resolved"><svg class="icon"><use href="#i-check"/></svg></span>
+                </div>
+                <div class="icon-suggestions">
+                  <span class="icon-suggestion active" title="people"><svg class="icon"><use href="#i-people"/></svg></span>
+                  <span class="icon-suggestion" title="user"><svg class="icon"><use href="#i-user-single"/></svg></span>
+                  <span class="icon-suggestion" title="users-alt"><svg class="icon"><use href="#i-users-alt"/></svg></span>
+                  <span class="icon-suggestion" title="id-card"><svg class="icon"><use href="#i-id-card"/></svg></span>
+                  <span class="icon-suggestion" title="key"><svg class="icon"><use href="#i-key"/></svg></span>
+                </div>
+                <span class="field-hint">Live preview · unresolved names fall back to a default glyph with a warning</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Placement -->
+          <div class="field-section">
+            <div class="field-section-title"><svg class="icon"><use href="#i-layout"/></svg> Placement</div>
+            <div class="field-grid">
+              <div class="field">
+                <label class="field-label">Heading</label>
+                <div class="select-input">
+                  <span>Administration</span>
+                  <svg class="icon"><use href="#i-chevron-down"/></svg>
+                </div>
+              </div>
+              <div class="field">
+                <label class="field-label">Position within heading</label>
+                <div class="position-control">
+                  <button class="pos-btn"><svg class="icon"><use href="#i-chevron-up"/></svg></button>
+                  <button class="pos-btn"><svg class="icon"><use href="#i-chevron-down"/></svg></button>
+                  <span class="pos-label"><strong>1</strong> of 2 · or drag in the structure list</span>
+                </div>
+              </div>
+              <div class="field full">
+                <div class="toggle-row">
+                  <div class="toggle-info">
+                    <div class="toggle-label">Visible in navigation pane</div>
+                    <div class="toggle-sub">Hiding removes the entry from the pane only — access is still governed by <span style="font-family:'Cascadia Mono',monospace;">users.manage</span> and the screen stays reachable in-app.</div>
+                  </div>
+                  <div class="toggle"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Owned by code -->
+          <div class="code-card">
+            <div class="field-section-title"><svg class="icon"><use href="#i-lock"/></svg> Owned by code — read only</div>
+            <div class="code-row">
+              <div class="code-key"><svg class="icon"><use href="#i-tag"/></svg> Module key</div>
+              <div class="code-val">account.users</div>
+            </div>
+            <div class="code-row">
+              <div class="code-key"><svg class="icon"><use href="#i-route"/></svg> Route</div>
+              <div class="code-val">account/users</div>
+            </div>
+            <div class="code-row">
+              <div class="code-key"><svg class="icon"><use href="#i-shield"/></svg> Required permission</div>
+              <div class="code-val"><span class="lock-chip"><svg class="icon"><use href="#i-lock"/></svg> users.manage</span></div>
+            </div>
+            <div class="code-row">
+              <div class="code-key"><svg class="icon"><use href="#i-code"/></svg> Declared in</div>
+              <div class="code-val">Modules/Users/UsersModule.cs</div>
+            </div>
+            <div class="code-note">
+              <svg class="icon"><use href="#i-info"/></svg>
+              <span>These values are declared beside the screen's code and enforced on every request. They sync into this page at startup via Reconcile and can't be edited here.</span>
+            </div>
+          </div>
+
+          <!-- Pane preview -->
+          <div class="pane-preview">
+            <span class="pane-preview-label">Pane preview</span>
+            <div class="pane-preview-box">
+              <div class="preview-heading">Administration</div>
+              <div class="preview-item highlight">
+                <svg class="icon"><use href="#i-people"/></svg>
+                <span>Team members</span>
+              </div>
+              <div class="preview-item">
+                <svg class="icon"><use href="#i-key"/></svg>
+                <span>Role permissions</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

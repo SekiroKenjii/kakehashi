@@ -1,0 +1,541 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Splash Window — Redesigned</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --accent: #343231;
+        --text-primary: rgba(0, 0, 0, 0.8956);
+        --text-secondary: rgba(0, 0, 0, 0.6063);
+        --text-tertiary: rgba(0, 0, 0, 0.4458);
+        --bg-card: #f3f3f3;
+        --bg-subtle: rgba(0, 0, 0, 0.0373);
+        --stroke: rgba(0, 0, 0, 0.0578);
+        --stroke-2: rgba(0, 0, 0, 0.1);
+        --success: #107c10;
+        --warning: #ca5010;
+        --radius-sm: 4px;
+        --radius-md: 8px;
+        --radius-lg: 12px;
+      }
+      body {
+        font-family:
+          "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        background: #1a1d24;
+        background-image:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(60, 70, 90, 0.4) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(40, 50, 70, 0.5) 0%,
+            transparent 45%
+          ),
+          linear-gradient(135deg, #14171d 0%, #1f2530 100%);
+        min-height: 100vh;
+        padding: 40px;
+        color: var(--text-primary);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 32px;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+
+      .section-label {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        align-self: flex-start;
+        max-width: 1100px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      /* Splash window */
+      .splash {
+        width: 620px;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        box-shadow:
+          0 40px 80px rgba(0, 0, 0, 0.5),
+          0 8px 24px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        padding: 48px 56px 40px;
+        position: relative;
+        overflow: hidden;
+      }
+      /* Subtle top accent gradient line */
+      .splash::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 3px;
+        opacity: 0.9;
+      }
+
+      .splash-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* App icon */
+      .app-icon {
+        width: 88px;
+        height: 88px;
+        border-radius: 22px;
+        background: linear-gradient(
+          135deg,
+          #343231 0%,
+          #343231 60%,
+          #343231 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 12px 28px rgba(52, 50, 49, 0.4),
+          inset 0 2px 4px rgba(255, 255, 255, 0.3),
+          inset 0 -2px 6px rgba(0, 0, 0, 0.15);
+        margin-bottom: 24px;
+        position: relative;
+      }
+      .app-icon .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        align-items: flex-start;
+      }
+      .app-icon .bars .bar {
+        height: 9px;
+        background: white;
+        border-radius: 5px;
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      }
+      .app-icon .bars .bar:nth-child(1) {
+        width: 40px;
+      }
+      .app-icon .bars .bar:nth-child(2) {
+        width: 28px;
+      }
+      .app-icon .bars .bar:nth-child(3) {
+        width: 34px;
+      }
+
+      .app-name {
+        font-size: 32px;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+        margin-bottom: 4px;
+      }
+      .app-tagline {
+        font-size: 13px;
+        color: var(--text-secondary);
+        margin-bottom: 32px;
+      }
+
+      /* Progress bar — animated indeterminate */
+      .progress-track {
+        width: 100%;
+        max-width: 380px;
+        height: 4px;
+        background: rgba(0, 0, 0, 0.08);
+        border-radius: 4px;
+        overflow: hidden;
+        position: relative;
+        margin-bottom: 16px;
+      }
+      .progress-indeterminate {
+        position: absolute;
+        height: 100%;
+        width: 40%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          var(--accent),
+          transparent
+        );
+        border-radius: 4px;
+        animation: indeterminate 1.4s ease-in-out infinite;
+      }
+      @keyframes indeterminate {
+        0% {
+          left: -40%;
+        }
+        100% {
+          left: 100%;
+        }
+      }
+      /* Determinate variant */
+      .progress-determinate {
+        height: 100%;
+        background: linear-gradient(90deg, var(--accent), var(--accent));
+        border-radius: 4px;
+        width: 68%;
+        transition: width 0.4s ease;
+        position: relative;
+      }
+      .progress-determinate::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.4),
+          transparent
+        );
+        animation: shimmer 1.5s infinite;
+      }
+      @keyframes shimmer {
+        0% {
+          transform: translateX(-100%);
+        }
+        100% {
+          transform: translateX(200%);
+        }
+      }
+
+      /* Loading status */
+      .loading-status {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        color: var(--text-secondary);
+        min-height: 20px;
+      }
+      .loading-spinner {
+        width: 14px;
+        height: 14px;
+        border: 2px solid rgba(52, 50, 49, 0.4);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.7s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .loading-status .step-count {
+        color: var(--text-tertiary);
+        font-size: 12px;
+        font-variant-numeric: tabular-nums;
+      }
+
+      /* Footer info */
+      .splash-footer {
+        position: absolute;
+        bottom: 16px;
+        left: 0;
+        right: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+      .footer-left {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .backend-status {
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+      .backend-status .dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--success);
+      }
+      .backend-status .dot.connecting {
+        background: var(--warning);
+        animation: pulse 1.2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.3;
+        }
+      }
+      .version-info {
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+
+      /* States row for demonstration */
+      .states-row {
+        display: flex;
+        gap: 20px;
+        max-width: 1100px;
+        margin: 0 auto;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .state-mini {
+        width: 340px;
+        background: var(--bg-card);
+        border-radius: var(--radius-md);
+        box-shadow:
+          0 16px 32px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.7);
+        padding: 28px 32px 20px;
+        position: relative;
+        overflow: hidden;
+      }
+      .state-mini::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: linear-gradient(90deg, var(--accent), var(--accent));
+      }
+      .state-mini-content {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .state-mini .app-icon {
+        width: 52px;
+        height: 52px;
+        border-radius: 14px;
+        margin-bottom: 14px;
+      }
+      .state-mini .app-icon .bars {
+        gap: 5px;
+      }
+      .state-mini .app-icon .bars .bar {
+        height: 5px;
+      }
+      .state-mini .app-icon .bars .bar:nth-child(1) {
+        width: 24px;
+      }
+      .state-mini .app-icon .bars .bar:nth-child(2) {
+        width: 16px;
+      }
+      .state-mini .app-icon .bars .bar:nth-child(3) {
+        width: 20px;
+      }
+      .state-mini .app-name {
+        font-size: 18px;
+        margin-bottom: 16px;
+      }
+      .state-mini .progress-track {
+        margin-bottom: 12px;
+        max-width: 100%;
+      }
+      .state-mini .loading-status {
+        font-size: 12px;
+      }
+      .state-mini-label {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+        margin-top: 12px;
+        font-weight: 500;
+      }
+      .state-badge {
+        position: absolute;
+        top: 10px;
+        right: 12px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+
+      .error-status {
+        color: var(--warning);
+      }
+      .error-icon {
+        width: 14px;
+        height: 14px;
+        color: var(--warning);
+      }
+      .retry-link {
+        color: var(--accent);
+        font-weight: 600;
+        cursor: pointer;
+        text-decoration: none;
+        margin-left: 4px;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="i-warn" viewBox="0 0 24 24">
+          <path d="M12 3 2 20h20z" />
+          <path d="M12 10v4M12 17v.5" />
+        </symbol>
+        <symbol id="i-check" viewBox="0 0 24 24">
+          <path d="m5 12 5 5L20 7" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="section-label">Splash window · primary loading state</div>
+
+    <!-- Main splash -->
+    <div class="splash">
+      <div class="splash-content">
+        <div class="app-icon">
+          <div class="bars">
+            <div class="bar"></div>
+            <div class="bar"></div>
+            <div class="bar"></div>
+          </div>
+        </div>
+        <div class="app-name">Kakehashi</div>
+        <div class="app-tagline">WinUI 3 application template</div>
+
+        <div class="progress-track">
+          <div class="progress-determinate"></div>
+        </div>
+
+        <div class="loading-status">
+          <div class="loading-spinner"></div>
+          <span>Connecting to backend…</span>
+          <span class="step-count">2 / 4</span>
+        </div>
+      </div>
+
+      <div class="splash-footer">
+        <div class="footer-left">
+          <span class="backend-status"
+            ><span class="dot connecting"></span> be-pod.gke · connecting</span
+          >
+        </div>
+        <span class="version-info">v1.1.2 · build 50866</span>
+      </div>
+    </div>
+
+    <div class="section-label" style="margin-top: 8px">
+      Startup sequence · the splash cycles through these stages
+    </div>
+
+    <!-- States demonstration -->
+    <div class="states-row">
+      <!-- Stage 1: initializing -->
+      <div>
+        <div class="state-mini">
+          <div class="state-badge">Stage 1</div>
+          <div class="state-mini-content">
+            <div class="app-icon">
+              <div class="bars">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+              </div>
+            </div>
+            <div class="app-name">Kakehashi</div>
+            <div class="progress-track">
+              <div class="progress-indeterminate"></div>
+            </div>
+            <div class="loading-status">
+              <div class="loading-spinner"></div>
+              <span>Initializing…</span>
+            </div>
+          </div>
+        </div>
+        <div class="state-mini-label">Indeterminate — app bootstrapping</div>
+      </div>
+
+      <!-- Stage final: ready -->
+      <div>
+        <div class="state-mini">
+          <div class="state-badge">Ready</div>
+          <div class="state-mini-content">
+            <div class="app-icon">
+              <div class="bars">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+              </div>
+            </div>
+            <div class="app-name">Kakehashi</div>
+            <div class="progress-track">
+              <div class="progress-determinate" style="width: 100%"></div>
+            </div>
+            <div class="loading-status" style="color: var(--success)">
+              <svg class="icon error-icon" style="color: var(--success)">
+                <use href="#i-check" />
+              </svg>
+              <span>Ready · launching workspace</span>
+            </div>
+          </div>
+        </div>
+        <div class="state-mini-label">Complete — hands off to main window</div>
+      </div>
+
+      <!-- Error state -->
+      <div>
+        <div class="state-mini">
+          <div class="state-badge" style="color: var(--warning)">Error</div>
+          <div class="state-mini-content">
+            <div class="app-icon">
+              <div class="bars">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+              </div>
+            </div>
+            <div class="app-name">Kakehashi</div>
+            <div class="progress-track">
+              <div
+                class="progress-determinate"
+                style="width: 40%; background: var(--warning)"
+              ></div>
+            </div>
+            <div class="loading-status error-status">
+              <svg class="icon error-icon"><use href="#i-warn" /></svg>
+              <span>Backend unreachable<a class="retry-link">Retry</a></span>
+            </div>
+          </div>
+        </div>
+        <div class="state-mini-label">
+          Failure — actionable, not a dead spinner
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

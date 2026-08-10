@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<!--
+  Used only for packaged (MSIX) builds: dotnet build -p:Platform=x64 -p:Packaged=true
+  A packaged build also expects image assets under Assets\ (StoreLogo, Square logos, SplashScreen).
+  Visual Studio creates these automatically; the default unpackaged build does not need them.
+-->
+<Package
+    xmlns="http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+    xmlns:uap="http://schemas.microsoft.com/appx/manifest/uap/windows10"
+    xmlns:rescap="http://schemas.microsoft.com/appx/manifest/foundation/windows10/restrictedcapabilities"
+    IgnorableNamespaces="uap rescap">
+
+  <!-- Version is kept in sync with Version.props by scripts/version.ps1. -->
+  <Identity
+      Name="Kakehashi.App"
+      Publisher="CN=Kakehashi"
+      Version="0.6.0.0" />
+
+  <Properties>
+    <DisplayName>WinUI 3 Kakehashi</DisplayName>
+    <PublisherDisplayName>Kakehashi</PublisherDisplayName>
+    <Logo>Assets\StoreLogo.png</Logo>
+  </Properties>
+
+  <Dependencies>
+    <TargetDeviceFamily
+        Name="Windows.Universal"
+        MinVersion="10.0.17763.0"
+        MaxVersionTested="10.0.22621.0" />
+  </Dependencies>
+
+  <Resources>
+    <Resource Language="en-us" />
+  </Resources>
+
+  <Applications>
+    <Application
+        Id="App"
+        Executable="$targetnametoken$.exe"
+        EntryPoint="$targetentrypoint$">
+      <uap:VisualElements
+          DisplayName="WinUI 3 Kakehashi"
+          Description="WinUI 3 Modular Monolith Kakehashi"
+          BackgroundColor="transparent"
+          Square150x150Logo="Assets\Square150x150Logo.png"
+          Square44x44Logo="Assets\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Assets\Wide310x150Logo.png" />
+        <uap:SplashScreen Image="Assets\SplashScreen.png" />
+      </uap:VisualElements>
+    </Application>
+  </Applications>
+
+  <Capabilities>
+    <rescap:Capability Name="runFullTrust" />
+  </Capabilities>
+</Package>

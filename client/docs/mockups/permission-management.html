@@ -1,0 +1,1522 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Role Permissions — Redesigned</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --accent: #343231;
+        --accent-hover: #343231;
+        --text-primary: rgba(0, 0, 0, 0.8956);
+        --text-secondary: rgba(0, 0, 0, 0.6063);
+        --text-tertiary: rgba(0, 0, 0, 0.4458);
+        --bg-card: rgba(255, 255, 255, 0.75);
+        --bg-card-2: rgba(255, 255, 255, 0.5);
+        --bg-subtle: rgba(0, 0, 0, 0.0373);
+        --bg-subtle-hover: rgba(0, 0, 0, 0.0586);
+        --stroke: rgba(0, 0, 0, 0.0578);
+        --stroke-2: rgba(0, 0, 0, 0.1);
+        --control-fill: rgba(255, 255, 255, 0.7);
+        --control-stroke: rgba(0, 0, 0, 0.0578);
+        --control-stroke-bottom: rgba(0, 0, 0, 0.1622);
+        --success: #107c10;
+        --success-bg: #dff6dd;
+        --warning: #ca5010;
+        --warning-bg: #fff4ce;
+        --danger: #c42b1c;
+        --danger-bg: #fde7e9;
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+      }
+      body {
+        font-family:
+          "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse at top left, #d4e4f7 0%, transparent 50%),
+          radial-gradient(ellipse at bottom right, #f0e0d4 0%, transparent 50%),
+          linear-gradient(135deg, #e8ecf3 0%, #f5f3ef 100%);
+        min-height: 100vh;
+        padding: 24px;
+        color: var(--text-primary);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+
+      .window {
+        max-width: 1480px;
+        margin: 0 auto;
+        background: rgba(243, 243, 243, 0.78);
+        backdrop-filter: blur(60px) saturate(125%);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 8px;
+        box-shadow:
+          0 32px 64px rgba(0, 0, 0, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        overflow: hidden;
+      }
+      .titlebar {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 12px;
+      }
+      .titlebar-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .titlebar-left .icon {
+        color: var(--accent);
+      }
+      .titlebar-controls {
+        display: flex;
+        height: 32px;
+      }
+      .titlebar-controls button {
+        width: 46px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .titlebar-controls button:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .titlebar-controls button.close:hover {
+        background: #c42b1c;
+        color: white;
+      }
+      .titlebar-controls .icon {
+        width: 10px;
+        height: 10px;
+        stroke-width: 1.2;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px 12px;
+        gap: 16px;
+      }
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 14px;
+      }
+      .breadcrumb .crumb {
+        padding: 5px 8px;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+      }
+      .breadcrumb .crumb:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .breadcrumb .crumb.active {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .breadcrumb .sep {
+        color: var(--text-tertiary);
+        display: inline-flex;
+        align-items: center;
+      }
+      .breadcrumb .sep .icon {
+        width: 12px;
+        height: 12px;
+      }
+      .commandbar {
+        display: flex;
+        gap: 2px;
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-md);
+        padding: 2px;
+      }
+      .cmd-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--text-primary);
+        cursor: pointer;
+        min-height: 28px;
+      }
+      .cmd-btn:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .cmd-btn .icon {
+        color: var(--text-secondary);
+      }
+      .cmd-btn.primary {
+        background: var(--accent);
+        color: white;
+      }
+      .cmd-btn.primary:hover {
+        background: var(--accent-hover);
+      }
+      .cmd-btn.primary .icon {
+        color: white;
+      }
+      .cmd-btn.compare {
+        background: linear-gradient(135deg, #8661c5, #b18aff);
+        color: white;
+      }
+      .cmd-btn.compare .icon {
+        color: white;
+      }
+      .cmd-divider {
+        width: 1px;
+        background: var(--stroke);
+        margin: 4px 2px;
+      }
+
+      /* Pending changes bar */
+      .pending-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin: 0 16px 12px;
+        padding: 10px 16px;
+        background: linear-gradient(
+          135deg,
+          rgba(202, 80, 16, 0.1),
+          rgba(242, 154, 77, 0.08)
+        );
+        border: 1px solid rgba(202, 80, 16, 0.3);
+        border-radius: var(--radius-md);
+      }
+      .pending-info {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 13px;
+        color: var(--warning);
+        font-weight: 600;
+      }
+      .pending-info .icon {
+        width: 16px;
+        height: 16px;
+      }
+      .pending-info .normal {
+        color: var(--text-secondary);
+        font-weight: 400;
+      }
+      .pending-actions {
+        display: flex;
+        gap: 8px;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 14px;
+        font-size: 13px;
+        font-family: inherit;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+        min-height: 30px;
+      }
+      .btn:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+        font-weight: 600;
+      }
+      .btn.primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn .icon {
+        color: inherit;
+        width: 13px;
+        height: 13px;
+      }
+
+      /* Main */
+      .main {
+        display: grid;
+        grid-template-columns: 320px 1fr;
+        gap: 12px;
+        padding: 0 16px 16px;
+        height: 760px;
+      }
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Roles panel */
+      .panel-header {
+        padding: 12px 14px 8px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+      .panel-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .icon-btn {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+      }
+      .icon-btn:hover {
+        background: var(--bg-subtle-hover);
+        color: var(--text-primary);
+      }
+
+      .autosuggest {
+        margin: 0 12px 8px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+      }
+      .autosuggest .icon {
+        color: var(--text-secondary);
+        width: 14px;
+        height: 14px;
+      }
+      .autosuggest input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: inherit;
+        font-size: 13px;
+      }
+
+      .role-list {
+        flex: 1;
+        overflow-y: auto;
+        padding: 4px 8px 12px;
+      }
+      .role-card {
+        padding: 12px;
+        background: var(--bg-card-2);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-md);
+        margin-bottom: 6px;
+        cursor: pointer;
+        position: relative;
+        transition: all 0.15s;
+      }
+      .role-card:hover {
+        background: var(--bg-card);
+        border-color: var(--stroke-2);
+      }
+      .role-card.selected {
+        background: rgba(0, 120, 212, 0.06);
+        border-color: rgba(0, 120, 212, 0.3);
+      }
+      .role-card.selected::before {
+        content: "";
+        position: absolute;
+        left: -8px;
+        top: 12px;
+        bottom: 12px;
+        width: 3px;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .role-top {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 8px;
+      }
+      .role-avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+        font-size: 12px;
+        font-weight: 700;
+      }
+      .role-avatar.admin {
+        background: var(--accent);
+      }
+      .role-avatar.dev {
+        background: var(--accent);
+      }
+      .role-avatar.ops {
+        background: var(--accent);
+      }
+      .role-avatar.viewer {
+        background: var(--accent);
+      }
+      .role-avatar.guest {
+        background: var(--accent);
+      }
+      .role-info {
+        flex: 1;
+        min-width: 0;
+      }
+      .role-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .role-desc {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 1px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .role-stats {
+        display: flex;
+        gap: 14px;
+        font-size: 11px;
+        color: var(--text-secondary);
+      }
+      .role-stat {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+      }
+      .role-stat .icon {
+        width: 11px;
+        height: 11px;
+      }
+      .role-stat strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .role-actions {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        display: flex;
+        gap: 2px;
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      .role-card:hover .role-actions {
+        opacity: 1;
+      }
+      .role-actions .icon-btn {
+        width: 24px;
+        height: 24px;
+      }
+      .role-actions .icon-btn .icon {
+        width: 12px;
+        height: 12px;
+      }
+      .perm-bar {
+        height: 4px;
+        background: var(--bg-subtle);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 8px;
+      }
+      .perm-bar-fill {
+        height: 100%;
+        background: var(--accent);
+        border-radius: 2px;
+      }
+      .perm-bar-fill.full {
+        background: var(--accent);
+      }
+
+      /* Permissions matrix panel */
+      .matrix-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 14px 20px;
+        border-bottom: 1px solid var(--stroke);
+      }
+      .matrix-title-block {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+      .matrix-avatar {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 15px;
+        font-weight: 700;
+        box-shadow: 0 4px 12px rgba(52, 50, 49, 0.3);
+      }
+      .matrix-title {
+        font-size: 16px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .matrix-sub {
+        font-size: 12px;
+        color: var(--text-secondary);
+        margin-top: 3px;
+      }
+      .matrix-actions {
+        display: flex;
+        gap: 6px;
+      }
+
+      /* Filter toolbar */
+      .filter-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: var(--bg-card-2);
+        border-bottom: 1px solid var(--stroke);
+      }
+      .filter-search {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 5px 10px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        max-width: 320px;
+      }
+      .filter-search .icon {
+        color: var(--text-secondary);
+        width: 13px;
+        height: 13px;
+      }
+      .filter-search input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: inherit;
+        font-size: 13px;
+      }
+      .filter-chip {
+        padding: 5px 11px;
+        font-size: 12px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-secondary);
+      }
+      .filter-chip:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .filter-chip.active {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+      .toolbar-spacer {
+        flex: 1;
+      }
+      .summary-text {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .summary-text strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      /* Matrix body */
+      .matrix-body {
+        flex: 1;
+        overflow-y: auto;
+      }
+
+      .perm-group {
+        border-bottom: 1px solid var(--stroke);
+      }
+      .perm-group:last-child {
+        border-bottom: none;
+      }
+      .group-header {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 12px 20px;
+        background: var(--bg-card-2);
+        cursor: pointer;
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(10px);
+        z-index: 1;
+      }
+      .group-chevron {
+        width: 12px;
+        height: 12px;
+        color: var(--text-secondary);
+        transition: transform 0.15s;
+      }
+      .group-chevron.collapsed {
+        transform: rotate(-90deg);
+      }
+      .group-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+      }
+      .group-icon.admin {
+        background: var(--accent);
+      }
+      .group-icon.devops {
+        background: var(--accent);
+      }
+      .group-icon.gcp {
+        background: var(--accent);
+      }
+      .group-icon.networking {
+        background: var(--accent);
+      }
+      .group-icon .icon {
+        width: 15px;
+        height: 15px;
+        stroke-width: 2;
+      }
+      .group-name {
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        flex: 1;
+      }
+      .group-count {
+        font-size: 12px;
+        color: var(--text-secondary);
+        padding: 2px 8px;
+        background: var(--bg-subtle);
+        border-radius: 10px;
+        border: 1px solid var(--stroke);
+        margin-right: 4px;
+      }
+      .group-count strong {
+        color: var(--text-primary);
+      }
+      .group-bulk {
+        display: flex;
+        gap: 2px;
+        padding: 2px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-radius: var(--radius-sm);
+      }
+      .group-bulk button {
+        border: none;
+        background: transparent;
+        padding: 3px 9px;
+        font-size: 11px;
+        font-family: inherit;
+        color: var(--text-secondary);
+        cursor: pointer;
+        border-radius: 3px;
+      }
+      .group-bulk button:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .group-bulk button.active {
+        background: var(--accent);
+        color: white;
+      }
+
+      /* Permission row */
+      .perm-row {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+        gap: 16px;
+        padding: 12px 20px 12px 50px;
+        border-top: 1px solid var(--stroke);
+        transition: background 0.1s;
+      }
+      .perm-row:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .perm-row.changed {
+        background: rgba(202, 80, 16, 0.05);
+        border-left: 3px solid var(--warning);
+        padding-left: 47px;
+      }
+      .perm-main {
+        min-width: 0;
+      }
+      .perm-name {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 3px;
+      }
+      .perm-key {
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 11px;
+        color: var(--accent);
+        background: rgba(0, 120, 212, 0.08);
+        padding: 1px 7px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 120, 212, 0.15);
+      }
+      .danger-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--danger);
+        background: var(--danger-bg);
+        padding: 1px 7px;
+        border-radius: 8px;
+        border: 1px solid rgba(196, 43, 28, 0.25);
+      }
+      .danger-badge .icon {
+        width: 10px;
+        height: 10px;
+      }
+      .changed-badge {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--warning);
+        background: var(--warning-bg);
+        padding: 1px 7px;
+        border-radius: 8px;
+        border: 1px solid rgba(202, 80, 16, 0.25);
+      }
+      .perm-desc {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+
+      /* Toggle switch */
+      .toggle {
+        width: 40px;
+        height: 22px;
+        background: var(--bg-subtle);
+        border: 1px solid var(--stroke-2);
+        border-radius: 12px;
+        position: relative;
+        cursor: pointer;
+        transition: all 0.2s;
+        flex-shrink: 0;
+      }
+      .toggle::after {
+        content: "";
+        position: absolute;
+        width: 14px;
+        height: 14px;
+        background: var(--text-secondary);
+        border-radius: 50%;
+        top: 50%;
+        left: 4px;
+        transform: translateY(-50%);
+        transition: all 0.2s;
+      }
+      .toggle.on {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .toggle.on::after {
+        background: white;
+        left: 21px;
+      }
+      .toggle.on.danger {
+        background: var(--danger);
+        border-color: var(--danger);
+      }
+      .toggle-wrap {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .toggle-label {
+        font-size: 12px;
+        color: var(--text-secondary);
+        width: 28px;
+      }
+      .toggle.on + .toggle-label {
+        color: var(--accent);
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="i-key" viewBox="0 0 24 24">
+          <circle cx="7.5" cy="15.5" r="4.5" />
+          <path d="m10.5 12.5 8-8M16 7l3 3M21 2l-2.5 2.5" />
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" />
+        </symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 4v5h-5" />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </symbol>
+        <symbol id="i-minimize" viewBox="0 0 24 24">
+          <path d="M5 12h14" />
+        </symbol>
+        <symbol id="i-maximize" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="1" />
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+          <path d="m9 6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-chevron-down" viewBox="0 0 24 24">
+          <path d="m6 9 6 6 6-6" />
+        </symbol>
+        <symbol id="i-compare" viewBox="0 0 24 24">
+          <path d="M9 3v18M15 3v18" />
+          <path d="M3 9h6M15 9h6M3 15h6M15 15h6" />
+        </symbol>
+        <symbol id="i-users" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z" />
+        </symbol>
+        <symbol id="i-copy" viewBox="0 0 24 24">
+          <rect x="9" y="9" width="12" height="12" rx="2" />
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+        </symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+        </symbol>
+        <symbol id="i-more" viewBox="0 0 24 24">
+          <circle cx="5" cy="12" r="1.3" fill="currentColor" />
+          <circle cx="12" cy="12" r="1.3" fill="currentColor" />
+          <circle cx="19" cy="12" r="1.3" fill="currentColor" />
+        </symbol>
+        <symbol id="i-warn" viewBox="0 0 24 24">
+          <path d="M12 3 2 20h20z" />
+          <path d="M12 10v4M12 17v.5" />
+        </symbol>
+        <symbol id="i-save" viewBox="0 0 24 24">
+          <path
+            d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"
+          />
+          <path d="M17 21v-8H7v8M7 3v5h8" />
+        </symbol>
+        <symbol id="i-undo" viewBox="0 0 24 24">
+          <path d="M3 7v6h6" />
+          <path d="M3 13a9 9 0 1 0 3-7.7L3 8" />
+        </symbol>
+        <symbol id="i-settings" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="3" />
+          <path
+            d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"
+          />
+        </symbol>
+        <symbol id="i-server" viewBox="0 0 24 24">
+          <rect x="2" y="3" width="20" height="8" rx="2" />
+          <rect x="2" y="13" width="20" height="8" rx="2" />
+          <path d="M6 7h.01M6 17h.01" />
+        </symbol>
+        <symbol id="i-cloud" viewBox="0 0 24 24">
+          <path d="M7 18a5 5 0 1 1 .8-9.94A6 6 0 0 1 19 11a4 4 0 0 1 0 8H7z" />
+        </symbol>
+        <symbol id="i-network" viewBox="0 0 24 24">
+          <path d="M2 12h20" />
+          <path d="M12 2a15 15 0 0 1 0 20" />
+          <path d="M12 2a15 15 0 0 0 0 20" />
+        </symbol>
+        <symbol id="i-history" viewBox="0 0 24 24">
+          <path d="M3 3v5h5" />
+          <path d="M3.05 13A9 9 0 1 0 6 5.3L3 8" />
+          <path d="M12 7v5l4 2" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="window">
+      <div class="titlebar">
+        <div class="titlebar-left">
+          <svg class="icon"><use href="#i-key" /></svg>
+          <span>ThiQah Utilities — Role Permissions</span>
+        </div>
+        <div class="titlebar-controls">
+          <button>
+            <svg class="icon"><use href="#i-minimize" /></svg>
+          </button>
+          <button>
+            <svg class="icon"><use href="#i-maximize" /></svg>
+          </button>
+          <button class="close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="header">
+        <div class="breadcrumb">
+          <span class="crumb">Administration</span>
+          <span class="sep"
+            ><svg class="icon"><use href="#i-chevron-right" /></svg
+          ></span>
+          <span class="crumb active">Role Permissions</span>
+        </div>
+        <div class="commandbar">
+          <button class="cmd-btn primary">
+            <svg class="icon"><use href="#i-plus" /></svg>
+            <span>New role</span>
+          </button>
+          <div class="cmd-divider"></div>
+          <button class="cmd-btn">
+            <svg class="icon"><use href="#i-history" /></svg>
+            <span>Audit log</span>
+          </button>
+          <div class="cmd-divider"></div>
+          <button class="cmd-btn">
+            <svg class="icon"><use href="#i-refresh" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Pending changes bar -->
+      <div class="pending-bar">
+        <div class="pending-info">
+          <svg class="icon"><use href="#i-warn" /></svg>
+          <span>3 unsaved changes</span>
+          <span class="normal">— 2 enabled, 1 disabled on role "Admin"</span>
+        </div>
+        <div class="pending-actions">
+          <button class="btn">
+            <svg class="icon"><use href="#i-undo" /></svg> Discard
+          </button>
+          <button class="btn primary">
+            <svg class="icon"><use href="#i-save" /></svg> Save changes
+          </button>
+        </div>
+      </div>
+
+      <div class="main">
+        <!-- LEFT: Roles -->
+        <div class="card">
+          <div class="panel-header">
+            <div class="panel-title">Roles (5)</div>
+            <button class="icon-btn">
+              <svg class="icon"><use href="#i-plus" /></svg>
+            </button>
+          </div>
+          <div class="autosuggest">
+            <svg class="icon"><use href="#i-search" /></svg>
+            <input placeholder="Search roles..." />
+          </div>
+          <div class="role-list">
+            <div class="role-card selected">
+              <div class="role-actions">
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-copy" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-edit" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+              <div class="role-top">
+                <div class="role-avatar admin">AD</div>
+                <div class="role-info">
+                  <div class="role-name">Admin</div>
+                  <div class="role-desc">Full system access</div>
+                </div>
+              </div>
+              <div class="role-stats">
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-key" /></svg>
+                  <strong>34/34</strong> perms
+                </div>
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-users" /></svg>
+                  <strong>3</strong> users
+                </div>
+              </div>
+              <div class="perm-bar">
+                <div class="perm-bar-fill full" style="width: 100%"></div>
+              </div>
+            </div>
+
+            <div class="role-card">
+              <div class="role-actions">
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-copy" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-edit" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+              <div class="role-top">
+                <div class="role-avatar dev">DV</div>
+                <div class="role-info">
+                  <div class="role-name">Developer</div>
+                  <div class="role-desc">DevOps + infrastructure access</div>
+                </div>
+              </div>
+              <div class="role-stats">
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-key" /></svg>
+                  <strong>22/34</strong> perms
+                </div>
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-users" /></svg>
+                  <strong>14</strong> users
+                </div>
+              </div>
+              <div class="perm-bar">
+                <div class="perm-bar-fill" style="width: 65%"></div>
+              </div>
+            </div>
+
+            <div class="role-card">
+              <div class="role-actions">
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-copy" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-edit" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+              <div class="role-top">
+                <div class="role-avatar ops">OP</div>
+                <div class="role-info">
+                  <div class="role-name">Operations</div>
+                  <div class="role-desc">Monitoring + read-only ops</div>
+                </div>
+              </div>
+              <div class="role-stats">
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-key" /></svg>
+                  <strong>15/34</strong> perms
+                </div>
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-users" /></svg>
+                  <strong>8</strong> users
+                </div>
+              </div>
+              <div class="perm-bar">
+                <div class="perm-bar-fill" style="width: 44%"></div>
+              </div>
+            </div>
+
+            <div class="role-card">
+              <div class="role-actions">
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-copy" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-edit" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+              <div class="role-top">
+                <div class="role-avatar viewer">VW</div>
+                <div class="role-info">
+                  <div class="role-name">Viewer</div>
+                  <div class="role-desc">Read-only across all modules</div>
+                </div>
+              </div>
+              <div class="role-stats">
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-key" /></svg>
+                  <strong>9/34</strong> perms
+                </div>
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-users" /></svg>
+                  <strong>27</strong> users
+                </div>
+              </div>
+              <div class="perm-bar">
+                <div class="perm-bar-fill" style="width: 26%"></div>
+              </div>
+            </div>
+
+            <div class="role-card">
+              <div class="role-actions">
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-copy" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-edit" /></svg>
+                </button>
+                <button class="icon-btn">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+              <div class="role-top">
+                <div class="role-avatar guest">GS</div>
+                <div class="role-info">
+                  <div class="role-name">Guest</div>
+                  <div class="role-desc">Minimal access · temporary users</div>
+                </div>
+              </div>
+              <div class="role-stats">
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-key" /></svg>
+                  <strong>2/34</strong> perms
+                </div>
+                <div class="role-stat">
+                  <svg class="icon"><use href="#i-users" /></svg>
+                  <strong>0</strong> users
+                </div>
+              </div>
+              <div class="perm-bar">
+                <div class="perm-bar-fill" style="width: 6%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: Permission matrix -->
+        <div class="card">
+          <div class="matrix-header">
+            <div class="matrix-title-block">
+              <div class="matrix-avatar">AD</div>
+              <div>
+                <div class="matrix-title">Admin</div>
+                <div class="matrix-sub">
+                  Full system access · 34/34 permissions · assigned to 3 users
+                </div>
+              </div>
+            </div>
+            <div class="matrix-actions">
+              <button class="btn">
+                <svg class="icon"><use href="#i-copy" /></svg> Clone role
+              </button>
+              <button class="btn">
+                <svg class="icon"><use href="#i-edit" /></svg> Edit details
+              </button>
+            </div>
+          </div>
+
+          <div class="filter-toolbar">
+            <div class="filter-search">
+              <svg class="icon"><use href="#i-search" /></svg>
+              <input placeholder="Search permissions by name or key..." />
+            </div>
+            <div class="filter-chip active">All</div>
+            <div class="filter-chip">Enabled</div>
+            <div class="filter-chip">Disabled</div>
+            <div class="filter-chip">Changed</div>
+            <div class="toolbar-spacer"></div>
+            <div class="summary-text"><strong>34</strong> of 34 enabled</div>
+          </div>
+
+          <div class="matrix-body">
+            <!-- Administration group -->
+            <div class="perm-group">
+              <div class="group-header">
+                <svg class="icon group-chevron">
+                  <use href="#i-chevron-down" />
+                </svg>
+                <div class="group-icon admin">
+                  <svg class="icon"><use href="#i-shield" /></svg>
+                </div>
+                <div class="group-name">Administration</div>
+                <div class="group-count"><strong>3</strong> / 3</div>
+                <div class="group-bulk">
+                  <button class="active">All on</button>
+                  <button>All off</button>
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    Manage Users
+                    <span class="perm-key">users.manage</span>
+                    <span class="danger-badge"
+                      ><svg class="icon"><use href="#i-warn" /></svg> High
+                      risk</span
+                    >
+                  </div>
+                  <div class="perm-desc">
+                    Create, edit, delete user accounts and assign roles
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on danger"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--danger); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row changed">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    Manage Roles
+                    <span class="perm-key">roles.manage</span>
+                    <span class="danger-badge"
+                      ><svg class="icon"><use href="#i-warn" /></svg> High
+                      risk</span
+                    >
+                    <span class="changed-badge">Changed</span>
+                  </div>
+                  <div class="perm-desc">
+                    Create and modify roles and their permission sets
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on danger"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--danger); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    View Audit Log
+                    <span class="perm-key">audit.view</span>
+                  </div>
+                  <div class="perm-desc">
+                    Read system audit trail and change history
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--accent); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- DevOps group -->
+            <div class="perm-group">
+              <div class="group-header">
+                <svg class="icon group-chevron">
+                  <use href="#i-chevron-down" />
+                </svg>
+                <div class="group-icon devops">
+                  <svg class="icon"><use href="#i-server" /></svg>
+                </div>
+                <div class="group-name">DevOps</div>
+                <div class="group-count"><strong>4</strong> / 4</div>
+                <div class="group-bulk">
+                  <button class="active">All on</button>
+                  <button>All off</button>
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    MongoDB Operations
+                    <span class="perm-key">devops.mongo</span>
+                  </div>
+                  <div class="perm-desc">
+                    Query, modify, and manage MongoDB databases
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--accent); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    Redis Operations
+                    <span class="perm-key">devops.redis</span>
+                  </div>
+                  <div class="perm-desc">
+                    Execute Redis commands and flush caches
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--accent); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row changed">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    SQL Server Operations
+                    <span class="perm-key">devops.sql</span>
+                    <span class="danger-badge"
+                      ><svg class="icon"><use href="#i-warn" /></svg> High
+                      risk</span
+                    >
+                    <span class="changed-badge">Changed</span>
+                  </div>
+                  <div class="perm-desc">
+                    Run queries, alter schema, manage SQL Server instances
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on danger"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--danger); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    PowerShell Scripts
+                    <span class="perm-key">devops.scripts</span>
+                    <span class="danger-badge"
+                      ><svg class="icon"><use href="#i-warn" /></svg> High
+                      risk</span
+                    >
+                  </div>
+                  <div class="perm-desc">
+                    Execute arbitrary PowerShell automation scripts
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on danger"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--danger); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- GCP group -->
+            <div class="perm-group">
+              <div class="group-header">
+                <svg class="icon group-chevron">
+                  <use href="#i-chevron-down" />
+                </svg>
+                <div class="group-icon gcp">
+                  <svg class="icon"><use href="#i-cloud" /></svg>
+                </div>
+                <div class="group-name">GCP</div>
+                <div class="group-count"><strong>4</strong> / 4</div>
+                <div class="group-bulk">
+                  <button class="active">All on</button>
+                  <button>All off</button>
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    GCP Compute Operations
+                    <span class="perm-key">gcp.compute</span>
+                  </div>
+                  <div class="perm-desc">
+                    Manage GKE clusters, VMs, and compute resources
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--accent); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    GCP Connect/Disconnect
+                    <span class="perm-key">gcp.connect</span>
+                  </div>
+                  <div class="perm-desc">
+                    Establish and tear down GCP authenticated sessions
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--accent); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    GCP Project Management
+                    <span class="perm-key">gcp.manage</span>
+                    <span class="danger-badge"
+                      ><svg class="icon"><use href="#i-warn" /></svg> High
+                      risk</span
+                    >
+                  </div>
+                  <div class="perm-desc">
+                    Switch projects, modify IAM bindings and quotas
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on danger"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--danger); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+
+              <div class="perm-row">
+                <div class="perm-main">
+                  <div class="perm-name">
+                    GCP View Sessions
+                    <span class="perm-key">gcp.view</span>
+                  </div>
+                  <div class="perm-desc">
+                    View active GCP sessions and connection status
+                  </div>
+                </div>
+                <div class="toggle-wrap">
+                  <div class="toggle on"></div>
+                  <span
+                    class="toggle-label"
+                    style="color: var(--accent); font-weight: 600"
+                    >On</span
+                  >
+                </div>
+              </div>
+            </div>
+
+            <!-- Networking group -->
+            <div class="perm-group">
+              <div class="group-header">
+                <svg class="icon group-chevron collapsed">
+                  <use href="#i-chevron-down" />
+                </svg>
+                <div class="group-icon networking">
+                  <svg class="icon"><use href="#i-network" /></svg>
+                </div>
+                <div class="group-name">Networking</div>
+                <div class="group-count"><strong>3</strong> / 3</div>
+                <div class="group-bulk">
+                  <button class="active">All on</button>
+                  <button>All off</button>
+                </div>
+              </div>
+              <!-- collapsed, rows hidden -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

@@ -1,0 +1,9 @@
+# Overrides for test projects only.
+# Test method names commonly use Method_State_ExpectedResult, which the Google naming rule would
+# flag. Relax naming diagnostics here; all other formatting rules from the root file still apply.
+[*.cs]
+dotnet_diagnostic.IDE1006.severity = none
+
+# xUnit1051 asks every CancellationToken-accepting call to use TestContext.Current.CancellationToken.
+# These tests are fast and do not exercise cancellation, so the rule is noise here.
+dotnet_diagnostic.xUnit1051.severity = none

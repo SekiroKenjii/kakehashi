@@ -1,0 +1,777 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Activity Page — Kakehashi</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    /* Monochrome theme */
+    --primary: #2b2b2b;
+    --primary-hover: #1a1a1a;
+    --text-primary: rgba(0,0,0,0.8956);
+    --text-secondary: rgba(0,0,0,0.6063);
+    --text-tertiary: rgba(0,0,0,0.4458);
+    --bg-card: rgba(255,255,255,0.85);
+    --bg-card-2: rgba(255,255,255,0.55);
+    --bg-subtle: rgba(0,0,0,0.0373);
+    --bg-subtle-hover: rgba(0,0,0,0.0586);
+    --stroke: rgba(0,0,0,0.0578);
+    --stroke-2: rgba(0,0,0,0.1);
+    --control-fill: rgba(255,255,255,0.7);
+    --control-stroke: rgba(0,0,0,0.0578);
+    --control-stroke-bottom: rgba(0,0,0,0.1622);
+    --success: #107c10;
+    --success-bg: #dff6dd;
+    --warning: #ca5010;
+    --warning-bg: #fff4ce;
+    --danger: #c42b1c;
+    --danger-bg: #fde7e9;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+  body {
+    font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at top right, #ece6f8 0%, transparent 55%),
+      radial-gradient(ellipse at bottom left, #e8e2f5 0%, transparent 50%),
+      linear-gradient(135deg, #f2f0f7 0%, #ece9f3 100%);
+    min-height: 100vh;
+    padding: 24px;
+    color: var(--text-primary);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .icon {
+    width: 16px; height: 16px;
+    display: inline-block; flex-shrink: 0;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    vertical-align: middle;
+  }
+
+  .window {
+    max-width: 1480px; margin: 0 auto;
+    background: rgba(250,250,251,0.92);
+    backdrop-filter: blur(60px) saturate(125%);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 8px;
+    box-shadow: 0 32px 64px rgba(40,30,70,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 220px 1fr;
+  }
+  .titlebar {
+    grid-column: 1 / -1;
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-left: 12px;
+  }
+  .titlebar-left { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .titlebar-left .nav-btn {
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+  }
+  .titlebar-left .nav-btn:hover { background: var(--bg-subtle-hover); }
+  .app-badge {
+    width: 24px; height: 24px;
+    border-radius: 6px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .app-badge .bars { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+  .app-badge .bars .bar { height: 2.5px; background: white; border-radius: 2px; }
+  .app-badge .bars .bar:nth-child(1) { width: 11px; }
+  .app-badge .bars .bar:nth-child(2) { width: 7px; }
+  .app-badge .bars .bar:nth-child(3) { width: 9px; }
+  .app-title { font-weight: 600; }
+  .app-channel { color: var(--text-tertiary); font-size: 12px; }
+  .titlebar-controls { display: flex; height: 40px; }
+  .titlebar-controls button {
+    width: 46px; height: 40px; border: none; background: transparent;
+    color: var(--text-primary); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .titlebar-controls button:hover { background: var(--bg-subtle-hover); }
+  .titlebar-controls button.close:hover { background: var(--danger); color: white; }
+  .titlebar-controls .icon { width: 10px; height: 10px; stroke-width: 1.2; }
+
+  /* Expanded nav pane */
+  .nav-pane {
+    display: flex;
+    flex-direction: column;
+    padding: 8px 8px 12px;
+    gap: 2px;
+  }
+  .nav-link {
+    display: flex; align-items: center; gap: 12px;
+    padding: 9px 12px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    color: var(--text-primary);
+    font-family: inherit;
+    font-size: 13.5px;
+    text-align: left;
+    position: relative;
+  }
+  .nav-link:hover { background: var(--bg-subtle-hover); }
+  .nav-link.active { background: var(--bg-subtle); font-weight: 600; }
+  .nav-link.active::before {
+    content: '';
+    position: absolute;
+    left: 0; top: 9px; bottom: 9px;
+    width: 3px;
+    background: var(--primary);
+    border-radius: 2px;
+  }
+  .nav-link .icon { width: 17px; height: 17px; color: var(--text-secondary); }
+  .nav-link.active .icon { color: var(--text-primary); }
+  .nav-spacer { flex: 1; }
+  .nav-user {
+    display: flex; align-items: center; gap: 10px;
+    padding: 8px 10px;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+  }
+  .nav-user:hover { background: var(--bg-subtle-hover); }
+  .nav-user-avatar {
+    width: 34px; height: 34px;
+    border-radius: 50%;
+    background: var(--primary);
+    color: white;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    position: relative;
+    flex-shrink: 0;
+  }
+  .nav-user-avatar .presence {
+    position: absolute;
+    bottom: -1px; right: -1px;
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--success);
+    border: 2px solid #fafafb;
+  }
+  .nav-user-name { font-size: 13px; font-weight: 600; }
+
+  /* Content */
+  .content {
+    padding: 4px 24px 24px;
+    overflow-y: auto;
+    max-height: calc(100vh - 110px);
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 2px; font-size: 14px; margin-bottom: 14px; }
+  .breadcrumb .crumb { padding: 5px 8px; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; }
+  .breadcrumb .crumb:hover { background: var(--bg-subtle-hover); }
+  .breadcrumb .crumb.active { color: var(--text-primary); font-weight: 600; }
+  .breadcrumb .sep { color: var(--text-tertiary); display: inline-flex; align-items: center; }
+  .breadcrumb .sep .icon { width: 12px; height: 12px; }
+
+  .page-head {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+    gap: 16px;
+  }
+  .commandbar {
+    display: flex; gap: 2px;
+    background: var(--bg-card); border: 1px solid var(--stroke);
+    border-radius: var(--radius-md); padding: 2px;
+  }
+  .cmd-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border: none; background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 13px;
+    color: var(--text-primary); cursor: pointer;
+    min-height: 28px;
+  }
+  .cmd-btn:hover { background: var(--bg-subtle-hover); }
+  .cmd-btn .icon { color: var(--text-secondary); width: 14px; height: 14px; }
+  .cmd-divider { width: 1px; background: var(--stroke); margin: 4px 2px; }
+
+  .main-col { max-width: 980px; }
+
+  /* Summary strip */
+  .stats-strip {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    padding: 13px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .stat-icon {
+    width: 34px; height: 34px;
+    border-radius: 8px;
+    background: var(--bg-subtle);
+    color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+  .stat-icon .icon { width: 16px; height: 16px; }
+  .stat-icon.alert { background: var(--danger-bg); color: var(--danger); }
+  .stat-icon.ok { background: var(--success-bg); color: var(--success); }
+  .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 1px; }
+  .stat-value { font-size: 17px; font-weight: 700; line-height: 1.15; }
+  .stat-value.alert { color: var(--danger); }
+  .stat-sub { font-size: 11px; color: var(--text-tertiary); }
+
+  /* Filter bar */
+  .filter-bar {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+  }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    width: 280px;
+  }
+  .search-box .icon { color: var(--text-secondary); width: 14px; height: 14px; }
+  .search-box input { flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 13px; }
+  .search-box input::placeholder { color: var(--text-tertiary); }
+  .chip {
+    padding: 5px 12px;
+    font-size: 12.5px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-radius: 14px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .chip:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+  .chip .count { opacity: 0.7; font-weight: 400; margin-left: 3px; }
+  .filter-spacer { flex: 1; }
+  .range-select {
+    display: flex; align-items: center; gap: 6px;
+    padding: 6px 12px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    font-size: 12.5px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .range-select .icon { width: 13px; height: 13px; color: var(--text-secondary); }
+
+  /* Timeline */
+  .timeline-card {
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+  }
+  .day-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 20px;
+    background: var(--bg-card-2);
+    border-bottom: 1px solid var(--stroke);
+    position: sticky; top: 0;
+    backdrop-filter: blur(20px);
+    z-index: 2;
+  }
+  .day-header:not(:first-child) { border-top: 1px solid var(--stroke); }
+  .day-title { font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; color: var(--text-secondary); }
+  .day-count {
+    font-size: 10.5px; color: var(--text-tertiary);
+    background: white;
+    border: 1px solid var(--stroke);
+    padding: 0 7px;
+    border-radius: 8px;
+  }
+
+  .event {
+    display: flex;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--stroke);
+    cursor: pointer;
+    transition: background 0.1s;
+  }
+  .event:hover { background: var(--bg-subtle-hover); }
+  .event:last-child { border-bottom: none; }
+  .event-icon {
+    width: 34px; height: 34px;
+    border-radius: 9px;
+    background: var(--bg-subtle);
+    display: flex; align-items: center; justify-content: center;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .event-icon .icon { width: 16px; height: 16px; }
+  .event-icon.ok { background: var(--success-bg); color: var(--success); }
+  .event-icon.alert { background: var(--danger-bg); color: var(--danger); }
+  .event-body { flex: 1; min-width: 0; }
+  .event-title {
+    font-size: 13.5px; font-weight: 600;
+    display: flex; align-items: center; gap: 8px;
+    flex-wrap: wrap;
+  }
+  .count-pill {
+    font-size: 10.5px; font-weight: 700;
+    color: var(--text-secondary);
+    background: var(--bg-subtle);
+    border: 1px solid var(--stroke-2);
+    padding: 0 8px;
+    border-radius: 9px;
+    font-family: 'Cascadia Mono', Consolas, monospace;
+  }
+  .new-pill {
+    font-size: 9.5px; font-weight: 700;
+    color: var(--danger);
+    background: var(--danger-bg);
+    padding: 1px 7px;
+    border-radius: 8px;
+    border: 1px solid rgba(196,43,28,0.25);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .cat-pill {
+    font-size: 9.5px; font-weight: 700;
+    color: var(--text-tertiary);
+    background: transparent;
+    padding: 1px 7px;
+    border-radius: 8px;
+    border: 1px solid var(--stroke-2);
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .event-meta {
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    margin-top: 3px;
+    font-family: 'Cascadia Mono', Consolas, monospace;
+  }
+  .wasnt-you {
+    display: inline-block;
+    margin-top: 5px;
+    font-size: 11.5px;
+    color: var(--danger);
+    font-weight: 600;
+    cursor: pointer;
+  }
+  .wasnt-you:hover { text-decoration: underline; }
+  .event-right {
+    display: flex; align-items: flex-start; gap: 10px;
+    flex-shrink: 0;
+  }
+  .event-time { font-size: 11.5px; color: var(--text-tertiary); white-space: nowrap; padding-top: 3px; font-variant-numeric: tabular-nums; }
+  .event-chevron { color: var(--text-tertiary); padding-top: 2px; transition: transform 0.15s; }
+  .event-chevron .icon { width: 14px; height: 14px; }
+  .event.expanded .event-chevron { transform: rotate(90deg); }
+
+  /* Expanded detail */
+  .event-detail {
+    background: #fafbfc;
+    border-bottom: 1px solid var(--stroke);
+    padding: 14px 20px 14px 68px;
+  }
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px 32px;
+    margin-bottom: 12px;
+  }
+  .detail-row {
+    display: grid;
+    grid-template-columns: 110px 1fr;
+    padding: 5px 0;
+    font-size: 12px;
+    gap: 10px;
+  }
+  .detail-key { color: var(--text-secondary); }
+  .detail-val { font-family: 'Cascadia Mono', Consolas, monospace; font-size: 11.5px; word-break: break-all; }
+  .detail-actions { display: flex; gap: 6px; }
+  .mini-btn {
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 4px 11px;
+    font-size: 12px; font-family: inherit;
+    background: white;
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary); cursor: pointer;
+  }
+  .mini-btn:hover { background: var(--bg-subtle-hover); }
+  .mini-btn .icon { width: 12px; height: 12px; }
+  .mini-btn.danger { color: var(--danger); border-color: rgba(196,43,28,0.3); }
+  .mini-btn.danger:hover { background: var(--danger-bg); }
+
+  /* Collapsed dup expansion */
+  .dup-list {
+    background: #fafbfc;
+    border-bottom: 1px solid var(--stroke);
+    padding: 8px 20px 10px 68px;
+  }
+  .dup-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 4px 0;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    font-family: 'Cascadia Mono', Consolas, monospace;
+  }
+  .dup-row .dot { width: 4px; height: 4px; border-radius: 50%; background: var(--text-tertiary); }
+  .dup-more { color: var(--text-primary); font-weight: 600; cursor: pointer; font-family: inherit; font-size: 12px; padding-top: 4px; }
+  .dup-more:hover { text-decoration: underline; }
+
+  /* Footer */
+  .timeline-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: var(--bg-card-2);
+  }
+  .load-more {
+    padding: 6px 16px;
+    font-size: 13px; font-family: inherit; font-weight: 600;
+    background: white;
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary); cursor: pointer;
+  }
+  .load-more:hover { background: var(--bg-subtle-hover); }
+  .retention-note { font-size: 11.5px; color: var(--text-tertiary); }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+    <symbol id="i-export" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-calendar" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></symbol>
+    <symbol id="i-chevron-down" viewBox="0 0 24 24"><path d="m6 9 6 6 6-6"/></symbol>
+    <symbol id="i-login" viewBox="0 0 24 24"><path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"/><path d="m10 17 5-5-5-5M15 12H3"/></symbol>
+    <symbol id="i-logout" viewBox="0 0 24 24"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="m16 17 5-5-5-5M21 12H9"/></symbol>
+    <symbol id="i-phone" viewBox="0 0 24 24"><rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/></symbol>
+    <symbol id="i-desktop" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="12" rx="1"/><path d="M2 20h20M9 16v4M15 16v4"/></symbol>
+    <symbol id="i-key" viewBox="0 0 24 24"><circle cx="7.5" cy="15.5" r="4.5"/><path d="m10.5 12.5 8-8M16 7l3 3M21 2l-2.5 2.5"/></symbol>
+    <symbol id="i-x-circle" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="m15 9-6 6M9 9l6 6"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-update" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/></symbol>
+    <symbol id="i-devices" viewBox="0 0 24 24"><rect x="2" y="4" width="13" height="10" rx="1"/><path d="M6 18h5"/><path d="M8.5 14v4"/><rect x="16" y="8" width="6" height="12" rx="1"/></symbol>
+    <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  </defs>
+</svg>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <button class="nav-btn"><svg class="icon"><use href="#i-back"/></svg></button>
+      <button class="nav-btn"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <div class="app-badge"><div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>
+      <span class="app-title">Kakehashi</span>
+      <span class="app-channel">Experimental</span>
+    </div>
+    <div class="titlebar-controls">
+      <button><svg class="icon"><use href="#i-minimize"/></svg></button>
+      <button><svg class="icon"><use href="#i-maximize"/></svg></button>
+      <button class="close"><svg class="icon"><use href="#i-close"/></svg></button>
+    </div>
+  </div>
+
+  <!-- Nav pane -->
+  <div class="nav-pane">
+    <button class="nav-link"><svg class="icon"><use href="#i-home"/></svg> Home</button>
+    <button class="nav-link"><svg class="icon"><use href="#i-notes"/></svg> Notes</button>
+    <button class="nav-link active"><svg class="icon"><use href="#i-activity"/></svg> Activity</button>
+    <div class="nav-spacer"></div>
+    <div class="nav-user">
+      <div class="nav-user-avatar">KD<div class="presence"></div></div>
+      <div class="nav-user-name">Kakehashi Developer</div>
+    </div>
+    <button class="nav-link"><svg class="icon"><use href="#i-settings"/></svg> Settings</button>
+  </div>
+
+  <!-- Content -->
+  <div class="content">
+    <div class="page-head">
+      <div class="breadcrumb" style="margin-bottom:0;">
+        <span class="crumb">Kakehashi</span>
+        <span class="sep"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+        <span class="crumb active">Activity</span>
+      </div>
+      <div class="commandbar">
+        <button class="cmd-btn"><svg class="icon"><use href="#i-refresh"/></svg> Refresh</button>
+        <div class="cmd-divider"></div>
+        <button class="cmd-btn"><svg class="icon"><use href="#i-export"/></svg> Export CSV</button>
+      </div>
+    </div>
+
+    <div class="main-col">
+
+      <!-- Summary strip -->
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="stat-icon"><svg class="icon"><use href="#i-activity"/></svg></div>
+          <div>
+            <div class="stat-label">Events · 7 days</div>
+            <div class="stat-value">32</div>
+            <div class="stat-sub">across 4 categories</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg class="icon"><use href="#i-devices"/></svg></div>
+          <div>
+            <div class="stat-label">Devices</div>
+            <div class="stat-value">2</div>
+            <div class="stat-sub">Windows · iOS</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon alert"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+          <div>
+            <div class="stat-label">Failed attempts</div>
+            <div class="stat-value alert">1</div>
+            <div class="stat-sub">yesterday · review below</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ok"><svg class="icon"><use href="#i-clock"/></svg></div>
+          <div>
+            <div class="stat-label">Last sign-in</div>
+            <div class="stat-value">2h ago</div>
+            <div class="stat-sub">this device</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter bar -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input placeholder="Search events, IP, device...">
+        </div>
+        <div class="chip active">All <span class="count">32</span></div>
+        <div class="chip">Sign-ins <span class="count">14</span></div>
+        <div class="chip">Security <span class="count">4</span></div>
+        <div class="chip">Profile <span class="count">2</span></div>
+        <div class="chip">System <span class="count">12</span></div>
+        <div class="filter-spacer"></div>
+        <div class="range-select">
+          <svg class="icon"><use href="#i-calendar"/></svg>
+          <span>Last 7 days</span>
+          <svg class="icon"><use href="#i-chevron-down"/></svg>
+        </div>
+      </div>
+
+      <!-- Timeline -->
+      <div class="timeline-card">
+
+        <!-- TODAY -->
+        <div class="day-header">
+          <span class="day-title">Today · June 12</span>
+          <span class="day-count">3 events</span>
+        </div>
+
+        <div class="event">
+          <div class="event-icon ok"><svg class="icon"><use href="#i-login"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">Signed in · this device</div>
+            <div class="event-meta">Windows · Kakehashi · 10.115.2.45 · Ho Chi Minh City</div>
+          </div>
+          <div class="event-right">
+            <span class="event-time">09:12 · 2h ago</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+
+        <!-- Collapsed duplicates, expanded to show grouped timestamps -->
+        <div class="event expanded">
+          <div class="event-icon"><svg class="icon"><use href="#i-logout"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">
+              Signed out
+              <span class="count-pill">×9</span>
+            </div>
+            <div class="event-meta">Windows · Kakehashi · same session · duplicates auto-grouped</div>
+          </div>
+          <div class="event-right">
+            <span class="event-time">08:47–08:55</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+        <div class="dup-list">
+          <div class="dup-row"><span class="dot"></span> 08:55:12 · session s_4f82 · client-initiated</div>
+          <div class="dup-row"><span class="dot"></span> 08:52:40 · session s_4f82 · client-initiated</div>
+          <div class="dup-row"><span class="dot"></span> 08:50:03 · session s_4f82 · client-initiated</div>
+          <div class="dup-more">Show 6 more…</div>
+        </div>
+
+        <div class="event">
+          <div class="event-icon"><svg class="icon"><use href="#i-phone"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">
+              New device signed in
+              <span class="new-pill">New</span>
+            </div>
+            <div class="event-meta">iOS · Mobile app · 94.97.x.x · Ho Chi Minh City</div>
+            <span class="wasnt-you">Wasn't you? Secure your account</span>
+          </div>
+          <div class="event-right">
+            <span class="event-time">07:58 · 3h ago</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+
+        <!-- YESTERDAY -->
+        <div class="day-header">
+          <span class="day-title">Yesterday · June 11</span>
+          <span class="day-count">2 events</span>
+        </div>
+
+        <div class="event">
+          <div class="event-icon alert"><svg class="icon"><use href="#i-x-circle"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">
+              Failed sign-in attempt
+              <span class="cat-pill">Security</span>
+            </div>
+            <div class="event-meta">unknown device · 203.0.113.42 · wrong password</div>
+            <span class="wasnt-you">Wasn't you? Secure your account</span>
+          </div>
+          <div class="event-right">
+            <span class="event-time">22:14</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+
+        <!-- Expanded event with detail -->
+        <div class="event expanded">
+          <div class="event-icon"><svg class="icon"><use href="#i-key"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">
+              Password changed
+              <span class="cat-pill">Security</span>
+            </div>
+            <div class="event-meta">from Windows · Kakehashi</div>
+          </div>
+          <div class="event-right">
+            <span class="event-time">10:31</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+        <div class="event-detail">
+          <div class="detail-grid">
+            <div class="detail-row">
+              <div class="detail-key">Event ID</div>
+              <div class="detail-val">evt_8c2f91ab</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-key">Session</div>
+              <div class="detail-val">s_2e17 · OAuth 2.0</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-key">IP address</div>
+              <div class="detail-val">10.115.2.45</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-key">Device</div>
+              <div class="detail-val">Windows 11 · Kakehashi v1.1.2</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-key">User agent</div>
+              <div class="detail-val">Kakehashi/1.1.2 (Windows NT 10.0; Win64)</div>
+            </div>
+            <div class="detail-row">
+              <div class="detail-key">Initiated by</div>
+              <div class="detail-val">user · via Account page</div>
+            </div>
+          </div>
+          <div class="detail-actions">
+            <button class="mini-btn"><svg class="icon"><use href="#i-copy"/></svg> Copy event JSON</button>
+            <button class="mini-btn danger"><svg class="icon"><use href="#i-shield"/></svg> Report suspicious</button>
+          </div>
+        </div>
+
+        <!-- JUNE 10 -->
+        <div class="day-header">
+          <span class="day-title">Tuesday · June 10</span>
+          <span class="day-count">3 events</span>
+        </div>
+
+        <div class="event">
+          <div class="event-icon"><svg class="icon"><use href="#i-user"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">
+              Profile updated
+              <span class="cat-pill">Profile</span>
+            </div>
+            <div class="event-meta">Display name: "KD" → "Kakehashi Developer"</div>
+          </div>
+          <div class="event-right">
+            <span class="event-time">16:40</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+
+        <div class="event">
+          <div class="event-icon"><svg class="icon"><use href="#i-logout"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">Session revoked</div>
+            <div class="event-meta">macOS · Web · revoked by you from Account page</div>
+          </div>
+          <div class="event-right">
+            <span class="event-time">14:22</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+
+        <div class="event">
+          <div class="event-icon"><svg class="icon"><use href="#i-update"/></svg></div>
+          <div class="event-body">
+            <div class="event-title">
+              App updated
+              <span class="cat-pill">System</span>
+            </div>
+            <div class="event-meta">v1.1.1 → v1.1.2 · auto-update</div>
+          </div>
+          <div class="event-right">
+            <span class="event-time">09:05</span>
+            <span class="event-chevron"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+          </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="timeline-footer">
+          <button class="load-more">Load more</button>
+          <span class="retention-note">Showing 8 of 214 events · activity is retained for 90 days</span>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

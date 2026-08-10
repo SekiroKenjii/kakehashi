@@ -1,0 +1,48 @@
+<Project>
+
+  <!-- Product version (single source of truth). See Version.props / scripts/version.ps1. -->
+  <Import Project="$(MSBuildThisFileDirectory)Version.props" />
+
+  <!--
+    Solution-wide build settings. Applies to every project unless overridden.
+    Strictness here is intentional: this is a shared boilerplate and consistency
+    is enforced by the toolchain, not by convention.
+  -->
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+
+    <!-- Google style requires explicit, ordered using directives, so implicit usings are off. -->
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <!-- Run the IDE code-style (IDExxxx) analyzers, configured in .editorconfig, during build. -->
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Default</AnalysisMode>
+
+    <!-- Compiler and analyzer warnings fail the build. Whitespace-only style is gated
+         separately by the CI "dotnet format" check to keep day-to-day builds unbrittle. -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+    <Deterministic>true</Deterministic>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
+  </PropertyGroup>
+
+  <!-- Versions derived from Version.props (the SSOT). AssemblyVersion stays major.minor.0.0 so a
+       patch bump does not break binding redirects; File/Informational carry the full version. -->
+  <PropertyGroup>
+    <Version>$(VersionMajor).$(VersionMinor).$(VersionPatch)</Version>
+    <VersionPrefix>$(VersionMajor).$(VersionMinor).$(VersionPatch)</VersionPrefix>
+    <AssemblyVersion>$(VersionMajor).$(VersionMinor).0.0</AssemblyVersion>
+    <FileVersion>$(VersionMajor).$(VersionMinor).$(VersionPatch).0</FileVersion>
+    <InformationalVersion>$(VersionMajor).$(VersionMinor).$(VersionPatch)</InformationalVersion>
+  </PropertyGroup>
+
+  <!-- Source Link / reproducible builds on CI. -->
+  <PropertyGroup Condition="'$(ContinuousIntegrationBuild)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+</Project>

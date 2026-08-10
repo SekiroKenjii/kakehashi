@@ -1,0 +1,95 @@
+syntax = "proto3";
+
+// Notes: the reference feature, and the one to copy when adding your own.
+//
+// It is deliberately small and deliberately complete. Every part of the stack a real feature
+// touches is here and nowhere else is: an entity with a rule worth enforcing, a table the module
+// owns, use cases that publish events, a wire mapping, a page. Nothing in it is a special case.
+package kakehashi.notes.v1;
+
+import "google/protobuf/timestamp.proto";
+
+// NotesService is the notes module's entire remote surface.
+service NotesService {
+  // ListNotes returns every note, most recently updated first.
+  rpc ListNotes(ListNotesRequest) returns (ListNotesResponse);
+
+  // GetNote returns one note, or NOT_FOUND.
+  rpc GetNote(GetNoteRequest) returns (GetNoteResponse);
+
+  // CreateNote stores a new note. An empty or whitespace-only title is INVALID_ARGUMENT.
+  rpc CreateNote(CreateNoteRequest) returns (CreateNoteResponse);
+
+  // UpdateNote rewrites a note's title and body.
+  rpc UpdateNote(UpdateNoteRequest) returns (UpdateNoteResponse);
+
+  // DeleteNote removes a note.
+  //
+  // Deleting one that is already gone succeeds. The caller asked for it to not exist, and
+  // afterwards it does not; returning NOT_FOUND would make a retried delete look like a failure.
+  rpc DeleteNote(DeleteNoteRequest) returns (DeleteNoteResponse);
+}
+
+// Note is a note as callers see it.
+message Note {
+  // Server-assigned identifier.
+  int64 id = 1;
+
+  // A single line, non-empty, at most 120 characters.
+  string title = 2;
+
+  // Free text. May be empty.
+  string body = 3;
+
+  google.protobuf.Timestamp created_at = 4;
+
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message ListNotesRequest {}
+
+message ListNotesResponse {
+  // Most recently updated first.
+  //
+  // Unpaged on purpose. Paging is a contract decision that is hard to add later and easy to get
+  // wrong early, and a boilerplate that ships a cursor nobody needs teaches the wrong lesson. When
+  // a real list outgrows one response, add a page_token here and a next_page_token below; both are
+  // additive and neither breaks an existing client.
+  repeated Note notes = 1;
+}
+
+message GetNoteRequest {
+  int64 id = 1;
+}
+
+message GetNoteResponse {
+  Note note = 1;
+}
+
+message CreateNoteRequest {
+  string title = 1;
+  string body = 2;
+}
+
+message CreateNoteResponse {
+  Note note = 1;
+}
+
+message UpdateNoteRequest {
+  int64 id = 1;
+  string title = 2;
+  string body = 3;
+}
+
+message UpdateNoteResponse {
+  Note note = 1;
+}
+
+message DeleteNoteRequest {
+  int64 id = 1;
+}
+
+// DeleteNoteResponse is empty, and is a message rather than google.protobuf.Empty so that it has
+// somewhere to grow. Swapping Empty for a real message later is a breaking change; adding a field
+// to this one is not.
+message DeleteNoteResponse {}

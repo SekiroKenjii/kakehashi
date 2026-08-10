@@ -1,0 +1,648 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Sign-in Window — Redesigned</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --accent: #343231;
+        --accent-hover: #343231;
+        --text-primary: rgba(0, 0, 0, 0.8956);
+        --text-secondary: rgba(0, 0, 0, 0.6063);
+        --text-tertiary: rgba(0, 0, 0, 0.4458);
+        --bg-card: #f3f3f3;
+        --bg-card-2: rgba(255, 255, 255, 0.6);
+        --bg-subtle: rgba(0, 0, 0, 0.0373);
+        --bg-subtle-hover: rgba(0, 0, 0, 0.0586);
+        --stroke: rgba(0, 0, 0, 0.0578);
+        --stroke-2: rgba(0, 0, 0, 0.1);
+        --control-fill: rgba(255, 255, 255, 0.7);
+        --control-stroke: rgba(0, 0, 0, 0.0578);
+        --control-stroke-bottom: rgba(0, 0, 0, 0.1622);
+        --success: #107c10;
+        --success-bg: #dff6dd;
+        --warning: #ca5010;
+        --danger: #c42b1c;
+        --danger-bg: #fde7e9;
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 12px;
+      }
+      body {
+        font-family:
+          "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        background: #1a1d24;
+        background-image:
+          radial-gradient(
+            circle at 20% 30%,
+            rgba(60, 70, 90, 0.4) 0%,
+            transparent 40%
+          ),
+          radial-gradient(
+            circle at 80% 70%,
+            rgba(40, 50, 70, 0.5) 0%,
+            transparent 45%
+          ),
+          linear-gradient(135deg, #14171d 0%, #1f2530 100%);
+        min-height: 100vh;
+        padding: 40px;
+        color: var(--text-primary);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 28px;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+
+      .section-label {
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 12px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        max-width: 1180px;
+        margin: 0 auto;
+        width: 100%;
+      }
+
+      /* Sign-in window */
+      .signin {
+        width: 420px;
+        background: var(--bg-card);
+        border-radius: var(--radius-lg);
+        box-shadow:
+          0 40px 80px rgba(0, 0, 0, 0.5),
+          0 8px 24px rgba(0, 0, 0, 0.3),
+          inset 0 1px 0 rgba(255, 255, 255, 0.8);
+        overflow: hidden;
+        position: relative;
+      }
+
+      /* Title bar with close */
+      .signin-titlebar {
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding-right: 6px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 2;
+      }
+      .titlebar-close {
+        width: 32px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .titlebar-close:hover {
+        background: rgba(0, 0, 0, 0.06);
+        color: var(--text-primary);
+      }
+      .titlebar-close .icon {
+        width: 13px;
+        height: 13px;
+      }
+
+      .signin-body {
+        padding: 44px 40px 32px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+
+      /* App icon (smaller, branded) */
+      .app-icon {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: linear-gradient(
+          135deg,
+          #343231 0%,
+          #343231 60%,
+          #343231 100%
+        );
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow:
+          0 8px 20px rgba(52, 50, 49, 0.4),
+          inset 0 2px 4px rgba(255, 255, 255, 0.3),
+          inset 0 -2px 4px rgba(0, 0, 0, 0.15);
+        margin-bottom: 20px;
+      }
+      .app-icon .bars {
+        display: flex;
+        flex-direction: column;
+        gap: 6px;
+        align-items: flex-start;
+      }
+      .app-icon .bars .bar {
+        height: 6px;
+        background: white;
+        border-radius: 4px;
+      }
+      .app-icon .bars .bar:nth-child(1) {
+        width: 30px;
+      }
+      .app-icon .bars .bar:nth-child(2) {
+        width: 20px;
+      }
+      .app-icon .bars .bar:nth-child(3) {
+        width: 25px;
+      }
+
+      .signin-title {
+        font-size: 22px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+        margin-bottom: 8px;
+      }
+      .signin-desc {
+        font-size: 13px;
+        color: var(--text-secondary);
+        line-height: 1.5;
+        margin-bottom: 24px;
+        max-width: 300px;
+      }
+
+      /* OAuth flow steps */
+      .flow-steps {
+        width: 100%;
+        background: var(--bg-card-2);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-md);
+        padding: 14px 16px;
+        margin-bottom: 24px;
+        text-align: left;
+      }
+      .flow-step {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 5px 0;
+        font-size: 12.5px;
+        color: var(--text-secondary);
+      }
+      .flow-step-num {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        color: var(--accent);
+        font-size: 11px;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        background: rgba(52, 50, 49, 0.08);
+        border: 1px solid rgba(52, 50, 49, 0.2);
+      }
+      .flow-step-text strong {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+
+      /* Primary button — ACCENT */
+      .btn-signin {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        padding: 12px;
+        background: var(--accent);
+        border: none;
+        border-radius: var(--radius-sm);
+        color: white;
+        font-family: inherit;
+        font-size: 15px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .btn-signin:hover {
+        background: var(--accent-hover);
+      }
+      .btn-signin .icon {
+        width: 17px;
+        height: 17px;
+      }
+
+      /* Security note */
+      .security-note {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-top: 16px;
+        font-size: 11px;
+        color: var(--text-tertiary);
+      }
+      .security-note .icon {
+        width: 13px;
+        height: 13px;
+        color: var(--success);
+      }
+
+      .signin-footer {
+        margin-top: 20px;
+        padding-top: 16px;
+        border-top: 1px solid var(--stroke);
+        width: 100%;
+        font-size: 11px;
+        color: var(--text-tertiary);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+      }
+      .version-info {
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+
+      /* Waiting state */
+      .waiting-visual {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: rgba(52, 50, 49, 0.08);
+        border: 1px solid rgba(52, 50, 49, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        position: relative;
+      }
+      .waiting-spinner {
+        width: 32px;
+        height: 32px;
+        border: 3px solid rgba(52, 50, 49, 0.4);
+        border-top-color: var(--accent);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .btn-secondary {
+        width: 100%;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        padding: 10px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        font-family: inherit;
+        font-size: 13px;
+        cursor: pointer;
+      }
+      .btn-secondary:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .btn-secondary .icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      .waiting-hint {
+        font-size: 12px;
+        color: var(--text-tertiary);
+        margin-bottom: 20px;
+        line-height: 1.5;
+        max-width: 300px;
+      }
+      .waiting-hint .link {
+        color: var(--accent);
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      /* Error state */
+      .error-visual {
+        width: 64px;
+        height: 64px;
+        border-radius: 16px;
+        background: var(--danger-bg);
+        border: 1px solid rgba(196, 43, 28, 0.2);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 20px;
+        color: var(--danger);
+      }
+      .error-visual .icon {
+        width: 32px;
+        height: 32px;
+        stroke-width: 1.8;
+      }
+      .error-detail {
+        width: 100%;
+        background: var(--danger-bg);
+        border: 1px solid rgba(196, 43, 28, 0.2);
+        border-radius: var(--radius-md);
+        padding: 10px 14px;
+        margin-bottom: 20px;
+        font-size: 12px;
+        color: var(--danger);
+        text-align: left;
+        font-family: "Cascadia Mono", monospace;
+        line-height: 1.5;
+      }
+
+      /* States layout */
+      .states-row {
+        display: flex;
+        gap: 24px;
+        max-width: 1180px;
+        margin: 0 auto;
+        flex-wrap: wrap;
+        justify-content: center;
+      }
+      .state-wrap {
+        display: flex;
+        flex-direction: column;
+      }
+      .state-caption {
+        text-align: center;
+        color: rgba(255, 255, 255, 0.6);
+        font-size: 12px;
+        margin-top: 12px;
+        font-weight: 500;
+      }
+      .state-badge {
+        position: absolute;
+        top: 12px;
+        left: 16px;
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--text-tertiary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        z-index: 3;
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </symbol>
+        <symbol id="i-browser" viewBox="0 0 24 24">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="M2 9h20M6 6.5h.01M9 6.5h.01" />
+        </symbol>
+        <symbol id="i-shield-check" viewBox="0 0 24 24">
+          <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z" />
+          <path d="m9 12 2 2 4-4" />
+        </symbol>
+        <symbol id="i-external" viewBox="0 0 24 24">
+          <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6" />
+          <path d="M15 3h6v6M10 14 21 3" />
+        </symbol>
+        <symbol id="i-x-circle" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="m15 9-6 6M9 9l6 6" />
+        </symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 4v5h-5" />
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+          <rect x="4" y="11" width="16" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="section-label">Sign-in window · three states to build</div>
+
+    <div class="states-row">
+      <!-- STATE 1: Initial -->
+      <div class="state-wrap">
+        <div class="signin">
+          <div class="signin-titlebar">
+            <button class="titlebar-close">
+              <svg class="icon"><use href="#i-close" /></svg>
+            </button>
+          </div>
+          <div class="signin-body">
+            <div class="app-icon">
+              <div class="bars">
+                <div class="bar"></div>
+                <div class="bar"></div>
+                <div class="bar"></div>
+              </div>
+            </div>
+            <div class="signin-title">Sign in to Kakehashi</div>
+            <div class="signin-desc">
+              Sign in with your organization account to continue.
+            </div>
+
+            <div class="flow-steps">
+              <div class="flow-step">
+                <div class="flow-step-num">1</div>
+                <div class="flow-step-text">
+                  Your <strong>default browser</strong> will open
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="flow-step-num">2</div>
+                <div class="flow-step-text">
+                  Authenticate with <strong>company SSO</strong>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="flow-step-num">3</div>
+                <div class="flow-step-text">
+                  Return here <strong>automatically</strong>
+                </div>
+              </div>
+            </div>
+
+            <button class="btn-signin">
+              <svg class="icon"><use href="#i-browser" /></svg>
+              Sign in with browser
+            </button>
+
+            <div class="security-note">
+              <svg class="icon"><use href="#i-shield-check" /></svg>
+              <span>Secured by OAuth 2.0 · no password stored locally</span>
+            </div>
+
+            <div class="signin-footer">
+              <span class="version-info">v1.1.2</span>
+              <span>·</span>
+              <span>Need help?</span>
+            </div>
+          </div>
+        </div>
+        <div class="state-caption">
+          Clear flow + accent button + security note
+        </div>
+      </div>
+
+      <!-- STATE 2: Waiting -->
+      <div class="state-wrap">
+        <div class="signin">
+          <div class="signin-titlebar">
+            <button class="titlebar-close">
+              <svg class="icon"><use href="#i-close" /></svg>
+            </button>
+          </div>
+          <div class="signin-body">
+            <div class="waiting-visual">
+              <div class="waiting-spinner"></div>
+            </div>
+            <div class="signin-title">Waiting for sign-in…</div>
+            <div class="waiting-hint">
+              Complete the sign-in in your browser. We'll continue automatically
+              once you're done.
+            </div>
+
+            <div class="flow-steps" style="margin-bottom: 20px">
+              <div class="flow-step" style="color: var(--success)">
+                <div
+                  class="flow-step-num"
+                  style="
+                    background: var(--success-bg);
+                    color: var(--success);
+                    border-color: rgba(16, 124, 16, 0.3);
+                  "
+                >
+                  ✓
+                </div>
+                <div class="flow-step-text">
+                  <strong style="color: var(--success)">Browser opened</strong>
+                </div>
+              </div>
+              <div class="flow-step">
+                <div class="flow-step-num">
+                  <div
+                    style="
+                      width: 10px;
+                      height: 10px;
+                      border: 1.5px solid var(--accent);
+                      border-top-color: transparent;
+                      border-radius: 50%;
+                      animation: spin 0.8s linear infinite;
+                    "
+                  ></div>
+                </div>
+                <div class="flow-step-text">
+                  <strong>Waiting for authentication…</strong>
+                </div>
+              </div>
+              <div class="flow-step" style="opacity: 0.5">
+                <div
+                  class="flow-step-num"
+                  style="
+                    background: var(--bg-subtle);
+                    color: var(--text-tertiary);
+                    border-color: var(--stroke);
+                  "
+                >
+                  3
+                </div>
+                <div class="flow-step-text">Return to app</div>
+              </div>
+            </div>
+
+            <button class="btn-secondary" style="margin-bottom: 10px">
+              <svg class="icon"><use href="#i-external" /></svg>
+              Reopen browser
+            </button>
+            <button
+              class="btn-secondary"
+              style="
+                border: none;
+                background: transparent;
+                color: var(--text-secondary);
+              "
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+        <div class="state-caption">
+          Live progress · escape hatches (reopen / cancel)
+        </div>
+      </div>
+
+      <!-- STATE 3: Error -->
+      <div class="state-wrap">
+        <div class="signin">
+          <div class="signin-titlebar">
+            <button class="titlebar-close">
+              <svg class="icon"><use href="#i-close" /></svg>
+            </button>
+          </div>
+          <div class="signin-body">
+            <div class="error-visual">
+              <svg class="icon"><use href="#i-x-circle" /></svg>
+            </div>
+            <div class="signin-title">Sign-in failed</div>
+            <div class="signin-desc">
+              We couldn't complete the sign-in. Please try again.
+            </div>
+
+            <div class="error-detail">
+              Error: authentication timed out after 120s.<br />
+              The callback was not received.
+            </div>
+
+            <button class="btn-signin" style="margin-bottom: 10px">
+              <svg class="icon"><use href="#i-refresh" /></svg>
+              Try again
+            </button>
+            <button class="btn-secondary">Troubleshoot connection</button>
+
+            <div class="security-note">
+              <svg class="icon" style="color: var(--text-tertiary)">
+                <use href="#i-lock" />
+              </svg>
+              <span>If this persists, contact your administrator</span>
+            </div>
+          </div>
+        </div>
+        <div class="state-caption">
+          Specific error + retry + troubleshoot path
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

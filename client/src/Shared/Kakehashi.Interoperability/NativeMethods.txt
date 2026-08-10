@@ -1,0 +1,42 @@
+// --- CREDENTIALS & AUTHENTICATION ---
+CredFree
+CredPackAuthenticationBuffer
+CredUnPackAuthenticationBuffer
+CredUIPromptForWindowsCredentials
+LogonUser
+CRED_PACK_FLAGS
+CREDUI_INFOW
+CREDUIWIN_FLAGS
+LOGON32_LOGON
+LOGON32_PROVIDER
+
+// --- PSEUDOCONSOLE (PTY) ---
+ClosePseudoConsole
+CreatePseudoConsole
+ResizePseudoConsole
+PROC_THREAD_ATTRIBUTE_PSEUDOCONSOLE
+
+// --- PROCESS & THREAD MANAGEMENT ---
+CloseHandle
+CreateProcess
+DeleteProcThreadAttributeList
+GetExitCodeProcess
+InitializeProcThreadAttributeList
+TerminateProcess
+UpdateProcThreadAttribute
+STARTUPINFOEXW
+
+// --- WINDOWS, INPUT & MESSAGES ---
+EnableWindow
+GetActiveWindow
+GetKeyboardState
+SendMessage
+SetWindowLongPtr
+ToUnicode
+WM_ACTIVATE
+WA_ACTIVE
+WA_INACTIVE
+
+// --- SYSTEM PIPES & ERRORS ---
+CreatePipe
+WIN32_ERROR

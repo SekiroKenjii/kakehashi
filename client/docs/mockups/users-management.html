@@ -1,0 +1,1286 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Users — Redesigned</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      :root {
+        --accent: #343231;
+        --accent-hover: #343231;
+        --text-primary: rgba(0, 0, 0, 0.8956);
+        --text-secondary: rgba(0, 0, 0, 0.6063);
+        --text-tertiary: rgba(0, 0, 0, 0.4458);
+        --bg-card: rgba(255, 255, 255, 0.75);
+        --bg-card-2: rgba(255, 255, 255, 0.5);
+        --bg-subtle: rgba(0, 0, 0, 0.0373);
+        --bg-subtle-hover: rgba(0, 0, 0, 0.0586);
+        --stroke: rgba(0, 0, 0, 0.0578);
+        --stroke-2: rgba(0, 0, 0, 0.1);
+        --control-fill: rgba(255, 255, 255, 0.7);
+        --control-stroke: rgba(0, 0, 0, 0.0578);
+        --control-stroke-bottom: rgba(0, 0, 0, 0.1622);
+        --success: #107c10;
+        --success-bg: #dff6dd;
+        --warning: #ca5010;
+        --warning-bg: #fff4ce;
+        --danger: #c42b1c;
+        --danger-bg: #fde7e9;
+        --radius-sm: 4px;
+        --radius-md: 6px;
+        --radius-lg: 8px;
+      }
+      body {
+        font-family:
+          "Segoe UI Variable Text", "Segoe UI", system-ui, sans-serif;
+        background:
+          radial-gradient(ellipse at top left, #d4e4f7 0%, transparent 50%),
+          radial-gradient(ellipse at bottom right, #f0e0d4 0%, transparent 50%),
+          linear-gradient(135deg, #e8ecf3 0%, #f5f3ef 100%);
+        min-height: 100vh;
+        padding: 24px;
+        color: var(--text-primary);
+        font-size: 14px;
+        -webkit-font-smoothing: antialiased;
+      }
+      .icon {
+        width: 16px;
+        height: 16px;
+        display: inline-block;
+        flex-shrink: 0;
+        fill: none;
+        stroke: currentColor;
+        stroke-width: 1.5;
+        stroke-linecap: round;
+        stroke-linejoin: round;
+        vertical-align: middle;
+      }
+
+      .window {
+        max-width: 1480px;
+        margin: 0 auto;
+        background: rgba(243, 243, 243, 0.78);
+        backdrop-filter: blur(60px) saturate(125%);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        border-radius: 8px;
+        box-shadow:
+          0 32px 64px rgba(0, 0, 0, 0.18),
+          inset 0 1px 0 rgba(255, 255, 255, 0.6);
+        overflow: hidden;
+      }
+      .titlebar {
+        height: 32px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding-left: 12px;
+      }
+      .titlebar-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .titlebar-left .icon {
+        color: var(--accent);
+      }
+      .titlebar-controls {
+        display: flex;
+        height: 32px;
+      }
+      .titlebar-controls button {
+        width: 46px;
+        height: 32px;
+        border: none;
+        background: transparent;
+        color: var(--text-primary);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .titlebar-controls button:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .titlebar-controls button.close:hover {
+        background: #c42b1c;
+        color: white;
+      }
+      .titlebar-controls .icon {
+        width: 10px;
+        height: 10px;
+        stroke-width: 1.2;
+      }
+
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 8px 16px 12px;
+        gap: 16px;
+      }
+      .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 2px;
+        font-size: 14px;
+      }
+      .breadcrumb .crumb {
+        padding: 5px 8px;
+        border-radius: var(--radius-sm);
+        color: var(--text-secondary);
+        cursor: pointer;
+      }
+      .breadcrumb .crumb.active {
+        color: var(--text-primary);
+        font-weight: 600;
+      }
+      .breadcrumb .sep {
+        color: var(--text-tertiary);
+        display: inline-flex;
+        align-items: center;
+      }
+      .breadcrumb .sep .icon {
+        width: 12px;
+        height: 12px;
+      }
+      .commandbar {
+        display: flex;
+        gap: 2px;
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-md);
+        padding: 2px;
+      }
+      .cmd-btn {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 12px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 13px;
+        color: var(--text-primary);
+        cursor: pointer;
+        min-height: 28px;
+      }
+      .cmd-btn:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .cmd-btn .icon {
+        color: var(--text-secondary);
+      }
+      .cmd-btn.primary {
+        background: var(--accent);
+        color: white;
+      }
+      .cmd-btn.primary:hover {
+        background: var(--accent-hover);
+      }
+      .cmd-btn.primary .icon {
+        color: white;
+      }
+      .cmd-divider {
+        width: 1px;
+        background: var(--stroke);
+        margin: 4px 2px;
+      }
+
+      /* Stats strip */
+      .stats-strip {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr);
+        gap: 12px;
+        padding: 0 16px 12px;
+      }
+      .stat-card {
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-md);
+        padding: 12px 14px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .stat-icon {
+        width: 36px;
+        height: 36px;
+        border-radius: 8px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        flex-shrink: 0;
+      }
+      .stat-icon.total {
+        background: var(--accent);
+      }
+      .stat-icon.active {
+        background: var(--success);
+      }
+      .stat-icon.inactive {
+        background: #767676;
+      }
+      .stat-icon.idle {
+        background: #f29a4d;
+      }
+      .stat-icon .icon {
+        width: 18px;
+        height: 18px;
+        stroke-width: 2;
+      }
+      .stat-label {
+        font-size: 11px;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 2px;
+      }
+      .stat-value {
+        font-size: 20px;
+        font-weight: 600;
+        line-height: 1;
+      }
+      .stat-sub {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 3px;
+      }
+
+      /* Main */
+      .main {
+        display: grid;
+        grid-template-columns: 1fr 380px;
+        gap: 12px;
+        padding: 0 16px 16px;
+        height: 720px;
+      }
+      .card {
+        background: var(--bg-card);
+        border: 1px solid var(--stroke);
+        border-radius: var(--radius-lg);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+      }
+
+      /* Filter toolbar */
+      .filter-toolbar {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--stroke);
+      }
+      .filter-search {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 10px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        max-width: 320px;
+      }
+      .filter-search .icon {
+        color: var(--text-secondary);
+        width: 14px;
+        height: 14px;
+      }
+      .filter-search input {
+        flex: 1;
+        border: none;
+        background: transparent;
+        outline: none;
+        font-family: inherit;
+        font-size: 13px;
+      }
+      .combobox {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 8px 6px 11px;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        font-size: 13px;
+        cursor: pointer;
+        min-height: 30px;
+      }
+      .combobox .icon {
+        width: 10px;
+        height: 10px;
+        color: var(--text-secondary);
+        margin-left: auto;
+      }
+      .toolbar-spacer {
+        flex: 1;
+      }
+      .selection-info {
+        font-size: 12px;
+        color: var(--text-secondary);
+      }
+      .selection-info strong {
+        color: var(--accent);
+      }
+
+      /* User table */
+      .user-table {
+        flex: 1;
+        overflow-y: auto;
+      }
+      .table-head {
+        display: grid;
+        grid-template-columns: 28px 1fr 130px 110px 130px 70px 36px;
+        gap: 14px;
+        padding: 10px 16px;
+        background: var(--bg-card-2);
+        border-bottom: 1px solid var(--stroke);
+        position: sticky;
+        top: 0;
+        backdrop-filter: blur(10px);
+        z-index: 1;
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+      }
+      .user-row {
+        display: grid;
+        grid-template-columns: 28px 1fr 130px 110px 130px 70px 36px;
+        gap: 14px;
+        padding: 10px 16px;
+        align-items: center;
+        border-bottom: 1px solid var(--stroke);
+        cursor: pointer;
+        transition: background 0.1s;
+      }
+      .user-row:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .user-row.selected {
+        background: rgba(0, 120, 212, 0.08);
+      }
+      .checkbox {
+        width: 16px;
+        height: 16px;
+        border: 1.5px solid var(--text-tertiary);
+        border-radius: 3px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .checkbox.checked {
+        background: var(--accent);
+        border-color: var(--accent);
+      }
+      .checkbox.checked::after {
+        content: "";
+        width: 8px;
+        height: 4px;
+        border-left: 1.5px solid white;
+        border-bottom: 1.5px solid white;
+        transform: rotate(-45deg) translate(1px, -1px);
+      }
+      .user-cell {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        min-width: 0;
+      }
+      .avatar {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 12px;
+        font-weight: 700;
+        flex-shrink: 0;
+      }
+      .avatar.a {
+        background: var(--accent);
+      }
+      .user-name-block {
+        min-width: 0;
+      }
+      .user-fullname {
+        font-size: 13px;
+        font-weight: 600;
+        color: var(--text-primary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .user-email {
+        font-size: 11.5px;
+        color: var(--text-secondary);
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        font-family: "Cascadia Mono", Consolas, monospace;
+      }
+      .role-badge {
+        display: inline-block;
+        padding: 3px 10px;
+        border-radius: 11px;
+        font-size: 11px;
+        font-weight: 600;
+        text-align: center;
+      }
+      .role-badge.admin {
+        background: var(--danger-bg);
+        color: var(--danger);
+        border: 1px solid rgba(196, 43, 28, 0.25);
+      }
+      .role-badge.dev {
+        background: rgba(0, 120, 212, 0.1);
+        color: var(--accent);
+        border: 1px solid rgba(0, 120, 212, 0.25);
+      }
+      .role-badge.ops {
+        background: var(--success-bg);
+        color: var(--success);
+        border: 1px solid rgba(16, 124, 16, 0.25);
+      }
+      .role-badge.viewer {
+        background: rgba(134, 97, 197, 0.1);
+        color: #6b3fa0;
+        border: 1px solid rgba(134, 97, 197, 0.25);
+      }
+      .status-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 12px;
+        font-weight: 500;
+      }
+      .status-badge .dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .status-badge.active {
+        color: var(--success);
+      }
+      .status-badge.active .dot {
+        background: var(--success);
+        box-shadow: 0 0 0 2px rgba(16, 124, 16, 0.2);
+      }
+      .status-badge.inactive {
+        color: var(--text-tertiary);
+      }
+      .status-badge.inactive .dot {
+        background: var(--text-tertiary);
+      }
+      .last-login {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
+      }
+      .created-at {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
+      }
+      .mfa-cell {
+        display: flex;
+        justify-content: center;
+      }
+      .mfa-badge {
+        width: 22px;
+        height: 22px;
+        border-radius: 6px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mfa-badge.on {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .mfa-badge.off {
+        background: var(--bg-subtle);
+        color: var(--text-tertiary);
+      }
+      .mfa-badge .icon {
+        width: 12px;
+        height: 12px;
+        stroke-width: 2;
+      }
+      .row-action {
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+      }
+      .row-action:hover {
+        background: var(--bg-subtle-hover);
+        color: var(--text-primary);
+      }
+      .row-action .icon {
+        width: 14px;
+        height: 14px;
+      }
+
+      /* Detail panel */
+      .detail-panel {
+        display: flex;
+        flex-direction: column;
+      }
+      .detail-hero {
+        padding: 24px 20px 18px;
+        text-align: center;
+        border-bottom: 1px solid var(--stroke);
+        position: relative;
+      }
+      .detail-hero .close-detail {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        width: 28px;
+        height: 28px;
+        border: none;
+        background: transparent;
+        border-radius: var(--radius-sm);
+        cursor: pointer;
+        color: var(--text-secondary);
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .detail-hero .close-detail:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .detail-avatar {
+        width: 72px;
+        height: 72px;
+        border-radius: 50%;
+        background: var(--accent);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 26px;
+        font-weight: 700;
+        margin: 0 auto 12px;
+        box-shadow: 0 6px 16px rgba(52, 50, 49, 0.3);
+      }
+      .detail-name {
+        font-size: 18px;
+        font-weight: 600;
+        margin-bottom: 4px;
+      }
+      .detail-email {
+        font-size: 12px;
+        color: var(--text-secondary);
+        font-family: "Cascadia Mono", Consolas, monospace;
+        margin-bottom: 10px;
+      }
+      .detail-badges {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+      }
+
+      .detail-actions {
+        display: flex;
+        gap: 6px;
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--stroke);
+      }
+      .btn {
+        flex: 1;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        padding: 7px 12px;
+        font-size: 12px;
+        font-family: inherit;
+        background: var(--control-fill);
+        border: 1px solid var(--control-stroke);
+        border-bottom: 1px solid var(--control-stroke-bottom);
+        border-radius: var(--radius-sm);
+        color: var(--text-primary);
+        cursor: pointer;
+        min-height: 30px;
+      }
+      .btn:hover {
+        background: var(--bg-subtle-hover);
+      }
+      .btn.primary {
+        background: var(--accent);
+        color: white;
+        border-color: var(--accent);
+      }
+      .btn.primary:hover {
+        background: var(--accent-hover);
+      }
+      .btn .icon {
+        color: inherit;
+        width: 13px;
+        height: 13px;
+      }
+
+      .detail-body {
+        flex: 1;
+        overflow-y: auto;
+        padding: 16px 20px;
+      }
+      .detail-section {
+        margin-bottom: 20px;
+      }
+      .detail-section-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: var(--text-secondary);
+        text-transform: uppercase;
+        letter-spacing: 0.4px;
+        margin-bottom: 10px;
+      }
+      .info-row {
+        display: grid;
+        grid-template-columns: 110px 1fr;
+        padding: 7px 0;
+        font-size: 13px;
+        border-bottom: 1px solid var(--stroke);
+        gap: 8px;
+      }
+      .info-row:last-child {
+        border-bottom: none;
+      }
+      .info-key {
+        color: var(--text-secondary);
+        font-size: 12px;
+      }
+      .info-val {
+        color: var(--text-primary);
+        font-size: 12px;
+        word-break: break-word;
+      }
+      .info-val.mono {
+        font-family: "Cascadia Mono", Consolas, monospace;
+        font-size: 11.5px;
+      }
+
+      /* Session list */
+      .session-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 8px 0;
+        border-bottom: 1px solid var(--stroke);
+      }
+      .session-item:last-child {
+        border-bottom: none;
+      }
+      .session-icon {
+        width: 28px;
+        height: 28px;
+        border-radius: 7px;
+        background: var(--bg-subtle);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: var(--text-secondary);
+        flex-shrink: 0;
+      }
+      .session-icon.current {
+        background: var(--success-bg);
+        color: var(--success);
+      }
+      .session-icon .icon {
+        width: 14px;
+        height: 14px;
+      }
+      .session-body {
+        flex: 1;
+        min-width: 0;
+      }
+      .session-title {
+        font-size: 12px;
+        font-weight: 600;
+      }
+      .session-meta {
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 1px;
+      }
+      .session-now {
+        font-size: 10px;
+        font-weight: 600;
+        color: var(--success);
+        background: var(--success-bg);
+        padding: 1px 7px;
+        border-radius: 8px;
+      }
+
+      /* Danger zone */
+      .danger-zone {
+        border: 1px solid rgba(196, 43, 28, 0.25);
+        background: rgba(196, 43, 28, 0.04);
+        border-radius: var(--radius-md);
+        padding: 14px;
+      }
+      .danger-zone-title {
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--danger);
+        margin-bottom: 10px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .danger-zone-title .icon {
+        width: 13px;
+        height: 13px;
+      }
+      .danger-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 6px 0;
+        gap: 12px;
+      }
+      .danger-label {
+        font-size: 12px;
+        color: var(--text-primary);
+      }
+      .danger-label .sub {
+        display: block;
+        font-size: 11px;
+        color: var(--text-secondary);
+        margin-top: 1px;
+      }
+      .danger-btn {
+        padding: 5px 12px;
+        font-size: 12px;
+        font-family: inherit;
+        background: white;
+        border: 1px solid rgba(196, 43, 28, 0.3);
+        border-radius: var(--radius-sm);
+        color: var(--danger);
+        cursor: pointer;
+        white-space: nowrap;
+      }
+      .danger-btn:hover {
+        background: var(--danger-bg);
+      }
+    </style>
+  </head>
+  <body>
+    <svg width="0" height="0" style="position: absolute">
+      <defs>
+        <symbol id="i-users" viewBox="0 0 24 24">
+          <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+          <circle cx="9" cy="7" r="4" />
+          <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+          <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+        </symbol>
+        <symbol id="i-user" viewBox="0 0 24 24">
+          <circle cx="12" cy="8" r="4" />
+          <path d="M4 21a8 8 0 0 1 16 0" />
+        </symbol>
+        <symbol id="i-user-check" viewBox="0 0 24 24">
+          <circle cx="9" cy="8" r="4" />
+          <path d="M3 21a6 6 0 0 1 12 0" />
+          <path d="m16 11 2 2 4-4" />
+        </symbol>
+        <symbol id="i-user-x" viewBox="0 0 24 24">
+          <circle cx="9" cy="8" r="4" />
+          <path d="M3 21a6 6 0 0 1 12 0" />
+          <path d="m17 10 4 4M21 10l-4 4" />
+        </symbol>
+        <symbol id="i-shield-check" viewBox="0 0 24 24">
+          <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z" />
+          <path d="m9 12 2 2 4-4" />
+        </symbol>
+        <symbol id="i-clock" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10" />
+          <path d="M12 6v6l4 2" />
+        </symbol>
+        <symbol id="i-search" viewBox="0 0 24 24">
+          <circle cx="11" cy="11" r="7" />
+          <path d="m20 20-3.5-3.5" />
+        </symbol>
+        <symbol id="i-plus" viewBox="0 0 24 24">
+          <path d="M12 5v14M5 12h14" />
+        </symbol>
+        <symbol id="i-refresh" viewBox="0 0 24 24">
+          <path d="M21 12a9 9 0 1 1-3-6.7" />
+          <path d="M21 4v5h-5" />
+        </symbol>
+        <symbol id="i-close" viewBox="0 0 24 24">
+          <path d="M6 6l12 12M18 6 6 18" />
+        </symbol>
+        <symbol id="i-minimize" viewBox="0 0 24 24">
+          <path d="M5 12h14" />
+        </symbol>
+        <symbol id="i-maximize" viewBox="0 0 24 24">
+          <rect x="4" y="4" width="16" height="16" rx="1" />
+        </symbol>
+        <symbol id="i-chevron-right" viewBox="0 0 24 24">
+          <path d="m9 6 6 6-6 6" />
+        </symbol>
+        <symbol id="i-chevron-down" viewBox="0 0 24 24">
+          <path d="m6 9 6 6 6-6" />
+        </symbol>
+        <symbol id="i-more" viewBox="0 0 24 24">
+          <circle cx="5" cy="12" r="1.3" fill="currentColor" />
+          <circle cx="12" cy="12" r="1.3" fill="currentColor" />
+          <circle cx="19" cy="12" r="1.3" fill="currentColor" />
+        </symbol>
+        <symbol id="i-export" viewBox="0 0 24 24">
+          <path d="M12 3v12" />
+          <path d="m7 10 5 5 5-5" />
+          <path d="M5 21h14" />
+        </symbol>
+        <symbol id="i-key" viewBox="0 0 24 24">
+          <circle cx="7.5" cy="15.5" r="4.5" />
+          <path d="m10.5 12.5 8-8M16 7l3 3M21 2l-2.5 2.5" />
+        </symbol>
+        <symbol id="i-edit" viewBox="0 0 24 24">
+          <path d="M12 20h9" />
+          <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+        </symbol>
+        <symbol id="i-mail" viewBox="0 0 24 24">
+          <rect x="2" y="4" width="20" height="16" rx="2" />
+          <path d="m2 7 10 6 10-6" />
+        </symbol>
+        <symbol id="i-lock" viewBox="0 0 24 24">
+          <rect x="4" y="11" width="16" height="10" rx="2" />
+          <path d="M8 11V7a4 4 0 0 1 8 0v4" />
+        </symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24">
+          <path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z" />
+        </symbol>
+        <symbol id="i-desktop" viewBox="0 0 24 24">
+          <rect x="3" y="4" width="18" height="12" rx="1" />
+          <path d="M2 20h20M9 16v4M15 16v4" />
+        </symbol>
+        <symbol id="i-phone" viewBox="0 0 24 24">
+          <rect x="7" y="2" width="10" height="20" rx="2" />
+          <path d="M11 18h2" />
+        </symbol>
+        <symbol id="i-warn" viewBox="0 0 24 24">
+          <path d="M12 3 2 20h20z" />
+          <path d="M12 10v4M12 17v.5" />
+        </symbol>
+        <symbol id="i-ban" viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="9" />
+          <path d="m5 5 14 14" />
+        </symbol>
+        <symbol id="i-trash" viewBox="0 0 24 24">
+          <path d="M4 7h16" />
+          <path d="M10 11v6M14 11v6" />
+          <path d="M5 7l1 13a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2l1-13" />
+          <path d="M9 7V4a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v3" />
+        </symbol>
+        <symbol id="i-filter" viewBox="0 0 24 24">
+          <path d="M3 5h18l-7 9v6l-4-2v-4z" />
+        </symbol>
+      </defs>
+    </svg>
+
+    <div class="window">
+      <div class="titlebar">
+        <div class="titlebar-left">
+          <svg class="icon"><use href="#i-users" /></svg>
+          <span>ThiQah Utilities — Users</span>
+        </div>
+        <div class="titlebar-controls">
+          <button>
+            <svg class="icon"><use href="#i-minimize" /></svg>
+          </button>
+          <button>
+            <svg class="icon"><use href="#i-maximize" /></svg>
+          </button>
+          <button class="close">
+            <svg class="icon"><use href="#i-close" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <div class="header">
+        <div class="breadcrumb">
+          <span class="crumb">Administration</span>
+          <span class="sep"
+            ><svg class="icon"><use href="#i-chevron-right" /></svg
+          ></span>
+          <span class="crumb active">Users</span>
+        </div>
+        <div class="commandbar">
+          <button class="cmd-btn primary">
+            <svg class="icon"><use href="#i-plus" /></svg>
+            <span>Add user</span>
+          </button>
+          <div class="cmd-divider"></div>
+          <button class="cmd-btn">
+            <svg class="icon"><use href="#i-export" /></svg>
+            <span>Export</span>
+          </button>
+          <button class="cmd-btn">
+            <svg class="icon"><use href="#i-refresh" /></svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- Stats strip -->
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="stat-icon total">
+            <svg class="icon"><use href="#i-users" /></svg>
+          </div>
+          <div>
+            <div class="stat-label">Total users</div>
+            <div class="stat-value">52</div>
+            <div class="stat-sub">+3 this month</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon active">
+            <svg class="icon"><use href="#i-user-check" /></svg>
+          </div>
+          <div>
+            <div class="stat-label">Active</div>
+            <div class="stat-value">47</div>
+            <div class="stat-sub">90% of total</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon inactive">
+            <svg class="icon"><use href="#i-user-x" /></svg>
+          </div>
+          <div>
+            <div class="stat-label">Inactive</div>
+            <div class="stat-value">5</div>
+            <div class="stat-sub">2 never logged in</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon idle">
+            <svg class="icon"><use href="#i-clock" /></svg>
+          </div>
+          <div>
+            <div class="stat-label">IDLE > 30 DAYS</div>
+            <div class="stat-value">6</div>
+            <div class="stat-sub">Review for cleanup</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="main">
+        <!-- LEFT: User table -->
+        <div class="card">
+          <div class="filter-toolbar">
+            <div class="filter-search">
+              <svg class="icon"><use href="#i-search" /></svg>
+              <input placeholder="Search by name, username, or email..." />
+            </div>
+            <div class="combobox">
+              <span>All roles</span>
+              <svg class="icon"><use href="#i-chevron-down" /></svg>
+            </div>
+            <div class="combobox">
+              <span>All status</span>
+              <svg class="icon"><use href="#i-chevron-down" /></svg>
+            </div>
+            <div class="toolbar-spacer"></div>
+            <div class="selection-info"><strong>1</strong> of 52 selected</div>
+          </div>
+
+          <div class="user-table">
+            <div class="table-head">
+              <div></div>
+              <div>User</div>
+              <div>Role</div>
+              <div>Status</div>
+              <div>Last login</div>
+              <div>Created</div>
+              <div></div>
+            </div>
+
+            <div class="user-row selected">
+              <div class="checkbox checked"></div>
+              <div class="user-cell">
+                <div class="avatar a">SA</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">System Administrator</div>
+                  <div class="user-email">admin@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge admin">Admin</span></div>
+              <div>
+                <span class="status-badge active"
+                  ><span class="dot"></span> Active</span
+                >
+              </div>
+              <div class="last-login">2 min ago</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="user-row">
+              <div class="checkbox"></div>
+              <div class="user-cell">
+                <div class="avatar a">MK</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">Mohammed Khalid</div>
+                  <div class="user-email">m.khalid@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge dev">Developer</span></div>
+              <div>
+                <span class="status-badge active"
+                  ><span class="dot"></span> Active</span
+                >
+              </div>
+              <div class="last-login">1 hour ago</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="user-row">
+              <div class="checkbox"></div>
+              <div class="user-cell">
+                <div class="avatar a">SA</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">Sara Abdullah</div>
+                  <div class="user-email">s.abdullah@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge ops">Operations</span></div>
+              <div>
+                <span class="status-badge active"
+                  ><span class="dot"></span> Active</span
+                >
+              </div>
+              <div class="last-login">Yesterday</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="user-row">
+              <div class="checkbox"></div>
+              <div class="user-cell">
+                <div class="avatar a">FN</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">Fatima Nasser</div>
+                  <div class="user-email">f.nasser@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge viewer">Viewer</span></div>
+              <div>
+                <span class="status-badge active"
+                  ><span class="dot"></span> Active</span
+                >
+              </div>
+              <div class="last-login">3 days ago</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="user-row">
+              <div class="checkbox"></div>
+              <div class="user-cell">
+                <div class="avatar a">AH</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">Ahmed Hassan</div>
+                  <div class="user-email">a.hassan@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge dev">Developer</span></div>
+              <div>
+                <span class="status-badge inactive"
+                  ><span class="dot"></span> Inactive</span
+                >
+              </div>
+              <div class="last-login">2 weeks ago</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="user-row">
+              <div class="checkbox"></div>
+              <div class="user-cell">
+                <div class="avatar a">OD</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">Omar Dabbagh</div>
+                  <div class="user-email">o.dabbagh@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge ops">Operations</span></div>
+              <div>
+                <span class="status-badge active"
+                  ><span class="dot"></span> Active</span
+                >
+              </div>
+              <div class="last-login">5 hours ago</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="user-row">
+              <div class="checkbox"></div>
+              <div class="user-cell">
+                <div class="avatar a">LM</div>
+                <div class="user-name-block">
+                  <div class="user-fullname">Layla Mahmoud</div>
+                  <div class="user-email">l.mahmoud@thiqah.sa</div>
+                </div>
+              </div>
+              <div><span class="role-badge viewer">Viewer</span></div>
+              <div>
+                <span class="status-badge inactive"
+                  ><span class="dot"></span> Never logged in</span
+                >
+              </div>
+              <div class="last-login">—</div>
+              <div class="created-at">2025-01-12</div>
+              <div>
+                <button class="row-action">
+                  <svg class="icon"><use href="#i-more" /></svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- RIGHT: User detail -->
+        <div class="card detail-panel">
+          <div class="detail-hero">
+            <button class="close-detail">
+              <svg class="icon"><use href="#i-close" /></svg>
+            </button>
+            <div class="detail-avatar">SA</div>
+            <div class="detail-name">System Administrator</div>
+            <div class="detail-email">admin@thiqah.sa</div>
+            <div class="detail-badges">
+              <span class="role-badge admin">Admin</span>
+              <span class="status-badge active"
+                ><span class="dot"></span> Active</span
+              >
+            </div>
+          </div>
+
+          <div class="detail-actions">
+            <button class="btn primary">
+              <svg class="icon"><use href="#i-edit" /></svg> Edit
+            </button>
+            <button class="btn">
+              <svg class="icon"><use href="#i-key" /></svg> Reset password
+            </button>
+            <button class="btn" style="flex: 0 0 auto">
+              <svg class="icon"><use href="#i-more" /></svg>
+            </button>
+          </div>
+
+          <div class="detail-body">
+            <div class="detail-section">
+              <div class="detail-section-title">Account information</div>
+              <div class="info-row">
+                <div class="info-key">Username</div>
+                <div class="info-val mono">admin</div>
+              </div>
+              <div class="info-row">
+                <div class="info-key">Email</div>
+                <div class="info-val mono">admin@thiqah.sa</div>
+              </div>
+              <div class="info-row">
+                <div class="info-key">Role</div>
+                <div class="info-val">Admin · full system access</div>
+              </div>
+              <div class="info-row">
+                <div class="info-key">Created</div>
+                <div class="info-val">2024-01-15 · 1y 3m ago</div>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-section-title">Active sessions (1)</div>
+              <div class="session-item">
+                <div class="session-icon current">
+                  <svg class="icon"><use href="#i-desktop" /></svg>
+                </div>
+                <div class="session-body">
+                  <div class="session-title">Windows · LPP00209687N</div>
+                  <div class="session-meta">103.154.187.232</div>
+                </div>
+                <span class="session-now">This device</span>
+              </div>
+            </div>
+
+            <div class="detail-section">
+              <div class="detail-section-title">Danger zone</div>
+              <div class="danger-zone">
+                <div class="danger-row">
+                  <div class="danger-label">
+                    Deactivate account
+                    <span class="sub"
+                      >User cannot sign in until reactivated</span
+                    >
+                  </div>
+                  <button class="danger-btn">Deactivate</button>
+                </div>
+                <div class="danger-row">
+                  <div class="danger-label">
+                    Delete user
+                    <span class="sub"
+                      >Permanently remove · cannot be undone</span
+                    >
+                  </div>
+                  <button class="danger-btn">Delete</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

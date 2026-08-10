@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>Kakehashi.Application.Abstractions</RootNamespace>
+    <AssemblyName>Kakehashi.Application.Abstractions</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kakehashi.SharedKernel\Kakehashi.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

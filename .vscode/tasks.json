@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "build-client",
+      "command": "dotnet",
+      "type": "process",
+      "args": [
+        "build",
+        "${workspaceFolder}/client/src/App/Kakehashi.App/Kakehashi.App.csproj",
+        "-c",
+        "Debug",
+        "-p:Platform=x64"
+      ]
+    },
+    {
+      "label": "build-server",
+      "command": "go",
+      "type": "process",
+      "args": ["build", "./..."],
+      "options": { "cwd": "${workspaceFolder}/server" }
+    },
+    {
+      "label": "archlint",
+      "command": "go",
+      "type": "process",
+      "args": ["run", "./tools/archlint"],
+      "options": { "cwd": "${workspaceFolder}/server" }
+    },
+    {
+      "label": "stack-up",
+      "command": "docker",
+      "type": "process",
+      "args": ["compose", "up", "-d", "--build"],
+      "options": { "cwd": "${workspaceFolder}" }
+    }
+  ]
+}

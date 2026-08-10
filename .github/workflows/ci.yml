@@ -1,0 +1,139 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  # The contract between the two halves. This job is why they live in one repository: a change to
+  # the schema is checked against both sides in the same run, so the two cannot drift.
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # buf breaking compares against main, which needs more than a shallow clone.
+          fetch-depth: 0
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      - name: Lint the schema
+        run: buf lint
+
+      # Only on pull requests: on a push to main the comparison is against the commit that was
+      # just pushed, which can never fail and only wastes a minute.
+      - name: Check for breaking changes
+        if: github.event_name == 'pull_request'
+        run: buf breaking --against "https://github.com/${{ github.repository }}.git#branch=main"
+
+      - name: Install the code generators
+        run: |
+          go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
+          go install connectrpc.com/connect/cmd/protoc-gen-connect-go@latest
+
+      # The generated code is committed so a fresh clone builds without buf. This is what keeps
+      # the committed copy honest: regenerate, and fail if anything moved.
+      - name: Verify the committed code matches the schema
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+
+  server:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      # No database needed: the domain, service and platform layers are free of I/O on purpose.
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      - name: Verify formatting
+        run: |
+          unformatted=$(gofmt -l cmd internal tools)
+          if [ -n "$unformatted" ]; then
+            echo "these files are not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  # The architecture check gets its own job so a broken boundary is obvious at a glance in the
+  # checks list, rather than buried in a build log.
+  architecture:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: server
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Check module boundaries
+        run: go run ./tools/archlint
+
+  client:
+    # WinUI 3 (Windows App SDK) requires Windows to build.
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: client
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: client/global.json
+
+      # Restores, and generates the typed gRPC client from proto/ — the same schema the server
+      # compiles against, read straight from the repository rather than from a copy.
+      - name: Restore
+        run: dotnet restore Kakehashi.slnx
+
+      # Hard gate: every file must already match the Google-style .editorconfig.
+      - name: Verify formatting
+        run: dotnet format Kakehashi.slnx --verify-no-changes --severity warn --no-restore
+
+      # Compiler + analyzer warnings fail the build (TreatWarningsAsErrors).
+      - name: Build
+        run: dotnet build Kakehashi.slnx -c Release --no-restore
+
+      - name: Test
+        run: dotnet test Kakehashi.slnx -c Release --no-build --verbosity normal

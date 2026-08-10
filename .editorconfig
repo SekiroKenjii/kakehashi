@@ -1,0 +1,35 @@
+# Repository-wide defaults for everything outside client/.
+#
+# client/ carries its own `root = true` .editorconfig encoding the Google C# Style
+# Guide; it deliberately stops inheritance so the C# rules stay scoped to the client
+# and never leak onto Go or proto files.
+
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+indent_size = 2
+
+# gofmt is the authority for Go. It uses tabs, and nothing here may argue with it.
+[*.go]
+indent_style = tab
+indent_size = 4
+max_line_length = 100
+
+[*.proto]
+indent_size = 2
+max_line_length = 100
+
+[*.{yml,yaml,json}]
+indent_size = 2
+
+[Makefile]
+indent_style = tab
+
+[*.md]
+# Two trailing spaces are a hard line break in Markdown, so trimming them changes meaning.
+trim_trailing_whitespace = false
