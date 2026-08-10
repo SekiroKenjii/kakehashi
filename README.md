@@ -128,15 +128,3 @@ credentials, and browsers will refuse to send them over plain HTTP anyway.
   promises are allowed to change
 - [`docs/RBAC.md`](docs/RBAC.md) — who may do what, to which rows, and where the scope is honoured
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — how the pane is arranged, and who decides what
-
-## Status
-
-| Phase | Contents | State |
-| --- | --- | --- |
-| P0 | Repo, contract tooling, server kernel, `health` module, client port, CI | done |
-| P1 | `notes` — one feature as a full vertical slice across the wire | done |
-| P2 | `account` — the server becomes an OpenID Connect provider | done |
-| P3 | `activity` — a cross-device feed on MongoDB | done |
-| P4 | `authz` — RBAC with row-level scope, enforced by a per-route policy | done |
-| P5 | `navigation` — the pane's arrangement in the database, editable at runtime | done |
-| P5 | TLS, systemd, release automation | planned |
