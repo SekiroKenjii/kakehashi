@@ -98,8 +98,8 @@ namespace Kakehashi.App.UI {
     /// <remarks>
     /// All of them, offered as a picker. The mockup showed five chips as suggestions relevant to the
     /// selected screen, and there is nothing to base relevance on: the vocabulary is a flat list of
-    /// eight names with no notion of which suits a page. Offering the whole list is the honest version
-    /// of the same control.
+    /// names with no notion of which suits a page. Offering the whole list is the honest version of
+    /// the same control.
     /// </remarks>
     public IReadOnlyList<NavIconChoice> IconChoices { get; }
 
@@ -124,15 +124,15 @@ namespace Kakehashi.App.UI {
     /// <summary>Every staged change, for the diff.</summary>
     public ObservableCollection<NavChange> Diff { get; } = [];
 
+    /// <summary>What is typed into the icon search.</summary>
+    [ObservableProperty]
+    public partial string IconQuery { get; set; }
+
     /// <summary>Whether the pane preview drawer is showing.</summary>
     /// <remarks>
     /// Closed to begin with. The preview answers a question somebody asks now and then - "what will
     /// this look like to them" - so it costs the two editing columns nothing until it is asked.
     /// </remarks>
-    /// <summary>What is typed into the icon search.</summary>
-    [ObservableProperty]
-    public partial string IconQuery { get; set; }
-
     [ObservableProperty]
     public partial bool IsPreviewOpen { get; set; }
 

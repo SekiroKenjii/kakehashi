@@ -30,7 +30,6 @@ import (
 // arrive as ordinary URLs a browser navigates to. net/http resolves between them by specificity,
 // so a catch-all at "/" and a service at "/kakehashi.notes.v1.NotesService/" coexist without
 // either having to know about the other.
-// New builds the server's handler from the kernel's routes.
 //
 // Every route carries its own policy and this enforces it. There is no list of exempt modules here
 // any more, and no way to be exempt by omission: the kernel refuses at boot to collect a route with
