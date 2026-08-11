@@ -1,9 +1,19 @@
-# Kakehashi
+<p align="center">
+  <img src="docs/brand/kakehashi-banner.svg" alt="Kakehashi — 架け橋, the bridge you build across" width="100%">
+</p>
 
-架け橋 — *the bridge you build across*.
+<h1 align="center">Kakehashi</h1>
 
-A starting point for Windows desktop applications that are backed by a server: a **WinUI 3 client**,
-a **Go backend** that deploys to any Linux box, and contracts between them that the build enforces.
+<p align="center">
+  <b>A Windows desktop app and the server behind it, in one repository.</b><br>
+  A WinUI 3 client, a Go backend that deploys to any Linux box, and one contract the build checks
+  against both halves — so the two cannot drift apart without something going red.
+</p>
+
+---
+
+架け橋 — *the bridge you build across*. A starting point for Windows desktop applications that are
+backed by a server.
 
 Both halves are modular monoliths. Both halves have a linter that fails the build when a module
 reaches past a boundary it was not given. The third linter guards the boundary between them.
@@ -130,3 +140,5 @@ credentials, and browsers will refuse to send them over plain HTTP anyway.
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — how the pane is arranged, and who decides what
 - [`docs/ACTIVITY.md`](docs/ACTIVITY.md) — what the feed records, the one write that comes from
   outside, and how long it keeps things
+- [`docs/brand/`](docs/brand/) — the mark, the palette, and why the accent is vermilion
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — the branching model, and how a release is cut
