@@ -97,6 +97,25 @@ docs/           ARCHITECTURE.md, CONTRACTS.md, RBAC.md, NAVIGATION.md
 
 ---
 
+## Branching — Gitflow, and `main` is protected
+
+**Never commit to `main`, and never push to it.** It refuses both, and so does `development`.
+
+| Branch | Cut from | Merges into |
+| --- | --- | --- |
+| `feature/…`, `bugfix/…` | `development` | `development` |
+| `release/…` | `development` | `main` **and** `development` |
+| `hotfix/…` | `main` | `main` **and** `development` |
+
+`development` is the integration branch and `main` holds what has been released, tagged `vX.Y.Z`.
+Everything lands through a pull request whose CI is green. A release or hotfix goes back into
+`development` as well — a fix that ships and then reappears in the next release is what that second
+merge prevents.
+
+Full walkthrough, including the release and hotfix sequences: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+---
+
 ## Server (Go)
 
 ### Stack
