@@ -2,7 +2,10 @@ using System;
 using System.ComponentModel;
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
+using Microsoft.UI.Xaml.Input;
+using Microsoft.UI.Xaml.Media.Animation;
 using Windows.ApplicationModel.DataTransfer;
+using Windows.System;
 
 namespace Kakehashi.App.UI {
   /// <summary>
@@ -31,6 +34,9 @@ namespace Kakehashi.App.UI {
     /// </remarks>
     private NavScreenNode? _dragged;
 
+    /// <summary>The running slide, kept alive so its Completed is not collected away.</summary>
+    private Storyboard? _previewSlide;
+
     /// <summary>Set while the picker is being put in step with the selection, not by somebody using it.</summary>
     private bool _syncingHeadingPicker;
 
@@ -41,6 +47,7 @@ namespace Kakehashi.App.UI {
       InitializeComponent();
 
       ViewModel.PropertyChanged += OnViewModelChanged;
+      ViewModel.Preview.CollectionChanged += (_, _) => RebuildPreview();
       Loaded += OnLoaded;
     }
 
@@ -113,6 +120,10 @@ namespace Kakehashi.App.UI {
     /// screen has had that bug before, in the row pickers this replaced.
     /// </remarks>
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) {
+      if (e.PropertyName == nameof(NavigationLayoutViewModel.IsPreviewOpen)) {
+        SlidePreview(ViewModel.IsPreviewOpen);
+        return;
+      }
       if (e.PropertyName != nameof(NavigationLayoutViewModel.SelectedScreen)) {
         return;
       }
@@ -152,9 +163,99 @@ namespace Kakehashi.App.UI {
       ViewModel.MoveScreen(screen, target, target.Screens.Count);
     }
 
+    /// <summary>How far the panel travels, which is its own width: closed means just off the edge.</summary>
+    private const double _previewTravel = 360;
+
+    /// <summary>
+    /// Slides the preview in from the right, and back out again.
+    /// </summary>
+    /// <remarks>
+    /// Hand-animated because the panel is always in the tree: it only changes Visibility, and the
+    /// theme transitions animate an element arriving rather than one becoming visible, so the panel
+    /// simply appeared. Visibility is still set — collapsed once it has left, so nothing offscreen
+    /// stays hit-testable, and visible before it starts so there is something to watch move.
+    /// </remarks>
+    private void SlidePreview(bool open) {
+      if (open) {
+        PreviewPanel.Visibility = Visibility.Visible;
+      }
+
+      var slide = new DoubleAnimation {
+        To = open ? 0 : _previewTravel,
+        Duration = new Duration(TimeSpan.FromMilliseconds(220)),
+        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+      };
+      Storyboard.SetTarget(slide, PreviewSlide);
+      Storyboard.SetTargetProperty(slide, "X");
+
+      // Held in a field, not a local. A Storyboard nobody references can be collected before it
+      // finishes, and the Completed that collapses the panel then never runs - which left the panel
+      // sitting open and hit-testable over the page after it had been asked to close.
+      _previewSlide?.Stop();
+      _previewSlide = new Storyboard();
+      _previewSlide.Children.Add(slide);
+      if (!open) {
+        _previewSlide.Completed += (_, _) => PreviewPanel.Visibility = Visibility.Collapsed;
+      }
+      _previewSlide.Begin();
+    }
+
+    private void OnTogglePreviewClicked(object sender, RoutedEventArgs e) {
+      ViewModel.IsPreviewOpen = !ViewModel.IsPreviewOpen;
+    }
+
+    private void OnClosePreviewClicked(object sender, RoutedEventArgs e) {
+      ViewModel.IsPreviewOpen = false;
+    }
+
+    /// <summary>
+    /// Fills the preview with the same kinds of item the shell puts in the real pane.
+    /// </summary>
+    /// <remarks>
+    /// Built here rather than bound, because <c>NavigationView</c> takes headers and items as
+    /// different types and the view model must not make controls - it is constructed off the UI
+    /// thread by its tests. Rebuilt wholesale on every change: the preview is small, and a diffing
+    /// version would be a second placement algorithm to keep in step with the planner.
+    /// </remarks>
+    private void RebuildPreview() {
+      PanePreview.MenuItems.Clear();
+
+      string group = string.Empty;
+      foreach (var entry in ViewModel.Preview) {
+        if (!string.Equals(entry.Item.Group, group, StringComparison.Ordinal)) {
+          group = entry.Item.Group;
+          if (group.Length > 0) {
+            PanePreview.MenuItems.Add(new NavigationViewItemHeader { Content = group });
+          }
+        }
+
+        PanePreview.MenuItems.Add(new NavigationViewItem {
+          Content = entry.Item.Title,
+          Icon = new FontIcon { Glyph = entry.Item.IconGlyph },
+          IsEnabled = entry.IsEnabled,
+          SelectsOnInvoked = false,
+        });
+      }
+    }
+
     private void OnScreenPressed(object sender, RoutedEventArgs e) {
       if (sender is FrameworkElement { Tag: NavScreenNode screen }) {
         ViewModel.SelectedScreen = screen;
+      }
+    }
+
+    /// <summary>Enter or Space on a focused row selects it, the way a click does.</summary>
+    /// <remarks>
+    /// The row is a Border rather than a Button on purpose — a Button is a leaf in the automation
+    /// tree, so it would hide the eye it contains — and a Border answers no key on its own.
+    /// </remarks>
+    private void OnScreenKeyDown(object sender, KeyRoutedEventArgs e) {
+      if (e.Key is not (VirtualKey.Enter or VirtualKey.Space)) {
+        return;
+      }
+      if (sender is FrameworkElement { Tag: NavScreenNode screen }) {
+        ViewModel.SelectedScreen = screen;
+        e.Handled = true;
       }
     }
 

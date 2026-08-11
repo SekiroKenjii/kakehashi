@@ -42,11 +42,33 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal(_fallback, NavigationIcons.Resolve(string.Empty, _fallback));
     }
 
-    /// <summary>Names are matched exactly — the server's vocabulary is lower case by convention.</summary>
+    /// <summary>
+    /// Names are matched exactly — the vocabulary here is lower case by convention, and the font's
+    /// own catalogue behind it is PascalCase.
+    /// </summary>
+    /// <remarks>
+    /// This used to probe with "Home", which stopped proving anything once the full Segoe catalogue
+    /// was chained on: "Home" is a real icon in it, so knowing it is correct. "Activity" is not,
+    /// which is what makes it a probe rather than a coincidence.
+    /// </remarks>
     [Fact]
     public void MatchingIsOrdinalRatherThanForgiving() {
-      Assert.False(NavigationIcons.Knows("Home"));
-      Assert.True(NavigationIcons.Knows("home"));
+      Assert.False(NavigationIcons.Knows("Activity"));
+      Assert.True(NavigationIcons.Knows("activity"));
+    }
+
+    /// <summary>The whole font is reachable by name, past the short vocabulary above.</summary>
+    /// <remarks>
+    /// A name from the catalogue is still a name rather than a code point, so it crosses the wire
+    /// and degrades exactly as the curated ones do.
+    /// </remarks>
+    [Fact]
+    public void TheFontsOwnCatalogueIsReachableToo() {
+      Assert.True(NavigationIcons.Knows("GlobalNavButton"));
+      Assert.NotEqual(_fallback, NavigationIcons.Resolve("GlobalNavButton", _fallback));
+
+      // And it is exact there as well: the catalogue spells it in PascalCase.
+      Assert.False(NavigationIcons.Knows("globalnavbutton"));
     }
   }
 }

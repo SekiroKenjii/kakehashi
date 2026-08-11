@@ -80,6 +80,8 @@ namespace Kakehashi.App.UI {
       _navigation = navigation;
       _planner = new NavigationPlanner(registry, permissions);
 
+      IconQuery = string.Empty;
+
       IconChoices = [.. NavigationIcons.Names.Select(
           name => new NavIconChoice(name, NavigationIcons.Resolve(name, NavigationIcons.Unknown)))];
     }
@@ -107,11 +109,32 @@ namespace Kakehashi.App.UI {
     /// <summary>What the pane would look like: the staged arrangement, or a role's saved one.</summary>
     public ObservableCollection<NavigationEntry> Preview { get; } = [];
 
+    /// <summary>What the icon search is showing, and out of how many.</summary>
+    public string IconSearchHint =>
+        IconQuery.Length == 0
+            ? $"{SegoeFluentIcons.Count} icons. Type to narrow them."
+            : $"{IconMatches.Count} shown of {SegoeFluentIcons.Count}.";
+
+    /// <summary>What the icon search found, for the flyout behind the last swatch.</summary>
+    public ObservableCollection<NavIconChoice> IconMatches { get; } = [];
+
     /// <summary>The read-only facts about the selected screen.</summary>
     public ObservableCollection<NavCodeFact> CodeFacts { get; } = [];
 
     /// <summary>Every staged change, for the diff.</summary>
     public ObservableCollection<NavChange> Diff { get; } = [];
+
+    /// <summary>Whether the pane preview drawer is showing.</summary>
+    /// <remarks>
+    /// Closed to begin with. The preview answers a question somebody asks now and then - "what will
+    /// this look like to them" - so it costs the two editing columns nothing until it is asked.
+    /// </remarks>
+    /// <summary>What is typed into the icon search.</summary>
+    [ObservableProperty]
+    public partial string IconQuery { get; set; }
+
+    [ObservableProperty]
+    public partial bool IsPreviewOpen { get; set; }
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
@@ -183,13 +206,14 @@ namespace Kakehashi.App.UI {
         // else is the one thing that stops working.
         var roles = await _access.ListRolesAsync(cancellationToken);
         PreviewRoles.Clear();
+        PreviewRoles.Add(NavPreviewRole.Yourself);
         PreviewRoles.Add(NavPreviewRole.Nobody);
         if (roles.IsSuccess) {
           foreach (var role in roles.Value) {
             PreviewRoles.Add(new NavPreviewRole(role.Id, role.Name));
           }
         }
-        PreviewRole = null;
+        PreviewRole = NavPreviewRole.Yourself;
       } finally {
         IsLoading = false;
       }
@@ -408,6 +432,21 @@ namespace Kakehashi.App.UI {
       RebuildCodeFacts(value);
     }
 
+    /// <summary>
+    /// Refills the icon search from the whole font.
+    /// </summary>
+    /// <remarks>
+    /// Capped at forty. The catalogue holds around fifteen hundred icons, which is a number to
+    /// search rather than a number to scroll.
+    /// </remarks>
+    partial void OnIconQueryChanged(string value) {
+      IconMatches.Clear();
+      foreach (var (name, glyph) in SegoeFluentIcons.Search(value, 40)) {
+        IconMatches.Add(new NavIconChoice(name, glyph));
+      }
+      OnPropertyChanged(nameof(IconSearchHint));
+    }
+
     partial void OnPreviewRoleChanged(NavPreviewRole? value) {
       _ = RefreshPreviewAsync();
     }
@@ -559,7 +598,7 @@ namespace Kakehashi.App.UI {
     private async Task RefreshPreviewAsync() {
       // No role picked: the arrangement as staged, drawn by the same planner the shell uses. This is
       // the only preview that can show unapplied edits, because it is the only one this client draws.
-      if (PreviewRole is null) {
+      if (PreviewRole is null or { IsYourself: true }) {
         Draw(_planner.Plan(StagedLayout()));
         PreviewNote = "Your own pane, including anything not applied yet.";
         return;
@@ -571,9 +610,10 @@ namespace Kakehashi.App.UI {
       if (previewed.IsFailure) {
         _notifications.Show(previewed.Error.Message, InfoBarSeverity.Error);
 
-        // Back to the local preview rather than leaving the box showing somebody else's pane. Assigning
-        // null re-enters this method through the change hook, which is where the note is put right.
-        PreviewRole = null;
+        // Back to the local preview rather than leaving the box showing somebody else's pane.
+        // Assigning re-enters this method through the change hook, which is where the note is put
+        // right.
+        PreviewRole = NavPreviewRole.Yourself;
         return;
       }
 
@@ -727,8 +767,18 @@ namespace Kakehashi.App.UI {
     }
   }
 
-  /// <summary>A role the pane can be previewed as, plus the "nobody" case.</summary>
+  /// <summary>A role the pane can be previewed as, plus the "yourself" and "nobody" cases.</summary>
   public sealed record NavPreviewRole(string Id, string Name) {
+    /// <summary>
+    /// The caller's own pane, and the way back from previewing somebody else's.
+    /// </summary>
+    /// <remarks>
+    /// A real item rather than the picker's placeholder. A ComboBox shows its placeholder only while
+    /// nothing is selected, so with this absent the first role somebody previewed was the last —
+    /// there was nothing left in the list to choose to get their own pane back.
+    /// </remarks>
+    public static NavPreviewRole Yourself { get; } = new(_yourselfId, "Yourself");
+
     /// <summary>
     /// Somebody holding no permissions at all.
     /// </summary>
@@ -737,6 +787,14 @@ namespace Kakehashi.App.UI {
     /// is what the server reads as "no role".
     /// </remarks>
     public static NavPreviewRole Nobody { get; } = new(string.Empty, "Nobody (no permissions)");
+
+    /// <summary>Not an id the server ever sees: it never leaves this class.</summary>
+    private const string _yourselfId = "(yourself)";
+
+    /// <summary>Whether this stands for the caller rather than for a role.</summary>
+    public bool IsYourself {
+      get { return Id == _yourselfId; }
+    }
 
     public override string ToString() {
       return Name;

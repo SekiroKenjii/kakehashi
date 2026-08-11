@@ -128,6 +128,7 @@ namespace Kakehashi.App.UI {
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(Glyph))]
+    [NotifyPropertyChangedFor(nameof(IconName))]
     [NotifyPropertyChangedFor(nameof(IsModified))]
     [NotifyPropertyChangedFor(nameof(IsIconKnown))]
     [NotifyPropertyChangedFor(nameof(IsIconUnknown))]
@@ -140,6 +141,13 @@ namespace Kakehashi.App.UI {
 
     /// <summary>What the pane will show: the override, or the code's own label.</summary>
     public string DisplayTitle => Title.Length > 0 ? Title : DefaultTitle;
+
+    /// <summary>The icon name in force: the override, or the one the code declared.</summary>
+    /// <remarks>
+    /// Shown rather than typed. The name is chosen from the vocabulary below the field, so a free
+    /// text box only ever produced a name this build cannot draw.
+    /// </remarks>
+    public string IconName => Icon.Length > 0 ? Icon : DefaultIcon;
 
     /// <summary>The glyph the pane will draw, falling back to the one the page ships with.</summary>
     public string Glyph =>

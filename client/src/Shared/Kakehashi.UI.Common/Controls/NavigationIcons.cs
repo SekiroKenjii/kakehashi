@@ -32,6 +32,7 @@ namespace Kakehashi.UI.Common.Controls {
     /// disagree with what <see cref="Resolve"/> will accept.
     /// </remarks>
     private static readonly (string Name, string Glyph)[] _vocabulary = [
+      // The screens this product ships, first, so the common case is the short walk.
       ("home", "\uE80F"),
       ("note", "\uE70B"),
       ("activity", "\uF463"),
@@ -40,6 +41,30 @@ namespace Kakehashi.UI.Common.Controls {
       ("permissions", "\uE192"),
       ("navigation", "\uE700"),
       ("settings", "\uE713"),
+
+      // What a module somebody else writes is likely to be about. Named for the subject rather than
+      // for what the glyph draws: the name is what a deployment stores and what another client - one
+      // shipping a different icon font - has to make sense of.
+      ("dashboard", "\uF246"),
+      ("report", "\uE9D2"),
+      ("folder", "\uE8B7"),
+      ("document", "\uE8A5"),
+      ("calendar", "\uE787"),
+      ("mail", "\uE715"),
+      ("message", "\uE8BD"),
+      ("alerts", "\uEA8F"),
+      ("tasks", "\uE9D5"),
+      ("search", "\uE721"),
+      ("tag", "\uE8EC"),
+      ("favourite", "\uE734"),
+      ("history", "\uE81C"),
+      ("security", "\uE72E"),
+      ("database", "\uE964"),
+      ("cloud", "\uE753"),
+      ("device", "\uE770"),
+      ("integration", "\uE839"),
+      ("tools", "\uE90F"),
+      ("help", "\uE897"),
     ];
 
     private static readonly Dictionary<string, string> _glyphs =
@@ -66,12 +91,20 @@ namespace Kakehashi.UI.Common.Controls {
       if (name.Length == 0) {
         return fallback;
       }
-      return _glyphs.TryGetValue(name, out var glyph) ? glyph : fallback;
+      if (_glyphs.TryGetValue(name, out var glyph)) {
+        return glyph;
+      }
+
+      // Then the whole font. The short vocabulary above is what a deployment is meant to reach for,
+      // but somebody who went looking through the full catalogue picked a real icon and should get
+      // the icon they picked.
+      string catalogued = SegoeFluentIcons.Glyph(name);
+      return catalogued.Length > 0 ? catalogued : fallback;
     }
 
     /// <summary>Whether a name is one this build can draw. For the picker's resolved/unresolved mark.</summary>
     public static bool Knows(string name) {
-      return _glyphs.ContainsKey(name);
+      return _glyphs.ContainsKey(name) || SegoeFluentIcons.Knows(name);
     }
   }
 }

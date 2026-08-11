@@ -71,3 +71,8 @@ appsettings.Development.json
 ## Claude Code local (user-specific) settings
 .claude/settings.local.json
 .claude/scheduled_tasks.lock
+
+# UI-Automation run output: screenshots and results are evidence of one run, not source. The
+# harness writes outside the repo by default; this catches a -ShotDir pointed back inside it.
+.claude/skills/ui-testing/ui/
+**/test-results.json
