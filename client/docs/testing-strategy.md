@@ -39,7 +39,7 @@
 | `Kakehashi.Mediator` | 4 | ✅ covered |
 | `Kakehashi.App.Infrastructure` (backend clients) | 10 | ✅ covered |
 | `Kakehashi.ArchitectureTests` | 7 | ✅ covered |
-| **`Kakehashi.App` (host)** — `ModuleRegistry`, `AppActivityLog`, `NavigationService`, `ThemeService`, `LocalSettingsService`, orchestrators, `StateManager`, view models (`Home`, `Shell`, `Settings`, `Splash`) | **0** | ❌ **none** |
+| **`Kakehashi.App` (host)** — `ModuleRegistry`, `AppActivityLog`, `NavigationService`, `ThemeService`, `LocalSettingsService`, orchestrators, view models (`Home`, `Shell`, `Settings`, `Splash`) | **0** | ❌ **none** |
 | **`Modules.*.UI`** — `AccountViewModel`, `ProductsViewModel`, `AccountFlyoutViewModel`, gateways, `OidcInteractiveAuthenticator` | **0** | ❌ **none** |
 | `Kakehashi.UI.Contracts` — `ViewModel` base, the new `ModuleRegistry` contracts | 0 | ❌ none |
 
@@ -61,7 +61,7 @@ windows TFM to reference them. Two ways:
   Risk: referencing a `WinExe` host + WinUI-generated code from a test assembly can be finicky;
   validate with one smoke test (`ModuleRegistry`) before fanning out.
 - **Option B — extract testable host services into `Kakehashi.App.Core`.** Move the non-XAML host
-  services (`ModuleRegistry`, `AppActivityLog`, `NavigationService`, orchestrators, `StateManager`)
+  services (`ModuleRegistry`, `AppActivityLog`, `NavigationService`, orchestrators)
   into a windows-TFM **library** that a plain test project references, leaving `Kakehashi.App` as
   thin composition + XAML. Robust and clean, but a real refactor touching DI wiring.
 

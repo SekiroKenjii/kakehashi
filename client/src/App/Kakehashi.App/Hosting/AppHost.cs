@@ -108,7 +108,6 @@ namespace Kakehashi.App.Hosting {
 
     private static void AddFundamentals(IServiceCollection services) {
       services.AddTransient<ISubscription, Subscription>();
-      services.AddTransient(typeof(IStateManager<>), typeof(StateManager<>));
     }
 
     private static void AddViewsAndViewModels(IServiceCollection services) {
