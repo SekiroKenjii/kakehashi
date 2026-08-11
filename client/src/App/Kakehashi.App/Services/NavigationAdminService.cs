@@ -8,60 +8,56 @@ using Kakehashi.SharedKernel;
 using NavigationV1 = Kakehashi.Navigation.V1;
 
 namespace Kakehashi.App.Services {
-  /// <summary>One heading, as the layout screen lists them.</summary>
-  /// <param name="IsSystem">
-  /// Ships with the product. Renamable and re-orderable, never deletable — a deployment that deleted
-  /// the heading its administrative screens live under would have nowhere left to put them.
-  /// </param>
+  // One heading, as the layout screen lists them.
+  //
+  // IsSystem: ships with the product. Renamable and re-orderable, never deletable — a deployment
+  // that deleted the heading its administrative screens live under would have nowhere left to put
+  // them.
   public sealed record NavGroupRow(string Id, string Title, int SortOrder, bool IsSystem);
 
-  /// <summary>One destination, as the layout screen manages it.</summary>
-  /// <param name="Title">The override, or empty when the destination uses what the code calls it.</param>
-  /// <param name="DefaultTitle">What the code calls it, shown as the placeholder.</param>
-  /// <param name="IsOrphan">
-  /// A stored row whose destination this build no longer has. Kept rather than deleted, so a module
-  /// that comes back comes back where somebody put it — and listed here because this is the only
-  /// screen where anybody can find out it exists.
-  /// </param>
-  /// <param name="RequiredPermission">
-  /// What the code enforces. Read-only: it is declared beside the page and enforced by the route
-  /// gate, and nothing on this screen can change it. That is what makes the rest safe to edit.
-  /// </param>
-  /// <param name="DefaultGroup">
-  /// Where the code puts this destination when nothing has moved it. What a "reset to what the product
-  /// shipped" button needs: the reconcile step writes it once as a seed and deliberately never applies
-  /// it again, so without this the intended place is unrecoverable once somebody has moved the row.
-  /// </param>
+  // One destination, as the layout screen manages it.
+  //
+  // Title: the override, or empty when the destination uses what the code calls it.
+  // DefaultTitle: what the code calls it, shown as the placeholder.
+  //
+  // IsOrphan: a stored row whose destination this build no longer has. Kept rather than deleted,
+  // so a module that comes back comes back where somebody put it — and listed here because this is
+  // the only screen where anybody can find out it exists.
+  //
+  // RequiredPermission: what the code enforces. Read-only: it is declared beside the page and
+  // enforced by the route gate, and nothing on this screen can change it. That is what makes the
+  // rest safe to edit.
+  //
+  // DefaultGroup: where the code puts this destination when nothing has moved it. What a "reset to
+  // what the product shipped" button needs: the reconcile step writes it once as a seed and
+  // deliberately never applies it again, so without this the intended place is unrecoverable once
+  // somebody has moved the row.
   public sealed record NavItemRow(
       string Id, string ModuleId, string GroupId, string Title, string Icon,
       string DefaultTitle, string DefaultIcon, int SortOrder, bool IsVisible, bool IsOrphan,
       string RequiredPermission, bool HideWhenDenied,
       string DefaultGroup, int DefaultOrder);
 
-  /// <summary>A heading as the screen wants it. An empty id means "create this one".</summary>
+  // A heading as the screen wants it. An empty id means "create this one".
   public sealed record NavGroupSpec(string Id, string Title, int SortOrder);
 
-  /// <summary>A destination as the screen wants it placed.</summary>
+  // A destination as the screen wants it placed.
   public sealed record NavItemSpec(
       string Id, string GroupId, int SortOrder, string Title, string Icon, bool IsVisible);
 
-  /// <summary>What an apply actually changed, which is not what was sent.</summary>
-  /// <remarks>
-  /// The screen posts its whole arrangement, and most of it is usually already true. Reporting what
-  /// moved rather than what was submitted is what lets the confirmation say something worth reading.
-  /// </remarks>
+  // What an apply actually changed, which is not what was sent.
+  //
+  // The screen posts its whole arrangement, and most of it is usually already true. Reporting what
+  // moved rather than what was submitted is what lets the confirmation say something worth reading.
   public sealed record NavApplyOutcome(
       int GroupsCreated, int GroupsUpdated, int GroupsDeleted, int ItemsChanged) {
     public int Total => GroupsCreated + GroupsUpdated + GroupsDeleted + ItemsChanged;
   }
 
-  /// <summary>
-  /// The layout operations behind the navigation screen, as a port.
-  /// </summary>
-  /// <remarks>
-  /// An interface so the view model can be tested without a server: the generated gRPC client returns
-  /// <c>AsyncUnaryCall</c>, which no substitute constructs cleanly.
-  /// </remarks>
+  // The layout operations behind the navigation screen, as a port.
+  //
+  // An interface so the view model can be tested without a server: the generated gRPC client returns
+  // AsyncUnaryCall, which no substitute constructs cleanly.
   public interface INavigationAdminService {
     Task<Result<IReadOnlyList<NavGroupRow>>> ListGroupsAsync(CancellationToken cancellationToken);
 
@@ -81,44 +77,36 @@ namespace Kakehashi.App.Services {
     Task<Result<NavItemRow>> UpdateItemAsync(
         string id, string title, string icon, bool isVisible, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Writes a whole arrangement, or writes none of it.
-    /// </summary>
-    /// <remarks>
-    /// What the screen uses. The single-row calls above remain because removing one from the contract
-    /// would break a client compiled against it, but one gesture on this screen produces several
-    /// changes at once and a sequence of single-row writes cannot fail halfway without leaving the pane
-    /// half-rearranged.
-    /// </remarks>
+    // Writes a whole arrangement, or writes none of it.
+    //
+    // What the screen uses. The single-row calls above remain because removing one from the contract
+    // would break a client compiled against it, but one gesture on this screen produces several
+    // changes at once and a sequence of single-row writes cannot fail halfway without leaving the pane
+    // half-rearranged.
     Task<Result<NavApplyOutcome>> ApplyLayoutAsync(
         IReadOnlyList<NavGroupSpec> groups,
         IReadOnlyList<NavItemSpec> items,
         CancellationToken cancellationToken);
 
-    /// <summary>Removes a stored row left over from a module this build no longer has.</summary>
+    // Removes a stored row left over from a module this build no longer has.
     Task<Result> DeleteItemAsync(string id, CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Answers what the pane looks like for a role other than the caller's.
-    /// </summary>
-    /// <remarks>
-    /// It reflects what is <em>saved</em>, not what is staged: the server is answering about the
-    /// arrangement it holds, and it has not been told about unapplied edits.
-    /// </remarks>
+    // Answers what the pane looks like for a role other than the caller's.
+    //
+    // It reflects what is saved, not what is staged: the server is answering about the
+    // arrangement it holds, and it has not been told about unapplied edits.
     Task<Result<NavigationLayout>> PreviewLayoutAsync(
         string roleId, CancellationToken cancellationToken);
   }
 
-  /// <summary>The administrator's client for the navigation layout service.</summary>
-  /// <remarks>
-  /// Every call needs <c>navigation.manage</c> and the server checks it. The client's own check is a
-  /// courtesy that keeps a screen off the pane; it is not what stops anybody.
-  /// <para>
-  /// Failures arrive as <see cref="Result"/> rather than exceptions because every one of them is
-  /// something a person did — a heading name already taken, a system heading, a title too long — and
-  /// the sentence the server wrote is the one worth showing.
-  /// </para>
-  /// </remarks>
+  // The administrator's client for the navigation layout service.
+  //
+  // Every call needs navigation.manage and the server checks it. The client's own check is a
+  // courtesy that keeps a screen off the pane; it is not what stops anybody.
+  //
+  // Failures arrive as Result rather than exceptions because every one of them is
+  // something a person did — a heading name already taken, a system heading, a title too long — and
+  // the sentence the server wrote is the one worth showing.
   public sealed class NavigationAdminService : INavigationAdminService {
     private readonly NavigationV1.NavigationAdminService.NavigationAdminServiceClient _client;
 
@@ -273,14 +261,11 @@ namespace Kakehashi.App.Services {
       });
     }
 
-    /// <summary>
-    /// The same mapping the pane's own read does.
-    /// </summary>
-    /// <remarks>
-    /// Duplicated from NavigationLayoutService rather than shared, and only just worth it: that one
-    /// maps the read every client makes and this one maps a preview only an administrator asks for. If
-    /// a third caller appears, the mapping moves.
-    /// </remarks>
+    // The same mapping the pane's own read does.
+    //
+    // Duplicated from NavigationLayoutService rather than shared, and only just worth it: that one
+    // maps the read every client makes and this one maps a preview only an administrator asks for. If
+    // a third caller appears, the mapping moves.
     private static NavigationPlacement ToPlacement(NavigationV1.Item item) {
       return new NavigationPlacement(item.Id, item.Title, item.Icon, item.Enabled);
     }
@@ -305,7 +290,7 @@ namespace Kakehashi.App.Services {
       }
     }
 
-    /// <summary>The same, for a call whose reply carries nothing worth returning.</summary>
+    // The same, for a call whose reply carries nothing worth returning.
     private static async Task<Result> CallVoidAsync<T>(Func<Task<T>> call) {
       try {
         await call().ConfigureAwait(false);
@@ -315,11 +300,10 @@ namespace Kakehashi.App.Services {
       }
     }
 
-    /// <summary>Turns a status into an error carrying the server's own sentence.</summary>
-    /// <remarks>
-    /// The server writes these to be read by a person — "Administration is one of the headings this
-    /// product ships, so it cannot be deleted" — so restating them here would only make them worse.
-    /// </remarks>
+    // Turns a status into an error carrying the server's own sentence.
+    //
+    // The server writes these to be read by a person — "Administration is one of the headings this
+    // product ships, so it cannot be deleted" — so restating them here would only make them worse.
     private static Error ToError(RpcException exception) {
       var detail = exception.Status.Detail ?? string.Empty;
 

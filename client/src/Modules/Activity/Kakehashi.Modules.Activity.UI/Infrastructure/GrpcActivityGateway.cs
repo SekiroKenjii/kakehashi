@@ -11,16 +11,13 @@ using Microsoft.Extensions.Logging;
 using ActivityV1 = Kakehashi.Activity.V1;
 
 namespace Kakehashi.Modules.Activity.UI.Infrastructure {
-  /// <summary>
-  /// The gRPC adapter behind <see cref="IActivityGateway"/>. It is the only class in the module
-  /// that knows the wire exists: it maps the generated messages onto the application's DTOs and
-  /// turns transport failures into <see cref="Result"/> failures.
-  /// </summary>
-  /// <remarks>
-  /// The alias is <c>ActivityV1</c> rather than <c>Activity</c> because inside a
-  /// <c>Kakehashi.*</c> namespace the identifier <c>Activity</c> binds to the enclosing
-  /// <c>Kakehashi.Modules.Activity</c> namespace before a using alias is ever considered.
-  /// </remarks>
+  // The gRPC adapter behind IActivityGateway. It is the only class in the module
+  // that knows the wire exists: it maps the generated messages onto the application's DTOs and
+  // turns transport failures into Result failures.
+  //
+  // The alias is ActivityV1 rather than Activity because inside a
+  // Kakehashi.* namespace the identifier Activity binds to the enclosing
+  // Kakehashi.Modules.Activity namespace before a using alias is ever considered.
   public sealed partial class GrpcActivityGateway : IActivityGateway {
     private readonly ActivityV1.ActivityService.ActivityServiceClient _client;
     private readonly ILogger<GrpcActivityGateway> _logger;
@@ -115,15 +112,12 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
       }
     }
 
-    /// <summary>
-    /// The name the server knows this fact by.
-    /// </summary>
-    /// <remarks>
-    /// A switch with no default arm, on purpose: adding a value to
-    /// <see cref="ClientActivityKind"/> without deciding what to call it on the wire should not
-    /// compile. The alternative — a default that sends the enum's own name — would send a string the
-    /// server has never heard of and turn a missed edit into a runtime refusal.
-    /// </remarks>
+    // The name the server knows this fact by.
+    //
+    // A switch with no default arm, on purpose: adding a value to
+    // ClientActivityKind without deciding what to call it on the wire should not
+    // compile. The alternative — a default that sends the enum's own name — would send a string the
+    // server has never heard of and turn a missed edit into a runtime refusal.
     private static string WireName(ClientActivityKind kind) {
       return kind switch {
         ClientActivityKind.AppUpdated => "AppUpdated",

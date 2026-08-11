@@ -7,13 +7,11 @@ using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 
 namespace Kakehashi.App.Services {
-  /// <summary>
-  /// Default <see cref="IModuleRegistry"/>: the composed modules plus a locally persisted set of
-  /// detached names. Default-attached semantics — a module absent from the persisted set is
-  /// attached, so a newly compiled-in module appears automatically. Attach/detach are UI-thread
-  /// operations (like the rest of the settings store); each change broadcasts a
-  /// <see cref="ModuleSetChangedMessage"/>.
-  /// </summary>
+  // Default IModuleRegistry: the composed modules plus a locally persisted set of
+  // detached names. Default-attached semantics — a module absent from the persisted set is
+  // attached, so a newly compiled-in module appears automatically. Attach/detach are UI-thread
+  // operations (like the rest of the settings store); each change broadcasts a
+  // ModuleSetChangedMessage.
   public sealed class ModuleRegistry : IModuleRegistry {
     private const string _detachedKey = "Modules.Detached";
 

@@ -2,18 +2,14 @@ using System;
 using Kakehashi.Modules.Auth.Domain;
 
 namespace Kakehashi.Modules.Auth.Application.Abstractions {
-  /// <summary>
-  /// Holds the current <see cref="AuthSession"/> for the lifetime of the app. Registered as a
-  /// singleton: the access-token provider reads from it, and the use cases update it.
-  /// </summary>
+  // Holds the current AuthSession for the lifetime of the app. Registered as a
+  // singleton: the access-token provider reads from it, and the use cases update it.
   public interface IAuthSessionAccessor {
-    /// <summary>The current session, or <see langword="null"/> when no user is signed in.</summary>
+    // The current session, or null when no user is signed in.
     AuthSession? Current { get; }
 
-    /// <summary>
-    /// When the current session was established in this app run (interactive sign-in or silent
-    /// restore), or <see langword="null"/> when no user is signed in.
-    /// </summary>
+    // When the current session was established in this app run (interactive sign-in or silent
+    // restore), or null when no user is signed in.
     DateTimeOffset? SignedInAtUtc { get; }
 
     void Set(AuthSession session);

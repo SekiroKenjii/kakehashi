@@ -13,10 +13,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using ActivityV1 = Kakehashi.Activity.V1;
 
 namespace Kakehashi.Modules.Activity.UI {
-  /// <summary>
-  /// Composition entry point for the Activity module: registers the application layer, the gRPC
-  /// client for its own contract, the adapter behind the gateway port, and the page.
-  /// </summary>
+  // Composition entry point for the Activity module: registers the application layer, the gRPC
+  // client for its own contract, the adapter behind the gateway port, and the page.
   public sealed class ActivityModule : IModule {
     public string Name => "Activity";
 

@@ -14,19 +14,17 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.UI {
-  /// <summary>One permission as the grid draws it, with the edit staged on top of it.</summary>
-  /// <remarks>
-  /// The staged value and the saved one both live here on purpose. "Changed" is the whole point of
-  /// the screen — an administrator flips eight toggles and wants to see what they have done before
-  /// committing — and a row that only knew its current value could not colour itself.
-  /// </remarks>
+  // One permission as the grid draws it, with the edit staged on top of it.
+  //
+  // The staged value and the saved one both live here on purpose. "Changed" is the whole point of
+  // the screen — an administrator flips eight toggles and wants to see what they have done before
+  // committing — and a row that only knew its current value could not colour itself.
   public sealed partial class GrantViewModel : ObservableObject {
-    /// <summary>What a permission is granted at when nothing narrower was chosen.</summary>
-    /// <remarks>
-    /// The widest, not the narrowest. A permission granted at "own" looks granted and does almost
-    /// nothing, which is a failure an administrator hears about from a confused user rather than
-    /// seeing on this screen. Narrowing is then one click, and deliberate.
-    /// </remarks>
+    // What a permission is granted at when nothing narrower was chosen.
+    //
+    // The widest, not the narrowest. A permission granted at "own" looks granted and does almost
+    // nothing, which is a failure an administrator hears about from a confused user rather than
+    // seeing on this screen. Narrowing is then one click, and deliberate.
     public const string DefaultScope = "all";
 
     private readonly bool _savedEnabled;
@@ -49,11 +47,11 @@ namespace Kakehashi.App.UI {
 
     public PermissionRow Permission { get; }
 
-    /// <summary>Whether the permission is granted at all.</summary>
+    // Whether the permission is granted at all.
     [ObservableProperty]
     public partial bool IsEnabled { get; set; }
 
-    /// <summary>The staged scope. Always one of own/team/all, whether granted or not.</summary>
+    // The staged scope. Always one of own/team/all, whether granted or not.
     [ObservableProperty]
     public partial string Scope { get; set; }
 
@@ -67,28 +65,22 @@ namespace Kakehashi.App.UI {
 
     public bool IsOrdinaryRisk => !Permission.IsHighRisk;
 
-    /// <summary>
-    /// Whether to offer the own/team/all picker for this permission.
-    /// </summary>
-    /// <remarks>
-    /// Only where the server says some store narrows on it. The picker used to be shown for every
-    /// permission, which made a row-level promise on keys nothing narrows — the choice was stored,
-    /// displayed back, and changed no answer anywhere.
-    /// </remarks>
+    // Whether to offer the own/team/all picker for this permission.
+    //
+    // Only where the server says some store narrows on it. The picker used to be shown for every
+    // permission, which made a row-level promise on keys nothing narrows — the choice was stored,
+    // displayed back, and changed no answer anywhere.
     public bool IsScoped => Permission.IsScoped;
 
-    /// <summary>
-    /// Whether this row differs from what is saved.
-    /// </summary>
-    /// <remarks>
-    /// The scope only counts while the permission is on. Re-scoping a grant nobody holds changes
-    /// nothing that would be saved, so calling it a pending change would put a number on the
-    /// unsaved-changes bar that Save could not account for.
-    /// </remarks>
+    // Whether this row differs from what is saved.
+    //
+    // The scope only counts while the permission is on. Re-scoping a grant nobody holds changes
+    // nothing that would be saved, so calling it a pending change would put a number on the
+    // unsaved-changes bar that Save could not account for.
     public bool IsChanged => IsEnabled != _savedEnabled
         || (IsEnabled && !string.Equals(Scope, _savedScope, StringComparison.Ordinal));
 
-    /// <summary>The saved state, for a discard that puts every row back at once.</summary>
+    // The saved state, for a discard that puts every row back at once.
     public void Discard() {
       IsEnabled = _savedEnabled;
       Scope = _savedScope;
@@ -103,12 +95,11 @@ namespace Kakehashi.App.UI {
     }
   }
 
-  /// <summary>A category of permissions, which is how the grid groups them.</summary>
-  /// <remarks>
-  /// Two lists on purpose. <see cref="All"/> is the category — the count pill and the bulk buttons
-  /// act on it. <see cref="Visible"/> is what the current search and filter let through. Filtering
-  /// must never re-create the grant rows: they carry the staged edits.
-  /// </remarks>
+  // A category of permissions, which is how the grid groups them.
+  //
+  // Two lists on purpose. All is the category — the count pill and the bulk buttons
+  // act on it. Visible is what the current search and filter let through. Filtering
+  // must never re-create the grant rows: they carry the staged edits.
   public sealed partial class PermissionGroupViewModel : ObservableObject {
     public PermissionGroupViewModel(string name, IReadOnlyList<GrantViewModel> grants) {
       Name = name;
@@ -125,10 +116,10 @@ namespace Kakehashi.App.UI {
 
     public ObservableCollection<GrantViewModel> Visible { get; }
 
-    /// <summary>"3 / 4" — how many of this whole category the role holds.</summary>
+    // "3 / 4" — how many of this whole category the role holds.
     public string Summary => $"{All.Count(g => g.IsEnabled)} / {All.Count}";
 
-    /// <summary>Narrows what is shown without touching what is staged.</summary>
+    // Narrows what is shown without touching what is staged.
     public void ApplyFilter(Func<GrantViewModel, bool> keep) {
       Visible.Clear();
       foreach (var grant in All.Where(keep)) {
@@ -151,18 +142,14 @@ namespace Kakehashi.App.UI {
     }
   }
 
-  /// <summary>
-  /// The Role Permissions screen: pick a role, stage its grants, save once.
-  /// </summary>
-  /// <remarks>
-  /// The staging is the design. A screen that saved on every toggle would give an administrator no
-  /// way to change their mind, and would write one audit entry per click for what was one decision;
-  /// the server takes the whole grant set in a transaction for the same reason.
-  /// <para>
-  /// Nothing here is enforcement. Every call it makes needs <c>roles.manage</c> and the server
-  /// checks it; the page's own check keeps a screen nobody can use out of the way.
-  /// </para>
-  /// </remarks>
+  // The Role Permissions screen: pick a role, stage its grants, save once.
+  //
+  // The staging is the design. A screen that saved on every toggle would give an administrator no
+  // way to change their mind, and would write one audit entry per click for what was one decision;
+  // the server takes the whole grant set in a transaction for the same reason.
+  //
+  // Nothing here is enforcement. Every call it makes needs roles.manage and the server
+  // checks it; the page's own check keeps a screen nobody can use out of the way.
   public sealed partial class RolePermissionsViewModel : ViewModel {
     private readonly IAccessAdminService _admin;
     private readonly IPermissionService _permissions;
@@ -188,15 +175,15 @@ namespace Kakehashi.App.UI {
       _dialogs = dialogs;
     }
 
-    /// <summary>Whether the account may use this screen at all.</summary>
+    // Whether the account may use this screen at all.
     public bool IsPermitted => _permissions.Allows(PermissionKeys.ManageRoles);
 
-    /// <summary>Whether the audit log is readable. A second permission, checked separately.</summary>
+    // Whether the audit log is readable. A second permission, checked separately.
     public bool CanViewAudit => _permissions.Allows(PermissionKeys.ViewAudit);
 
     public ObservableCollection<RoleRow> Roles { get; } = [];
 
-    /// <summary>The groups the grid draws — only those the current filter leaves something in.</summary>
+    // The groups the grid draws — only those the current filter leaves something in.
     public ObservableCollection<PermissionGroupViewModel> Groups { get; } = [];
 
     public ObservableCollection<AuditRow> AuditEntries { get; } = [];
@@ -205,15 +192,12 @@ namespace Kakehashi.App.UI {
     [NotifyPropertyChangedFor(nameof(CanDeleteSelectedRole))]
     public partial RoleRow? SelectedRole { get; set; }
 
-    /// <summary>
-    /// Whether the selected role can actually be deleted.
-    /// </summary>
-    /// <remarks>
-    /// The server refuses a role the product ships, with a sentence explaining why. Offering the
-    /// menu item anyway walked an administrator through a permanent-deletion confirmation for
-    /// something that was never going to happen — a control that exists to be refused teaches
-    /// somebody to distrust the screen.
-    /// </remarks>
+    // Whether the selected role can actually be deleted.
+    //
+    // The server refuses a role the product ships, with a sentence explaining why. Offering the
+    // menu item anyway walked an administrator through a permanent-deletion confirmation for
+    // something that was never going to happen — a control that exists to be refused teaches
+    // somebody to distrust the screen.
     public bool CanDeleteSelectedRole => SelectedRole is { IsSystem: false };
 
     [ObservableProperty]
@@ -231,17 +215,17 @@ namespace Kakehashi.App.UI {
     [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;
 
-    /// <summary>"All", "Enabled", "Disabled" or "Changed" — the chip row's selection.</summary>
+    // "All", "Enabled", "Disabled" or "Changed" — the chip row's selection.
     [ObservableProperty]
     public partial string StateFilter { get; set; } = "All";
 
     [ObservableProperty]
     public partial bool IsAuditOpen { get; set; }
 
-    /// <summary>Whether there is anything to save. Drives the unsaved-changes bar.</summary>
+    // Whether there is anything to save. Drives the unsaved-changes bar.
     public bool HasChanges => ChangedCount > 0;
 
-    /// <summary>Loads the roles and the catalogue, then the first role's grants.</summary>
+    // Loads the roles and the catalogue, then the first role's grants.
     [RelayCommand]
     private async Task LoadAsync(CancellationToken cancellationToken) {
       if (!IsPermitted) {
@@ -278,7 +262,7 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Sends the whole staged set and reports what changed.</summary>
+    // Sends the whole staged set and reports what changed.
     [RelayCommand]
     private async Task SaveAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null || !HasChanges) {
@@ -316,7 +300,7 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Puts every row back to what is saved.</summary>
+    // Puts every row back to what is saved.
     [RelayCommand]
     private void Discard() {
       foreach (var grant in _allGroups.SelectMany(group => group.All)) {
@@ -325,7 +309,7 @@ namespace Kakehashi.App.UI {
       RecountChanges();
     }
 
-    /// <summary>Copies the selected role into a new one.</summary>
+    // Copies the selected role into a new one.
     [RelayCommand]
     private async Task CloneAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null) {
@@ -348,7 +332,7 @@ namespace Kakehashi.App.UI {
       await SelectAfterReloadAsync(result.Value.Id, cancellationToken);
     }
 
-    /// <summary>Creates an empty role.</summary>
+    // Creates an empty role.
     [RelayCommand]
     private async Task CreateAsync(CancellationToken cancellationToken) {
       var values = await _dialogs.ShowInputsAsync(
@@ -368,7 +352,7 @@ namespace Kakehashi.App.UI {
       await SelectAfterReloadAsync(result.Value.Id, cancellationToken);
     }
 
-    /// <summary>Renames the selected role or rewrites its description.</summary>
+    // Renames the selected role or rewrites its description.
     [RelayCommand]
     private async Task EditDetailsAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null) {
@@ -392,7 +376,7 @@ namespace Kakehashi.App.UI {
       await SelectAfterReloadAsync(result.Value.Id, cancellationToken);
     }
 
-    /// <summary>Deletes the selected role, after asking.</summary>
+    // Deletes the selected role, after asking.
     [RelayCommand]
     private async Task DeleteAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null) {
@@ -418,12 +402,11 @@ namespace Kakehashi.App.UI {
       await LoadAsync(cancellationToken);
     }
 
-    /// <summary>Opens or closes the audit panel, loading it the first time.</summary>
-    /// <remarks>
-    /// The in-flight guard is not decoration. "Have I already loaded this?" was a count of the
-    /// list, which stays zero for as long as the fetch takes — so closing and reopening during it
-    /// started a second fetch, and both replies appended, showing every entry twice.
-    /// </remarks>
+    // Opens or closes the audit panel, loading it the first time.
+    //
+    // The in-flight guard is not decoration. "Have I already loaded this?" was a count of the
+    // list, which stays zero for as long as the fetch takes — so closing and reopening during it
+    // started a second fetch, and both replies appended, showing every entry twice.
     [RelayCommand]
     private async Task ToggleAuditAsync(CancellationToken cancellationToken) {
       IsAuditOpen = !IsAuditOpen;
@@ -459,13 +442,12 @@ namespace Kakehashi.App.UI {
       ApplyPermissionFilter();
     }
 
-    /// <summary>Rebuilds the grid for whichever role is now selected.</summary>
-    /// <remarks>
-    /// Staged edits on the previous role are dropped without asking, and that is a real trade: the
-    /// alternative is a confirmation between every click on the role list. The unsaved-changes bar
-    /// is visible the whole time somebody has pending edits, which is the warning that costs
-    /// nothing.
-    /// </remarks>
+    // Rebuilds the grid for whichever role is now selected.
+    //
+    // Staged edits on the previous role are dropped without asking, and that is a real trade: the
+    // alternative is a confirmation between every click on the role list. The unsaved-changes bar
+    // is visible the whole time somebody has pending edits, which is the warning that costs
+    // nothing.
     async partial void OnSelectedRoleChanged(RoleRow? value) {
       _allGroups = [];
       Groups.Clear();
@@ -542,15 +524,12 @@ namespace Kakehashi.App.UI {
       };
     }
 
-    /// <summary>
-    /// Reports a failure, and re-reads the caller's own permissions when the failure was a refusal.
-    /// </summary>
-    /// <remarks>
-    /// A refusal mid-session means this client's idea of what the account may do is out of date —
-    /// most often because the administrator just edited their own role. Re-reading turns the next
-    /// render into the honest "you do not have access" panel instead of a working-looking screen
-    /// that answers 403 to everything.
-    /// </remarks>
+    // Reports a failure, and re-reads the caller's own permissions when the failure was a refusal.
+    //
+    // A refusal mid-session means this client's idea of what the account may do is out of date —
+    // most often because the administrator just edited their own role. Re-reading turns the next
+    // render into the honest "you do not have access" panel instead of a working-looking screen
+    // that answers 403 to everything.
     private void Notify(Error error) {
       _notifications.Show(error.Message, InfoBarSeverity.Error);
       if (error.Code == nameof(StatusCode.PermissionDenied)) {

@@ -6,11 +6,9 @@ using System.Threading.Tasks;
 using Kakehashi.Application.Abstractions.Security;
 
 namespace Kakehashi.App.Infrastructure.Backend {
-  /// <summary>
-  /// Adds an <c>Authorization: Bearer</c> header to outbound HTTP backend calls, using the token
-  /// supplied by <see cref="IAccessTokenProvider"/>. When the provider returns no token the request
-  /// is sent unauthenticated, so this handler is harmless when authentication is disabled.
-  /// </summary>
+  // Adds an Authorization: Bearer header to outbound HTTP backend calls, using the token
+  // supplied by IAccessTokenProvider. When the provider returns no token the request
+  // is sent unauthenticated, so this handler is harmless when authentication is disabled.
   public sealed class BearerTokenHandler : DelegatingHandler {
     private readonly IAccessTokenProvider _tokenProvider;
 

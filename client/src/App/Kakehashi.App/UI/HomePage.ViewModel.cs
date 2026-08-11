@@ -20,7 +20,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.UI {
-  /// <summary>A row in the getting-started checklist.</summary>
+  // A row in the getting-started checklist.
   public sealed record GettingStartedStep(
       string Id, string Title, string Subtitle, bool IsDone, bool HasAction) {
     public bool IsNotDone => !IsDone;
@@ -28,16 +28,14 @@ namespace Kakehashi.App.UI {
     public bool ShowsChevron => HasAction && !IsDone;
   }
 
-  /// <summary>A tile in the feature-modules grid.</summary>
-  /// <param name="IsWithheld">
-  /// An administrator has not assigned this module to the account. The tile is shown anyway,
-  /// locked: a module that vanishes tells the user nothing, and looks the same as one that was
-  /// never built. The lock is a courtesy — the server refuses the module's requests regardless.
-  /// </param>
-  /// <param name="IsGranted">
-  /// An administrator assigned this module. It cannot be detached: the grant is not the user's to
-  /// give back.
-  /// </param>
+  // A tile in the feature-modules grid.
+  //
+  // IsWithheld: an administrator has not assigned this module to the account. The tile is shown
+  // anyway, locked: a module that vanishes tells the user nothing, and looks the same as one that
+  // was never built. The lock is a courtesy — the server refuses the module's requests regardless.
+  //
+  // IsGranted: an administrator assigned this module. It cannot be detached: the grant is not the
+  // user's to give back.
   public sealed record ModuleCardItem(
       string PageKey,
       string Name,
@@ -49,32 +47,29 @@ namespace Kakehashi.App.UI {
       bool CanDetach,
       bool IsWithheld = false,
       bool IsGranted = false) {
-    /// <summary>Whether the tile opens its page. A withheld module has nothing to open.</summary>
+    // Whether the tile opens its page. A withheld module has nothing to open.
     public bool CanOpen => !IsWithheld;
   }
 
-  /// <summary>A detached module offered for re-attachment in the register dialog.</summary>
-  /// <param name="IsWithheld">
-  /// Listed but not offerable: the account is not assigned it. Shown rather than hidden so the
-  /// user learns why the module is missing instead of wondering.
-  /// </param>
+  // A detached module offered for re-attachment in the register dialog.
+  //
+  // IsWithheld: listed but not offerable, because the account is not assigned it. Shown rather
+  // than hidden so the user learns why the module is missing instead of wondering.
   public sealed record DetachedModuleListItem(
       string Name, string DisplayName, string Description, bool IsWithheld = false) {
     public bool CanAttach => !IsWithheld;
   }
 
-  /// <summary>A row in the recent-activity feed.</summary>
+  // A row in the recent-activity feed.
   public sealed record HomeActivityItem(
       string Title, string Subtitle, string TimeText, string Glyph, bool IsPositive, bool IsAlert) {
     public bool IsNeutral => !IsPositive && !IsAlert;
   }
 
-  /// <summary>
-  /// Presentation logic for the home page: the session-aware greeting, the dismissible
-  /// getting-started checklist (persisted locally), the feature-module tiles built from the
-  /// attached modules (with attach/detach through the module registry), the backend health
-  /// probe, and the paged local app activity feed.
-  /// </summary>
+  // Presentation logic for the home page: the session-aware greeting, the dismissible
+  // getting-started checklist (persisted locally), the feature-module tiles built from the
+  // attached modules (with attach/detach through the module registry), the backend health
+  // probe, and the paged local app activity feed.
   public sealed partial class HomeViewModel : ViewModel {
     private const string _dismissedKey = "Home.GettingStartedDismissed";
     private const string _exploreStepDoneKey = "Home.ExploreModuleStepDone";
@@ -313,14 +308,14 @@ namespace Kakehashi.App.UI {
           new ProcessStartInfo { FileName = url, UseShellExecute = true });
     }
 
-    /// <summary>Stages a tile for detachment and builds the confirmation prompt.</summary>
+    // Stages a tile for detachment and builds the confirmation prompt.
     public void PrepareDetach(ModuleCardItem module) {
       _pendingDetach = module;
       DetachPrompt = $"Detach {module.Name}? Its pages leave the nav rail and this page. " +
           "You can re-attach it any time from “Register your module”.";
     }
 
-    /// <summary>Detaches the staged module. The broadcast message rebuilds shell and tiles.</summary>
+    // Detaches the staged module. The broadcast message rebuilds shell and tiles.
     public void ConfirmDetach() {
       if (_pendingDetach is { CanDetach: true } module) {
         _ = _moduleRegistry.Detach(module.ModuleName);
@@ -329,7 +324,7 @@ namespace Kakehashi.App.UI {
       _pendingDetach = null;
     }
 
-    /// <summary>Fills the register dialog with the modules that are currently detached.</summary>
+    // Fills the register dialog with the modules that are currently detached.
     public void PrepareAttachModules() {
       DetachedModules.Clear();
       foreach (var module in _moduleRegistry.All) {

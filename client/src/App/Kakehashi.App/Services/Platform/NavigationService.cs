@@ -8,11 +8,9 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.Services.Platform {
-  /// <summary>
-  /// Shows pages in the shell's content <see cref="Frame"/>. Pages are resolved from the container
-  /// (so they get constructor injection), which is why navigation sets <see cref="Frame.Content"/>
-  /// directly and keeps its own back stack rather than using the frame's reflection-based journal.
-  /// </summary>
+  // Shows pages in the shell's content Frame. Pages are resolved from the container
+  // (so they get constructor injection), which is why navigation sets Frame.Content
+  // directly and keeps its own back stack rather than using the frame's reflection-based journal.
   public sealed class NavigationService : INavigationService {
     private readonly IServiceProvider _services;
     private readonly IModuleRegistry _moduleRegistry;

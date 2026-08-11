@@ -5,19 +5,16 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The formatting the two administration screens share: initials for avatars, relative times,
-  /// and the badge palette.
-  /// </summary>
-  /// <remarks>
-  /// Static functions rather than converters because <c>x:Bind</c> compile-checks a function call
-  /// and cannot check a converter. Brushes are cached: these are called once per row per render,
-  /// and a fresh brush per call is garbage for no benefit.
-  /// </remarks>
+  // The formatting the two administration screens share: initials for avatars, relative times,
+  // and the badge palette.
+  //
+  // Static functions rather than converters because x:Bind compile-checks a function call
+  // and cannot check a converter. Brushes are cached: these are called once per row per render,
+  // and a fresh brush per call is garbage for no benefit.
   public static class AdminFormat {
     private static readonly Dictionary<string, SolidColorBrush> _brushes = [];
 
-    /// <summary>"System Administrator" → "SA". One letter for one-word names.</summary>
+    // "System Administrator" → "SA". One letter for one-word names.
     public static string Initials(string name) {
       var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
       if (parts.Length == 0) {
@@ -29,10 +26,8 @@ namespace Kakehashi.App.UI {
       return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
-    /// <summary>
-    /// "2 min ago", "Yesterday", "2026-06-01". Null — never — is the caller's to phrase, because
-    /// the list says "—" where the status column says "Never signed in".
-    /// </summary>
+    // "2 min ago", "Yesterday", "2026-06-01". Null — never — is the caller's to phrase, because
+    // the list says "—" where the status column says "Never signed in".
     public static string Relative(DateTimeOffset at) {
       var age = DateTimeOffset.Now - at;
       if (age < TimeSpan.FromMinutes(2)) {
@@ -56,13 +51,13 @@ namespace Kakehashi.App.UI {
       return at.ToString("yyyy-MM-dd");
     }
 
-    /// <summary>The foreground for a role's badge. Known roles get the mockup's palette.</summary>
+    // The foreground for a role's badge. Known roles get the mockup's palette.
     public static SolidColorBrush RoleForeground(string roleName) {
       return Cached("fg:" + roleName, () => RoleColor(roleName));
     }
 
-    /// <summary>The tinted background behind it — the same hue at low alpha, so it works on both
-    /// themes without a second palette.</summary>
+    // The tinted background behind it — the same hue at low alpha, so it works on both
+    // themes without a second palette.
     public static SolidColorBrush RoleBackground(string roleName) {
       return Cached("bg:" + roleName, () => WithAlpha(RoleColor(roleName), 0x26));
     }

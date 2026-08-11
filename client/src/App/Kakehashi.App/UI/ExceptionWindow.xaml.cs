@@ -6,10 +6,8 @@ using Microsoft.UI.Xaml;
 using WinUIEx;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// A last-resort window shown for unhandled exceptions. It surfaces the error and its inner
-  /// exceptions and lets the user continue, restart, or exit the app.
-  /// </summary>
+  // A last-resort window shown for unhandled exceptions. It surfaces the error and its inner
+  // exceptions and lets the user continue, restart, or exit the app.
   public sealed partial class ExceptionWindow : WindowEx {
     public ExceptionWindow() {
       InitializeComponent();

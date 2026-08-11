@@ -20,12 +20,10 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 
 namespace Kakehashi.Modules.Auth.UI {
-  /// <summary>
-  /// Composition entry point for the Auth module: binds options, registers the application layer and
-  /// the concrete OIDC adapters, replaces the host's access-token provider with the session-backed
-  /// one, contributes the startup login gate and the forced re-sign-in on sign-out, and exposes the
-  /// Account page through an avatar item in the shell's footer.
-  /// </summary>
+  // Composition entry point for the Auth module: binds options, registers the application layer and
+  // the concrete OIDC adapters, replaces the host's access-token provider with the session-backed
+  // one, contributes the startup login gate and the forced re-sign-in on sign-out, and exposes the
+  // Account page through an avatar item in the shell's footer.
   public sealed class AuthModule : IModule {
     public string Name => "Auth";
 
@@ -107,14 +105,12 @@ namespace Kakehashi.Modules.Auth.UI {
       ];
     }
 
-    /// <summary>
-    /// Lays the avatar and label out over the default item template's geometry so they line up
-    /// with icon items (e.g. Settings) in every pane state. The shell gives the item a blank
-    /// Icon, so the presenter's 40px icon column - with its icon box centered at x=20 - is
-    /// present in both expanded and compact modes, and content starts 4px after it.
-    /// The -44 margin re-bases this grid at the icon column's origin, the avatar is centered on
-    /// the icon box, and the 44px first column puts the label back at the standard position.
-    /// </summary>
+    // Lays the avatar and label out over the default item template's geometry so they line up
+    // with icon items (e.g. Settings) in every pane state. The shell gives the item a blank
+    // Icon, so the presenter's 40px icon column - with its icon box centered at x=20 - is
+    // present in both expanded and compact modes, and content starts 4px after it.
+    // The -44 margin re-bases this grid at the icon column's origin, the avatar is centered on
+    // the icon box, and the 44px first column puts the label back at the standard position.
     private static Grid CreateAccountItemContent(PersonPicture avatar) {
       var panel = new Grid { Margin = new Thickness(-44, 0, 0, 0) };
       panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
@@ -144,7 +140,7 @@ namespace Kakehashi.Modules.Auth.UI {
       return panel;
     }
 
-    /// <summary>The shell item label: full name, falling back to email, then to "Account".</summary>
+    // The shell item label: full name, falling back to email, then to "Account".
     private static string ResolveAccountLabel() {
       var session = ContractServices.Provider.GetRequiredService<IAuthSessionAccessor>().Current;
       if (!string.IsNullOrWhiteSpace(session?.DisplayName)) {

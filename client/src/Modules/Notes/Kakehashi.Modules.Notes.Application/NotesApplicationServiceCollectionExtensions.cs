@@ -4,9 +4,9 @@ using Kakehashi.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kakehashi.Modules.Notes.Application {
-  /// <summary>Registers the Notes application layer: its message handlers.</summary>
+  // Registers the Notes application layer: its message handlers.
   public static class NotesApplicationServiceCollectionExtensions {
-    /// <summary>The assembly that contains the Notes application handlers.</summary>
+    // The assembly that contains the Notes application handlers.
     public static Assembly Assembly =>
         typeof(NotesApplicationServiceCollectionExtensions).Assembly;
 

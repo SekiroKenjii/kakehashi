@@ -11,12 +11,10 @@ using Microsoft.Extensions.Options;
 using HealthV1 = Kakehashi.Health.V1;
 
 namespace Kakehashi.App.Infrastructure.DependencyInjection {
-  /// <summary>
-  /// Composition entry point for the host-side infrastructure: the backend client (HTTP or gRPC,
-  /// selected by configuration) and the outbound bearer-token attachment. Observability is registered
-  /// separately via <c>AddObservability</c> so the transport instrumentation it adds is wired
-  /// regardless of protocol.
-  /// </summary>
+  // Composition entry point for the host-side infrastructure: the backend client (HTTP or gRPC,
+  // selected by configuration) and the outbound bearer-token attachment. Observability is registered
+  // separately via AddObservability so the transport instrumentation it adds is wired
+  // regardless of protocol.
   public static class InfrastructureServiceCollectionExtensions {
     public static IServiceCollection AddBackendInfrastructure(
         this IServiceCollection services, IConfiguration configuration) {
@@ -50,21 +48,17 @@ namespace Kakehashi.App.Infrastructure.DependencyInjection {
       return services;
     }
 
-    /// <summary>
-    /// Registers a generated gRPC client pointed at the backend, with the session access token
-    /// attached to every call.
-    /// </summary>
-    /// <remarks>
-    /// Feature modules call this from <c>IModule.RegisterServices</c> rather than assembling a
-    /// channel themselves. The token plumbing is the reason: a module that wired its own client
-    /// and forgot the call credentials would send unauthenticated requests, and it would keep
-    /// working right up until the server started checking. One place to get it right, and no way
-    /// to half-do it.
-    /// <para>
-    /// The address is read at resolve time rather than captured at registration, so a module can
-    /// register before or after <see cref="AddBackendInfrastructure"/> without the order mattering.
-    /// </para>
-    /// </remarks>
+    // Registers a generated gRPC client pointed at the backend, with the session access token
+    // attached to every call.
+    //
+    // Feature modules call this from IModule.RegisterServices rather than assembling a
+    // channel themselves. The token plumbing is the reason: a module that wired its own client
+    // and forgot the call credentials would send unauthenticated requests, and it would keep
+    // working right up until the server started checking. One place to get it right, and no way
+    // to half-do it.
+    //
+    // The address is read at resolve time rather than captured at registration, so a module can
+    // register before or after AddBackendInfrastructure without the order mattering.
     public static IHttpClientBuilder AddBackendGrpcClient<TClient>(this IServiceCollection services)
         where TClient : class {
       ArgumentNullException.ThrowIfNull(services);

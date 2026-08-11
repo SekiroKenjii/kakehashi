@@ -8,7 +8,7 @@ using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
 
 namespace Kakehashi.Modules.Auth.UI.Views {
-  /// <summary>A small sign-in window shown by the startup gate when interactive login is required.</summary>
+  // A small sign-in window shown by the startup gate when interactive login is required.
   public sealed partial class LoginWindow : WindowEx {
     private readonly TaskCompletionSource<bool> _outcome = new();
     private bool _allowClose;
@@ -31,10 +31,8 @@ namespace Kakehashi.Modules.Auth.UI.Views {
 
     public LoginViewModel ViewModel { get; }
 
-    /// <summary>
-    /// Completes with <c>true</c> when the user signs in and <c>false</c> when they confirm quitting
-    /// at the sign-in prompt. The startup gate awaits this to decide whether to continue or exit.
-    /// </summary>
+    // Completes with true when the user signs in and false when they confirm quitting
+    // at the sign-in prompt. The startup gate awaits this to decide whether to continue or exit.
     public Task<bool> Outcome => _outcome.Task;
 
     private void OnSignInSucceeded(object? sender, EventArgs e) {

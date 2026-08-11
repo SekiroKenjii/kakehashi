@@ -21,16 +21,13 @@ using AuthzV1 = Kakehashi.Authz.V1;
 using NavigationV1 = Kakehashi.Navigation.V1;
 
 namespace Kakehashi.App.Hosting {
-  /// <summary>
-  /// Builds the application's <see cref="IHost"/>: configuration, logging, observability, the backend
-  /// client, the platform services, the windows/pages/view models, the startup orchestrators, and the
-  /// feature modules. This is the one place composition happens; <c>App.xaml.cs</c> just runs it.
-  /// </summary>
+  // Builds the application's IHost: configuration, logging, observability, the backend
+  // client, the platform services, the windows/pages/view models, the startup orchestrators, and the
+  // feature modules. This is the one place composition happens; App.xaml.cs just runs it.
   internal static class AppHost {
-    /// <summary>
-    /// Builds the application's host, which is the container for all services and composition. This is the one place composition happens; <c>App.xaml.cs</c> just runs it.
-    /// </summary>
-    /// <returns>The built <see cref="IHost"/> instance.</returns>
+    // Builds the application's host, which is the container for all services and composition. This is the one place composition happens; App.xaml.cs just runs it.
+    //
+    // Returns: The built IHost instance.
     public static IHost Build() {
       var builder = Host.CreateApplicationBuilder();
 

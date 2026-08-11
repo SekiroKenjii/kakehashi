@@ -7,7 +7,7 @@ using Kakehashi.Modules.Notes.Domain.Notes;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Notes.Application.Notes.Commands.UpdateNote {
-  /// <summary>Validates the draft locally, then asks the server to rewrite the note.</summary>
+  // Validates the draft locally, then asks the server to rewrite the note.
   public sealed class UpdateNoteCommandHandler
       : IRequestHandler<UpdateNoteCommand, Result<NoteDto>> {
     private readonly INotesGateway _notes;

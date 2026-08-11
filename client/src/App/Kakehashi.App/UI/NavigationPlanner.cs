@@ -6,23 +6,19 @@ using Kakehashi.UI.Common.Controls;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.App.UI {
-  /// <summary>One pane entry, and whether the account may use it.</summary>
+  // One pane entry, and whether the account may use it.
   public sealed record NavigationEntry(NavigationItem Item, bool IsEnabled);
 
-  /// <summary>
-  /// Decides what goes in the navigation pane, in what order, and what is reachable.
-  /// </summary>
-  /// <remarks>
-  /// Its own class rather than a method on the shell, because these are rules worth being able to
-  /// test — and a <c>Page</c> cannot be constructed off the UI thread, so a rule that lives on one is
-  /// a rule nothing checks. The shell keeps what is genuinely its own: turning entries into controls.
-  /// <para>
-  /// Two halves meet here. The client knows which destinations it <em>has</em> — a destination is a
-  /// compiled page, and no server can conjure one. The deployment knows where they <em>go</em> —
-  /// which heading, in what order, under what label, and whether an account may use them. This class
-  /// is the join, and it trusts each side for exactly its half.
-  /// </para>
-  /// </remarks>
+  // Decides what goes in the navigation pane, in what order, and what is reachable.
+  //
+  // Its own class rather than a method on the shell, because these are rules worth being able to
+  // test — and a Page cannot be constructed off the UI thread, so a rule that lives on one is
+  // a rule nothing checks. The shell keeps what is genuinely its own: turning entries into controls.
+  //
+  // Two halves meet here. The client knows which destinations it has — a destination is a
+  // compiled page, and no server can conjure one. The deployment knows where they go —
+  // which heading, in what order, under what label, and whether an account may use them. This class
+  // is the join, and it trusts each side for exactly its half.
   public sealed class NavigationPlanner {
     private readonly IModuleRegistry _registry;
     private readonly IPermissionService _permissions;
@@ -32,7 +28,7 @@ namespace Kakehashi.App.UI {
         : this(registry, permissions, HostNavigation.Items) {
     }
 
-    /// <summary>Overload taking the host's items, so a test can supply its own.</summary>
+    // Overload taking the host's items, so a test can supply its own.
     public NavigationPlanner(
         IModuleRegistry registry,
         IPermissionService permissions,
@@ -45,28 +41,23 @@ namespace Kakehashi.App.UI {
       _hostItems = hostItems;
     }
 
-    /// <summary>
-    /// The pane's entries: the deployment's menu first, then the destinations the client places
-    /// itself.
-    /// </summary>
-    /// <remarks>
-    /// The deployment decides the menu — the order of the headings, the order within them, the labels,
-    /// and which destinations an account is offered at all. This client contributes three things it is
-    /// the only one able to know:
-    /// <list type="bullet">
-    /// <item>whether it <em>has</em> the destination. A layout naming a page this build does not
-    /// contain is skipped rather than drawn as a row that navigates nowhere;</item>
-    /// <item>whether the user <em>detached</em> its module. That is their own preference about their
-    /// own composition, and no server is entitled to overrule it;</item>
-    /// <item>where the footer items go. The account avatar is not in the menu, so nothing about it is
-    /// the deployment's to arrange.</item>
-    /// </list>
-    /// <para>
-    /// With no layout — the first run, or a server that could not be reached — it falls back to
-    /// <see cref="PlanLocally"/>. An app that will not draw a menu because a call timed out is worse
-    /// than one drawing the menu it was built with.
-    /// </para>
-    /// </remarks>
+    // The pane's entries: the deployment's menu first, then the destinations the client places
+    // itself.
+    //
+    // The deployment decides the menu — the order of the headings, the order within them, the
+    // labels, and which destinations an account is offered at all. This client contributes three
+    // things it is the only one able to know:
+    //
+    //   - whether it has the destination. A layout naming a page this build does not contain is
+    //     skipped rather than drawn as a row that navigates nowhere;
+    //   - whether the user detached its module. That is their own preference about their own
+    //     composition, and no server is entitled to overrule it;
+    //   - where the footer items go. The account avatar is not in the menu, so nothing about it is
+    //     the deployment's to arrange.
+    //
+    // With no layout — the first run, or a server that could not be reached — it falls back to
+    // PlanLocally. An app that will not draw a menu because a call timed out is worse than one
+    // drawing the menu it was built with.
     public IReadOnlyList<NavigationEntry> Plan(NavigationLayout layout) {
       ArgumentNullException.ThrowIfNull(layout);
 
@@ -93,23 +84,20 @@ namespace Kakehashi.App.UI {
       return entries;
     }
 
-    /// <summary>
-    /// The pane as this build alone would draw it, used until the deployment's answer arrives.
-    /// </summary>
-    /// <remarks>
-    /// Three rules, and they are the client-side approximation of what the server does properly:
-    /// <list type="bullet">
-    /// <item>a destination whose permission the account lacks is <em>absent</em>. It is the cautious
-    /// direction — this is the path taken when nothing is known, and a locked administrative row
-    /// offered to everybody is worse than a missing one;</item>
-    /// <item>a module an administrator withheld is present and <em>disabled</em>, because a module the
-    /// product has and this account has not been given is worth being able to see and ask for;</item>
-    /// <item>a module the user detached is absent, because that is their own preference.</item>
-    /// </list>
-    /// A required module — the one the sign-in gate depends on — is exempt from withholding. Its page
-    /// is how somebody signs out and manages their own account, and an account that cannot reach it is
-    /// stuck.
-    /// </remarks>
+    // The pane as this build alone would draw it, used until the deployment's answer arrives.
+    //
+    // Three rules, and they are the client-side approximation of what the server does properly:
+    //
+    //   - a destination whose permission the account lacks is absent. It is the cautious direction
+    //     — this is the path taken when nothing is known, and a locked administrative row offered
+    //     to everybody is worse than a missing one;
+    //   - a module an administrator withheld is present and disabled, because a module the product
+    //     has and this account has not been given is worth being able to see and ask for;
+    //   - a module the user detached is absent, because that is their own preference.
+    //
+    // A required module — the one the sign-in gate depends on — is exempt from withholding. Its
+    // page is how somebody signs out and manages their own account, and an account that cannot
+    // reach it is stuck.
     private IReadOnlyList<NavigationEntry> PlanLocally(
         IReadOnlyDictionary<string, NavigationEntry> available) {
       var entries = new List<NavigationEntry>();
@@ -122,15 +110,12 @@ namespace Kakehashi.App.UI {
       return entries;
     }
 
-    /// <summary>
-    /// The compiled navigation item a stored row refers to, or null when this build has no such page.
-    /// </summary>
-    /// <remarks>
-    /// Exposed for the layout screen, which reports a screen's route and where it is declared. Those
-    /// come from the page type this build compiled, not from the server — the server has no notion of a
-    /// route, and no way to know which file declares a page. Reusing this join is what keeps the screen
-    /// from re-deriving a mapping the planner already owns.
-    /// </remarks>
+    // The compiled navigation item a stored row refers to, or null when this build has no such page.
+    //
+    // Exposed for the layout screen, which reports a screen's route and where it is declared. Those
+    // come from the page type this build compiled, not from the server — the server has no notion of a
+    // route, and no way to know which file declares a page. Reusing this join is what keeps the screen
+    // from re-deriving a mapping the planner already owns.
     public NavigationItem? Find(string id) {
       if (id.Length == 0) {
         return null;
@@ -138,14 +123,11 @@ namespace Kakehashi.App.UI {
       return Available().TryGetValue(id, out var entry) ? entry.Item : null;
     }
 
-    /// <summary>
-    /// Every destination this client has and the user has not detached, keyed by its id.
-    /// </summary>
-    /// <remarks>
-    /// Insertion-ordered, because <see cref="PlanLocally"/> draws them in this order and the
-    /// composition root's module order is the sensible fallback. The footer items have no id, so they
-    /// are keyed by their page type to keep them from colliding.
-    /// </remarks>
+    // Every destination this client has and the user has not detached, keyed by its id.
+    //
+    // Insertion-ordered, because PlanLocally draws them in this order and the
+    // composition root's module order is the sensible fallback. The footer items have no id, so they
+    // are keyed by their page type to keep them from colliding.
     private Dictionary<string, NavigationEntry> Available() {
       var available = new Dictionary<string, NavigationEntry>(StringComparer.Ordinal);
 
@@ -182,20 +164,16 @@ namespace Kakehashi.App.UI {
       return available;
     }
 
-    /// <summary>
-    /// Adds the destination a placement names, if this build has it.
-    /// </summary>
-    /// <remarks>
-    /// The label and icon come from the deployment, so renaming a heading or a screen is somebody's
-    /// afternoon rather than a release. The glyph does not: the deployment sends a semantic name and
-    /// this client decides what it looks like, because which code point draws a note is a fact about
-    /// the font this build ships with.
-    /// <para>
-    /// Enabled is the conjunction of both answers. The server's says whether the account may use it;
-    /// this client's says whether an administrator withheld the whole module. Either one being false
-    /// is a reason not to offer a working row.
-    /// </para>
-    /// </remarks>
+    // Adds the destination a placement names, if this build has it.
+    //
+    // The label and icon come from the deployment, so renaming a heading or a screen is somebody's
+    // afternoon rather than a release. The glyph does not: the deployment sends a semantic name and
+    // this client decides what it looks like, because which code point draws a note is a fact about
+    // the font this build ships with.
+    //
+    // Enabled is the conjunction of both answers. The server's says whether the account may use it;
+    // this client's says whether an administrator withheld the whole module. Either one being false
+    // is a reason not to offer a working row.
     private void Place(
         List<NavigationEntry> entries,
         IReadOnlyDictionary<string, NavigationEntry> available,

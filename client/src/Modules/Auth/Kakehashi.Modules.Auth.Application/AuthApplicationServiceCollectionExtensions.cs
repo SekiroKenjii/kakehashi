@@ -4,9 +4,9 @@ using Kakehashi.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kakehashi.Modules.Auth.Application {
-  /// <summary>Registers the Auth application layer: its message handlers.</summary>
+  // Registers the Auth application layer: its message handlers.
   public static class AuthApplicationServiceCollectionExtensions {
-    /// <summary>The assembly that contains the Auth application handlers.</summary>
+    // The assembly that contains the Auth application handlers.
     public static Assembly Assembly => typeof(AuthApplicationServiceCollectionExtensions).Assembly;
 
     public static IServiceCollection AddAuthApplication(this IServiceCollection services) {

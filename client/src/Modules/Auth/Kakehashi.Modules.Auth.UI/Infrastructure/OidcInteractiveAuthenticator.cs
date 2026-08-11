@@ -13,11 +13,9 @@ using Microsoft.Extensions.Options;
 using SharedKernelResult = Kakehashi.SharedKernel.Result;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  /// <summary>
-  /// Drives the OpenID Connect Authorization Code + PKCE flow via <see cref="OidcClient"/> and the
-  /// system browser. PKCE, state/nonce and id_token validation are handled by the library; this
-  /// adapter only maps results to the domain and never throws for expected failures.
-  /// </summary>
+  // Drives the OpenID Connect Authorization Code + PKCE flow via OidcClient and the
+  // system browser. PKCE, state/nonce and id_token validation are handled by the library; this
+  // adapter only maps results to the domain and never throws for expected failures.
   public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthenticator {
     private readonly AuthOptions _options;
     private readonly SystemBrowser _browser;
@@ -36,11 +34,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _logger = logger;
     }
 
-    /// <summary>
-    /// Signs in through the system browser. <paramref name="credentials"/> is ignored: the whole
-    /// point of this flow is that the password is typed into the authorization server's page and
-    /// never reaches this process.
-    /// </summary>
+    // Signs in through the system browser. credentials is ignored: the whole
+    // point of this flow is that the password is typed into the authorization server's page and
+    // never reaches this process.
     public async Task<Result<AuthSession>> LoginAsync(
         SignInCredentials? credentials, CancellationToken cancellationToken) {
       if (!_options.IsConfigured) {
@@ -143,16 +139,13 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       });
     }
 
-    /// <summary>
-    /// Resolves the user's identity from the userinfo endpoint. Refresh responses carry no identity
-    /// claims, so without this a silently restored session would have no display name or email.
-    /// Best-effort: the session works without identity.
-    /// </summary>
-    /// <remarks>
-    /// Internal because <see cref="InAppAuthenticator"/> needs the same answer after its own
-    /// sign-in, and getting it from here means one implementation of discovery, one of the userinfo
-    /// call, and no second opinion about which claim holds the display name.
-    /// </remarks>
+    // Resolves the user's identity from the userinfo endpoint. Refresh responses carry no identity
+    // claims, so without this a silently restored session would have no display name or email.
+    // Best-effort: the session works without identity.
+    //
+    // Internal because InAppAuthenticator needs the same answer after its own
+    // sign-in, and getting it from here means one implementation of discovery, one of the userinfo
+    // call, and no second opinion about which claim holds the display name.
     internal async Task<(string? DisplayName, string? Email, IReadOnlyList<string> Roles)>
         FetchIdentityAsync(string accessToken, CancellationToken cancellationToken) {
       try {
@@ -177,13 +170,11 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       return claims.FirstOrDefault(claim => claim.Type == type)?.Value;
     }
 
-    /// <summary>
-    /// Collects role claims under both spellings. There is no standard one: Duende and legacy
-    /// IdentityServer emit <c>role</c>, Entra and this product's own backend emit <c>roles</c>, and
-    /// which authorization server sits behind <c>Auth:Authority</c> is a deployment choice. Reading
-    /// both costs a predicate and removes a class of "why is the user missing every permission"
-    /// that is invisible from the client side.
-    /// </summary>
+    // Collects role claims under both spellings. There is no standard one: Duende and legacy
+    // IdentityServer emit role, Entra and this product's own backend emit roles, and
+    // which authorization server sits behind Auth:Authority is a deployment choice. Reading
+    // both costs a predicate and removes a class of "why is the user missing every permission"
+    // that is invisible from the client side.
     private static IReadOnlyList<string> ResolveRoles(IEnumerable<Claim>? claims) {
       return claims is null
           ? []

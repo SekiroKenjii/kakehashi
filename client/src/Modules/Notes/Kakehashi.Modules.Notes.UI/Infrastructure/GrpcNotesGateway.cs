@@ -11,16 +11,13 @@ using Microsoft.Extensions.Logging;
 using NotesV1 = Kakehashi.Notes.V1;
 
 namespace Kakehashi.Modules.Notes.UI.Infrastructure {
-  /// <summary>
-  /// The gRPC adapter behind <see cref="INotesGateway"/>. It is the only class in the module that
-  /// knows the wire exists: it maps between the generated messages and the application's DTOs, and
-  /// turns transport failures into <see cref="Result"/> failures.
-  /// </summary>
-  /// <remarks>
-  /// The alias is <c>NotesV1</c> rather than <c>Notes</c> because inside a <c>Kakehashi.*</c>
-  /// namespace the identifier <c>Notes</c> binds to the enclosing <c>Kakehashi.Modules.Notes</c>
-  /// namespace before a using alias is ever considered.
-  /// </remarks>
+  // The gRPC adapter behind INotesGateway. It is the only class in the module that
+  // knows the wire exists: it maps between the generated messages and the application's DTOs, and
+  // turns transport failures into Result failures.
+  //
+  // The alias is NotesV1 rather than Notes because inside a Kakehashi.*
+  // namespace the identifier Notes binds to the enclosing Kakehashi.Modules.Notes
+  // namespace before a using alias is ever considered.
   public sealed partial class GrpcNotesGateway : INotesGateway {
     private readonly NotesV1.NotesService.NotesServiceClient _client;
     private readonly ILogger<GrpcNotesGateway> _logger;
@@ -108,7 +105,7 @@ namespace Kakehashi.Modules.Notes.UI.Infrastructure {
           note.UpdatedAt.ToDateTimeOffset());
     }
 
-    /// <summary>Turns a gRPC status into an error the user can be shown.</summary>
+    // Turns a gRPC status into an error the user can be shown.
     private Error Translate(RpcException exception, string operation) {
       switch (exception.StatusCode) {
         case StatusCode.InvalidArgument:

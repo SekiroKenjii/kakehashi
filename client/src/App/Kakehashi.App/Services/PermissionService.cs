@@ -9,58 +9,45 @@ using Microsoft.Extensions.Logging;
 using AuthzV1 = Kakehashi.Authz.V1;
 
 namespace Kakehashi.App.Services {
-  /// <summary>What the signed-in account may do, as this client understands it.</summary>
-  /// <remarks>
-  /// A port so view models can be tested without a server, and so the one answer everything reads
-  /// comes from one place. A second component asking the server the same question separately is a
-  /// second component that can be told something different.
-  /// </remarks>
+  // What the signed-in account may do, as this client understands it.
+  //
+  // A port so view models can be tested without a server, and so the one answer everything reads
+  // comes from one place. A second component asking the server the same question separately is a
+  // second component that can be told something different.
   public interface IPermissionService {
-    /// <summary>
-    /// Whether the account holds the permission at all, at any scope.
-    /// </summary>
-    /// <remarks>
-    /// Presentation only. Every route is checked server-side against the same table, so a client
-    /// that never asked, or asked and lied to itself, is refused identically. What this buys is a
-    /// hidden button instead of one that fails.
-    /// </remarks>
+    // Whether the account holds the permission at all, at any scope.
+    //
+    // Presentation only. Every route is checked server-side against the same table, so a client
+    // that never asked, or asked and lied to itself, is refused identically. What this buys is a
+    // hidden button instead of one that fails.
     bool Allows(string permissionKey);
 
-    /// <summary>
-    /// How far the permission reaches: <c>own</c>, <c>team</c>, <c>all</c>, or empty when the
-    /// account does not hold it.
-    /// </summary>
+    // How far the permission reaches: own, team, all, or empty when the
+    // account does not hold it.
     string ScopeOf(string permissionKey);
 
-    /// <summary>Re-reads the account's grants from the server.</summary>
+    // Re-reads the account's grants from the server.
     Task RefreshAsync(CancellationToken cancellationToken);
 
-    /// <summary>
-    /// Raised after <see cref="RefreshAsync"/> changes what the account may do.
-    /// </summary>
-    /// <remarks>
-    /// Grants are resolved per request, so they can change under a screen that is already open —
-    /// an administrator who just edited their own role is the ordinary case. A page that heard
-    /// nothing would keep showing a working screen that answers 403 to everything.
-    /// </remarks>
+    // Raised after RefreshAsync changes what the account may do.
+    //
+    // Grants are resolved per request, so they can change under a screen that is already open —
+    // an administrator who just edited their own role is the ordinary case. A page that heard
+    // nothing would keep showing a working screen that answers 403 to everything.
     event EventHandler? GrantsChanged;
   }
 
-  /// <summary>
-  /// Asks the server what the account may do, and tells the registry which modules to lock.
-  /// </summary>
-  /// <remarks>
-  /// A host service rather than a feature module's, because what it feeds is the host's: the
-  /// registry governs every module, and a feature module that governed the others would reach
-  /// across the boundary the architecture tests exist to hold.
-  /// <para>
-  /// It replaces the module-assignment client this project used to carry. That mechanism answered
-  /// "may this account use this module" with a table of its own, beside the permission table that
-  /// answers everything else — two systems, one question, and no reason for them to agree. Module
-  /// access is now the ordinary permission <c>&lt;module&gt;.access</c>, so the lock on a page and
-  /// the refusal on a route read the same row.
-  /// </para>
-  /// </remarks>
+  // Asks the server what the account may do, and tells the registry which modules to lock.
+  //
+  // A host service rather than a feature module's, because what it feeds is the host's: the
+  // registry governs every module, and a feature module that governed the others would reach
+  // across the boundary the architecture tests exist to hold.
+  //
+  // It replaces the module-assignment client this project used to carry. That mechanism answered
+  // "may this account use this module" with a table of its own, beside the permission table that
+  // answers everything else — two systems, one question, and no reason for them to agree. Module
+  // access is now the ordinary permission &lt;module&gt;.access, so the lock on a page and
+  // the refusal on a route read the same row.
   public sealed partial class PermissionService : IPermissionService {
     private readonly AuthzV1.AuthzService.AuthzServiceClient _client;
     private readonly IModuleRegistry _registry;
@@ -90,12 +77,11 @@ namespace Kakehashi.App.Services {
       return _grants.TryGetValue(permissionKey, out var scope) ? scope : string.Empty;
     }
 
-    /// <summary>Fetches the grants and applies the module locks to the registry.</summary>
-    /// <remarks>
-    /// Failure leaves the previous answer standing rather than emptying it. An unreachable server
-    /// must not lock a user out of a client the server is going to refuse anyway; the alternative
-    /// trades a lock nobody can act on for an app that will not open.
-    /// </remarks>
+    // Fetches the grants and applies the module locks to the registry.
+    //
+    // Failure leaves the previous answer standing rather than emptying it. An unreachable server
+    // must not lock a user out of a client the server is going to refuse anyway; the alternative
+    // trades a lock nobody can act on for an app that will not open.
     public async Task RefreshAsync(CancellationToken cancellationToken) {
       try {
         var reply = await _client

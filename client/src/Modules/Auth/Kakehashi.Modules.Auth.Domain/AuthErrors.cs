@@ -1,7 +1,7 @@
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Domain {
-  /// <summary>The domain errors the Auth module can return.</summary>
+  // The domain errors the Auth module can return.
   public static class AuthErrors {
     public static readonly Error AccessTokenRequired =
         new("Auth.Session.AccessTokenRequired", "An access token is required to create a session.");

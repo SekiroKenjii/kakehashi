@@ -4,7 +4,7 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Kakehashi.Modules.Auth.Application.Abstractions;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Queries.GetCurrentSession {
-  /// <summary>Projects the current <see cref="Domain.AuthSession"/> to a <see cref="SessionDto"/>.</summary>
+  // Projects the current Domain.AuthSession to a SessionDto.
   public sealed class GetCurrentSessionQueryHandler
       : IRequestHandler<GetCurrentSessionQuery, SessionDto> {
     private readonly IAuthSessionAccessor _session;

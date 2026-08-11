@@ -8,13 +8,11 @@ using Kakehashi.App.Infrastructure.Backend.Contracts;
 using HealthV1 = Kakehashi.Health.V1;
 
 namespace Kakehashi.App.Infrastructure.Backend.Grpc {
-  /// <summary>
-  /// gRPC implementation of <see cref="IBackendClient"/>. It wraps the strongly-typed client
-  /// generated from <c>proto/kakehashi/health/v1/health.proto</c> — the same file the Go server
-  /// compiles against, so the two halves cannot disagree about the contract — and maps between the
-  /// generated protobuf messages and the transport-agnostic contracts. Calls are traced
-  /// automatically by the OpenTelemetry gRPC-client instrumentation.
-  /// </summary>
+  // gRPC implementation of IBackendClient. It wraps the strongly-typed client
+  // generated from proto/kakehashi/health/v1/health.proto — the same file the Go server
+  // compiles against, so the two halves cannot disagree about the contract — and maps between the
+  // generated protobuf messages and the transport-agnostic contracts. Calls are traced
+  // automatically by the OpenTelemetry gRPC-client instrumentation.
   public sealed class GrpcBackendClient : IBackendClient {
     private readonly HealthV1.HealthService.HealthServiceClient _client;
 

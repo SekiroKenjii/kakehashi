@@ -7,10 +7,8 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 
 namespace Kakehashi.Modules.Auth.UI.Views {
-  /// <summary>
-  /// The content of the account flyout opened from the shell's footer avatar item. Raises
-  /// <see cref="CloseRequested"/> when an action is taken so the hosting flyout can dismiss itself.
-  /// </summary>
+  // The content of the account flyout opened from the shell's footer avatar item. Raises
+  // CloseRequested when an action is taken so the hosting flyout can dismiss itself.
   public sealed partial class AccountFlyoutView : UserControl {
     public AccountFlyoutView(AccountFlyoutViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
@@ -23,10 +21,10 @@ namespace Kakehashi.Modules.Auth.UI.Views {
 
     public AccountFlyoutViewModel ViewModel { get; }
 
-    /// <summary>Raised when the user takes an action that should dismiss the flyout.</summary>
+    // Raised when the user takes an action that should dismiss the flyout.
     public event Action? CloseRequested;
 
-    /// <summary>Resolves the status color: success when signed in, neutral otherwise.</summary>
+    // Resolves the status color: success when signed in, neutral otherwise.
     public Brush StatusBrush(bool isAuthenticated) {
       string key = isAuthenticated ? "SystemFillColorSuccessBrush" : "SystemFillColorNeutralBrush";
       // Fully qualified because Kakehashi.Modules.Auth.Application shadows the XAML type name.

@@ -3,25 +3,19 @@ using Kakehashi.App.Services;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The destinations the host owns, in the same shape a module contributes.
-  /// </summary>
-  /// <remarks>
-  /// The administration screens are not a feature module — they govern every module, and a module
-  /// that governed the others would reach across the boundary the architecture tests hold. But
-  /// they are still pane items, and hard-coding them into the shell's XAML meant they could not be
-  /// grouped, ordered or gated by the same code that handles everyone else's. Declaring them here
-  /// gives the shell exactly one list to render.
-  /// </remarks>
+  // The destinations the host owns, in the same shape a module contributes.
+  //
+  // The administration screens are not a feature module — they govern every module, and a module
+  // that governed the others would reach across the boundary the architecture tests hold. But
+  // they are still pane items, and hard-coding them into the shell's XAML meant they could not be
+  // grouped, ordered or gated by the same code that handles everyone else's. Declaring them here
+  // gives the shell exactly one list to render.
   public static class HostNavigation {
-    /// <summary>
-    /// Home is not here: it is the one fixed destination, and the shell owns it.
-    /// </summary>
-    /// <remarks>
-    /// Each names the destination the deployment files it under, so where these screens sit — and
-    /// what they are called — is decided once, on the server, for every client. <c>Group</c> is only
-    /// the fallback for a client that has not been able to ask.
-    /// </remarks>
+    // Home is not here: it is the one fixed destination, and the shell owns it.
+    //
+    // Each names the destination the deployment files it under, so where these screens sit — and
+    // what they are called — is decided once, on the server, for every client. Group is only
+    // the fallback for a client that has not been able to ask.
     public static IReadOnlyList<NavigationItem> Items { get; } = [
       new NavigationItem("Users", "", typeof(UsersPage)) {
         Id = "account.users",

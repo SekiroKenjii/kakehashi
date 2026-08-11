@@ -8,36 +8,29 @@ using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The Navigation screen: the structure on the left, the selected screen on the right.
-  /// </summary>
-  /// <remarks>
-  /// Everything here is either a static helper <c>x:Bind</c> calls, or a handler that reads its row out
-  /// of <c>Tag</c> and forwards to the view model. Nothing decides anything: what a move means, what
-  /// counts as unsaved, and what gets posted are all the view model's, which is what lets them be
-  /// tested without a window.
-  /// <para>
-  /// The rows carry <c>Tag="{x:Bind}"</c> rather than relying on <c>DataContext</c>. That is a lesson
-  /// this screen already paid for once: a handler that read <c>DataContext</c> matched nothing and
-  /// returned silently on every interaction.
-  /// </para>
-  /// </remarks>
+  // The Navigation screen: the structure on the left, the selected screen on the right.
+  //
+  // Everything here is either a static helper x:Bind calls, or a handler that reads its row out
+  // of Tag and forwards to the view model. Nothing decides anything: what a move means, what
+  // counts as unsaved, and what gets posted are all the view model's, which is what lets them be
+  // tested without a window.
+  //
+  // The rows carry Tag="{x:Bind}" rather than relying on DataContext. That is a lesson
+  // this screen already paid for once: a handler that read DataContext matched nothing and
+  // returned silently on every interaction.
   public sealed partial class NavigationLayoutPage : Page {
-    /// <summary>
-    /// The row being dragged.
-    /// </summary>
-    /// <remarks>
-    /// A field rather than something in the drag package, because a package carries data and this is an
-    /// object: putting an identifier in and looking it back up would work and would also mean the drop
-    /// handler could be handed an identifier from another window. The package still gets text, because
-    /// a drag with an empty package never starts.
-    /// </remarks>
+    // The row being dragged.
+    //
+    // A field rather than something in the drag package, because a package carries data and this is an
+    // object: putting an identifier in and looking it back up would work and would also mean the drop
+    // handler could be handed an identifier from another window. The package still gets text, because
+    // a drag with an empty package never starts.
     private NavScreenNode? _dragged;
 
-    /// <summary>The running slide, kept alive so its Completed is not collected away.</summary>
+    // The running slide, kept alive so its Completed is not collected away.
     private Storyboard? _previewSlide;
 
-    /// <summary>Set while the picker is being put in step with the selection, not by somebody using it.</summary>
+    // Set while the picker is being put in step with the selection, not by somebody using it.
     private bool _syncingHeadingPicker;
 
     public NavigationLayoutPage(NavigationLayoutViewModel viewModel) {
@@ -53,53 +46,48 @@ namespace Kakehashi.App.UI {
 
     public NavigationLayoutViewModel ViewModel { get; }
 
-    /// <summary>Shown when a string has something in it.</summary>
+    // Shown when a string has something in it.
     public static Visibility WhenSet(string value) {
       return value.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>Shown when there is nothing selected. x:Bind has no operator for "not".</summary>
+    // Shown when there is nothing selected. x:Bind has no operator for "not".
     public static Visibility WhenAbsent(object? value) {
       return value is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>A hidden screen is drawn faded, the way the mockup dims it.</summary>
+    // A hidden screen is drawn faded, the way the mockup dims it.
     public static double RowOpacity(bool isVisible) {
       return isVisible ? 1.0 : 0.45;
     }
 
-    /// <summary>An open eye for a screen the pane offers, a struck-through one for a hidden screen.</summary>
+    // An open eye for a screen the pane offers, a struck-through one for a hidden screen.
     public static string EyeGlyph(bool isVisible) {
       return isVisible ? "" : "";
     }
 
-    /// <summary>A screen that refuses to be hidden draws its eye faded, since pressing it does nothing.</summary>
-    /// <remarks>
-    /// Faded rather than disabled: <c>IsEnabled=false</c> takes the button out of the tab order and
-    /// stops it surfacing a tooltip, which left the sentence below reaching a mouse and nothing else.
-    /// </remarks>
+    // A screen that refuses to be hidden draws its eye faded, since pressing it does nothing.
+    //
+    // Faded rather than disabled: IsEnabled=false takes the button out of the tab order and
+    // stops it surfacing a tooltip, which left the sentence below reaching a mouse and nothing else.
     public static double EyeOpacity(bool canHide) {
       return canHide ? 1.0 : 0.4;
     }
 
-    /// <summary>What the eye is, named per row so a reader knows which screen it acts on.</summary>
+    // What the eye is, named per row so a reader knows which screen it acts on.
     public static string VisibilityLabel(string title, bool isVisible) {
       return isVisible ? $"{title}: offered in the pane" : $"{title}: hidden from the pane";
     }
 
-    /// <summary>
-    /// What the eye button says it will do.
-    /// </summary>
-    /// <remarks>
-    /// A screen that refuses to be hidden says why rather than offering a control with no
-    /// explanation — the alternative is a button somebody clicks twice and then distrusts.
-    /// <para>
-    /// The refusal states the rule rather than asserting a role. It read "this is how the pane is
-    /// managed", which is true of the Navigation screen and false of the others it appears on: Users
-    /// and Role permissions are refused because they are shown only to accounts holding their
-    /// permission, which is a different reason wearing the same words.
-    /// </para>
-    /// </remarks>
+    // What the eye button says it will do.
+    //
+    // A screen that refuses to be hidden says why rather than offering a control with no
+    // explanation — the alternative is a button somebody clicks twice and then distrusts.
+    //
+    // The refusal states the rule rather than asserting a role. It read "this is how the pane is
+    // managed", which is true of the Navigation screen and false of the others it appears on: Users
+    // and Role permissions are refused because they are shown only to accounts holding their
+    // permission, which is a different reason wearing the same words.
     public static string VisibilityTip(bool isVisible, bool canHide) {
       if (!canHide) {
         return "This screen is shown only to accounts that hold its permission, so it cannot also "
@@ -112,13 +100,12 @@ namespace Kakehashi.App.UI {
       await ViewModel.LoadCommand.ExecuteAsync(parameter: null);
     }
 
-    /// <summary>Puts the heading picker in step with whatever is selected.</summary>
-    /// <remarks>
-    /// Assigned here rather than two-way bound. A two-way binding on a picker whose item list is
-    /// rebuilt writes <c>null</c> while the list is being replaced, and "no heading" is a real choice
-    /// whose id happens to be empty — so a rebuild would read as somebody unfiling the screen. This
-    /// screen has had that bug before, in the row pickers this replaced.
-    /// </remarks>
+    // Puts the heading picker in step with whatever is selected.
+    //
+    // Assigned here rather than two-way bound. A two-way binding on a picker whose item list is
+    // rebuilt writes null while the list is being replaced, and "no heading" is a real choice
+    // whose id happens to be empty — so a rebuild would read as somebody unfiling the screen. This
+    // screen has had that bug before, in the row pickers this replaced.
     private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) {
       if (e.PropertyName == nameof(NavigationLayoutViewModel.IsPreviewOpen)) {
         SlidePreview(ViewModel.IsPreviewOpen);
@@ -163,18 +150,15 @@ namespace Kakehashi.App.UI {
       ViewModel.MoveScreen(screen, target, target.Screens.Count);
     }
 
-    /// <summary>How far the panel travels, which is its own width: closed means just off the edge.</summary>
+    // How far the panel travels, which is its own width: closed means just off the edge.
     private const double _previewTravel = 360;
 
-    /// <summary>
-    /// Slides the preview in from the right, and back out again.
-    /// </summary>
-    /// <remarks>
-    /// Hand-animated because the panel is always in the tree: it only changes Visibility, and the
-    /// theme transitions animate an element arriving rather than one becoming visible, so the panel
-    /// simply appeared. Visibility is still set — collapsed once it has left, so nothing offscreen
-    /// stays hit-testable, and visible before it starts so there is something to watch move.
-    /// </remarks>
+    // Slides the preview in from the right, and back out again.
+    //
+    // Hand-animated because the panel is always in the tree: it only changes Visibility, and the
+    // theme transitions animate an element arriving rather than one becoming visible, so the panel
+    // simply appeared. Visibility is still set — collapsed once it has left, so nothing offscreen
+    // stays hit-testable, and visible before it starts so there is something to watch move.
     private void SlidePreview(bool open) {
       if (open) {
         PreviewPanel.Visibility = Visibility.Visible;
@@ -208,15 +192,12 @@ namespace Kakehashi.App.UI {
       ViewModel.IsPreviewOpen = false;
     }
 
-    /// <summary>
-    /// Fills the preview with the same kinds of item the shell puts in the real pane.
-    /// </summary>
-    /// <remarks>
-    /// Built here rather than bound, because <c>NavigationView</c> takes headers and items as
-    /// different types and the view model must not make controls - it is constructed off the UI
-    /// thread by its tests. Rebuilt wholesale on every change: the preview is small, and a diffing
-    /// version would be a second placement algorithm to keep in step with the planner.
-    /// </remarks>
+    // Fills the preview with the same kinds of item the shell puts in the real pane.
+    //
+    // Built here rather than bound, because NavigationView takes headers and items as
+    // different types and the view model must not make controls - it is constructed off the UI
+    // thread by its tests. Rebuilt wholesale on every change: the preview is small, and a diffing
+    // version would be a second placement algorithm to keep in step with the planner.
     private void RebuildPreview() {
       PanePreview.MenuItems.Clear();
 
@@ -244,11 +225,10 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Enter or Space on a focused row selects it, the way a click does.</summary>
-    /// <remarks>
-    /// The row is a Border rather than a Button on purpose — a Button is a leaf in the automation
-    /// tree, so it would hide the eye it contains — and a Border answers no key on its own.
-    /// </remarks>
+    // Enter or Space on a focused row selects it, the way a click does.
+    //
+    // The row is a Border rather than a Button on purpose — a Button is a leaf in the automation
+    // tree, so it would hide the eye it contains — and a Border answers no key on its own.
     private void OnScreenKeyDown(object sender, KeyRoutedEventArgs e) {
       if (e.Key is not (VirtualKey.Enter or VirtualKey.Space)) {
         return;
@@ -319,7 +299,7 @@ namespace Kakehashi.App.UI {
       e.Handled = true;
     }
 
-    /// <summary>Dropped on a heading: filed at the end of it.</summary>
+    // Dropped on a heading: filed at the end of it.
     private void OnHeadingDrop(object sender, DragEventArgs e) {
       if (_dragged is { } screen && sender is FrameworkElement { Tag: NavHeadingNode heading }) {
         ViewModel.MoveScreen(screen, heading, heading.Screens.Count);
@@ -328,7 +308,7 @@ namespace Kakehashi.App.UI {
       e.Handled = true;
     }
 
-    /// <summary>Dropped on a row: placed above it.</summary>
+    // Dropped on a row: placed above it.
     private void OnScreenDrop(object sender, DragEventArgs e) {
       if (_dragged is { } screen
           && sender is FrameworkElement { Tag: NavScreenNode target }

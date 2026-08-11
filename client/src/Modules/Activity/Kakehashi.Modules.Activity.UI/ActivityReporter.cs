@@ -10,20 +10,16 @@ using Kakehashi.UI.Contracts.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Kakehashi.Modules.Activity.UI {
-  /// <summary>
-  /// Forwards the two app-level facts the server cannot observe for itself into the account's feed.
-  /// </summary>
-  /// <remarks>
-  /// The host notices when this installation has been updated and when the theme changes, and
-  /// announces both. It cannot hand them to this module directly — the host does not reference a
-  /// feature module — so it announces and this listens.
-  /// <para>
-  /// It lives in the module rather than in the host because what belongs in the feed is the activity
-  /// module's business. The host's own local log keeps recording all four kinds it knows about for its
-  /// Home page; only two of them are this module's to report, because the server already writes the
-  /// other two from facts it saw itself. Forwarding those would double every sign-in.
-  /// </para>
-  /// </remarks>
+  // Forwards the two app-level facts the server cannot observe for itself into the account's feed.
+  //
+  // The host notices when this installation has been updated and when the theme changes, and
+  // announces both. It cannot hand them to this module directly — the host does not reference a
+  // feature module — so it announces and this listens.
+  //
+  // It lives in the module rather than in the host because what belongs in the feed is the activity
+  // module's business. The host's own local log keeps recording all four kinds it knows about for its
+  // Home page; only two of them are this module's to report, because the server already writes the
+  // other two from facts it saw itself. Forwarding those would double every sign-in.
   public sealed partial class ActivityReporter : IAwakeOnStartup {
     private readonly ISender _sender;
     private readonly ILogger<ActivityReporter> _logger;
@@ -75,13 +71,10 @@ namespace Kakehashi.Modules.Activity.UI {
       }
     }
 
-    /// <summary>
-    /// Which announced facts this module reports, and which it leaves alone.
-    /// </summary>
-    /// <remarks>
-    /// Sign-ins and sign-outs are absent on purpose: the server records those from its own events, so
-    /// reporting them here would put two rows in the feed for one thing that happened.
-    /// </remarks>
+    // Which announced facts this module reports, and which it leaves alone.
+    //
+    // Sign-ins and sign-outs are absent on purpose: the server records those from its own events, so
+    // reporting them here would put two rows in the feed for one thing that happened.
     private static ClientActivityKind? Reportable(AppActivityKind kind) {
       return kind switch {
         AppActivityKind.AppUpdated => ClientActivityKind.AppUpdated,

@@ -2,7 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  /// <summary>Activates the main window and dismisses the splash. Runs last.</summary>
+  // Activates the main window and dismisses the splash. Runs last.
   public sealed class ActivationOrchestrator : IStartupOrchestrator {
     private readonly StartupContext _context;
 

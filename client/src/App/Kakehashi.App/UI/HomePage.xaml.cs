@@ -6,11 +6,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The default landing page shown in the shell: the session-aware greeting, the getting-started
-  /// checklist, the feature-module tiles, the backend status, the recent security activity, and
-  /// developer resources. Reloads itself whenever the auth session changes (e.g. after a re-login).
-  /// </summary>
+  // The default landing page shown in the shell: the session-aware greeting, the getting-started
+  // checklist, the feature-module tiles, the backend status, the recent security activity, and
+  // developer resources. Reloads itself whenever the auth session changes (e.g. after a re-login).
   public sealed partial class HomePage : Page {
     public HomePage(HomeViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);

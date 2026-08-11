@@ -6,7 +6,7 @@ using Kakehashi.Modules.Activity.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Activity.Application.Activity.Commands.RecordClientEvent {
-  /// <summary>Reports the fact through the gateway.</summary>
+  // Reports the fact through the gateway.
   public sealed class RecordClientEventCommandHandler
       : IRequestHandler<RecordClientEventCommand, Result> {
     private readonly IActivityGateway _activity;

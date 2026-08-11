@@ -6,7 +6,7 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Account.Queries.GetRemoteProfile {
-  /// <summary>Fetches the profile through the account gateway.</summary>
+  // Fetches the profile through the account gateway.
   public sealed class GetRemoteProfileQueryHandler
       : IRequestHandler<GetRemoteProfileQuery, Result<RemoteProfileDto>> {
     private readonly IAccountGateway _account;

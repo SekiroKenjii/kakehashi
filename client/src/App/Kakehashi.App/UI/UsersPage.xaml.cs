@@ -8,21 +8,17 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The Users screen.
-  /// </summary>
-  /// <remarks>
-  /// Loads on <see cref="FrameworkElement.Loaded"/>, not <c>OnNavigatedTo</c>: the navigation
-  /// service sets <c>Frame.Content</c> directly — pages come from the container, not from
-  /// <c>Frame.Navigate</c> — so the navigation overrides never fire. Every page in this app loads
-  /// the same way.
-  /// <para>
-  /// The static helpers exist because <c>x:Bind</c> calls functions but does not format strings or
-  /// negate booleans. They live on the page rather than in converters for the reason the rest of
-  /// this codebase prefers: a function is compile-checked against its arguments, a converter is
-  /// not.
-  /// </para>
-  /// </remarks>
+  // The Users screen.
+  //
+  // Loads on FrameworkElement.Loaded, not OnNavigatedTo: the navigation
+  // service sets Frame.Content directly — pages come from the container, not from
+  // Frame.Navigate — so the navigation overrides never fire. Every page in this app loads
+  // the same way.
+  //
+  // The static helpers exist because x:Bind calls functions but does not format strings or
+  // negate booleans. They live on the page rather than in converters for the reason the rest of
+  // this codebase prefers: a function is compile-checked against its arguments, a converter is
+  // not.
   public sealed partial class UsersPage : Page {
     public UsersPage(UsersViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
@@ -34,12 +30,12 @@ namespace Kakehashi.App.UI {
 
     public UsersViewModel ViewModel { get; }
 
-    /// <summary>"Admin, Developer", or a dash for somebody holding none.</summary>
+    // "Admin, Developer", or a dash for somebody holding none.
     public static string DescribeRoles(IReadOnlyList<string> roleNames) {
       return roleNames.Count == 0 ? "—" : string.Join(", ", roleNames);
     }
 
-    /// <summary>The first role's name, for the coloured badge. Empty hides the badge.</summary>
+    // The first role's name, for the coloured badge. Empty hides the badge.
     public static string FirstRole(IReadOnlyList<string> roleNames) {
       return roleNames.Count == 0 ? string.Empty : roleNames[0];
     }
@@ -53,7 +49,7 @@ namespace Kakehashi.App.UI {
       return AdminFormat.RoleBackground(FirstRole(roleNames));
     }
 
-    /// <summary>"+2" when the user holds more roles than the one badge shows.</summary>
+    // "+2" when the user holds more roles than the one badge shows.
     public static string MoreRoles(IReadOnlyList<string> roleNames) {
       return roleNames.Count > 1 ? $"+{roleNames.Count - 1}" : string.Empty;
     }
@@ -66,7 +62,7 @@ namespace Kakehashi.App.UI {
       return roleNames.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>"Active", "Inactive", or "Never signed in" — the status column's text.</summary>
+    // "Active", "Inactive", or "Never signed in" — the status column's text.
     public static string DescribeStatus(bool isActive, DateTimeOffset? lastSignIn) {
       if (!isActive) {
         return "Inactive";
@@ -74,12 +70,12 @@ namespace Kakehashi.App.UI {
       return lastSignIn is null ? "Never signed in" : "Active";
     }
 
-    /// <summary>The status dot and its label: green for an account that signs in, grey otherwise.</summary>
+    // The status dot and its label: green for an account that signs in, grey otherwise.
     public static SolidColorBrush StatusBrush(bool isActive, DateTimeOffset? lastSignIn) {
       return isActive && lastSignIn is not null ? _statusActive : _statusInactive;
     }
 
-    /// <summary>The selected user's status, for the badge under their name.</summary>
+    // The selected user's status, for the badge under their name.
     public static string SelectedStatus(UserRow? user) {
       return user is null ? string.Empty : DescribeStatus(user.IsActive, user.LastSignInAt);
     }
@@ -88,12 +84,12 @@ namespace Kakehashi.App.UI {
       return user is null ? _statusInactive : StatusBrush(user.IsActive, user.LastSignInAt);
     }
 
-    /// <summary>Whether the Remove button on an assigned role is shown at all.</summary>
+    // Whether the Remove button on an assigned role is shown at all.
     public static Visibility WhenTrue(bool value) {
       return value ? Visibility.Visible : Visibility.Collapsed;
     }
 
-    /// <summary>"2 min ago" in the last-login column; a dash for never.</summary>
+    // "2 min ago" in the last-login column; a dash for never.
     public static string DescribeLastSignIn(DateTimeOffset? at) {
       return at is null ? "—" : AdminFormat.Relative(at.Value);
     }
@@ -122,7 +118,7 @@ namespace Kakehashi.App.UI {
       return $"ACTIVE SESSIONS ({count})";
     }
 
-    /// <summary>The device the session claimed, or the client when it claimed nothing.</summary>
+    // The device the session claimed, or the client when it claimed nothing.
     public static string SessionTitle(string device, string client) {
       return device.Length == 0 ? client : device;
     }
@@ -131,7 +127,7 @@ namespace Kakehashi.App.UI {
       return $"{ipAddress} · last seen {AdminFormat.Relative(lastSeenAt)}";
     }
 
-    /// <summary>The danger-zone row's title. The button beside it says just the verb.</summary>
+    // The danger-zone row's title. The button beside it says just the verb.
     public static string DescribeToggleTitle(UserRow? user) {
       return user is { IsActive: true } ? "Deactivate account" : "Reactivate account";
     }
@@ -146,7 +142,7 @@ namespace Kakehashi.App.UI {
           : "Restores the account's ability to sign in";
     }
 
-    /// <summary>A dash where a value is optional and absent, so the row still reads as a row.</summary>
+    // A dash where a value is optional and absent, so the row still reads as a row.
     public static string OrDash(string? value) {
       return string.IsNullOrWhiteSpace(value) ? "—" : value;
     }
@@ -159,7 +155,7 @@ namespace Kakehashi.App.UI {
       return string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>The add-a-role row appears only when there is a role to add and the right to add it.</summary>
+    // The add-a-role row appears only when there is a role to add and the right to add it.
     public static Visibility WhenAssignable(bool canManageRoles, int assignableCount) {
       return canManageRoles && assignableCount > 0 ? Visibility.Visible : Visibility.Collapsed;
     }

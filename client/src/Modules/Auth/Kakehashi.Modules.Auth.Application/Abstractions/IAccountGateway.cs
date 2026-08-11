@@ -6,10 +6,8 @@ using Kakehashi.Modules.Auth.Application.Sessions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Abstractions {
-  /// <summary>
-  /// Port over the authorization server's account endpoints (profile, sessions and security
-  /// activity), called with the current user's access token. The adapter lives in the UI layer.
-  /// </summary>
+  // Port over the authorization server's account endpoints (profile, sessions and security
+  // activity), called with the current user's access token. The adapter lives in the UI layer.
   public interface IAccountGateway {
     Task<Result<IReadOnlyList<RemoteSessionDto>>> GetSessionsAsync(
         CancellationToken cancellationToken);

@@ -21,22 +21,20 @@ using SignInRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignI
 using SignOutRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut.SignOutCommand;
 
 namespace Kakehashi.Modules.Auth.UI.ViewModels {
-  /// <summary>A row in the active sessions list.</summary>
+  // A row in the active sessions list.
   public sealed record SessionItem(string Id, string Title, string Subtitle, bool IsCurrent) {
     public bool IsNotCurrent => !IsCurrent;
   }
 
-  /// <summary>A row in the security activity feed.</summary>
+  // A row in the security activity feed.
   public sealed record ActivityItem(
       string Title, string Subtitle, string TimeText, string Glyph, bool IsAlert) {
     public bool IsNotAlert => !IsAlert;
   }
 
-  /// <summary>
-  /// Presentation logic for the Account page: the signed-in profile, the active sessions and
-  /// security activity fetched from the authorization server (paged client-side), the session
-  /// actions, and the edit-profile / change-password dialogs.
-  /// </summary>
+  // Presentation logic for the Account page: the signed-in profile, the active sessions and
+  // security activity fetched from the authorization server (paged client-side), the session
+  // actions, and the edit-profile / change-password dialogs.
   public sealed partial class AccountViewModel : ViewModel {
     private const int _pageSize = 5;
 
@@ -255,7 +253,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       ShowActivityPage(_activityPage + 1);
     }
 
-    /// <summary>Prefills the edit-profile dialog from the server (best-effort).</summary>
+    // Prefills the edit-profile dialog from the server (best-effort).
     public async Task PrepareEditProfileAsync() {
       DialogError = null;
       EditDisplayName = DisplayName ?? string.Empty;
@@ -267,7 +265,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       }
     }
 
-    /// <summary>Saves the profile dialog. Returns false (and sets the error) to keep it open.</summary>
+    // Saves the profile dialog. Returns false (and sets the error) to keep it open.
     public async Task<bool> SaveProfileAsync() {
       DialogError = null;
       var result = await _sender.Send(new UpdateRemoteProfileCommand(
@@ -289,7 +287,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       ConfirmPassword = string.Empty;
     }
 
-    /// <summary>Submits the password dialog. Returns false (and sets the error) to keep it open.</summary>
+    // Submits the password dialog. Returns false (and sets the error) to keep it open.
     public async Task<bool> ChangePasswordAsync() {
       DialogError = null;
       if (string.IsNullOrEmpty(CurrentPassword) || string.IsNullOrEmpty(NewPassword)) {
@@ -337,13 +335,10 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       ShowActivityPage(1);
     }
 
-    /// <summary>
-    /// Whether each pager button has anywhere to go.
-    /// </summary>
-    /// <remarks>
-    /// The buttons were never disabled, so at the first page "previous" was a live control that did
-    /// nothing — which reads as a broken button rather than as the end of the list.
-    /// </remarks>
+    // Whether each pager button has anywhere to go.
+    //
+    // The buttons were never disabled, so at the first page "previous" was a live control that did
+    // nothing — which reads as a broken button rather than as the end of the list.
     [ObservableProperty]
     public partial bool CanPageSessionsBack { get; set; }
 

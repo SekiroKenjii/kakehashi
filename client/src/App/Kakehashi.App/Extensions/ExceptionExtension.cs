@@ -3,14 +3,10 @@ using System.Collections.Generic;
 using Kakehashi.App.Core;
 
 namespace Kakehashi.App.Extensions {
-  /// <summary>
-  /// Extension methods for <see cref="System.Exception"/>.
-  /// </summary>
+  // Extension methods for System.Exception.
   public static class ExceptionExtension {
-    /// <summary>
-    /// Flattens an exception and its inner exceptions into <see cref="CallStack"/> records suitable
-    /// for display in the exception window.
-    /// </summary>
+    // Flattens an exception and its inner exceptions into CallStack records suitable
+    // for display in the exception window.
     internal static IReadOnlyList<CallStack> ToCallStacks(this Exception exception) {
       ArgumentNullException.ThrowIfNull(exception);
 

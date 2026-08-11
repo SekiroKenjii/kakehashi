@@ -1,7 +1,7 @@
 using System;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions {
-  /// <summary>An entry in the user's security activity feed on the authorization server.</summary>
+  // An entry in the user's security activity feed on the authorization server.
   public sealed record SecurityEventDto(
       string Kind,
       string? Device,

@@ -1,7 +1,7 @@
 using System;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions {
-  /// <summary>A sign-in session on the authorization server, as listed on the account page.</summary>
+  // A sign-in session on the authorization server, as listed on the account page.
   public sealed record RemoteSessionDto(
       string Id,
       string Client,

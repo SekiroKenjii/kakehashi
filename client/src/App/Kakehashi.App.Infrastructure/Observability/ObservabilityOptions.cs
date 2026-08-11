@@ -1,33 +1,31 @@
 namespace Kakehashi.App.Infrastructure.Observability {
-  /// <summary>
-  /// Strongly-typed configuration for OpenTelemetry, bound from the <c>Observability</c> section of
-  /// <c>appsettings.json</c>. Exporters are opt-in so a developer with no collector running sees no
-  /// noise; turn on <see cref="EnableConsoleExporter"/> for local debugging or
-  /// <see cref="EnableOtlpExporter"/> to ship to a collector / Aspire dashboard / Jaeger.
-  /// </summary>
+  // Strongly-typed configuration for OpenTelemetry, bound from the Observability section of
+  // appsettings.json. Exporters are opt-in so a developer with no collector running sees no
+  // noise; turn on EnableConsoleExporter for local debugging or
+  // EnableOtlpExporter to ship to a collector / Aspire dashboard / Jaeger.
   public sealed class ObservabilityOptions {
-    /// <summary>The configuration section these options bind to.</summary>
+    // The configuration section these options bind to.
     public const string SectionName = "Observability";
 
-    /// <summary>Service name reported on every signal. Defaults to the infrastructure assembly name.</summary>
+    // Service name reported on every signal. Defaults to the infrastructure assembly name.
     public string ServiceName { get; set; } = "Kakehashi.App";
 
-    /// <summary>Emit distributed traces.</summary>
+    // Emit distributed traces.
     public bool EnableTracing { get; set; } = true;
 
-    /// <summary>Emit metrics (process/runtime + HTTP client).</summary>
+    // Emit metrics (process/runtime + HTTP client).
     public bool EnableMetrics { get; set; } = true;
 
-    /// <summary>Route <c>ILogger</c> logs through the OpenTelemetry logging pipeline.</summary>
+    // Route ILogger logs through the OpenTelemetry logging pipeline.
     public bool EnableLogging { get; set; } = true;
 
-    /// <summary>Write traces/metrics/logs to stdout (handy for local <c>dotnet run</c>).</summary>
+    // Write traces/metrics/logs to stdout (handy for local dotnet run).
     public bool EnableConsoleExporter { get; set; }
 
-    /// <summary>Export traces/metrics/logs over OTLP to <see cref="OtlpEndpoint"/>.</summary>
+    // Export traces/metrics/logs over OTLP to OtlpEndpoint.
     public bool EnableOtlpExporter { get; set; }
 
-    /// <summary>OTLP collector endpoint (e.g. <c>http://localhost:4317</c>). Empty uses the SDK default.</summary>
+    // OTLP collector endpoint (e.g. http://localhost:4317). Empty uses the SDK default.
     public string? OtlpEndpoint { get; set; }
   }
 }

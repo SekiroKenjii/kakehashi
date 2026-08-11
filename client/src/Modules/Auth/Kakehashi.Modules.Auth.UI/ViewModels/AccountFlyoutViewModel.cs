@@ -15,11 +15,9 @@ using Windows.System;
 using SignOutRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut.SignOutCommand;
 
 namespace Kakehashi.Modules.Auth.UI.ViewModels {
-  /// <summary>
-  /// Backs the account flyout: the identity header, session status, the appearance switch,
-  /// navigation to the profile page, and sign-out. Sign-out itself only sends the use case; the
-  /// forced re-sign-in is driven by the module's sign-out notification handler.
-  /// </summary>
+  // Backs the account flyout: the identity header, session status, the appearance switch,
+  // navigation to the profile page, and sign-out. Sign-out itself only sends the use case; the
+  // forced re-sign-in is driven by the module's sign-out notification handler.
   public sealed partial class AccountFlyoutViewModel : ViewModel {
     private readonly ISender _sender;
     private readonly INavigationService _navigationService;
@@ -34,10 +32,8 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     [ObservableProperty]
     public partial string DisplayName { get; set; }
 
-    /// <summary>
-    /// The raw display name for avatar initials, or <see langword="null"/> when unknown so
-    /// <c>PersonPicture</c> falls back to its generic person glyph instead of fake initials.
-    /// </summary>
+    // The raw display name for avatar initials, or null when unknown so
+    // PersonPicture falls back to its generic person glyph instead of fake initials.
     [ObservableProperty]
     public partial string? AvatarName { get; set; }
 
@@ -48,15 +44,12 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     [ObservableProperty]
     public partial string SignedInText { get; set; }
 
-    /// <summary>
-    /// "3 devices · this + 2 others" under the sessions row.
-    /// </summary>
-    /// <remarks>
-    /// Read from the server, not written into the XAML. This line used to be the literal string
-    /// "2 devices · this + iOS mobile" — a number nobody had, about a device this product has never
-    /// run on. A figure that is always wrong is worse than no figure, because a reader has no way
-    /// to tell which one they are looking at.
-    /// </remarks>
+    // "3 devices · this + 2 others" under the sessions row.
+    //
+    // Read from the server, not written into the XAML. This line used to be the literal string
+    // "2 devices · this + iOS mobile" — a number nobody had, about a device this product has never
+    // run on. A figure that is always wrong is worse than no figure, because a reader has no way
+    // to tell which one they are looking at.
     [ObservableProperty]
     public partial string SessionSummary { get; set; }
 
@@ -90,12 +83,11 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       SessionSummary = "—";
     }
 
-    /// <summary>Whether a support destination is configured. Unset hides the row.</summary>
-    /// <remarks>
-    /// Hidden rather than shown-and-dead. This is a boilerplate: it has no support site until
-    /// somebody's product gives it one, and a row that opens nothing teaches a user to stop
-    /// trusting the menu.
-    /// </remarks>
+    // Whether a support destination is configured. Unset hides the row.
+    //
+    // Hidden rather than shown-and-dead. This is a boilerplate: it has no support site until
+    // somebody's product gives it one, and a row that opens nothing teaches a user to stop
+    // trusting the menu.
     public bool HasSupport => _supportUrl.Length > 0;
 
     [RelayCommand]
@@ -119,30 +111,29 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       GoToAccount();
     }
 
-    /// <summary>Opens the account page, where the password is changed.</summary>
-    /// <remarks>
-    /// Three rows land on the same page, and that is not a shortcut: the account page is where a
-    /// person's password, their sessions and their own audit trail all live. They are named
-    /// separately here because that is what somebody is looking for when they open this menu.
-    /// </remarks>
+    // Opens the account page, where the password is changed.
+    //
+    // Three rows land on the same page, and that is not a shortcut: the account page is where a
+    // person's password, their sessions and their own audit trail all live. They are named
+    // separately here because that is what somebody is looking for when they open this menu.
     [RelayCommand]
     private void ChangePassword() {
       GoToAccount();
     }
 
-    /// <summary>Opens the account page's session list.</summary>
+    // Opens the account page's session list.
     [RelayCommand]
     private void ViewSessions() {
       GoToAccount();
     }
 
-    /// <summary>Opens the account page's security activity.</summary>
+    // Opens the account page's security activity.
     [RelayCommand]
     private void ViewActivity() {
       GoToAccount();
     }
 
-    /// <summary>Opens the configured support destination in the system browser.</summary>
+    // Opens the configured support destination in the system browser.
     [RelayCommand]
     private async Task OpenSupportAsync() {
       if (!HasSupport) {
@@ -155,7 +146,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       _navigationService.NavigateTo(_navigationService.GetPageKey(typeof(AccountPage)));
     }
 
-    /// <summary>Counts the account's live sessions, and says which one is here.</summary>
+    // Counts the account's live sessions, and says which one is here.
     private async Task<string> DescribeSessionsAsync() {
       if (!IsAuthenticated) {
         return "—";

@@ -5,11 +5,9 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.Modules.Auth.UI.Views {
-  /// <summary>
-  /// The account page: the signed-in profile, account information, active sessions with revoke,
-  /// the security activity feed, the session actions, and the edit-profile / change-password
-  /// dialogs. Reloads itself whenever the auth session changes (e.g. after a re-login).
-  /// </summary>
+  // The account page: the signed-in profile, account information, active sessions with revoke,
+  // the security activity feed, the session actions, and the edit-profile / change-password
+  // dialogs. Reloads itself whenever the auth session changes (e.g. after a re-login).
   public sealed partial class AccountPage : Page {
     public AccountPage(AccountViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);

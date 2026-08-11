@@ -15,18 +15,15 @@ using Microsoft.Extensions.Options;
 using SharedKernelResult = Kakehashi.SharedKernel.Result;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  /// <summary>
-  /// Signs in by posting credentials straight to the authorization server, with no browser and no
-  /// loopback listener. Registered when <see cref="AuthOptions.Mode"/> is
-  /// <see cref="AuthMode.InApp"/>.
-  /// </summary>
-  /// <remarks>
-  /// Only the two interactive halves are ours. Refreshing delegates to
-  /// <see cref="OidcInteractiveAuthenticator"/> on purpose: the server issues both modes' tokens
-  /// through one provider and rotates them on one standard endpoint, so a session that began here
-  /// and a session that began in a browser have the same lifecycle from the second request onward.
-  /// Reimplementing the refresh grant would be a second chance to get it wrong for no gain.
-  /// </remarks>
+  // Signs in by posting credentials straight to the authorization server, with no browser and no
+  // loopback listener. Registered when AuthOptions.Mode is
+  // AuthMode.InApp.
+  //
+  // Only the two interactive halves are ours. Refreshing delegates to
+  // OidcInteractiveAuthenticator on purpose: the server issues both modes' tokens
+  // through one provider and rotates them on one standard endpoint, so a session that began here
+  // and a session that began in a browser have the same lifecycle from the second request onward.
+  // Reimplementing the refresh grant would be a second chance to get it wrong for no gain.
   public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDisposable {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
@@ -52,16 +49,13 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", DeviceLabel());
     }
 
-    /// <summary>
-    /// What the server will record as this session's device.
-    /// </summary>
-    /// <remarks>
-    /// It exists because <see cref="HttpClient"/> sends no User-Agent by default, and the server
-    /// reads that header to fill the device column the Account page shows — so without one, every
-    /// in-app session is a blank row and the session list stops answering "which of these is the
-    /// laptop I left at the office". The browser flow never had the problem because the browser
-    /// sends its own.
-    /// </remarks>
+    // What the server will record as this session's device.
+    //
+    // It exists because HttpClient sends no User-Agent by default, and the server
+    // reads that header to fill the device column the Account page shows — so without one, every
+    // in-app session is a blank row and the session list stops answering "which of these is the
+    // laptop I left at the office". The browser flow never had the problem because the browser
+    // sends its own.
     public static string DeviceLabel() {
       var version = Assembly.GetEntryAssembly()?.GetName().Version;
       var number = version is null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
@@ -128,11 +122,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       return _oidc.RefreshAsync(refreshToken, cancellationToken);
     }
 
-    /// <summary>
-    /// Ends the session server-side. There is no browser cookie to clear here — that is what
-    /// <c>/end_session</c> exists for — so this only needs the session row gone, which is what
-    /// stops its refresh token working.
-    /// </summary>
+    // Ends the session server-side. There is no browser cookie to clear here — that is what
+    // /end_session exists for — so this only needs the session row gone, which is what
+    // stops its refresh token working.
     public async Task LogoutAsync(AuthSession? session, CancellationToken cancellationToken) {
       if (!_options.IsConfigured || session is null) {
         return;
@@ -183,7 +175,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
 
     private sealed record ServerError(string? Error, string? Message);
 
-    /// <summary>The OAuth token response shape the sign-in endpoint deliberately mirrors.</summary>
+    // The OAuth token response shape the sign-in endpoint deliberately mirrors.
     private sealed record TokenResponse(
         [property: JsonPropertyName("access_token")] string AccessToken,
         [property: JsonPropertyName("refresh_token")] string? RefreshToken,

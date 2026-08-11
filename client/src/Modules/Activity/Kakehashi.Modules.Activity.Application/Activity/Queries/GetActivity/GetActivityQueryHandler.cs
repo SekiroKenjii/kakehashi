@@ -6,7 +6,7 @@ using Kakehashi.Modules.Activity.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Activity.Application.Activity.Queries.GetActivity {
-  /// <summary>Fetches a page of the feed through the gateway.</summary>
+  // Fetches a page of the feed through the gateway.
   public sealed class GetActivityQueryHandler
       : IRequestHandler<GetActivityQuery, Result<ActivityPageDto>> {
     private readonly IActivityGateway _activity;

@@ -6,7 +6,7 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Account.Commands.ChangeRemotePassword {
-  /// <summary>Changes the password through the account gateway.</summary>
+  // Changes the password through the account gateway.
   public sealed class ChangeRemotePasswordCommandHandler
       : IRequestHandler<ChangeRemotePasswordCommand, Result> {
     private readonly IAccountGateway _account;

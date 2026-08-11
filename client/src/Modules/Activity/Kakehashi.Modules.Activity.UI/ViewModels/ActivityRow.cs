@@ -6,22 +6,18 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Kakehashi.Modules.Activity.Application.Activity;
 
 namespace Kakehashi.Modules.Activity.UI.ViewModels {
-  /// <summary>One key-and-value line inside an expanded row.</summary>
+  // One key-and-value line inside an expanded row.
   public sealed record ActivityDetail(string Label, string Value);
 
-  /// <summary>
-  /// One row in the feed, which may stand for several entries.
-  /// </summary>
-  /// <remarks>
-  /// An observable object rather than a record because a row is expandable, and expansion is state
-  /// the row owns. The facts themselves are get-only: an entry never changes once it happened.
-  /// <para>
-  /// The wording, the icon and the grouping are all decided here rather than sent by the server. The
-  /// server ships a stable kind and structured facts, which is what lets this page be re-worded and
-  /// re-illustrated without a server release — and what stops a server from owning presentation for
-  /// clients it cannot see.
-  /// </para>
-  /// </remarks>
+  // One row in the feed, which may stand for several entries.
+  //
+  // An observable object rather than a record because a row is expandable, and expansion is state
+  // the row owns. The facts themselves are get-only: an entry never changes once it happened.
+  //
+  // The wording, the icon and the grouping are all decided here rather than sent by the server. The
+  // server ships a stable kind and structured facts, which is what lets this page be re-worded and
+  // re-illustrated without a server release — and what stops a server from owning presentation for
+  // clients it cannot see.
   public sealed partial class ActivityRow : ObservableObject {
     // Written as escapes rather than as literal characters. These are Private Use Area code points,
     // so a literal shows as nothing at all in an editor and in a diff — which is how a glyph mapping
@@ -50,69 +46,63 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       Facts = Describe(first);
     }
 
-    /// <summary>The entries this row stands for, newest first. One, unless it is a burst.</summary>
+    // The entries this row stands for, newest first. One, unless it is a burst.
     public IReadOnlyList<ActivityEntryDto> Entries { get; }
 
-    /// <summary>The kind the server reported, which is what the wording and the badges key on.</summary>
+    // The kind the server reported, which is what the wording and the badges key on.
     public string Kind { get; }
 
-    /// <summary>The category the server put this in, for the label the row may carry.</summary>
+    // The category the server put this in, for the label the row may carry.
     public string Category { get; }
 
-    /// <summary>What happened, in this client's words.</summary>
+    // What happened, in this client's words.
     public string Title { get; }
 
-    /// <summary>The muted line under the title: where it happened.</summary>
+    // The muted line under the title: where it happened.
     public string Meta { get; }
 
     public string TimeText { get; }
     public string Glyph { get; }
 
-    /// <summary>Whether this row is the reason somebody opened the page.</summary>
+    // Whether this row is the reason somebody opened the page.
     public bool IsAlert { get; }
 
-    /// <summary>Whether to badge this as a first sighting of a device.</summary>
+    // Whether to badge this as a first sighting of a device.
     public bool IsNew { get; }
 
-    /// <summary>The timestamps a burst collapsed, newest first. Empty for a single entry.</summary>
+    // The timestamps a burst collapsed, newest first. Empty for a single entry.
     public IReadOnlyList<string> Occurrences { get; }
 
-    /// <summary>The detail lines shown when the row is opened.</summary>
+    // The detail lines shown when the row is opened.
     public IReadOnlyList<ActivityDetail> Facts { get; }
 
-    /// <summary>
-    /// Whether this row offers a way to act on it.
-    /// </summary>
-    /// <remarks>
-    /// Only where the answer to "was that me?" could be no. Offering it on every row would make the
-    /// offer meaningless, which is the same reason the mockup only draws it twice.
-    /// </remarks>
+    // Whether this row offers a way to act on it.
+    //
+    // Only where the answer to "was that me?" could be no. Offering it on every row would make the
+    // offer meaningless, which is the same reason the mockup only draws it twice.
     public bool CanSecure =>
         Kind is ActivityKinds.FailedSignIn
             or ActivityKinds.NewDeviceSignedIn
             or ActivityKinds.SessionRevokedByAdmin;
 
-    /// <summary>How many entries this row stands for. One unless it is a burst.</summary>
+    // How many entries this row stands for. One unless it is a burst.
     public int Count => Entries.Count;
 
     public bool IsBurst => Entries.Count > 1;
 
-    /// <summary>The multiplier badge, "×9".</summary>
+    // The multiplier badge, "×9".
     public string CountText => "×" + Count.ToString(CultureInfo.CurrentCulture);
 
     public bool HasMeta => Meta.Length > 0;
 
-    /// <summary>
-    /// Whether to label the row with its category.
-    /// </summary>
-    /// <remarks>
-    /// Sign-in rows are not labelled. A feed of an account's activity is mostly sessions, so a chip
-    /// repeating "SignIn" on two rows in three is decoration; a chip on the ones that are not is
-    /// information.
-    /// </remarks>
+    // Whether to label the row with its category.
+    //
+    // Sign-in rows are not labelled. A feed of an account's activity is mostly sessions, so a chip
+    // repeating "SignIn" on two rows in three is decoration; a chip on the ones that are not is
+    // information.
     public bool ShowCategory => Category.Length > 0 && Category != ActivityCategories.SignIn;
 
-    /// <summary>The category, spelled for a person.</summary>
+    // The category, spelled for a person.
     public string CategoryText => Category switch {
       ActivityCategories.Security => "Security",
       ActivityCategories.System => "System",
@@ -123,14 +113,11 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     [NotifyPropertyChangedFor(nameof(AnnouncedName))]
     public partial bool IsExpanded { get; set; }
 
-    /// <summary>
-    /// What a screen reader says for this row.
-    /// </summary>
-    /// <remarks>
-    /// The state belongs in the name because the chevron is a glyph inside the row rather than a
-    /// control of its own: there is no expander for UIA to report an expand-collapse pattern on, so
-    /// a reader pressing Enter had no way to hear that anything had happened.
-    /// </remarks>
+    // What a screen reader says for this row.
+    //
+    // The state belongs in the name because the chevron is a glyph inside the row rather than a
+    // control of its own: there is no expander for UIA to report an expand-collapse pattern on, so
+    // a reader pressing Enter had no way to hear that anything had happened.
     public string AnnouncedName {
       get {
         string burst = IsBurst ? $", {Count} times" : string.Empty;
@@ -138,13 +125,12 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       }
     }
 
-    /// <summary>Builds one row per entry, collapsing consecutive repeats into a burst.</summary>
-    /// <remarks>
-    /// Consecutive is load-bearing. Grouping every matching entry in the page would reorder the feed
-    /// — nine sign-outs from this morning would swallow one from last week and claim it happened at
-    /// breakfast. Only a run of the same fact, from the same session, inside a short window is one
-    /// event as far as a reader is concerned.
-    /// </remarks>
+    // Builds one row per entry, collapsing consecutive repeats into a burst.
+    //
+    // Consecutive is load-bearing. Grouping every matching entry in the page would reorder the feed
+    // — nine sign-outs from this morning would swallow one from last week and claim it happened at
+    // breakfast. Only a run of the same fact, from the same session, inside a short window is one
+    // event as far as a reader is concerned.
     public static IReadOnlyList<ActivityRow> Collapse(
         IReadOnlyList<ActivityEntryDto> entries, TimeSpan window) {
       var rows = new List<ActivityRow>();
@@ -163,12 +149,11 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return rows;
     }
 
-    /// <summary>Whether <paramref name="next"/> is more of the same thing as <paramref name="last"/>.</summary>
-    /// <remarks>
-    /// Entries with no session are never collapsed even when they match. A password change has no
-    /// session, and two of them minutes apart are two decisions somebody made rather than one event
-    /// reported twice.
-    /// </remarks>
+    // Whether next is more of the same thing as last.
+    //
+    // Entries with no session are never collapsed even when they match. A password change has no
+    // session, and two of them minutes apart are two decisions somebody made rather than one event
+    // reported twice.
     private static bool Continues(ActivityEntryDto last, ActivityEntryDto next, TimeSpan window) {
       return last.Kind == next.Kind
           && last.SessionId.Length > 0
@@ -197,20 +182,16 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       };
     }
 
-    /// <summary>
-    /// The detail lines, with every empty one left out.
-    /// </summary>
-    /// <remarks>
-    /// The mockup this page follows also drew an "Initiated by" line. There is no such field, at any
-    /// layer — the server records what happened, not who asked — and inventing one would be a
-    /// fabrication on the single screen somebody opens to check whether a stranger has been in their
-    /// account. It is absent rather than guessed.
-    /// <para>
-    /// "Device" and "User agent" were two lines in the mockup and are one fact here: the stored
-    /// device string *is* the user agent. Both forms are shown — the readable one and the raw one —
-    /// but they come from one value rather than from two that could disagree.
-    /// </para>
-    /// </remarks>
+    // The detail lines, with every empty one left out.
+    //
+    // The mockup this page follows also drew an "Initiated by" line. There is no such field, at any
+    // layer — the server records what happened, not who asked — and inventing one would be a
+    // fabrication on the single screen somebody opens to check whether a stranger has been in their
+    // account. It is absent rather than guessed.
+    //
+    // "Device" and "User agent" were two lines in the mockup and are one fact here: the stored
+    // device string *is* the user agent. Both forms are shown — the readable one and the raw one —
+    // but they come from one value rather than from two that could disagree.
     private static IReadOnlyList<ActivityDetail> Describe(ActivityEntryDto entry) {
       var facts = new List<ActivityDetail>(5) { new("Event", entry.Id) };
       if (entry.SessionId.Length > 0) {
@@ -232,7 +213,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return entry.OccurredAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture);
     }
 
-    /// <summary>The span a burst covers, oldest to newest, as the mockup draws it.</summary>
+    // The span a burst covers, oldest to newest, as the mockup draws it.
     private static string Span(IReadOnlyList<ActivityEntryDto> entries) {
       string oldest = entries[^1].OccurredAt.ToLocalTime()
           .ToString("HH:mm", CultureInfo.CurrentCulture);
@@ -241,7 +222,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return oldest == newest ? newest : oldest + "–" + newest;
     }
 
-    /// <summary>Clock time, plus how long ago while that is still the more useful answer.</summary>
+    // Clock time, plus how long ago while that is still the more useful answer.
     private static string Moment(DateTimeOffset occurred) {
       string clock = occurred.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
       string relative = Relative(occurred);
@@ -270,13 +251,10 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
   }
 
-  /// <summary>
-  /// One day's rows, which is what the list groups by.
-  /// </summary>
-  /// <remarks>
-  /// The boundary is the reader's local midnight, not the server's. A sign-in at 00:30 in Ho Chi Minh
-  /// City belongs under today for the person reading it, whatever UTC thinks.
-  /// </remarks>
+  // One day's rows, which is what the list groups by.
+  //
+  // The boundary is the reader's local midnight, not the server's. A sign-in at 00:30 in Ho Chi Minh
+  // City belongs under today for the person reading it, whatever UTC thinks.
   public sealed class ActivityDay {
     public ActivityDay(DateTime day, IReadOnlyList<ActivityRow> items) {
       Items = items;

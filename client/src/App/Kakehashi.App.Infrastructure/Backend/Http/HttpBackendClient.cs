@@ -6,12 +6,10 @@ using System.Threading.Tasks;
 using Kakehashi.App.Infrastructure.Backend.Contracts;
 
 namespace Kakehashi.App.Infrastructure.Backend.Http {
-  /// <summary>
-  /// REST/JSON implementation of <see cref="IBackendClient"/>. The <see cref="HttpClient"/> is supplied
-  /// by <c>IHttpClientFactory</c> (base address and timeout configured in
-  /// <c>InfrastructureServiceCollectionExtensions</c>); outbound calls are traced automatically by the
-  /// OpenTelemetry HTTP-client instrumentation.
-  /// </summary>
+  // REST/JSON implementation of IBackendClient. The HttpClient is supplied
+  // by IHttpClientFactory (base address and timeout configured in
+  // InfrastructureServiceCollectionExtensions); outbound calls are traced automatically by the
+  // OpenTelemetry HTTP-client instrumentation.
   public sealed class HttpBackendClient : IBackendClient {
     private readonly HttpClient _httpClient;
 

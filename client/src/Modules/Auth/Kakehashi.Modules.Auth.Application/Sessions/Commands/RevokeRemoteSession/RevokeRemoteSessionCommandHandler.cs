@@ -6,7 +6,7 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Commands.RevokeRemoteSession {
-  /// <summary>Revokes the session through the account gateway.</summary>
+  // Revokes the session through the account gateway.
   public sealed class RevokeRemoteSessionCommandHandler
       : IRequestHandler<RevokeRemoteSessionCommand, Result> {
     private readonly IAccountGateway _account;

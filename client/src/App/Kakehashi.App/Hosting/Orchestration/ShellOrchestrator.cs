@@ -5,7 +5,7 @@ using Kakehashi.App.UI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  /// <summary>Creates the main window, hosts the shell inside it, and wires the custom title bar.</summary>
+  // Creates the main window, hosts the shell inside it, and wires the custom title bar.
   public sealed class ShellOrchestrator : IStartupOrchestrator {
     private readonly IServiceProvider _services;
     private readonly StartupContext _context;

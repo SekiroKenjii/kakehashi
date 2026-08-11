@@ -7,7 +7,7 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Queries.GetRemoteSessions {
-  /// <summary>Fetches the session list through the account gateway.</summary>
+  // Fetches the session list through the account gateway.
   public sealed class GetRemoteSessionsQueryHandler
       : IRequestHandler<GetRemoteSessionsQuery, Result<IReadOnlyList<RemoteSessionDto>>> {
     private readonly IAccountGateway _account;

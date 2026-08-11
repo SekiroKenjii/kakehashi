@@ -7,7 +7,7 @@ using Kakehashi.Modules.Notes.Domain.Notes;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Notes.Application.Notes.Commands.CreateNote {
-  /// <summary>Validates the draft locally, then asks the server to store it.</summary>
+  // Validates the draft locally, then asks the server to store it.
   public sealed class CreateNoteCommandHandler
       : IRequestHandler<CreateNoteCommand, Result<NoteDto>> {
     private readonly INotesGateway _notes;

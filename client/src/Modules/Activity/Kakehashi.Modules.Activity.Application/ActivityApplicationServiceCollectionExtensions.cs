@@ -4,9 +4,9 @@ using Kakehashi.Mediator;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kakehashi.Modules.Activity.Application {
-  /// <summary>Registers the Activity application layer: its message handlers.</summary>
+  // Registers the Activity application layer: its message handlers.
   public static class ActivityApplicationServiceCollectionExtensions {
-    /// <summary>The assembly that contains the Activity application handlers.</summary>
+    // The assembly that contains the Activity application handlers.
     public static Assembly Assembly =>
         typeof(ActivityApplicationServiceCollectionExtensions).Assembly;
 

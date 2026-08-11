@@ -8,7 +8,7 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.UI {
-  /// <summary>Presents the theme choice as a 0/1/2 index and applies it through the theme service.</summary>
+  // Presents the theme choice as a 0/1/2 index and applies it through the theme service.
   public sealed partial class SettingsViewModel : ViewModel {
     private readonly IThemeService _themeService;
 
@@ -33,12 +33,11 @@ namespace Kakehashi.App.UI {
       });
     }
 
-    /// <summary>Opens the folder the application writes its log to.</summary>
-    /// <remarks>
-    /// This replaces a switch labelled "Error reporting" whose handler was empty — nothing sent, and
-    /// not even the flag persisted. Opening the folder is a smaller promise and an honest one, and it
-    /// answers the question that actually follows a crash: where is the log.
-    /// </remarks>
+    // Opens the folder the application writes its log to.
+    //
+    // This replaces a switch labelled "Error reporting" whose handler was empty — nothing sent, and
+    // not even the flag persisted. Opening the folder is a smaller promise and an honest one, and it
+    // answers the question that actually follows a crash: where is the log.
     [RelayCommand]
     private void OpenLogFolder() {
       var folder = Path.Combine(

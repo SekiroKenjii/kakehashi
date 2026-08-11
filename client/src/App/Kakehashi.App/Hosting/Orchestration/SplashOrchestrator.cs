@@ -5,7 +5,7 @@ using Kakehashi.App.UI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  /// <summary>Shows the splash window first and performs any startup warm-up.</summary>
+  // Shows the splash window first and performs any startup warm-up.
   public sealed class SplashOrchestrator : IStartupOrchestrator {
     private readonly IServiceProvider _services;
     private readonly StartupContext _context;

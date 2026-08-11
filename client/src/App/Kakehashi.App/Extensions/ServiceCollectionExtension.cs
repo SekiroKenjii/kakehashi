@@ -1,6 +1,4 @@
 namespace Kakehashi.App.Extensions {
-  /// <summary>
-  /// Extension methods for <see cref="Microsoft.Extensions.DependencyInjection.IServiceCollection"/>.
-  /// </summary>
+  // Extension methods for Microsoft.Extensions.DependencyInjection.IServiceCollection.
   public static class ServiceCollectionExtension { }
 }

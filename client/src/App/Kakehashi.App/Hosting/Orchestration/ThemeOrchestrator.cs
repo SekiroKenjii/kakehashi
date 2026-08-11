@@ -4,7 +4,7 @@ using System.Threading.Tasks;
 using Kakehashi.UI.Contracts.Services.Platform;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  /// <summary>Applies the persisted theme once the main window content exists.</summary>
+  // Applies the persisted theme once the main window content exists.
   public sealed class ThemeOrchestrator : IStartupOrchestrator {
     private readonly IThemeService _themeService;
 

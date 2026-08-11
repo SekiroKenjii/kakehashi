@@ -1,6 +1,4 @@
 namespace Kakehashi.App.Extensions {
-  /// <summary>
-  /// Extension methods for <see cref="System.Collections.ICollection"/>.
-  /// </summary>
+  // Extension methods for System.Collections.ICollection.
   public static class CollectionExtension { }
 }

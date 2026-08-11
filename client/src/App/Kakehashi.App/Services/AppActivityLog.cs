@@ -11,17 +11,15 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.Services {
-  /// <summary>One entry in the local app activity feed.</summary>
+  // One entry in the local app activity feed.
   public sealed record AppActivityEntry(
       string Kind, string Title, string Detail, DateTimeOffset OccurredAt);
 
-  /// <summary>
-  /// Records notable app-level events — sign-ins and sign-outs, app updates, theme changes — into a
-  /// small feed persisted via <see cref="ILocalSettingsService"/> (newest first, capped). Awakened at
-  /// startup so events that happen before any page exists (the startup sign-in, an app update) are
-  /// captured. All recording is marshalled to the UI thread, which keeps the settings store
-  /// single-threaded.
-  /// </summary>
+  // Records notable app-level events — sign-ins and sign-outs, app updates, theme changes — into a
+  // small feed persisted via ILocalSettingsService (newest first, capped). Awakened at
+  // startup so events that happen before any page exists (the startup sign-in, an app update) are
+  // captured. All recording is marshalled to the UI thread, which keeps the settings store
+  // single-threaded.
   public sealed class AppActivityLog : IAwakeOnStartup {
     public const string SignedInKind = "SignedIn";
     public const string SignedOutKind = "SignedOut";
@@ -76,7 +74,7 @@ namespace Kakehashi.App.Services {
           this, static (log, message) => log.HandleAuthSessionChanged());
     }
 
-    /// <summary>Returns a newest-first snapshot of the feed.</summary>
+    // Returns a newest-first snapshot of the feed.
     public IReadOnlyList<AppActivityEntry> GetRecent() {
       return [.. _entries];
     }

@@ -12,10 +12,8 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NotesV1 = Kakehashi.Notes.V1;
 
 namespace Kakehashi.Modules.Notes.UI {
-  /// <summary>
-  /// Composition entry point for the Notes module: registers the application layer, the gRPC
-  /// client for its own contract, the adapter behind the gateway port, and the page.
-  /// </summary>
+  // Composition entry point for the Notes module: registers the application layer, the gRPC
+  // client for its own contract, the adapter behind the gateway port, and the page.
   public sealed class NotesModule : IModule {
     public string Name => "Notes";
 

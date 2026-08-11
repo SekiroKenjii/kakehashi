@@ -9,11 +9,9 @@ using Kakehashi.Modules.Auth.Domain;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  /// <summary>
-  /// Holds the current <see cref="AuthSession"/> and serves the access token to the backend client
-  /// (<see cref="IAccessTokenProvider"/>). When a token is requested close to expiry it refreshes
-  /// transparently, serialising concurrent refreshes through a semaphore. Registered as a singleton.
-  /// </summary>
+  // Holds the current AuthSession and serves the access token to the backend client
+  // (IAccessTokenProvider). When a token is requested close to expiry it refreshes
+  // transparently, serialising concurrent refreshes through a semaphore. Registered as a singleton.
   public sealed class AuthSessionAccessor : IAuthSessionAccessor, IAccessTokenProvider {
     private readonly IInteractiveAuthenticator _authenticator;
     private readonly ITokenStore _tokenStore;

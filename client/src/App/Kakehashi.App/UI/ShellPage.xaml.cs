@@ -64,10 +64,10 @@ namespace Kakehashi.App.UI {
 
     public ShellViewModel ViewModel { get; }
 
-    /// <summary>The custom title bar, handed to the window so it becomes the draggable caption.</summary>
+    // The custom title bar, handed to the window so it becomes the draggable caption.
     public TitleBar TitleBar => AppTitleBar;
 
-    /// <summary>The in-app notification bar, bound to the notification service.</summary>
+    // The in-app notification bar, bound to the notification service.
     public InfoBar NotificationBar => AppNotificationBar;
 
     private void OnShellPageLoaded(object sender, RoutedEventArgs e) {
@@ -88,19 +88,15 @@ namespace Kakehashi.App.UI {
       NavView.SelectedItem = Home;
     }
 
-    /// <summary>
-    /// Rebuilds every pane item the shell does not own outright, grouped under their headings.
-    /// </summary>
-    /// <remarks>
-    /// Host items and module items go through the same planner, which is the point: grouping,
-    /// ordering and gating are decided once instead of once per source. Home stays in XAML because it
-    /// is the one destination that is always there and always first.
-    /// <para>
-    /// What to draw is <see cref="NavigationPlanner"/>'s decision, not this method's. Everything here
-    /// is about controls: making a <c>NavigationViewItem</c>, giving a disabled one a tooltip that
-    /// says why, and putting each under its heading.
-    /// </para>
-    /// </remarks>
+    // Rebuilds every pane item the shell does not own outright, grouped under their headings.
+    //
+    // Host items and module items go through the same planner, which is the point: grouping,
+    // ordering and gating are decided once instead of once per source. Home stays in XAML because it
+    // is the one destination that is always there and always first.
+    //
+    // What to draw is NavigationPlanner's decision, not this method's. Everything here
+    // is about controls: making a NavigationViewItem, giving a disabled one a tooltip that
+    // says why, and putting each under its heading.
     private void OnLayoutChanged(object? sender, EventArgs e) {
       _ = DispatcherQueue.TryEnqueue(OnModuleSetChanged);
     }
@@ -167,15 +163,12 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>
-    /// Places an item under its group heading, creating the heading the first time it is needed.
-    /// </summary>
-    /// <remarks>
-    /// Appending rather than inserting at a computed index: the first item of a group creates its
-    /// heading at the end of the pane, and every later item of that group goes directly after the
-    /// ones already there. Groups therefore appear in the order they are first contributed, which
-    /// is the composition root's module order.
-    /// </remarks>
+    // Places an item under its group heading, creating the heading the first time it is needed.
+    //
+    // Appending rather than inserting at a computed index: the first item of a group creates its
+    // heading at the end of the pane, and every later item of that group goes directly after the
+    // ones already there. Groups therefore appear in the order they are first contributed, which
+    // is the composition root's module order.
     private void AddToGroup(string group, NavigationViewItem navItem) {
       if (group.Length == 0) {
         NavView.MenuItems.Add(navItem);
@@ -280,13 +273,12 @@ namespace Kakehashi.App.UI {
       NavView.IsPaneOpen = !NavView.IsPaneOpen;
     }
 
-    /// <summary>Undoes exactly what loading did, so the page survives being shown twice.</summary>
-    /// <remarks>
-    /// The version this replaces cleared the tracking lists and left the controls in the pane, and
-    /// unsubscribed from things it had subscribed to in the CONSTRUCTOR rather than on load — so an
-    /// Unloaded/Loaded cycle produced a pane with every row twice and no live subscriptions. Setup
-    /// and teardown are symmetric now: both happen on load and unload, and both name the same things.
-    /// </remarks>
+    // Undoes exactly what loading did, so the page survives being shown twice.
+    //
+    // The version this replaces cleared the tracking lists and left the controls in the pane, and
+    // unsubscribed from things it had subscribed to in the CONSTRUCTOR rather than on load — so an
+    // Unloaded/Loaded cycle produced a pane with every row twice and no live subscriptions. Setup
+    // and teardown are symmetric now: both happen on load and unload, and both name the same things.
     private void OnShellPageUnloaded(object sender, RoutedEventArgs e) {
       _layout.Changed -= OnLayoutChanged;
       if (!_subscription.Unsubscribed) {

@@ -3,28 +3,26 @@ using System.Diagnostics.Metrics;
 using System.Reflection;
 
 namespace Kakehashi.App.Infrastructure.Observability {
-  /// <summary>
-  /// The application's single <see cref="ActivitySource"/> and <see cref="Meter"/>. Use
-  /// <see cref="ActivitySource"/> to create custom spans and <see cref="Meter"/> to create custom
-  /// instruments; both are registered with OpenTelemetry by name in
-  /// <c>ObservabilityServiceCollectionExtensions.AddObservability</c>.
-  /// </summary>
+  // The application's single ActivitySource and Meter. Use
+  // ActivitySource to create custom spans and Meter to create custom
+  // instruments; both are registered with OpenTelemetry by name in
+  // ObservabilityServiceCollectionExtensions.AddObservability.
   public static class Telemetry {
-    /// <summary>Logical service name, also used as the activity-source and meter name.</summary>
+    // Logical service name, also used as the activity-source and meter name.
     public static readonly string ServiceName =
         typeof(Telemetry).Assembly.GetName().Name ?? "Kakehashi.App";
 
-    /// <summary>The assembly's informational/file version, reported as the OpenTelemetry service version.</summary>
+    // The assembly's informational/file version, reported as the OpenTelemetry service version.
     public static readonly string ServiceVersion =
         typeof(Telemetry).Assembly
             .GetCustomAttribute<AssemblyInformationalVersionAttribute>()?.InformationalVersion
         ?? typeof(Telemetry).Assembly.GetName().Version?.ToString()
         ?? "0.0.0";
 
-    /// <summary>The source for application-authored traces (spans).</summary>
+    // The source for application-authored traces (spans).
     public static readonly ActivitySource ActivitySource = new(ServiceName, ServiceVersion);
 
-    /// <summary>The meter for application-authored metrics.</summary>
+    // The meter for application-authored metrics.
     public static readonly Meter Meter = new(ServiceName, ServiceVersion);
   }
 }

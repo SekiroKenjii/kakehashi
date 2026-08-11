@@ -10,13 +10,11 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Kakehashi.App.Infrastructure.Observability {
-  /// <summary>
-  /// Registers OpenTelemetry tracing, metrics and logging. Tracing follows the app's
-  /// <see cref="Telemetry.ActivitySource"/> plus outbound HTTP and gRPC client calls; metrics include
-  /// process/runtime and HTTP-client instruments; logs flow through the OpenTelemetry logging provider.
-  /// Each signal and exporter is gated by <see cref="ObservabilityOptions"/> so it stays quiet until
-  /// configured.
-  /// </summary>
+  // Registers OpenTelemetry tracing, metrics and logging. Tracing follows the app's
+  // Telemetry.ActivitySource plus outbound HTTP and gRPC client calls; metrics include
+  // process/runtime and HTTP-client instruments; logs flow through the OpenTelemetry logging provider.
+  // Each signal and exporter is gated by ObservabilityOptions so it stays quiet until
+  // configured.
   public static class ObservabilityServiceCollectionExtensions {
     public static IServiceCollection AddObservability(
         this IServiceCollection services, IConfiguration configuration) {

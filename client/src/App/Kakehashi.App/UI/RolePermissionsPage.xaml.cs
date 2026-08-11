@@ -7,21 +7,17 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The Role Permissions screen.
-  /// </summary>
-  /// <remarks>
-  /// Loads on <see cref="FrameworkElement.Loaded"/>, not <c>OnNavigatedTo</c>: the navigation
-  /// service sets <c>Frame.Content</c> directly — pages come from the container, not from
-  /// <c>Frame.Navigate</c> — so the navigation overrides never fire. Every page in this app loads
-  /// the same way.
-  /// <para>
-  /// The static helpers exist because <c>x:Bind</c> calls functions but does not do arithmetic or
-  /// string formatting. They are on the page rather than in converters for the reason the rest of
-  /// this codebase prefers: a function is compile-checked against its arguments, a converter is
-  /// not.
-  /// </para>
-  /// </remarks>
+  // The Role Permissions screen.
+  //
+  // Loads on FrameworkElement.Loaded, not OnNavigatedTo: the navigation
+  // service sets Frame.Content directly — pages come from the container, not from
+  // Frame.Navigate — so the navigation overrides never fire. Every page in this app loads
+  // the same way.
+  //
+  // The static helpers exist because x:Bind calls functions but does not do arithmetic or
+  // string formatting. They are on the page rather than in converters for the reason the rest of
+  // this codebase prefers: a function is compile-checked against its arguments, a converter is
+  // not.
   public sealed partial class RolePermissionsPage : Page {
     public RolePermissionsPage(RolePermissionsViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
@@ -33,7 +29,7 @@ namespace Kakehashi.App.UI {
 
     public RolePermissionsViewModel ViewModel { get; }
 
-    /// <summary>"22/34 perms" on a role card.</summary>
+    // "22/34 perms" on a role card.
     public static string DescribePerms(int permissionCount, int permissionTotal) {
       return $"{permissionCount}/{permissionTotal} perms";
     }
@@ -42,14 +38,11 @@ namespace Kakehashi.App.UI {
       return accountCount == 1 ? "1 user" : $"{accountCount} users";
     }
 
-    /// <summary>
-    /// The matrix header's one-line summary of the selected role.
-    /// </summary>
-    /// <remarks>
-    /// The description is deliberately absent: it is already on the role card two inches to the
-    /// left, and including it here pushed the line past the header's width, so the counts — the
-    /// part that is only here — were the half that got trimmed away.
-    /// </remarks>
+    // The matrix header's one-line summary of the selected role.
+    //
+    // The description is deliberately absent: it is already on the role card two inches to the
+    // left, and including it here pushed the line past the header's width, so the counts — the
+    // part that is only here — were the half that got trimmed away.
     public static string DescribeRoleSub(RoleRow? role) {
       if (role is null) {
         return string.Empty;
@@ -66,12 +59,12 @@ namespace Kakehashi.App.UI {
       return role is null ? string.Empty : AdminFormat.Initials(role.Name);
     }
 
-    /// <summary>The unsaved-changes bar's headline.</summary>
+    // The unsaved-changes bar's headline.
     public static string DescribeChanges(int count) {
       return count == 1 ? "1 unsaved change" : $"{count} unsaved changes";
     }
 
-    /// <summary>The icon on a category header.</summary>
+    // The icon on a category header.
     public static string GroupGlyph(string category) {
       return category switch {
         "Administration" => "",
@@ -80,36 +73,33 @@ namespace Kakehashi.App.UI {
       };
     }
 
-    /// <summary>The headline of one audit entry.</summary>
+    // The headline of one audit entry.
     public static string DescribeAudit(string action, string roleName, string permissionKey) {
       return permissionKey.Length == 0
           ? $"{action} · {roleName}"
           : $"{action} · {roleName} · {permissionKey}";
     }
 
-    /// <summary>Who did it and when, plus whatever the entry carried.</summary>
+    // Who did it and when, plus whatever the entry carried.
     public static string DescribeActor(string actorName, DateTimeOffset at, string detail) {
       var line = $"{actorName} · {AdminFormat.Relative(at)}";
       return detail.Length == 0 ? line : $"{line} · {detail}";
     }
 
-    /// <summary>The changed-row tint: a caution wash behind a staged row, nothing otherwise.</summary>
+    // The changed-row tint: a caution wash behind a staged row, nothing otherwise.
     public static SolidColorBrush ChangedBackground(bool isChanged) {
       return isChanged ? _changedBackground : _transparent;
     }
 
-    /// <summary>The 3px caution edge on a staged row — the mockup's changed marker.</summary>
+    // The 3px caution edge on a staged row — the mockup's changed marker.
     public static SolidColorBrush ChangedBorder(bool isChanged) {
       return isChanged ? _changedBorder : _transparent;
     }
 
-    /// <summary>
-    /// The inverse of a flag, as a visibility.
-    /// </summary>
-    /// <remarks>
-    /// x:Bind converts a bool to Visibility on its own but has no operator for "not", and a
-    /// second property on the view model for every negated one is worse than one function here.
-    /// </remarks>
+    // The inverse of a flag, as a visibility.
+    //
+    // x:Bind converts a bool to Visibility on its own but has no operator for "not", and a
+    // second property on the view model for every negated one is worse than one function here.
     public static Visibility Not(bool value) {
       return value ? Visibility.Collapsed : Visibility.Visible;
     }

@@ -6,7 +6,7 @@ using Kakehashi.Modules.Notes.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Notes.Application.Notes.Commands.DeleteNote {
-  /// <summary>Asks the server to remove a note.</summary>
+  // Asks the server to remove a note.
   public sealed class DeleteNoteCommandHandler : IRequestHandler<DeleteNoteCommand, Result> {
     private readonly INotesGateway _notes;
 

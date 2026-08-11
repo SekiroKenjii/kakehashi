@@ -2,10 +2,8 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.Services.Platform {
-  /// <summary>
-  /// Shows in-app notifications through the shell's <see cref="InfoBar"/>. A seam is left for OS-level
-  /// toast notifications, which require a packaged app and <c>AppNotificationManager</c>.
-  /// </summary>
+  // Shows in-app notifications through the shell's InfoBar. A seam is left for OS-level
+  // toast notifications, which require a packaged app and AppNotificationManager.
   public sealed class NotificationService : INotificationService {
     private InfoBar? _infoBar;
 

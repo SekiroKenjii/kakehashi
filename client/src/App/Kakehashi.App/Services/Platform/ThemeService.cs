@@ -6,11 +6,9 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.Services.Platform {
-  /// <summary>
-  /// Applies and persists the app theme. The theme is applied to the main window's content root and
-  /// the title-bar caption buttons, and stored via <see cref="ILocalSettingsService"/> so it survives
-  /// restarts (works for the unpackaged app, which has no <c>ApplicationData</c>).
-  /// </summary>
+  // Applies and persists the app theme. The theme is applied to the main window's content root and
+  // the title-bar caption buttons, and stored via ILocalSettingsService so it survives
+  // restarts (works for the unpackaged app, which has no ApplicationData).
   public sealed class ThemeService : IThemeService {
     private const string _themeSettingKey = "AppTheme";
     private readonly ILocalSettingsService _localSettings;

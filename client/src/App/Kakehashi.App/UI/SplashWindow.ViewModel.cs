@@ -19,12 +19,12 @@ namespace Kakehashi.App.UI {
     [ObservableProperty]
     public partial double ProgressValue { get; set; }
 
-    /// <summary>The backend endpoint shown in the footer, e.g. <c>localhost:5001 · connecting</c>.</summary>
+    // The backend endpoint shown in the footer, e.g. localhost:5001 · connecting.
     public string BackendText { get; }
 
     public bool HasBackend => BackendText.Length > 0;
 
-    /// <summary>The application version shown in the footer, e.g. <c>v1.0.0 · build 0</c>.</summary>
+    // The application version shown in the footer, e.g. v1.0.0 · build 0.
     public string VersionText { get; }
 
     public SplashViewModel(IOptions<BackendOptions> backendOptions) {
@@ -42,7 +42,7 @@ namespace Kakehashi.App.UI {
       VersionText = ResolveVersionText();
     }
 
-    /// <summary>Reports startup progress: the 1-based step, the total step count and a status text.</summary>
+    // Reports startup progress: the 1-based step, the total step count and a status text.
     public void ReportProgress(int step, int totalSteps, string statusText) {
       StatusText = statusText;
       StepText = $"{step} / {totalSteps}";
@@ -50,11 +50,9 @@ namespace Kakehashi.App.UI {
       ProgressValue = totalSteps == 0 ? 0 : 100.0 * step / totalSteps;
     }
 
-    /// <summary>
-    /// Builds the footer version, e.g. <c>v0.4.0 · build 05609c6</c>. The build identifier is the
-    /// source commit the SDK stamps into the informational version's <c>+</c> metadata
-    /// (SourceLink's SourceRevisionId); local builds without one show just the version.
-    /// </summary>
+    // Builds the footer version, e.g. v0.4.0 · build 05609c6. The build identifier is the
+    // source commit the SDK stamps into the informational version's + metadata
+    // (SourceLink's SourceRevisionId); local builds without one show just the version.
     private static string ResolveVersionText() {
       var assembly = Assembly.GetEntryAssembly();
       var version = assembly?.GetName().Version;

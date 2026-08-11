@@ -6,12 +6,11 @@ using Windows.Storage.Pickers;
 using WinRT.Interop;
 
 namespace Kakehashi.App.Services.Platform {
-  /// <summary>Shows the Windows save dialog.</summary>
-  /// <remarks>
-  /// The window handle is the part that is easy to get wrong: a picker created in a desktop app has
-  /// no window of its own to be modal to, and without InitializeWithWindow it throws rather than
-  /// appearing. That one call is most of the reason this lives behind a port.
-  /// </remarks>
+  // Shows the Windows save dialog.
+  //
+  // The window handle is the part that is easy to get wrong: a picker created in a desktop app has
+  // no window of its own to be modal to, and without InitializeWithWindow it throws rather than
+  // appearing. That one call is most of the reason this lives behind a port.
   public sealed class FileSaveService : IFileSaveService {
     private readonly IMainWindowProvider _windows;
 

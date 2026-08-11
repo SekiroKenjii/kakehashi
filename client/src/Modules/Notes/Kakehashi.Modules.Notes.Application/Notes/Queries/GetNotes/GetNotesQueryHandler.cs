@@ -7,7 +7,7 @@ using Kakehashi.Modules.Notes.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Notes.Application.Notes.Queries.GetNotes {
-  /// <summary>Fetches the note list through the gateway.</summary>
+  // Fetches the note list through the gateway.
   public sealed class GetNotesQueryHandler
       : IRequestHandler<GetNotesQuery, Result<IReadOnlyList<NoteDto>>> {
     private readonly INotesGateway _notes;

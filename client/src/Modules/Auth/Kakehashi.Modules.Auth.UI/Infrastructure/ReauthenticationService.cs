@@ -7,12 +7,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  /// <summary>
-  /// Forces an interactive re-sign-in after the user signs out: the main window is blurred and its
-  /// input disabled while the <see cref="LoginWindow"/> is shown as a modal centered over it. The
-  /// user can only sign in again or quit - declining closes the application, so it never keeps
-  /// running unauthenticated once authentication is configured.
-  /// </summary>
+  // Forces an interactive re-sign-in after the user signs out: the main window is blurred and its
+  // input disabled while the LoginWindow is shown as a modal centered over it. The
+  // user can only sign in again or quit - declining closes the application, so it never keeps
+  // running unauthenticated once authentication is configured.
   public sealed class ReauthenticationService {
     private readonly IServiceProvider _services;
     private readonly IShellOverlay _overlay;
@@ -36,7 +34,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _options = options.Value;
     }
 
-    /// <summary>Runs the modal re-sign-in flow. Must be called on the UI thread.</summary>
+    // Runs the modal re-sign-in flow. Must be called on the UI thread.
     public async Task RequireSignInAsync() {
       if (!_options.IsConfigured || _inProgress) {
         return;

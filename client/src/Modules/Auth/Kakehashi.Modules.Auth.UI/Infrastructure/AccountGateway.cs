@@ -16,11 +16,9 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  /// <summary>
-  /// Calls the authorization server's account endpoints (sessions and security activity) with the
-  /// current access token. Expected failures (offline, expired token, revoked session) surface as
-  /// <see cref="Result"/> failures rather than exceptions. Registered as a singleton.
-  /// </summary>
+  // Calls the authorization server's account endpoints (sessions and security activity) with the
+  // current access token. Expected failures (offline, expired token, revoked session) surface as
+  // Result failures rather than exceptions. Registered as a singleton.
   public sealed partial class AccountGateway : IAccountGateway, IDisposable {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
 
@@ -139,7 +137,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       }
     }
 
-    /// <summary>Surfaces the server's validation message (e.g. password policy) when present.</summary>
+    // Surfaces the server's validation message (e.g. password policy) when present.
     private static async Task<Error> ReadErrorAsync(
         HttpResponseMessage response, CancellationToken cancellationToken) {
       try {

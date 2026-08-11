@@ -9,11 +9,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  /// <summary>
-  /// The startup login gate. When authentication is configured it first tries a silent session
-  /// restore (refresh-token exchange); if that fails it shows the <see cref="LoginWindow"/> and waits
-  /// for interactive sign-in. When authentication is not configured it returns immediately.
-  /// </summary>
+  // The startup login gate. When authentication is configured it first tries a silent session
+  // restore (refresh-token exchange); if that fails it shows the LoginWindow and waits
+  // for interactive sign-in. When authentication is not configured it returns immediately.
   public sealed class AuthenticationGate : IAuthenticationGate {
     private readonly IServiceProvider _services;
     private readonly AuthOptions _options;

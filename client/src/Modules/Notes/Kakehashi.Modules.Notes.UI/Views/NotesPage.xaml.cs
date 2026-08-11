@@ -4,10 +4,8 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.Modules.Notes.UI.Views {
-  /// <summary>
-  /// The notes page: the note list served by the backend, with create, edit and delete through
-  /// dialogs.
-  /// </summary>
+  // The notes page: the note list served by the backend, with create, edit and delete through
+  // dialogs.
   public sealed partial class NotesPage : Page {
     public NotesPage(NotesViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
