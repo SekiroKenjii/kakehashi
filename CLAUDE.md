@@ -114,6 +114,32 @@ merge prevents.
 
 Full walkthrough, including the release and hotfix sequences: [CONTRIBUTING.md](CONTRIBUTING.md).
 
+### Commit messages — Conventional Commits, no exceptions
+
+**Every commit subject starts with a type and a colon.** This is not a preference, it is what the
+history already is, and a subject without one has to be rewritten by hand afterwards.
+
+```text
+<type>: <subject in the imperative, lower case, no full stop>
+
+<body: why, not what. Wrap at 72 columns.>
+```
+
+| Type | For |
+| --- | --- |
+| `feat` | a capability the product did not have |
+| `fix` | a defect somebody could hit |
+| `refactor` | the behaviour is identical and the code is not |
+| `docs` | documentation, comments, README, the docs/ tree |
+| `test` | tests only |
+| `chore` | tooling, scripts, dependencies, repository plumbing |
+| `ci` | the workflow files |
+
+Scope is optional and used sparingly: `feat(navigation):`. Breaking changes take `!` before the
+colon and explain themselves in the body.
+
+**Never write the `Co-Authored-By` trailer.**
+
 ---
 
 ## Server (Go)
