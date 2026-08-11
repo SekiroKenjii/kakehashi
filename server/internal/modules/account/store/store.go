@@ -29,7 +29,6 @@ type SQLServer struct {
 	db *database.DB
 }
 
-// New returns a store backed by db.
 func New(db *database.DB) *SQLServer { return &SQLServer{db: db} }
 
 // Health reports whether the database answers. The provider's discovery of "is storage alive"

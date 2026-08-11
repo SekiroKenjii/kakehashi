@@ -20,7 +20,6 @@ type SQLServer struct {
 	db *database.DB
 }
 
-// New returns a store backed by db.
 func New(db *database.DB) *SQLServer { return &SQLServer{db: db} }
 
 // scanner is what *sql.Row and *sql.Rows have in common, so one scan serves both.

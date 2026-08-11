@@ -24,7 +24,6 @@ type Module struct {
 	svc *service.Service
 }
 
-// New returns the module, ready to be mounted on the kernel.
 func New() *Module { return &Module{} }
 
 // ID namespaces the module. Health owns no storage, so nothing here is prefixed with it yet.

@@ -76,7 +76,6 @@ func (e *Error) Error() string {
 
 func (e *Error) Unwrap() error { return e.Err }
 
-// NotFoundf builds a NotFound error.
 func NotFoundf(format string, a ...any) *Error {
 	return &Error{Kind: NotFound, Msg: fmt.Sprintf(format, a...)}
 }
@@ -87,17 +86,14 @@ func Invalidf(format string, a ...any) *Error {
 	return &Error{Kind: Invalid, Msg: fmt.Sprintf(format, a...)}
 }
 
-// Conflictf builds a Conflict error.
 func Conflictf(format string, a ...any) *Error {
 	return &Error{Kind: Conflict, Msg: fmt.Sprintf(format, a...)}
 }
 
-// Unauthenticatedf builds an Unauthenticated error.
 func Unauthenticatedf(format string, a ...any) *Error {
 	return &Error{Kind: Unauthenticated, Msg: fmt.Sprintf(format, a...)}
 }
 
-// Forbiddenf builds a Forbidden error.
 func Forbiddenf(format string, a ...any) *Error {
 	return &Error{Kind: Forbidden, Msg: fmt.Sprintf(format, a...)}
 }

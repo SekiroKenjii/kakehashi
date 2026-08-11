@@ -65,7 +65,6 @@ func New() *Module {
 // ID namespaces the module's SQL schema (navigation.*) and its configuration keys.
 func (m *Module) ID() string { return "navigation" }
 
-// Migrations hands the kernel this module's schema.
 func (m *Module) Migrations() []app.Migration {
 	src := store.Migrations()
 

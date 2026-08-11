@@ -4,8 +4,6 @@ import (
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 )
 
-// The screen this module owns.
-
 // NavigationDestinations declares the Notes page.
 //
 // No Permission, which means the module's own notes.access — the ordinary case, and the one worth

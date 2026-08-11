@@ -61,18 +61,20 @@ namespace Kakehashi.App {
       set => Current._appTitleBar = value;
     }
 
-    /// <summary>
-    /// Gets the a new instance of <see cref="ISubscription"/> from the service provider.
-    /// </summary>
+    /// <summary>A fresh <see cref="ISubscription"/> from the container.</summary>
     public static ISubscription Subscription => Services.GetRequiredService<ISubscription>();
 
     /// <summary>
-    /// Gets a UI service from the container. Services accessed via this method must implement <see cref="IUiContractService"/>
-    /// to indicate that they are designed for use in the UI layer and can be safely accessed via this static accessor. This is a compile-time convention only, but helps to prevent accidental misuse of the static service accessors by non-UI code.
+    /// Resolves a UI service.
     /// </summary>
-    /// <typeparam name="TService">The type of the UI service that implements <see cref="IUiContractService"/>.</typeparam>
-    /// <returns>The requested service instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if the service is not registered.</exception>
+    /// <remarks>
+    /// The <see cref="IUiContractService"/> constraint is what keeps these static accessors from
+    /// becoming a service locator for the whole app: a type has to opt in before non-UI code can
+    /// reach it this way. It is a convention the compiler happens to check, not a boundary.
+    /// </remarks>
+    /// <typeparam name="TService">The service.</typeparam>
+    /// <returns>The service.</returns>
+    /// <exception cref="InvalidOperationException">The service is not registered.</exception>
     public static TService GetService<TService>() where TService : IUiContractService {
       return Services.GetService(typeof(TService)) is TService service
           ? service
@@ -80,21 +82,17 @@ namespace Kakehashi.App {
               $"Service of type {typeof(TService)} is not registered.");
     }
 
-    /// <summary>
-    /// Gets all registered services of the specified type. Services accessed via this method must implement <see cref="IUiContractService"/> to indicate that they are designed for use in the UI layer and can be safely accessed via this static accessor. This is a compile-time convention only, but helps to prevent accidental misuse of the static service accessors by non-UI code.
-    /// </summary>
-    /// <typeparam name="TService">The type of the UI service that implements <see cref="IUiContractService"/>.</typeparam>
-    /// <returns>An enumerable of the requested service instances.</returns>
+    /// <summary>Every registered service of a type.</summary>
+    /// <typeparam name="TService">The service.</typeparam>
+    /// <returns>The services, possibly none.</returns>
     public static IEnumerable<TService> GetServices<TService>() where TService : class {
       return Services.GetServices<TService>();
     }
 
-    /// <summary>
-    /// Gets a view model from the container. View models accessed via this method must implement <see cref="ViewModel"/> to indicate that they are designed for use as view models and can be safely accessed via this static accessor. This is a compile-time convention only, but helps to prevent accidental misuse of the static service accessors by non-UI code.
-    /// </summary>
-    /// <typeparam name="TViewModel">The type of the view model that implements <see cref="ViewModel"/>.</typeparam>
-    /// <returns>The requested view model instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if the view model is not registered.</exception>
+    /// <summary>Resolves a view model.</summary>
+    /// <typeparam name="TViewModel">The view model.</typeparam>
+    /// <returns>The view model.</returns>
+    /// <exception cref="InvalidOperationException">The view model is not registered.</exception>
     public static TViewModel GetViewModel<TViewModel>() where TViewModel : ViewModel {
       return Services.GetService(typeof(TViewModel)) is TViewModel viewModel
           ? viewModel
@@ -103,9 +101,12 @@ namespace Kakehashi.App {
     }
 
     /// <summary>
-    /// Shuts down the application host, allowing for graceful cleanup of resources. This should be called during application exit to ensure that all hosted services are properly stopped and disposed. The method attempts to stop the host within a 5-second timeout, but will not throw if shutdown fails, as it is a best-effort operation during application teardown.
+    /// Stops the host on the way out, giving hosted services five seconds to finish.
     /// </summary>
-    /// <returns>A task that represents the asynchronous shutdown operation.</returns>
+    /// <remarks>
+    /// Never throws. The process is leaving either way, and an exception here would replace an
+    /// orderly exit with a crash dialog over a cleanup nobody was waiting on.
+    /// </remarks>
     public static async Task ShutdownAsync() {
       var host = Current._host;
       if (host is null) {

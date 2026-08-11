@@ -5,8 +5,6 @@ import (
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 )
 
-// The screen this module owns.
-
 // NavigationDestinations declares the Role permissions screen.
 //
 // Its own permission, for the same reason the module's routes are not gated on authz.access: a

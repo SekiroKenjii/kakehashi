@@ -26,7 +26,6 @@ type Module struct {
 	svc *service.Service
 }
 
-// New returns the module, ready to be mounted on the kernel.
 func New() *Module { return &Module{} }
 
 // ID namespaces the module's tables (notes_*) and its configuration keys.

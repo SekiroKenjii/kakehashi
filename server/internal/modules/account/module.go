@@ -40,7 +40,6 @@ type Module struct {
 	wire  *rpc.Wire
 }
 
-// New returns the module, ready to be mounted on the kernel.
 func New() *Module { return &Module{} }
 
 // ID namespaces the module's schema (account.*) and its configuration keys (KAKEHASHI_ACCOUNT_*).
@@ -48,7 +47,6 @@ func New() *Module { return &Module{} }
 // IDENTITY is a reserved word in T-SQL.
 func (m *Module) ID() string { return "account" }
 
-// Migrations hands the kernel this module's schema.
 func (m *Module) Migrations() []app.Migration {
 	src := store.Migrations()
 

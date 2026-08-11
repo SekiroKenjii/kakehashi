@@ -27,7 +27,6 @@ type SQLServer struct {
 	db *database.DB
 }
 
-// New returns a store backed by db.
 func New(db *database.DB) *SQLServer { return &SQLServer{db: db} }
 
 // execer is what the pooled handle and a transaction have in common.

@@ -1,7 +1,6 @@
 namespace Kakehashi.UI.Contracts {
   /// <summary>
-  /// Marker interface for transient dependencies. Implement this interface on services that should be
-  /// registered with a transient lifetime in the dependency injection container.
+  /// Registers the implementing service as transient when the container scans the assembly.
   /// </summary>
   public interface ITransientDependency;
 }

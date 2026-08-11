@@ -2,22 +2,18 @@ using System;
 
 namespace Kakehashi.UI.Contracts.Services {
   /// <summary>
-  /// Services that implement this interface will be created during app startup before any of the
-  /// orchestrators run. This is useful for services that need to "awake" (do some work) during
-  /// startup but don't fit well as an orchestrator themselves, for example because they need to be
-  /// created early or because their behavior is more of a side effect of their creation rather than
-  /// a sequence of steps to run.
+  /// A service the composition root builds and initialises before any orchestrator runs.
   /// </summary>
+  /// <remarks>
+  /// For work that has to happen early but is not a step in the startup sequence — a service whose
+  /// point is the wiring it does on the way up rather than anything a caller asks it for.
+  /// </remarks>
   public interface IAwakeOnStartup : ISingletonDependency {
-    /// <summary>
-    /// A name to identify the service in logs and telemetry during startup. This is useful because all services that implement this interface will be created during startup and it can be hard to tell them apart in logs and telemetry without a name.
-    /// </summary>
+    /// <summary>What to call this one in startup logs.</summary>
     string Name { get; }
 
-    /// <summary>
-    /// Initializes the service. This is called by the composition root when the app starts up; the service instance is created and then this method is called on it. This is a bit unusual but it works and keeps the service reusable without forcing a specific DI container or composition approach on the app.
-    /// </summary>
-    /// <param name="serviceProvider"></param>
+    /// <summary>Called once, after construction, before the orchestrators.</summary>
+    /// <param name="serviceProvider">The container, for the dependencies this resolves itself.</param>
     void Initialize(IServiceProvider serviceProvider);
   }
 }
