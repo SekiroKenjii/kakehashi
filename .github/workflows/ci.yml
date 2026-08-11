@@ -1,10 +1,13 @@
 name: CI
 
+# Gitflow: development is where features land and main is what has been released, so both are worth
+# a full run on their own. Every long-lived branch is also a pull-request target, and the release and
+# hotfix branches are checked through the pull request that opens them.
 on:
   push:
-    branches: [main]
+    branches: [main, development]
   pull_request:
-    branches: [main]
+    branches: [main, development]
 
 permissions:
   contents: read
