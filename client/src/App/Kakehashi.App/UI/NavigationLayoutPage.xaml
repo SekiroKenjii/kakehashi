@@ -41,6 +41,22 @@
             <Setter Property="MinWidth" Value="0" />
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
         </Style>
+        <!--
+            A screen row. It looks like the card it used to be and is a Button, because selecting a
+            screen is the only way into the editor on the right — and while this was a Border with a
+            PointerPressed handler, that entrance existed for a mouse and for nothing else. Follows
+            RowButtonStyle on the Home page, which made the same row a button for the same reason.
+        -->
+        <Style x:Key="ScreenRowButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="4" />
+            <Setter Property="Padding" Value="8" />
+            <Setter Property="Margin" Value="0,0,0,2" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        </Style>
         <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
             <Setter Property="FontSize" Value="12" />
             <Setter Property="FontWeight" Value="SemiBold" />
@@ -130,28 +146,38 @@
                     <ColumnDefinition Width="Auto" />
                 </Grid.ColumnDefinitions>
 
-                <StackPanel
-                    Grid.Column="0"
-                    VerticalAlignment="Center"
-                    Orientation="Horizontal"
-                    Spacing="10">
+                <!--
+                    A Grid rather than a horizontal StackPanel. A StackPanel hands its children
+                    unbounded width, so the summary's TextTrimming never engaged and the sentence was
+                    sliced mid-word by the border instead of ending in an ellipsis.
+                -->
+                <Grid Grid.Column="0" ColumnSpacing="10">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
                     <FontIcon
+                        Grid.Column="0"
                         VerticalAlignment="Center"
                         FontSize="15"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
                         Glyph="&#xE7BA;" />
                     <TextBlock
+                        Grid.Column="1"
                         VerticalAlignment="Center"
                         FontWeight="SemiBold"
                         Foreground="{ThemeResource SystemFillColorCautionBrush}"
                         Text="{x:Bind ViewModel.ChangeCountText, Mode=OneWay}" />
                     <TextBlock
+                        Grid.Column="2"
                         VerticalAlignment="Center"
                         FontSize="12.5"
                         Foreground="{ThemeResource TextFillColorSecondaryBrush}"
                         Text="{x:Bind ViewModel.ChangeSummary, Mode=OneWay}"
-                        TextTrimming="CharacterEllipsis" />
-                </StackPanel>
+                        TextTrimming="CharacterEllipsis"
+                        ToolTipService.ToolTip="{x:Bind ViewModel.ChangeSummary, Mode=OneWay}" />
+                </Grid>
 
                 <StackPanel
                     Grid.Column="1"
@@ -342,20 +368,16 @@
                                             ItemsSource="{x:Bind Screens}">
                                             <ItemsControl.ItemTemplate>
                                                 <DataTemplate x:DataType="local:NavScreenNode">
-                                                    <Border
+                                                    <Button
                                                         AllowDrop="True"
-                                                        Background="Transparent"
-                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                                        BorderThickness="1"
+                                                        AutomationProperties.Name="{x:Bind DisplayTitle, Mode=OneWay}"
                                                         CanDrag="True"
-                                                        CornerRadius="4"
+                                                        Click="OnScreenPressed"
                                                         DragOver="OnRowDragOver"
                                                         DragStarting="OnScreenDragStarting"
                                                         Drop="OnScreenDrop"
-                                                        Margin="0,0,0,2"
                                                         Opacity="{x:Bind local:NavigationLayoutPage.RowOpacity(IsVisible), Mode=OneWay}"
-                                                        Padding="8"
-                                                        PointerPressed="OnScreenPressed"
+                                                        Style="{StaticResource ScreenRowButtonStyle}"
                                                         Tag="{x:Bind}">
                                                         <Grid ColumnSpacing="9">
                                                             <Grid.ColumnDefinitions>
@@ -412,20 +434,30 @@
                                                                     Text="{x:Bind RequiredPermission}" />
                                                             </Border>
 
+                                                            <!--
+                                                                Stays enabled where the screen
+                                                                refuses to be hidden, because a
+                                                                disabled button is skipped by Tab and
+                                                                surfaces no tooltip — so the one
+                                                                sentence explaining the refusal
+                                                                reached a mouse and nobody else. The
+                                                                handler already declines the press.
+                                                            -->
                                                             <Button
                                                                 Grid.Column="4"
-                                                                AutomationProperties.Name="Show in the pane"
+                                                                AutomationProperties.HelpText="{x:Bind local:NavigationLayoutPage.VisibilityTip(IsVisible, CanHide), Mode=OneWay}"
+                                                                AutomationProperties.Name="{x:Bind local:NavigationLayoutPage.VisibilityLabel(DisplayTitle, IsVisible), Mode=OneWay}"
                                                                 Click="OnVisibilityClicked"
-                                                                IsEnabled="{x:Bind CanHide}"
                                                                 Style="{StaticResource RowIconButtonStyle}"
                                                                 Tag="{x:Bind}"
                                                                 ToolTipService.ToolTip="{x:Bind local:NavigationLayoutPage.VisibilityTip(IsVisible, CanHide), Mode=OneWay}">
                                                                 <FontIcon
                                                                     FontSize="13"
-                                                                    Glyph="{x:Bind local:NavigationLayoutPage.EyeGlyph(IsVisible), Mode=OneWay}" />
+                                                                    Glyph="{x:Bind local:NavigationLayoutPage.EyeGlyph(IsVisible), Mode=OneWay}"
+                                                                    Opacity="{x:Bind local:NavigationLayoutPage.EyeOpacity(CanHide), Mode=OneWay}" />
                                                             </Button>
                                                         </Grid>
-                                                    </Border>
+                                                    </Button>
                                                 </DataTemplate>
                                             </ItemsControl.ItemTemplate>
                                         </ItemsControl>

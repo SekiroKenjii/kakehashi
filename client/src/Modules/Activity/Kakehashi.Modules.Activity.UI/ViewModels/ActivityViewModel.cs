@@ -32,12 +32,28 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CountText))]
+    [NotifyPropertyChangedFor(nameof(AnnouncedName))]
     public partial int Count { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AnnouncedName))]
     public partial bool IsSelected { get; set; }
 
     public string CountText => Count.ToString(CultureInfo.CurrentCulture);
+
+    /// <summary>
+    /// What a screen reader says for this chip.
+    /// </summary>
+    /// <remarks>
+    /// The count and the selected state are both drawn rather than announced — the count in a second
+    /// TextBlock, the selection in a brush — so a reader heard "Security, button" and could not tell
+    /// how many there were or which chip the feed was filtered by.
+    /// </remarks>
+    public string AnnouncedName {
+      get {
+        return IsSelected ? $"{Label}, {Count}, showing" : $"{Label}, {Count}";
+      }
+    }
   }
 
   /// <summary>How far back to look.</summary>
@@ -396,12 +412,30 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
 
     /// <summary>Rebuilds the rows and the day groups from everything loaded.</summary>
+    /// <remarks>
+    /// Which rows were open is carried across the rebuild. Every row is a new object here — a burst
+    /// can grow a member and stop being the row it was — so without this, pressing "load more" while
+    /// reading an expanded entry closed it, which reads as the app losing the reader's place.
+    /// </remarks>
     private void Regroup() {
+      var open = new HashSet<string>(StringComparer.Ordinal);
+      foreach (var day in Days) {
+        foreach (var row in day.Items) {
+          if (row.IsExpanded) {
+            open.Add(row.Entries[0].Id);
+          }
+        }
+      }
+
       var rows = ActivityRow.Collapse(_entries, _burstWindow);
 
       Days.Clear();
       foreach (var group in rows.GroupBy(row => row.Entries[0].OccurredAt.ToLocalTime().Date)) {
-        Days.Add(new ActivityDay(group.Key, [.. group]));
+        var items = group.ToList();
+        foreach (var row in items) {
+          row.IsExpanded = open.Contains(row.Entries[0].Id);
+        }
+        Days.Add(new ActivityDay(group.Key, [.. items]));
       }
       OnPropertyChanged(nameof(IsEmpty));
     }

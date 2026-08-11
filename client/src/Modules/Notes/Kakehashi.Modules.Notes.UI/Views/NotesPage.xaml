@@ -87,6 +87,7 @@
                                 Spacing="2"
                                 Visibility="{x:Bind ViewModel.HasPaging, Mode=OneWay}">
                                 <Button
+                                    AutomationProperties.Name="Previous page"
                                     Command="{x:Bind ViewModel.PrevPageCommand}"
                                     Style="{StaticResource PagerButtonStyle}"
                                     ToolTipService.ToolTip="Previous page">
@@ -98,6 +99,7 @@
                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                     Text="{x:Bind ViewModel.PageLabel, Mode=OneWay}" />
                                 <Button
+                                    AutomationProperties.Name="Next page"
                                     Command="{x:Bind ViewModel.NextPageCommand}"
                                     Style="{StaticResource PagerButtonStyle}"
                                     ToolTipService.ToolTip="Next page">
@@ -107,6 +109,7 @@
 
                             <Button
                                 Margin="8,0,0,0"
+                                AutomationProperties.Name="New note"
                                 Click="OnNewNote"
                                 Style="{ThemeResource AccentButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -167,6 +170,8 @@
                                     <Button
                                         Grid.Column="1"
                                         VerticalAlignment="Center"
+                                        AutomationProperties.HelpText="{x:Bind Title}"
+                                        AutomationProperties.Name="Edit"
                                         Click="OnEditNote"
                                         Style="{StaticResource PagerButtonStyle}"
                                         Tag="{x:Bind}"
@@ -177,6 +182,8 @@
                                     <Button
                                         Grid.Column="2"
                                         VerticalAlignment="Center"
+                                        AutomationProperties.HelpText="{x:Bind Title}"
+                                        AutomationProperties.Name="Delete"
                                         Click="OnDeleteNote"
                                         Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                         Style="{StaticResource PagerButtonStyle}"

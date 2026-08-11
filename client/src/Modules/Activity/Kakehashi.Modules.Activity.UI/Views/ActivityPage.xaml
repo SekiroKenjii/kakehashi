@@ -102,6 +102,7 @@
                 Grid.Column="0"
                 Width="280"
                 AutomationProperties.AutomationId="ActivitySearch"
+                AutomationProperties.Name="Search activity"
                 PlaceholderText="Search events, address, device..."
                 QueryIcon="Find"
                 QuerySubmitted="OnSearchSubmitted"
@@ -113,7 +114,7 @@
                         <Button
                             Margin="0,0,6,0"
                             Padding="12,5"
-                            AutomationProperties.Name="{x:Bind Label}"
+                            AutomationProperties.Name="{x:Bind AnnouncedName, Mode=OneWay}"
                             Background="{x:Bind local:ActivityPage.ChipBackground(IsSelected), Mode=OneWay}"
                             Click="OnChipClicked"
                             CornerRadius="14"
@@ -228,7 +229,9 @@
                     </ListView.ItemContainerStyle>
                     <ListView.ItemTemplate>
                         <DataTemplate x:DataType="vm:ActivityRow">
-                            <StackPanel AutomationProperties.Name="{x:Bind Title}" Spacing="8">
+                            <StackPanel
+                                AutomationProperties.Name="{x:Bind AnnouncedName, Mode=OneWay}"
+                                Spacing="8">
                                 <Grid ColumnSpacing="14">
                                     <Grid.ColumnDefinitions>
                                         <ColumnDefinition Width="Auto" />

@@ -120,7 +120,23 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     };
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(AnnouncedName))]
     public partial bool IsExpanded { get; set; }
+
+    /// <summary>
+    /// What a screen reader says for this row.
+    /// </summary>
+    /// <remarks>
+    /// The state belongs in the name because the chevron is a glyph inside the row rather than a
+    /// control of its own: there is no expander for UIA to report an expand-collapse pattern on, so
+    /// a reader pressing Enter had no way to hear that anything had happened.
+    /// </remarks>
+    public string AnnouncedName {
+      get {
+        string burst = IsBurst ? $", {Count} times" : string.Empty;
+        return $"{Title}, {TimeText}{burst}, {(IsExpanded ? "expanded" : "collapsed")}";
+      }
+    }
 
     /// <summary>Builds one row per entry, collapsing consecutive repeats into a burst.</summary>
     /// <remarks>

@@ -278,7 +278,7 @@ namespace Kakehashi.App.UI {
                 ? "Nothing had changed."
                 : $"Applied: {outcome.GroupsCreated} heading(s) added, "
                     + $"{outcome.GroupsUpdated} renamed, {outcome.GroupsDeleted} removed, "
-                    + $"{outcome.ItemsChanged} screen(s) moved.",
+                    + $"{outcome.ItemsChanged} screen(s) changed.",
             InfoBarSeverity.Success);
 
         // Reloaded rather than assumed: the server derives identifiers for new headings, and somebody

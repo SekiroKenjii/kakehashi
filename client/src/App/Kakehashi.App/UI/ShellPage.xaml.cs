@@ -7,6 +7,7 @@ using Kakehashi.App.Services;
 using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Automation;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Controls.Primitives;
 
@@ -139,6 +140,11 @@ namespace Kakehashi.App.UI {
         navItem.Content = item.ContentFactory is { } contentFactory
             ? contentFactory()
             : item.Title;
+
+        // Named explicitly rather than left to the presenter. An item drawing custom content has no
+        // text for UIA to derive a name from, so the account avatar announced itself as
+        // "NavigationViewItem" — the class name — to every screen reader.
+        AutomationProperties.SetName(navItem, item.Title);
 
         if (item.FlyoutFactory is { } flyoutFactory) {
           // Flyout items present transient UI on invoke instead of navigating.

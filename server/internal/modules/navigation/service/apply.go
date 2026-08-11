@@ -225,8 +225,9 @@ func (s *Service) planItems(
 			// that could unhide it, from every client at once.
 			if d, declared := s.byID[spec.ID]; declared && d.HideWhenDenied {
 				return errs.Invalidf(
-					"%s is how this pane is managed, so it cannot be hidden from it. Take the "+
-						"permission away instead, and it disappears for everyone who lacks it.",
+					"%s is shown only to accounts that hold its permission, so it cannot also be "+
+						"hidden by hand. Take the permission away instead, and it disappears for "+
+						"everyone who lacks it.",
 					d.DefaultTitle)
 			}
 		}

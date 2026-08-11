@@ -66,16 +66,37 @@ namespace Kakehashi.App.UI {
       return isVisible ? "" : "";
     }
 
+    /// <summary>A screen that refuses to be hidden draws its eye faded, since pressing it does nothing.</summary>
+    /// <remarks>
+    /// Faded rather than disabled: <c>IsEnabled=false</c> takes the button out of the tab order and
+    /// stops it surfacing a tooltip, which left the sentence below reaching a mouse and nothing else.
+    /// </remarks>
+    public static double EyeOpacity(bool canHide) {
+      return canHide ? 1.0 : 0.4;
+    }
+
+    /// <summary>What the eye is, named per row so a reader knows which screen it acts on.</summary>
+    public static string VisibilityLabel(string title, bool isVisible) {
+      return isVisible ? $"{title}: offered in the pane" : $"{title}: hidden from the pane";
+    }
+
     /// <summary>
     /// What the eye button says it will do.
     /// </summary>
     /// <remarks>
-    /// A screen that refuses to be hidden says why rather than offering a disabled control with no
+    /// A screen that refuses to be hidden says why rather than offering a control with no
     /// explanation — the alternative is a button somebody clicks twice and then distrusts.
+    /// <para>
+    /// The refusal states the rule rather than asserting a role. It read "this is how the pane is
+    /// managed", which is true of the Navigation screen and false of the others it appears on: Users
+    /// and Role permissions are refused because they are shown only to accounts holding their
+    /// permission, which is a different reason wearing the same words.
+    /// </para>
     /// </remarks>
     public static string VisibilityTip(bool isVisible, bool canHide) {
       if (!canHide) {
-        return "This is how the pane is managed, so it cannot be hidden from it.";
+        return "This screen is shown only to accounts that hold its permission, so it cannot also "
+            + "be hidden by hand. Take the permission away instead.";
       }
       return isVisible ? "Offered in the pane — click to hide" : "Hidden — click to offer it";
     }
