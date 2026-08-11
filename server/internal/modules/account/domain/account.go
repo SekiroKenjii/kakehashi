@@ -49,7 +49,7 @@ type Account struct {
 	UpdatedAt time.Time
 }
 
-// ResetPassword replaces the password without checking the old one.
+// ResetPassword replaces the password without checking the current one.
 //
 // Distinct from the owner's own change, which verifies the current password first. An
 // administrator does not have it — that is why this exists — so the protection here is not a

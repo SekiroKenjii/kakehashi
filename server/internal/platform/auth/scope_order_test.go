@@ -9,14 +9,13 @@ import (
 
 // The trap this file exists to keep shut.
 //
-// The store used to fold a caller's scopes across roles with MAX(rp.Scope) over an nvarchar column,
-// under a comment claiming the scopes "sort the way they rank". They do not, and the comment was
-// asserted nowhere: a test that looked like it checked the claim was checking auth.Widest, which
-// ranks correctly in Go. An account holding one role at 'all' and another at 'team' therefore
-// resolved to 'team' — the narrower of the two, which is the opposite of what widening means.
+// The scope names do not sort the way they rank: alphabetically the largest is 'team', the
+// NARROWEST. The store therefore folds a caller's scopes across roles on an explicit rank in SQL —
+// never MAX() over the string column, which resolves 'all'+'team' to 'team', the opposite of
+// widening. History of that defect: docs/adr/0005-scope-order-is-not-string-order.md.
 //
-// The fix folds on an explicit rank in SQL. This test is what stops somebody reading the three
-// values, noticing they are strings, and putting MAX back.
+// This test is what stops somebody reading the three values, noticing they are strings, and
+// putting MAX back.
 
 func TestTheScopeNamesDoNotSortTheWayTheyRank(t *testing.T) {
 	byRank := []auth.Scope{auth.ScopeOwn, auth.ScopeTeam, auth.ScopeAll}

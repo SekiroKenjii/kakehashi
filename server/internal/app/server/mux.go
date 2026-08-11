@@ -31,12 +31,10 @@ import (
 // so a catch-all at "/" and a service at "/kakehashi.notes.v1.NotesService/" coexist without
 // either having to know about the other.
 //
-// Every route carries its own policy and this enforces it. There is no list of exempt modules here
-// any more, and no way to be exempt by omission: the kernel refuses at boot to collect a route with
-// no policy, and refuses one that checks no permission unless the composition root named its module.
-// What used to be a module-wide exemption — which skipped the check on all thirteen of the account
-// module's routes, leaving its administrative service protected only by a hand-written wrapper — is
-// now a decision each route states beside its pattern.
+// Every route carries its own policy and this enforces it. There is no way to be exempt by
+// omission: the kernel refuses at boot to collect a route with no policy, and refuses one that
+// checks no permission unless the composition root named its module.
+// Why per route, not per module: docs/adr/0001-per-route-permission-policy.md.
 func New(k *app.Kernel) *Server {
 	// ReadIdleTimeout and IdleTimeout have to be set HERE rather than on the http.Server, and that
 	// is the whole reason this value is kept. An h2c connection is hijacked out of net/http's
@@ -155,9 +153,9 @@ func (s *Server) Handler() http.Handler { return s.handler }
 //
 // The waiting is the part that is easy to leave out and expensive to leave out. h2c hijacks every
 // HTTP/2 connection out of net/http's tracking, so http.Server.Shutdown has nothing to drain and
-// returns in milliseconds — which used to mean the caller went straight on to closing the SQL and
-// Mongo pools underneath handlers that were still running. A sign-in would read the account, lose
-// its database mid-flight, and answer a reset stream. ConfigureServer installs the HTTP/2 graceful
+// returns in milliseconds — without the drain, the caller would go straight on to closing the SQL
+// and Mongo pools underneath handlers still running. A sign-in would read the account, lose its
+// database mid-flight, and answer a reset stream. ConfigureServer installs the HTTP/2 graceful
 // shutdown hook so peers get a GOAWAY; the WaitGroup is what actually makes the caller wait.
 func (s *Server) Run(ctx context.Context) error {
 	httpServer := &http.Server{

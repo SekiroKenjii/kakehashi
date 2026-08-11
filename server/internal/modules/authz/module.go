@@ -127,18 +127,11 @@ func (m *Module) Routes(k *app.Kernel) []app.Route {
 	}
 }
 
-// catalogue assembles every permission this build enforces.
-//
-// One .access per module that ACTUALLY gates a route on it, so "may this account use this module"
-// is an ordinary permission rather than a second mechanism beside the real one. Asking the kernel
-// rather than being handed a list deletes a copy of the mount list that only a test kept honest —
-// and asking for the modules that gate rather than the modules that exist deletes something worse:
-// the old version minted a grantable, official-looking permission for every module whose routes
-// check something else entirely, which an administrator could spend a morning granting to no
-// effect whatsoever.
-//
-// Anything finer comes from the modules that implement authzapi.Catalogue — which is how a module
-// says what it checks in its own handlers without this one having to know.
+// catalogue assembles every permission this build enforces: only modules the route table shows
+// gating on their own .access are minted a permission
+// (docs/adr/0002-permission-catalogue-from-gating-modules.md), plus the finer permissions modules
+// declare through authzapi.Catalogue — how a module says what it checks in its own handlers
+// without this one having to know.
 func (m *Module) catalogue(k *app.Kernel) []domain.Permission {
 	access := k.AccessModules()
 

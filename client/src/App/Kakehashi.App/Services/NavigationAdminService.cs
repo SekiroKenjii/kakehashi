@@ -19,9 +19,9 @@ namespace Kakehashi.App.Services {
   /// <param name="Title">The override, or empty when the destination uses what the code calls it.</param>
   /// <param name="DefaultTitle">What the code calls it, shown as the placeholder.</param>
   /// <param name="IsOrphan">
-  /// A stored row whose destination this build no longer has. Kept rather than deleted, so a module
-  /// that comes back comes back where somebody put it — and listed here because this is the only
-  /// screen where anybody can find out it exists.
+  /// A stored row whose destination is not part of this build. Kept rather than deleted, so a
+  /// module that comes back comes back where somebody put it — and listed here because this is
+  /// the only screen where anybody can find out it exists.
   /// </param>
   /// <param name="RequiredPermission">
   /// What the code enforces. Read-only: it is declared beside the page and enforced by the route
@@ -95,7 +95,9 @@ namespace Kakehashi.App.Services {
         IReadOnlyList<NavItemSpec> items,
         CancellationToken cancellationToken);
 
-    /// <summary>Removes a stored row left over from a module this build no longer has.</summary>
+    /// <summary>
+    /// Removes a stored row left over from a module that is not part of this build.
+    /// </summary>
     Task<Result> DeleteItemAsync(string id, CancellationToken cancellationToken);
 
     /// <summary>

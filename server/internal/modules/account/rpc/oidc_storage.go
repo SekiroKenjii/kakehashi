@@ -108,9 +108,8 @@ func (s *storage) CreateAccessToken(
 // CreateAccessAndRefreshTokens issues an access token and rotates the refresh token.
 //
 // On the first exchange currentRefreshToken is empty and a fresh one is minted. On a refresh the
-// old token row is deleted before the new one is written: a refresh token that has been used is a
-// refresh token that no longer exists, so a replay of it fails loudly instead of silently minting
-// a second session.
+// spent token row is deleted before the new one is written: a refresh token that has been used
+// ceases to exist, so a replay of it fails loudly instead of silently minting a second session.
 func (s *storage) CreateAccessAndRefreshTokens(
 	ctx context.Context, request op.TokenRequest, currentRefreshToken string,
 ) (string, string, time.Time, error) {
@@ -304,8 +303,8 @@ func (s *storage) Health(ctx context.Context) error {
 // insertToken writes a token, retiring the refresh token it replaces in the same transaction.
 //
 // retire is empty on the first exchange of a session. On a refresh it is the token being spent: a
-// refresh token that has been used is a refresh token that no longer exists, so a replay of it
-// fails loudly instead of silently minting a second session.
+// refresh token that has been used ceases to exist, so a replay of it fails loudly instead of
+// silently minting a second session.
 func (s *storage) insertToken(
 	ctx context.Context, request op.TokenRequest, refreshToken, retire string,
 ) (domain.IssuedToken, error) {

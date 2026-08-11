@@ -158,10 +158,9 @@ namespace Kakehashi.App.UI {
 
         // Detached is asked FIRST and independently of withholding. The two are different
         // questions — one is the user's preference about their own composition, the other is an
-        // administrator's decision — and the old order asked "attached?" only when not withheld,
-        // so a module somebody had detached reappeared, disabled, the moment an administrator
-        // withheld it. Their preference is theirs; being told they may not have something is not
-        // a reason to put it back.
+        // administrator's decision — and gating "attached?" on "not withheld" makes a detached
+        // module reappear, disabled, the moment an administrator withholds it.
+        // See docs/adr/0015-module-attachment-is-not-a-security-boundary.md
         if (!module.Descriptor.IsRequired && !_registry.IsAttached(module.Name)) {
           continue;
         }

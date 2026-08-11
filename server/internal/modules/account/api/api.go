@@ -24,8 +24,8 @@ const (
 	EventPasswordChanged   = "PasswordChanged"
 	EventSessionRevoked    = "SessionRevoked"
 
-	// EventSignedOut is leaving on purpose, which until now was recorded as EventSessionRevoked —
-	// so the account page told people a session had been revoked every time they signed out.
+	// EventSignedOut is leaving on purpose; EventSessionRevoked is somebody ending the session by
+	// a decision. Two kinds on purpose: docs/adr/0003-signedout-vs-sessionrevoked.md
 	EventSignedOut = "SignedOut"
 )
 

@@ -8,16 +8,10 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Applying a whole arrangement at once.
-//
-// The rest of admin.go changes one row per call, which is what a screen needed when every edit was
-// written the moment it was made. One gesture now produces several changes — dragging a screen into
-// another heading renumbers what it landed among — and a sequence of single-row calls cannot fail
-// halfway without leaving the pane half-rearranged.
-//
-// Everything here validates before anything writes. That ordering is the feature: a refusal leaves
-// the stored layout exactly as it was, so an administrator who mistyped one heading has not silently
-// half-applied the other eleven changes.
+// Applying a whole arrangement at once: staged on the client, applied in one atomic call —
+// docs/adr/0004-staged-edits-atomic-apply.md. The whole arrangement is validated before any row is
+// written — one transaction, one cache invalidation — so a refusal leaves the stored layout
+// exactly as it was.
 
 // GroupSpec is a heading as an administrator wants it. An empty ID means "create it".
 type GroupSpec struct {

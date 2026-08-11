@@ -24,10 +24,8 @@ namespace Kakehashi.App.UI {
   /// One destination in the structure tree, as an administrator stages it.
   /// </summary>
   /// <remarks>
-  /// Every edit is held here until Apply, which is a reversal of how this screen used to work. What
-  /// changed is the gesture: dragging a screen into another heading renumbers what it landed among, so
-  /// one action is now several writes — and a sequence of single-row calls cannot fail halfway without
-  /// leaving the pane half-rearranged. The staging is what a transaction on the server can then protect.
+  /// Every edit is held here until Apply, then written in one atomic call:
+  /// docs/adr/0004-staged-edits-atomic-apply.md
   /// <para>
   /// The baselines are what "unsaved" is measured against. They are also why the order comparison is
   /// positional rather than numeric: a deployment whose stored orders are 5 and 7 is perfectly
@@ -92,12 +90,12 @@ namespace Kakehashi.App.UI {
     /// </summary>
     /// <remarks>
     /// The server refuses it, with a sentence. Reading it here as well is what stops the switch being
-    /// offered at all — three of the five rows on this screen used to carry a switch the server always
-    /// rejected, and the only way to find out was to try it and read the error bar.
+    /// offered at all — a switch the server always rejects could only be discovered by flipping it
+    /// and reading the error bar.
     /// </remarks>
     public bool HideWhenDenied { get; }
 
-    /// <summary>A stored row whose destination this build no longer has.</summary>
+    /// <summary>A stored row whose destination is not part of this build.</summary>
     public bool IsOrphan { get; }
 
     /// <summary>The heading holding this screen, or null while it is being moved.</summary>
@@ -293,9 +291,9 @@ namespace Kakehashi.App.UI {
     /// </summary>
     /// <remarks>
     /// Not in the mockup, and necessary anyway. Two kinds of row have no heading: a destination nobody
-    /// has filed, and a leftover from a module this build no longer has — which the server lists
-    /// deliberately, because this screen is the only place anybody can discover it exists. Without a
-    /// bucket they would be invisible on the one screen that manages placement.
+    /// has filed, and a leftover from a module that is not part of this build — which the server
+    /// lists deliberately, because this screen is the only place anybody can discover it exists.
+    /// Without a bucket they would be invisible on the one screen that manages placement.
     /// <para>
     /// It is not a heading. It has no identifier, it is never sent to the server, it cannot be renamed
     /// or deleted, and it draws itself as what it is.

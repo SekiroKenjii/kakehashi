@@ -9,9 +9,10 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.Services.Platform {
   /// <summary>
-  /// Shows pages in the shell's content <see cref="Frame"/>. Pages are resolved from the container
-  /// (so they get constructor injection), which is why navigation sets <see cref="Frame.Content"/>
-  /// directly and keeps its own back stack rather than using the frame's reflection-based journal.
+  /// Shows pages in the shell's content <see cref="Frame"/>. Pages resolve from the container with
+  /// constructor injection, so navigation sets <see cref="Frame.Content"/> directly and keeps its
+  /// own back stack; pages start their load on <c>Loaded</c>, never <c>OnNavigatedTo</c>:
+  /// docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md
   /// </summary>
   public sealed class NavigationService : INavigationService {
     private readonly IServiceProvider _services;

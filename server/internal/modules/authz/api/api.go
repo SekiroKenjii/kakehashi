@@ -8,10 +8,9 @@
 // Note what is absent: no way to grant. Deciding who may hold what is this module's alone, and it
 // answers the mux through the platform's auth.Permissions port rather than through anything here.
 //
-// This also said "no way to ask about somebody else", and GrantsForRole below is a reader of exactly
-// that, so the claim needs replacing rather than defending. What it reads is a role, not a person: it
-// grants nothing and authorizes nothing, and it exists so the navigation module can draw the pane a
-// colleague will see instead of the one the administrator happens to have.
+// GrantsForRole below reads a role, not a person: it grants nothing and authorizes nothing, and it
+// exists so the navigation module can draw the pane a colleague will see instead of the one the
+// administrator happens to have.
 //
 // The honest caveat, since RolesOf is also here: the two together can be composed into "what may this
 // account do", and nothing in the type system stops it. What makes that a bug rather than a feature is

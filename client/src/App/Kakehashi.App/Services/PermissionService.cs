@@ -54,11 +54,10 @@ namespace Kakehashi.App.Services {
   /// registry governs every module, and a feature module that governed the others would reach
   /// across the boundary the architecture tests exist to hold.
   /// <para>
-  /// It replaces the module-assignment client this project used to carry. That mechanism answered
+  /// Module access is the ordinary permission <c>&lt;module&gt;.access</c>, so the lock on a page
+  /// and the refusal on a route read the same row. A separate module-assignment store would answer
   /// "may this account use this module" with a table of its own, beside the permission table that
-  /// answers everything else — two systems, one question, and no reason for them to agree. Module
-  /// access is now the ordinary permission <c>&lt;module&gt;.access</c>, so the lock on a page and
-  /// the refusal on a route read the same row.
+  /// answers everything else — two systems, one question, and no reason for them to agree.
   /// </para>
   /// </remarks>
   public sealed partial class PermissionService : IPermissionService {
@@ -134,7 +133,7 @@ namespace Kakehashi.App.Services {
       } catch (RpcException exception)
           when (exception.StatusCode == StatusCode.Unauthenticated) {
         // Signing out revokes the token, and the refresh that follows the session change lands
-        // here. Holding on to the old grants would leave a shell drawn for somebody who has left,
+        // here. Keeping the prior grants would leave a shell drawn for somebody who has left,
         // and logging it as an error would fill the log with the most ordinary event there is.
         _grants = [];
         LogSignedOut();

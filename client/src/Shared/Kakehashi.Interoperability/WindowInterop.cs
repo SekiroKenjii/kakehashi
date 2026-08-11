@@ -59,13 +59,13 @@ namespace Kakehashi.Interoperability {
     /// </summary>
     /// <param name="hWnd">A handle to the window to enable or disable.</param>
     /// <param name="enable"><see langword="true"/> to enable input; <see langword="false"/> to disable it.</param>
-    /// <returns><see langword="true"/> if the window was previously disabled; otherwise <see langword="false"/>.</returns>
+    /// <returns><see langword="true"/> if the window was disabled before the call; otherwise <see langword="false"/>.</returns>
     public static bool EnableWindow(IntPtr hWnd, bool enable) {
       return PInvoke.EnableWindow(new HWND(hWnd), enable);
     }
 
     /// <summary>
-    /// Sets the owner of a top-level window, keeping it above its owner in z-order (used together with <see cref="EnableWindow"/> for modal windows).
+    /// Sets the owner of a top-level window, keeping it above its owner in z-order (pairs with <see cref="EnableWindow"/> for modal windows).
     /// </summary>
     /// <param name="hWnd">A handle to the window whose owner is set.</param>
     /// <param name="hOwner">A handle to the owner window.</param>

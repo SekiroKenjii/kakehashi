@@ -27,7 +27,7 @@
 //
 //  5. Inside a module, only store/ may import the database packages. Persistence is one layer's
 //     job; a service that reaches for a connection has stopped orchestrating and started querying,
-//     and the tests that used to run without a database no longer do.
+//     and tests that ran without a database now need one.
 //
 //  6. Only rpc/ may import the generated protobuf code. Generated types are the wire's shape, not
 //     the module's. Let them into domain/ or service/ and a change to the schema becomes a change

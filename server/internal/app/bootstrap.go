@@ -16,14 +16,13 @@ import (
 
 // Everything a running server needs, acquired in one place.
 //
-// This used to be the body of main.run, which meant the composition root held two unrelated jobs:
-// naming the modules, and knowing how to open a database. Only the first is a decision about this
-// product; the second is the same for every build and belongs where the kernel lives.
+// Naming the modules is a decision about this product and stays at the composition root; opening
+// a database is the same for every build and belongs here, where the kernel lives.
 //
-// What it buys beyond tidiness is the cleanup stack. The version this replaces returned early on
-// each acquisition failure, so a Mongo connection that could not be opened left an already-open
-// SQL pool and a telemetry exporter behind. That was survivable only because the process exited
-// immediately afterwards — which stopped being true the moment a test wanted to boot a server.
+// Acquisitions are ordered and torn down in reverse. A failure at any step releases what the
+// earlier steps acquired — returning early instead would leave a Mongo connection that could not
+// be opened sitting on an already-open SQL pool and a live telemetry exporter, which a test that
+// boots a server in-process cannot afford.
 
 // BootOptions is what a caller must decide. Everything else comes from the environment.
 type BootOptions struct {
@@ -136,8 +135,8 @@ func Boot(ctx context.Context, opts BootOptions) (*Runtime, error) {
 //
 // The steps share ctx's deadline but not equally — each gets an equal slice of whatever is left, so
 // one step that hangs cannot spend the whole budget and hand the next an already-expired context.
-// That was the old shape, and it meant a slow module stop reliably lost the telemetry flush
-// explaining why it was slow.
+// Without the per-step slice, a slow module stop would eat the telemetry flush explaining why it
+// was slow.
 func (r *Runtime) Close(ctx context.Context) error {
 	var errs []error
 

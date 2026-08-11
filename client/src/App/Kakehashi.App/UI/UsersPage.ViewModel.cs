@@ -407,11 +407,11 @@ namespace Kakehashi.App.UI {
       }
 
       // Read the sessions BEFORE asking, and from the server rather than from the panel's cache.
-      // The panel shows the newest three and is empty until the detail has loaded at all, so the
-      // old version counted a stale cache in its question and revoked a stale cache in its answer —
-      // reporting "Signed out everywhere" after revoking nothing whenever the load had not happened
-      // or had failed. A success message for work that did not happen is the one kind of lie a
-      // person cannot detect.
+      // The panel shows the newest three and is empty until the detail has loaded at all, so a
+      // count taken from it would ask about a stale cache and revoke a stale cache — reporting
+      // "Signed out everywhere" after revoking nothing whenever the load had not happened or had
+      // failed. A success message for work that did not happen is the one kind of lie a person
+      // cannot detect.
       var live = await _admin.ListUserSessionsAsync(user.Id, cancellationToken);
       if (live.IsFailure) {
         Notify(live.Error);
@@ -441,7 +441,7 @@ namespace Kakehashi.App.UI {
       }
 
       // Including this one, when the account being signed out is the caller's. The server has
-      // already killed the token; leaving the app sitting on a shell it can no longer talk to
+      // already killed the token; leaving the app sitting on a shell it cannot talk to
       // would turn "signed out everywhere" into "everywhere except the screen you are looking at".
       var current = await _sender.Send(new GetCurrentSessionQuery());
       if (string.Equals(current.Email, user.Email, StringComparison.OrdinalIgnoreCase)) {
@@ -626,7 +626,7 @@ namespace Kakehashi.App.UI {
     /// </remarks>
     private async Task ReloadKeepingSelectionAsync(CancellationToken cancellationToken) {
       // The reload runs through ApplyFilter, which restores the selection by id — the rows are
-      // records, so the reloaded one is a different object and the old reference matches nothing.
+      // records, so the reloaded one is a different object and the stale reference matches nothing.
       await LoadAsync(cancellationToken);
     }
 
@@ -634,8 +634,8 @@ namespace Kakehashi.App.UI {
 
     private async Task LoadSessionsAsync(string accountId) {
       var result = await _admin.ListUserSessionsAsync(accountId, CancellationToken.None);
-      // The administrator may have moved on while the call was in flight; a reply for somebody no
-      // longer selected must not be drawn under the person who is.
+      // The administrator may have moved on while the call was in flight; a reply for somebody
+      // who is not the selected user must not be drawn under the person who is.
       if (result.IsFailure || SelectedUser?.Id != accountId) {
         return;
       }

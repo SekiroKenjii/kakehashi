@@ -41,7 +41,7 @@ type Placement struct {
 	DestinationID string
 
 	// ModuleID is denormalised from the declaration so an orphan row can still say which module it
-	// came from. A row whose destination this build no longer has is the case the whole field
+	// came from. A row whose destination is not part of this build is the case the whole field
 	// exists for: without it an orphan is an unexplained id.
 	ModuleID string
 

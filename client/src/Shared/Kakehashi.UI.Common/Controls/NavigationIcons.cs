@@ -7,16 +7,9 @@ namespace Kakehashi.UI.Common.Controls {
   /// Turns the semantic icon names a deployment uses into the glyphs this build can draw.
   /// </summary>
   /// <remarks>
-  /// The server sends "note", not <c></c>, and the split is deliberate. Which code point draws a
-  /// note is a fact about the font a client ships with — Segoe Fluent Icons here, something else on a
-  /// platform that does not have it — and a server sending code points would be deciding what a
-  /// Windows font looks like on behalf of clients it knows nothing about. That is also why the server
-  /// accepts any short string: this vocabulary is one client's, not the contract's.
-  /// <para>
-  /// An unknown name falls back to whatever the page already declared rather than to a placeholder.
-  /// That way a deployment naming an icon this build has never heard of costs nothing: the row draws
-  /// the glyph it always did.
-  /// </para>
+  /// The server sends semantic names, never code points; each client owns its glyph mapping, and
+  /// an unknown name falls back to the caller's glyph:
+  /// docs/adr/0013-client-owned-icon-vocabulary.md
   /// <para>
   /// The glyphs are written as escapes rather than as literal characters. They are Private Use Area
   /// code points, so a literal shows up as nothing at all in most editors and diffs — which is how a

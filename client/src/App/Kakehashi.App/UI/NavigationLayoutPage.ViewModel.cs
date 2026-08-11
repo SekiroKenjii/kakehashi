@@ -24,14 +24,8 @@ namespace Kakehashi.App.UI {
   /// What can be edited is the arrangement: headings, order, labels, icons, and whether a destination
   /// is offered at all.
   /// <para>
-  /// Edits are staged and applied together, which reverses how this screen used to work. The old note
-  /// argued that each edit was "a single deliberate act… none of them can leave the layout
-  /// half-changed, so there is nothing for a transaction to protect", and that was true of a screen
-  /// whose only controls were one picker and one switch per row. It is not true of this one: dragging a
-  /// screen into another heading renumbers what it landed among, so one gesture is several writes, and
-  /// a sequence of single-row calls has no way to fail halfway without leaving the pane half-rearranged.
-  /// The reorder defect that motivated this was exactly that — two writes, the second failing, both
-  /// rows left sharing a number.
+  /// Edits are staged in this view model and applied in one atomic call:
+  /// docs/adr/0004-staged-edits-atomic-apply.md
   /// </para>
   /// </remarks>
   public sealed partial class NavigationLayoutViewModel : ViewModel {
@@ -46,7 +40,7 @@ namespace Kakehashi.App.UI {
     /// <summary>What the last read returned, which is what Discard rebuilds from.</summary>
     /// <remarks>
     /// Rebuilding beats asking each node to undo itself. A node can put its own name back, but nothing
-    /// on a node knows which heading it used to sit under or in what order — that is a fact about the
+    /// on a node knows which heading it sat under or in what order — that is a fact about the
     /// tree, and the tree is what a rebuild restores.
     /// </remarks>
     private IReadOnlyList<NavGroupRow> _loadedGroups = [];
@@ -364,7 +358,7 @@ namespace Kakehashi.App.UI {
     }
 
     /// <summary>
-    /// Removes a stored row left over from a module this build no longer has.
+    /// Removes a stored row left over from a module that is not part of this build.
     /// </summary>
     /// <remarks>
     /// Not staged, unlike everything else here. It is not an arrangement — the row stops existing — and

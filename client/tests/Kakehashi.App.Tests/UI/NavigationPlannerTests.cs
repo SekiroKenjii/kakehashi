@@ -162,7 +162,7 @@ namespace Kakehashi.App.Tests.UI {
           new NavigationItem("Notes", "N", typeof(object)) { Id = "notes" });
       _registry.All.Returns([notes]);
       // Attached AND withheld: the point of the test is the disabled state, which presumes the user
-      // has the module in their composition. Withholding alone no longer implies attachment.
+      // has the module in their composition. Withholding alone does not imply attachment.
       _registry.IsAttached("Notes").Returns(true);
       _registry.IsWithheld("notes").Returns(true);
 
@@ -352,8 +352,9 @@ namespace Kakehashi.App.Tests.UI {
     /// A module the user detached stays gone even once an administrator withholds it.
     /// </summary>
     /// <remarks>
-    /// Two different questions, and the old order conflated them: attachment was consulted only for
-    /// a module that was NOT withheld, so withholding a detached module put it back in the pane.
+    /// Detachment and withholding are separate questions, asked in that order; consulting
+    /// attachment only for a module that is not withheld would put a detached module back in the
+    /// pane: docs/adr/0015-module-attachment-is-not-a-security-boundary.md
     /// </remarks>
     [Fact]
     public void PlanWithoutALayout_KeepsADetachedModuleGoneWhenItIsAlsoWithheld() {

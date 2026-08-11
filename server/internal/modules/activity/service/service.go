@@ -168,9 +168,9 @@ func withoutCategory(filter domain.Filter) domain.Filter {
 
 // clamp keeps a page size sane.
 //
-// A true ceiling rather than a reset to the default, which is what this used to do: asking for 500
-// and silently getting 50 makes a client's paging arithmetic wrong in a way nothing reports. Out of
-// range still means the default, because zero is what an unset field looks like on the wire.
+// A true ceiling rather than a reset to the default: asking for 500 and silently getting 50 would
+// make a client's paging arithmetic wrong in a way nothing reports. A non-positive size still
+// means the default, because zero is what an unset field looks like on the wire.
 func clamp(size int) int {
 	switch {
 	case size <= 0:
@@ -222,9 +222,9 @@ func decodeCursor(token string) (*domain.Cursor, error) {
 // toAPI is the border checkpoint: nothing crosses out of the module without passing through here,
 // and the account it belongs to stops at it.
 //
-// The id used to stop here too. It goes out now because the reader of a row is the account that owns
-// it, and a screen offering "copy this event" needs something to copy; withholding it protected
-// nobody. The user id still stops, because it is the query's filter and never its result.
+// The entry id goes out: the reader of a row is the account that owns it, and a screen offering
+// "copy this event" needs something to copy; withholding it protects nobody. The user id stops,
+// because it is the query's filter and never its result.
 //
 // Category and Platform are both computed here rather than stored. They are answers about a stored
 // value, so deriving them on the way out means a better answer applies to every row already written

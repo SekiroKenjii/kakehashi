@@ -14,9 +14,9 @@ import (
 
 // Placements returns every stored placement, ordered as the pane draws them.
 //
-// Every row, including the ones whose destination this build no longer has. Filtering orphans is the
-// service's job because only the service knows what is declared, and a store that decided it would
-// need the declaration passed in to answer a question about its own table.
+// Every row, including the ones whose destination is not part of this build. Filtering orphans is
+// the service's job because only the service knows what is declared, and a store that decided it
+// would need the declaration passed in to answer a question about its own table.
 // placementsQuery is shared with Layout, so the two readers cannot drift on ordering.
 const placementsQuery = `
         SELECT i.Id, i.ModuleId, i.GroupId, i.Title, i.Icon, i.SortOrder, i.IsVisible
@@ -93,7 +93,7 @@ func (s *SQLServer) EnsurePlacements(
 //
 // One method for both because they are one action: an item dropped into a group has landed
 // somewhere in it, and a move that set the group and left the order behind would put it wherever
-// the old number happens to fall.
+// the prior number happens to fall.
 func (s *SQLServer) Move(ctx context.Context, id, groupID string, order int, at time.Time) error {
 	const q = `
         UPDATE navigation.NavItem
@@ -205,8 +205,8 @@ func writePlacementTx(
 
 // DeleteItem removes a stored placement.
 //
-// The store will delete any row it is given; only the service knows which rows are leftovers from a
-// module this build no longer has, and it refuses the rest. Guarding here as well would mean this
+// The store will delete any row it is given; only the service knows which rows name a destination
+// that is not part of this build, and it refuses the rest. Guarding here as well would mean this
 // package needing to know what the build declares, which is the one thing its doc comment says it
 // must not.
 func (s *SQLServer) DeleteItem(ctx context.Context, id string) error {

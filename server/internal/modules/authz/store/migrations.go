@@ -75,8 +75,8 @@ func Migrations() []database.Migration {
 
                 /*
                     Deleting a role takes its grants with it, which is the one cascade in this
-                    schema and the one place a cascade is right: a grant on a role that no longer
-                    exists is unreachable by construction.
+                    schema and the one place a cascade is right: a grant on a deleted role is
+                    unreachable by construction.
 
                     There is deliberately no foreign key to authz.Permission. The catalogue is
                     reconciled from what the modules declare at boot, so unmounting a module would

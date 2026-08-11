@@ -52,10 +52,9 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     /// "3 devices · this + 2 others" under the sessions row.
     /// </summary>
     /// <remarks>
-    /// Read from the server, not written into the XAML. This line used to be the literal string
-    /// "2 devices · this + iOS mobile" — a number nobody had, about a device this product has never
-    /// run on. A figure that is always wrong is worse than no figure, because a reader has no way
-    /// to tell which one they are looking at.
+    /// Computed from the server's session list, never hard-coded into the XAML: a made-up device
+    /// count is always wrong, and a figure that is always wrong is worse than no figure, because a
+    /// reader has no way to tell which one they are looking at.
     /// </remarks>
     [ObservableProperty]
     public partial string SessionSummary { get; set; }

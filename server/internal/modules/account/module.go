@@ -132,11 +132,8 @@ func (m *Module) Routes(k *app.Kernel) []app.Route {
 	out := make([]app.Route, 0, len(m.wire.Routes)+1)
 	out = append(out, m.wire.Routes...)
 
-	// The administrative surface, and the reason the policy lives on the route rather than in a
-	// wrapper here. This used to be auth.RequirePermission(...) written by hand around the handler,
-	// which meant deleting one call — or adding a second admin route and forgetting it — opened the
-	// whole user directory to any signed-in caller, with nothing to catch it. Stated as a policy,
-	// the mux applies it and the kernel refuses to boot a route that states nothing.
+	// The administrative surface. The policy lives on the route: the mux applies it and the kernel
+	// refuses to boot a route that states nothing. docs/adr/0001-per-route-permission-policy.md
 	return append(out, app.Route{
 		Pattern: pattern,
 		Handler: handler,

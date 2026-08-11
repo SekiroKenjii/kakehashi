@@ -88,10 +88,10 @@
                 Orientation="Horizontal"
                 Spacing="8">
                 <!--
-                    Both bound, because this line used to be a literal: a green shield and the words
-                    "Sent over TLS" shown unconditionally, including against an http authority, where
-                    it was simply false. A reassurance that is not checked is worse than none — it is
-                    the one place a person looks before typing a password.
+                    Both bound, never literals: an unconditional green shield with the words "Sent
+                    over TLS" is false against an http authority. A reassurance that is not checked
+                    is worse than none — this is the one place a person looks before typing a
+                    password.
                 -->
                 <FontIcon
                     FontSize="13"

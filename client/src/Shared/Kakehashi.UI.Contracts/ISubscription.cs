@@ -2,7 +2,8 @@ using System;
 
 namespace Kakehashi.UI.Contracts {
   /// <summary>
-  /// Represents a subscription to a system. It is used to manage the lifecycle of the subscription and dispose of it when it is no longer needed.
+  /// Represents a subscription to a system. It manages the lifecycle of the subscription and
+  /// disposes of it when it is not needed anymore.
   /// </summary>
   public interface ISubscription : ITransientDependency, IDisposable {
     /// <summary>

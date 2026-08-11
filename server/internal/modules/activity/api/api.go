@@ -36,9 +36,8 @@ const (
 	// device is what the client draws a badge for.
 	KindNewDeviceSignedIn = "NewDeviceSignedIn"
 
-	// KindSessionRevoked is a session ended by a decision rather than by leaving. Distinct from
-	// KindSignedOut, which until now it was indistinguishable from: both facts arrived on the bus
-	// as one event, so the feed said "signed out" whichever had happened.
+	// KindSessionRevoked is a session ended by a decision rather than by leaving, which is
+	// KindSignedOut. Two kinds on purpose: docs/adr/0003-signedout-vs-sessionrevoked.md
 	KindSessionRevoked = "SessionRevoked"
 
 	// KindSessionRevokedByAdmin is somebody other than the account holder ending their session.

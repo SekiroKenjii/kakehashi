@@ -210,7 +210,7 @@ namespace Kakehashi.App.UI {
         // The selected container may have been recreated by the rebuild; re-point the selection.
         SyncSelection(container);
       } else {
-        // The page being shown belongs to a module that is no longer attached: leave it, and
+        // The page being shown belongs to a module that has been detached: leave it, and
         // clear the back stack so its stale entries cannot be navigated back to.
         _navigationService.NavigateTo(_homePageKey);
         _navigationService.ClearBackStack();

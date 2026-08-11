@@ -10,17 +10,10 @@ namespace Kakehashi.Modules.Activity.Application.Abstractions {
   /// by the UI layer at composition time.
   /// </summary>
   /// <remarks>
-  /// This said "one method, and there will never be a second write one… a history a client can write
-  /// is a history that proves nothing", and <see cref="RecordAsync"/> is that second method, so the
-  /// claim deserves an answer rather than a deletion.
-  /// <para>
-  /// What makes a history worthless is a client that gets to say what happened. This one does not: it
-  /// picks from a two-value enum, neither of which is a security claim, and the server refuses
-  /// anything outside its own allow-list without taking this client's word for it. It cannot say
-  /// whose feed, cannot say when, and cannot write prose. The two facts it may report — which build
-  /// is running, which theme is set — are ones no server can observe for itself, so they arrive this
-  /// way or the feed simply does not have them.
-  /// </para>
+  /// <see cref="RecordAsync"/> never lets this client say what happened: the server decides whose
+  /// feed, when, and from which device, and refuses any kind outside its own allow-list. The two
+  /// reportable facts — which build is running, which theme is set — are ones no server can observe
+  /// for itself, so they arrive this way or the feed does not have them. See docs/ACTIVITY.md.
   /// </remarks>
   public interface IActivityGateway {
     /// <summary>

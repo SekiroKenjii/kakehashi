@@ -144,7 +144,7 @@ func (s *SQLServer) scanAccount(row scanner, what string) (domain.Account, error
 // reason the platform's ScopeOf comment gives: a gate that rewrote everyone's SQL would have to
 // understand everyone's schema, while a store narrowing its own query only has to understand its
 // own. This one understands that TeamId is what "team" means — which the schema has said since it
-// was written, and nothing read until now.
+// was written, and this narrowing is its only reader.
 //
 // An unrecognised or absent scope narrows to nothing rather than widening to everything. The route
 // gate has already established that the caller holds the permission; if this cannot tell how far it
@@ -221,10 +221,10 @@ func (s *SQLServer) DeleteAccount(ctx context.Context, id string) error {
 
 	// The authorization module's rows, deleted here, in this transaction, and not by publishing an
 	// event for it to react to. That is a deliberate exception to how the two modules otherwise
-	// talk: a role membership pointing at an account that no longer exists is over-reported in
-	// every "how many people hold this role" count, forever, and an event delivered after the
-	// commit can fail while the delete stands. One transaction is the only shape where the account
-	// and its memberships go together.
+	// talk: a role membership pointing at a deleted account is over-reported in every "how many
+	// people hold this role" count, forever, and an event delivered after the commit can fail
+	// while the delete stands. One transaction is the only shape where the account and its
+	// memberships go together.
 	//
 	// It is a cross-schema DELETE rather than a foreign key because authz.AccountRole must not
 	// depend on account.Account existing — the authorization module is meant to survive the account

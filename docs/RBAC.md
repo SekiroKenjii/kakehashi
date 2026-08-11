@@ -67,14 +67,15 @@ recognise returns nothing rather than everything. The route gate has already est
 caller holds the permission; if the store cannot tell how far it reaches, the safe answer is the
 smaller one.
 
-The narrowing lives in the store rather than the gate for the reason `auth.ScopeOf`'s own comment
-gives: a gate that rewrote everyone's SQL would have to understand everyone's schema, while a store
-narrowing its own query only has to understand its own.
+The narrowing lives in the store rather than the gate: a gate that rewrote everyone's SQL would
+have to understand everyone's schema, while a store narrowing its own query only has to understand
+its own.
 
 **One trap, written down because it cost a live debugging session.** The three scope names do not
 sort the way they rank — alphabetically `all` < `own` < `team`, so `MAX(Scope)` over the column
 picks the *narrowest*. The fold is done on an explicit `CASE` rank instead, and
-`platform/auth/scope_order_test.go` exists solely to fail if somebody puts `MAX` back.
+`platform/auth/scope_order_test.go` exists solely to fail if somebody puts `MAX` back. The defect
+and the decision are recorded in [ADR 0005](adr/0005-scope-order-is-not-string-order.md).
 
 ## Enforcement
 

@@ -71,9 +71,9 @@ namespace Kakehashi.App.UI {
     /// Whether to offer the own/team/all picker for this permission.
     /// </summary>
     /// <remarks>
-    /// Only where the server says some store narrows on it. The picker used to be shown for every
-    /// permission, which made a row-level promise on keys nothing narrows — the choice was stored,
-    /// displayed back, and changed no answer anywhere.
+    /// Only where the server says some store narrows on it. Offering the picker on every permission
+    /// would make a row-level promise on keys nothing narrows — a choice stored and displayed back
+    /// while changing no answer anywhere.
     /// </remarks>
     public bool IsScoped => Permission.IsScoped;
 
@@ -155,9 +155,8 @@ namespace Kakehashi.App.UI {
   /// The Role Permissions screen: pick a role, stage its grants, save once.
   /// </summary>
   /// <remarks>
-  /// The staging is the design. A screen that saved on every toggle would give an administrator no
-  /// way to change their mind, and would write one audit entry per click for what was one decision;
-  /// the server takes the whole grant set in a transaction for the same reason.
+  /// Grants are staged in this view model and saved in one atomic call:
+  /// docs/adr/0004-staged-edits-atomic-apply.md
   /// <para>
   /// Nothing here is enforcement. Every call it makes needs <c>roles.manage</c> and the server
   /// checks it; the page's own check keeps a screen nobody can use out of the way.

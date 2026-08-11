@@ -21,7 +21,7 @@ namespace Kakehashi.UI.Contracts {
     /// Subscribes to state changes and invokes the provided callback whenever the state changes. The callback receives the new state as a parameter. The implementation of this method is platform-specific, as it needs to interact with the XAML framework to subscribe to state changes in the UI.
     /// </summary>
     /// <param name="onNext">The callback to invoke when the state changes.</param>
-    /// <returns>A disposable that can be used to unsubscribe from state changes.</returns>
+    /// <returns>A disposable that unsubscribes from state changes when disposed.</returns>
     IDisposable Subscribe(Action<T> onNext);
 
     /// <summary>

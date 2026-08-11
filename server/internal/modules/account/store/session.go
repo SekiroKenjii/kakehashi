@@ -72,7 +72,7 @@ func (s *SQLServer) TouchSession(ctx context.Context, id string, at time.Time) e
 }
 
 // DeleteSession ends one session, reporting whether there was one to end. The account id is part of
-// the predicate so a stolen session id cannot be used to end someone else's.
+// the predicate so a stolen session id cannot end someone else's.
 //
 // The count is returned rather than swallowed because a caller announces this delete, and an
 // announcement about a row that was not there is a false entry in somebody's security feed.

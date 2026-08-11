@@ -90,7 +90,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
         if (!response.IsSuccessStatusCode) {
           LogSignInFailed((int)response.StatusCode);
           // The server answers a wrong password and an unknown address identically, on purpose, so
-          // the form cannot be used to discover which addresses have accounts. Passing its message
+          // the form reveals nothing about which addresses have accounts. Passing its message
           // through keeps that property instead of inventing a more specific one here.
           return SharedKernelResult.Failure<AuthSession>(
               await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false));

@@ -321,7 +321,7 @@ func (s *Service) UpdateRole(
 
 	detail := ""
 	if before != role.Name {
-		// The old name, because after a rename it exists nowhere else to be looked up.
+		// The prior name, because after a rename it exists nowhere else to be looked up.
 		detail = "was " + before
 	}
 	s.record(ctx, actor, role, []auditChange{{domain.ActionRoleEdited, "", detail}})

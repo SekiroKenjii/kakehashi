@@ -39,18 +39,11 @@ func (m *Module) subscribe(k *app.Kernel) {
 	// and device strings, and a feed that grew rows automatically because someone in another
 	// module added a struct would be a privacy bug waiting to happen.
 	//
-	// This file once recorded a loss here: the account module told its own audit trail apart a
-	// first sign-in from a new machine, the published event carried no such flag, and the feed
-	// showed the coarser fact. The note argued that fixing it meant adding a field to accountapi
-	// "for this module's benefit — the inverted dependency this seam exists to avoid".
-	//
-	// That drew the line in the wrong place, and the flag is now on the event. What the seam
-	// forbids is a direction of dependency: activity calling into account, or account naming
-	// activity. Announcing a fact the publisher already worked out for itself is neither — the
-	// account module computes NewDevice to choose its own audit kind whether anybody listens or
-	// not, and publishing a conclusion it already reached costs it nothing and binds it to no one.
-	// The test is not "who benefits", it is "who now has to know about whom", and the answer here
-	// is still nobody.
+	// The NewDevice flag rides the event. What the seam forbids is a direction of dependency —
+	// activity calling into account, or account naming activity — not which fields an event
+	// carries: the account module computes NewDevice to choose its own audit kind whether anybody
+	// listens or not, and publishing a conclusion it already reached binds it to no one. The test
+	// is not "who benefits", it is "who now has to know about whom", and the answer here is nobody.
 	app.Subscribe(k, func(ctx context.Context, e accountapi.SignedIn) {
 		kind := activityapi.KindSignedIn
 		if e.NewDevice {
@@ -59,8 +52,8 @@ func (m *Module) subscribe(k *app.Kernel) {
 		m.record(ctx, e.UserID, kind, e.SessionID, e.Device, e.IPAddress, e.At)
 	})
 
-	// Leaving and being ended arrive as two events now, and are two rows. They used to be one
-	// event, so the feed said "signed out" for a revocation the account page called a revocation.
+	// Leaving and being ended arrive as two events and become two rows, with ByAdmin telling
+	// somebody else's revocation apart: docs/adr/0003-signedout-vs-sessionrevoked.md
 	app.Subscribe(k, func(ctx context.Context, e accountapi.SignedOut) {
 		m.record(ctx, e.UserID, activityapi.KindSignedOut, e.SessionID, "", "", e.At)
 	})

@@ -39,7 +39,7 @@ func Indexes() []mongodb.Index {
 		{
 			// Named after its keys rather than its query, on purpose. EnsureIndexes creates by
 			// name with CreateOne and Mongo cannot alter an existing index, so a name kept while
-			// its keys change fails the boot of every database that already has the old one — and
+			// its keys change fails the boot of every database that already holds that name — and
 			// there is no migration to fix it with. Change the name with the keys.
 			Name:       "IX_Entry_UserId_OccurredAt_Id",
 			Collection: collection,

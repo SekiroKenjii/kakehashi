@@ -174,7 +174,7 @@ func (h *adminHandler) ApplyLayout(
 	}), nil
 }
 
-// DeleteItem removes a row left over from a module this build no longer has.
+// DeleteItem removes a row whose destination is not part of this build.
 func (h *adminHandler) DeleteItem(
 	ctx context.Context, req *connect.Request[navigationv1.DeleteItemRequest],
 ) (*connect.Response[navigationv1.DeleteItemResponse], error) {

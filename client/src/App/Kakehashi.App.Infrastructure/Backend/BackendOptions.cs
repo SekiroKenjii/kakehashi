@@ -12,7 +12,7 @@ namespace Kakehashi.App.Infrastructure.Backend {
     /// <summary>Base address of the backend service (e.g. <c>https://localhost:5001</c>).</summary>
     public string BaseAddress { get; set; } = "https://localhost:5001";
 
-    /// <summary>Transport used to reach the backend. Defaults to <see cref="BackendProtocol.Http"/>.</summary>
+    /// <summary>Transport for reaching the backend. Defaults to <see cref="BackendProtocol.Http"/>.</summary>
     public BackendProtocol Protocol { get; set; } = BackendProtocol.Http;
 
     /// <summary>Per-request timeout, in seconds. Applies to the HTTP transport.</summary>

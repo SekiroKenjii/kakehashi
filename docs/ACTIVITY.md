@@ -47,8 +47,9 @@ read what the delete affected before they say anything, and the delete still suc
 
 ## The one write from outside
 
-`RecordClientEvent` is the exception, and the service comment used to forbid it: "an endpoint that let
-a caller append to their own history would be an endpoint that lets a caller rewrite it".
+`RecordClientEvent` is the deliberate exception: the one write on an otherwise read-only module. An
+endpoint that let a caller freely append to their own history would be an endpoint that lets a
+caller rewrite it, which is why this write is shaped so the request decides almost nothing.
 
 What makes a history worthless is a caller who gets to say what happened. This one does not:
 
