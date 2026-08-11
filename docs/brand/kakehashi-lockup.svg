@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Kakehashi — 架け橋, the bridge you build across">
+  <title>Kakehashi</title>
+  <desc>The Kakehashi lockup: the bridge mark and the wordmark.</desc>
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#08090C" />
+      <stop offset="1" stop-color="#060709" />
+    </linearGradient>
+    <radialGradient id="shu" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#E0503A" stop-opacity="0.26" />
+      <stop offset="0.5" stop-color="#A83A2C" stop-opacity="0.10" />
+      <stop offset="1" stop-color="#E0503A" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.09" />
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+    <linearGradient id="span" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#E9E7E3" />
+    </linearGradient>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22242A" />
+      <stop offset="1" stop-color="#131519" />
+    </linearGradient>
+    <pattern id="dotgrid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <circle cx="1.5" cy="1.5" r="1.4" fill="#23252C" />
+    </pattern>
+  </defs>
+
+  <rect width="1200" height="630" fill="url(#night)" />
+  <rect width="1200" height="630" fill="url(#dotgrid)" opacity="0.55" />
+  <ellipse cx="600" cy="300" rx="560" ry="300" fill="url(#shu)" />
+  <ellipse cx="600" cy="270" rx="340" ry="160" fill="url(#halo)" />
+
+  <g fill="none" stroke="#1B1D24">
+    <rect x="86" y="96" width="72" height="72" rx="10" />
+    <rect x="1042" y="120" width="88" height="88" rx="10" />
+    <rect x="150" y="452" width="96" height="96" rx="12" />
+    <rect x="1010" y="440" width="72" height="72" rx="10" />
+  </g>
+
+  <g>
+    <rect x="512" y="118" width="176" height="36" rx="18" fill="#170E0D" stroke="#5C2A22" />
+    <circle cx="534" cy="136" r="4.5" fill="#4EC77B" />
+    <text x="550" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="13" letter-spacing="4" fill="#E4E6EA">SEKIROKENJII</text>
+  </g>
+  <g transform="translate(234,248) scale(0.273)">
+    <rect width="256" height="256" rx="58" fill="url(#plate)" />
+    <rect x="1.5" y="1.5" width="253" height="253" rx="56.5" fill="none" stroke="#33363D" stroke-width="3" />
+    <rect x="40" y="78" width="176" height="16" rx="8" fill="url(#span)" />
+    <path d="M48 148 Q128 58 208 148 Q128 90 48 148 Z" fill="#E0503A" />
+    <rect x="88" y="164" width="80" height="14" rx="7" fill="#8A8D95" />
+  </g>
+  <text x="328" y="309" font-weight="700" font-size="82" fill="#F7F6F4"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="3">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-2">&#160;Kakehashi</tspan></text>
+  <text x="600" y="384" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="22" fill="#9BA0AA">The High-Performance bridge you build across</text>
+</svg>
