@@ -18,23 +18,44 @@ It is a redraw rather than a replacement. The icon before it was three left-alig
 short, medium — meant as a nod to layering. The count survived; what changed is that the three
 strokes now mean something you can name.
 
-The arch is a filled path that tapers to nothing at both ends, the way a brush leaves paper. That is
-the whole of the "kanji" in the mark: no character is drawn, because a logo that depends on the
-reader having a CJK font is a logo that sometimes is not there. 架け橋 appears as *type* beside the
-wordmark, where losing it costs decoration and not meaning.
+**The mark contains no character.** The arch is a filled path tapering to nothing at both ends, the
+way a brush leaves paper — that is the whole of the Japanese in it. A mark that needs a CJK font to
+render is a mark that is sometimes not there, and the app's own icons have to draw at 16px in a
+taskbar where no character survives anyway.
 
-[`kakehashi-mark.svg`](kakehashi-mark.svg) · [`kakehashi-banner.svg`](kakehashi-banner.svg)
+[`kakehashi-mark.svg`](kakehashi-mark.svg) — the tile, for icons and favicons.
+
+## The lockup
+
+**架け橋 Kakehashi** — the name in both scripts, one line, kanji first. The tile sits to its left.
+
+The kanji here is *not* decorative: it is half the wordmark, and a machine with no CJK font shows
+boxes where it should be. That is a deliberate trade and worth stating plainly, because an earlier
+version of this document argued the opposite. The reasoning changed with the design:
+
+- Every platform this is read on — Windows, macOS, GitHub's own renderers, any current Linux — ships
+  a CJK fallback. The residual risk is a stripped container image, which is not where a banner is read.
+- The lockup is used where a *reader* is, not where a *system* is. The mark, which is used where
+  systems are (taskbar, favicon, MSIX tile), still contains no character. The rule holds where it costs
+  something.
+
+Above the lockup sits a small pill badge — a status dot and the owner's handle — and below it the
+line **"The High-Performance bridge you build across."**
+
+[`kakehashi-lockup.svg`](kakehashi-lockup.svg) — 1200×630, the social-preview size.
 
 ## Palette
 
 | Token | Hex | For |
 | --- | --- | --- |
-| Ink | `#08090B` | the ground everything sits on |
-| Plate | `#1F2024` → `#101114` | the tile the mark lives in |
+| Ink | `#08090C` | the ground everything sits on |
+| Plate | `#22242A` → `#131519` | the tile the mark lives in |
 | Paper | `#F7F6F4` | the wordmark and the span |
 | **朱 Shu** | `#E0503A` | the arch, and the one accent |
+| Ember | `#F5A54A` → `#E0503A` | the big numerals, and nothing else |
 | Stone | `#8A8D95` | the water, secondary type |
 | Rule | `#24272E` | card borders, dividers |
+| Grid | `#23252C` | the dot lattice on the ground |
 
 **朱 (shu)** is the vermilion a Japanese bridge is lacquered in — the same red as a torii. It was
 chosen over the usual product blue for one reason: it is the colour the name already implies. Used
@@ -42,19 +63,34 @@ once per surface. An accent that appears three times is not an accent.
 
 ## Typography
 
-No font is shipped or embedded. The banner asks for Segoe UI Variable and falls back through
-`system-ui` — a README is read on machines nobody chose, and a webfont that fails to load is worse
-than a system font that never tried. Japanese text falls back through Yu Gothic UI, Noto Sans JP and
-Hiragino Sans.
+No font is shipped or embedded. Type asks for Segoe UI Variable and falls back through `system-ui` —
+a README is read on machines nobody chose, and a webfont that fails to load is worse than a system
+font that never tried. Japanese falls back through Yu Gothic UI, Noto Sans JP and Hiragino Sans.
 
-## Using it
+Code is set in **Consolas** first. It is what VS Code uses by default on Windows, and its hyphen is
+unmistakably a hyphen — an earlier draft used a font whose hyphen filled the whole cell, which turned
+`docker compose up -d` into what read as an em dash and an invalid flag.
 
-The banner is 2000×760 and is meant to be the first thing in the README, full width. It is SVG on
-purpose: it stays sharp at any width, has no raster to re-export, and every colour above can be
-changed by editing one file.
+## The banner
 
-It contains no `<filter>` and no external reference. Glows are layered radial gradients, because
-filters are the first thing a README renderer strips.
+2000×1080, the first thing in the README, full width. [`kakehashi-banner.svg`](kakehashi-banner.svg).
+
+It is a product shot, not an illustration: the editor window in the middle holds the repository's
+real `proto/kakehashi/activity/v1/activity.proto`, and the panels around it state numbers that are
+true — six modules, sixty archlint packages, ninety days of retention. Nothing on it is a placeholder,
+because a banner that overstates is the first thing a reader learns not to trust.
+
+Three constraints, all of them mechanical rather than aesthetic:
+
+- **No `<filter>`.** Filters are the first thing a README renderer strips. Every glow is layered
+  radial gradients.
+- **No `<style>` block.** Fonts are presentation attributes on each element; a sanitiser that removes
+  the stylesheet would take the typography with it.
+- **No external reference of any kind.** One file, nothing to fetch.
+
+Centring is measured rather than eyeballed: render the SVG and check the ink's bounding box against
+the canvas centre. The optical centre of a lockup is never its geometric one, and 11px of drift is
+visible to everyone and explicable by nobody.
 
 ## Not done yet
 
