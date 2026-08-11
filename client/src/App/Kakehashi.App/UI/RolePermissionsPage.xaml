@@ -172,6 +172,7 @@
                         <Button
                             Padding="5"
                             HorizontalAlignment="Right"
+                            AutomationProperties.Name="New role"
                             Background="Transparent"
                             BorderThickness="0"
                             Command="{x:Bind ViewModel.CreateCommand}"
@@ -392,6 +393,7 @@
                             MaxWidth="240"
                             VerticalAlignment="Center"
                             AutomationProperties.AutomationId="PermissionSearch"
+                            AutomationProperties.Name="Search permissions"
                             PlaceholderText="Search permissions by name or key..."
                             QueryIcon="Find"
                             Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -582,6 +584,8 @@
                                                                 Grid.Column="1"
                                                                 MinWidth="108"
                                                                 VerticalAlignment="Center"
+                                                                AutomationProperties.HelpText="{x:Bind Name}"
+                                                                AutomationProperties.Name="Scope"
                                                                 IsEnabled="{x:Bind IsEnabled, Mode=OneWay}"
                                                                 SelectedValue="{x:Bind Scope, Mode=TwoWay}"
                                                                 SelectedValuePath="Tag"
@@ -600,10 +604,12 @@
                                                             -->
                                                             <StackPanel Grid.Column="2" VerticalAlignment="Center">
                                                                 <ToggleSwitch
+                                                                    AutomationProperties.Name="{x:Bind Name}"
                                                                     IsOn="{x:Bind IsEnabled, Mode=TwoWay}"
                                                                     Style="{StaticResource CompactToggleStyle}"
                                                                     Visibility="{x:Bind IsOrdinaryRisk}" />
                                                                 <ToggleSwitch
+                                                                    AutomationProperties.Name="{x:Bind Name}"
                                                                     IsOn="{x:Bind IsEnabled, Mode=TwoWay}"
                                                                     Style="{StaticResource CompactToggleStyle}"
                                                                     Visibility="{x:Bind IsHighRisk}">

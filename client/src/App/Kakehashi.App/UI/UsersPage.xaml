@@ -145,6 +145,7 @@
                             MaxWidth="320"
                             HorizontalAlignment="Left"
                             AutomationProperties.AutomationId="UserSearch"
+                            AutomationProperties.Name="Search users"
                             PlaceholderText="Search by name or email..."
                             QueryIcon="Find"
                             Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
@@ -152,12 +153,14 @@
                         <ComboBox
                             Grid.Column="1"
                             MinWidth="110"
+                            AutomationProperties.Name="Filter by role"
                             ItemsSource="{x:Bind ViewModel.RoleFilters}"
                             SelectedItem="{x:Bind ViewModel.RoleFilter, Mode=TwoWay}" />
 
                         <ComboBox
                             Grid.Column="2"
                             MinWidth="110"
+                            AutomationProperties.Name="Filter by status"
                             ItemsSource="{x:Bind ViewModel.StatusFilters}"
                             SelectedItem="{x:Bind ViewModel.StatusFilter, Mode=TwoWay}" />
 

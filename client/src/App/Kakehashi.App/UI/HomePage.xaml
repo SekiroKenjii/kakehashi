@@ -152,6 +152,7 @@
                             <Button
                                 Grid.Column="2"
                                 VerticalAlignment="Center"
+                                AutomationProperties.Name="Explore modules"
                                 Click="OnExploreModulesClick"
                                 Style="{StaticResource AccentButtonStyle}">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
@@ -177,6 +178,7 @@
                                 <Button
                                     Grid.Column="1"
                                     Padding="6,4"
+                                    AutomationProperties.Name="Dismiss"
                                     Background="Transparent"
                                     BorderThickness="0"
                                     Command="{x:Bind ViewModel.DismissGettingStartedCommand}"
@@ -215,6 +217,7 @@
                                             broken app rather than as a step that needs no help.
                                         -->
                                         <Button
+                                            AutomationProperties.Name="{x:Bind Title}"
                                             Click="OnStepClick"
                                             IsHitTestVisible="{x:Bind HasAction}"
                                             IsTabStop="{x:Bind HasAction}"
@@ -299,6 +302,7 @@
                                 <ItemsRepeater.ItemTemplate>
                                     <DataTemplate x:DataType="ui:ModuleCardItem">
                                         <Button
+                                            AutomationProperties.Name="{x:Bind Name}"
                                             Click="OnModuleCardClick"
                                             Style="{StaticResource ModuleCardButtonStyle}"
                                             Tag="{x:Bind}">
@@ -377,6 +381,8 @@
                                                         Grid.Column="3"
                                                         Padding="5,4"
                                                         VerticalAlignment="Center"
+                                                        AutomationProperties.HelpText="{x:Bind Name}"
+                                                        AutomationProperties.Name="Detach module"
                                                         Background="Transparent"
                                                         BorderThickness="0"
                                                         Click="OnDetachModuleClick"
@@ -450,6 +456,7 @@
                                 Padding="0"
                                 HorizontalAlignment="Stretch"
                                 HorizontalContentAlignment="Stretch"
+                                AutomationProperties.Name="Register your module"
                                 Background="Transparent"
                                 BorderThickness="0"
                                 Click="OnRegisterModuleClick">
@@ -598,7 +605,10 @@
                                     Orientation="Horizontal"
                                     Spacing="2"
                                     Visibility="{x:Bind ViewModel.HasActivityPaging, Mode=OneWay}">
-                                    <Button Command="{x:Bind ViewModel.ActivityPrevPageCommand}" Style="{StaticResource PagerButtonStyle}">
+                                    <Button
+                                        AutomationProperties.Name="Previous page"
+                                        Command="{x:Bind ViewModel.ActivityPrevPageCommand}"
+                                        Style="{StaticResource PagerButtonStyle}">
                                         <FontIcon FontSize="11" Glyph="&#xE76B;" />
                                     </Button>
                                     <TextBlock
@@ -606,7 +616,10 @@
                                         FontSize="11"
                                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                                         Text="{x:Bind ViewModel.ActivityPageLabel, Mode=OneWay}" />
-                                    <Button Command="{x:Bind ViewModel.ActivityNextPageCommand}" Style="{StaticResource PagerButtonStyle}">
+                                    <Button
+                                        AutomationProperties.Name="Next page"
+                                        Command="{x:Bind ViewModel.ActivityNextPageCommand}"
+                                        Style="{StaticResource PagerButtonStyle}">
                                         <FontIcon FontSize="11" Glyph="&#xE76C;" />
                                     </Button>
                                 </StackPanel>
@@ -682,6 +695,7 @@
                                 <TextBlock Style="{StaticResource CaptionLabelStyle}" Text="RESOURCES" />
                             </StackPanel>
                             <Button
+                                AutomationProperties.Name="WinUI 3 documentation"
                                 Command="{x:Bind ViewModel.OpenLinkCommand}"
                                 CommandParameter="https://learn.microsoft.com/windows/apps/winui/winui3/"
                                 Style="{StaticResource RowButtonStyle}">
@@ -709,6 +723,7 @@
                                 </Grid>
                             </Button>
                             <Button
+                                AutomationProperties.Name="Windows App SDK repository"
                                 Command="{x:Bind ViewModel.OpenLinkCommand}"
                                 CommandParameter="https://github.com/microsoft/WindowsAppSDK"
                                 Style="{StaticResource RowButtonStyle}">
@@ -736,6 +751,7 @@
                                 </Grid>
                             </Button>
                             <Button
+                                AutomationProperties.Name="Windows App SDK releases"
                                 Command="{x:Bind ViewModel.OpenLinkCommand}"
                                 CommandParameter="https://github.com/microsoft/WindowsAppSDK/releases"
                                 Style="{StaticResource RowButtonStyle}">
