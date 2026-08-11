@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Kakehashi">
+  <title>Kakehashi</title>
+  <desc>A bridge in three brush strokes: the span, the arch beneath it, and the water it crosses.</desc>
+
+  <defs>
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#1F2024" />
+      <stop offset="1" stop-color="#101114" />
+    </linearGradient>
+    <linearGradient id="span" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#F6F5F3" />
+      <stop offset="1" stop-color="#E8E6E2" />
+    </linearGradient>
+  </defs>
+
+  <rect width="256" height="256" rx="58" fill="url(#plate)" />
+  <rect x="0.75" y="0.75" width="254.5" height="254.5" rx="57.25" fill="none" stroke="#2E3036" stroke-width="1.5" />
+
+  <!-- The span. The longest stroke, and the one the name is about. -->
+  <rect x="40" y="78" width="176" height="16" rx="8" fill="url(#span)" />
+
+  <!-- The arch. Tapered to nothing at both ends, the way a brush leaves the paper. -->
+  <path d="M48 148 Q128 58 208 148 Q128 90 48 148 Z" fill="#E0503A" />
+
+  <!-- The water it crosses. -->
+  <rect x="88" y="164" width="80" height="14" rx="7" fill="#8A8D95" />
+</svg>

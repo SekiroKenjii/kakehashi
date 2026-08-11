@@ -1,0 +1,153 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 760" width="2000" height="760" role="img" aria-label="Kakehashi — a WinUI 3 client, a Go backend, and contracts the build enforces">
+  <title>Kakehashi</title>
+  <desc>架け橋 — a WinUI 3 client, a Go backend, and contracts the build enforces.</desc>
+
+  <defs>
+    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#08090B" />
+      <stop offset="0.55" stop-color="#0C0E12" />
+      <stop offset="1" stop-color="#07080A" />
+    </linearGradient>
+
+    <!-- The glow behind the wordmark. Layered gradients rather than a blur filter: filters are the
+         first thing a README renderer strips. -->
+    <radialGradient id="shu" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#E0503A" stop-opacity="0.34" />
+      <stop offset="0.45" stop-color="#B23A2C" stop-opacity="0.13" />
+      <stop offset="1" stop-color="#E0503A" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.09" />
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
+    </radialGradient>
+
+    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#22242A" />
+      <stop offset="1" stop-color="#131519" />
+    </linearGradient>
+    <linearGradient id="span" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#FFFFFF" />
+      <stop offset="1" stop-color="#E6E4E0" />
+    </linearGradient>
+    <linearGradient id="window" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#191B20" />
+      <stop offset="1" stop-color="#101216" />
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#16181D" />
+      <stop offset="1" stop-color="#111318" />
+    </linearGradient>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#07080A" stop-opacity="0" />
+      <stop offset="1" stop-color="#07080A" stop-opacity="1" />
+    </linearGradient>
+
+  </defs>
+
+  <rect width="2000" height="760" fill="url(#night)" />
+  <ellipse cx="1000" cy="250" rx="820" ry="330" fill="url(#shu)" />
+  <ellipse cx="1000" cy="235" rx="480" ry="190" fill="url(#halo)" />
+
+  <!-- ── the mark ─────────────────────────────────────────────────────────────────────────── -->
+  <g transform="translate(690,108) scale(0.5)">
+    <rect width="256" height="256" rx="58" fill="url(#plate)" />
+    <rect x="0.75" y="0.75" width="254.5" height="254.5" rx="57.25" fill="none" stroke="#33363D" stroke-width="1.5" />
+    <rect x="40" y="78" width="176" height="16" rx="8" fill="url(#span)" />
+    <path d="M48 148 Q128 58 208 148 Q128 90 48 148 Z" fill="#E0503A" />
+    <rect x="88" y="164" width="80" height="14" rx="7" fill="#8A8D95" />
+  </g>
+
+  <!-- ── the wordmark ─────────────────────────────────────────────────────────────────────── -->
+  <text font-family="'Segoe UI Variable Display','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" font-weight="700" x="838" y="232" font-size="112" fill="#F7F6F4" letter-spacing="-2">Kakehashi</text>
+
+  <!-- 架け橋: the name in the writing it comes from. The wordmark above carries the meaning, so a
+       machine with no CJK font loses decoration rather than information. -->
+  <text font-family="'Yu Gothic UI','Yu Gothic','Noto Sans JP','Hiragino Sans','Meiryo','Microsoft YaHei',sans-serif" x="694" y="300" font-size="30" fill="#E0503A" letter-spacing="10" opacity="0.95">架け橋</text>
+  <text font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif" x="838" y="300" font-size="27" fill="#9BA0AA" letter-spacing="0.4">the bridge you build across</text>
+
+  <!-- ── the fact cards ──────────────────────────────────────────────────────────────────── -->
+  <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,-apple-system,'Helvetica Neue',Arial,sans-serif">
+    <g transform="translate(96,286)">
+      <rect width="340" height="104" rx="14" fill="url(#card)" stroke="#24272E" />
+      <text x="22" y="40" font-size="16" fill="#8B909A" letter-spacing="1.6">CLIENT</text>
+      <text x="22" y="76" font-size="24" fill="#EDECEA">WinUI 3 · .NET 10</text>
+    </g>
+    <g transform="translate(96,410)">
+      <rect width="340" height="104" rx="14" fill="url(#card)" stroke="#24272E" />
+      <text x="22" y="40" font-size="16" fill="#8B909A" letter-spacing="1.6">SERVER</text>
+      <text x="22" y="76" font-size="24" fill="#EDECEA">Go 1.26 · one binary</text>
+    </g>
+    <g transform="translate(1564,286)">
+      <rect width="340" height="104" rx="14" fill="url(#card)" stroke="#24272E" />
+      <text x="22" y="40" font-size="16" fill="#8B909A" letter-spacing="1.6">BETWEEN THEM</text>
+      <text x="22" y="76" font-size="24" fill="#EDECEA">one proto, both halves</text>
+    </g>
+    <g transform="translate(1564,410)">
+      <rect width="340" height="104" rx="14" fill="url(#card)" stroke="#24272E" />
+      <text x="22" y="40" font-size="16" fill="#8B909A" letter-spacing="1.6">ENFORCED BY</text>
+      <text x="22" y="76" font-size="24" fill="#EDECEA">three linters, not habit</text>
+    </g>
+  </g>
+
+  <!-- ── the app, drawn rather than screenshotted so it stays sharp at any width ──────────── -->
+  <g transform="translate(470,392)">
+    <rect x="0" y="0" width="1060" height="420" rx="16" fill="url(#window)" stroke="#282B32" />
+
+    <!-- title bar -->
+    <circle cx="30" cy="28" r="6" fill="#3A3E46" />
+    <circle cx="52" cy="28" r="6" fill="#3A3E46" />
+    <circle cx="74" cy="28" r="6" fill="#3A3E46" />
+    <rect x="470" y="21" width="120" height="14" rx="7" fill="#23262C" />
+
+    <!-- navigation pane, the thing this project is opinionated about -->
+    <rect x="14" y="56" width="228" height="350" rx="12" fill="#121419" />
+    <rect x="30" y="76" width="72" height="10" rx="5" fill="#2C3038" />
+    <g>
+      <rect x="26" y="102" width="204" height="34" rx="8" fill="#1D2027" />
+      <rect x="34" y="114" width="10" height="10" rx="3" fill="#E0503A" />
+      <rect x="56" y="114" width="86" height="10" rx="5" fill="#C9CBCF" />
+    </g>
+    <rect x="34" y="156" width="10" height="10" rx="3" fill="#4A4F58" />
+    <rect x="56" y="156" width="112" height="10" rx="5" fill="#63686F" />
+    <rect x="34" y="192" width="10" height="10" rx="3" fill="#4A4F58" />
+    <rect x="56" y="192" width="94" height="10" rx="5" fill="#63686F" />
+    <rect x="30" y="230" width="90" height="10" rx="5" fill="#2C3038" />
+    <rect x="34" y="266" width="10" height="10" rx="3" fill="#4A4F58" />
+    <rect x="56" y="266" width="120" height="10" rx="5" fill="#63686F" />
+    <rect x="34" y="302" width="10" height="10" rx="3" fill="#4A4F58" />
+    <rect x="56" y="302" width="104" height="10" rx="5" fill="#63686F" />
+
+    <!-- content: four cards over a list, which is what most of these screens are -->
+    <g>
+      <rect x="262" y="56" width="184" height="86" rx="12" fill="#15181D" stroke="#23262C" />
+      <rect x="280" y="76" width="58" height="9" rx="4.5" fill="#4A4F58" />
+      <rect x="280" y="100" width="40" height="18" rx="6" fill="#D8D6D2" />
+      <rect x="458" y="56" width="184" height="86" rx="12" fill="#15181D" stroke="#23262C" />
+      <rect x="476" y="76" width="66" height="9" rx="4.5" fill="#4A4F58" />
+      <rect x="476" y="100" width="52" height="18" rx="6" fill="#D8D6D2" />
+      <rect x="654" y="56" width="184" height="86" rx="12" fill="#15181D" stroke="#23262C" />
+      <rect x="672" y="76" width="52" height="9" rx="4.5" fill="#4A4F58" />
+      <rect x="672" y="100" width="34" height="18" rx="6" fill="#E0503A" />
+      <rect x="850" y="56" width="184" height="86" rx="12" fill="#15181D" stroke="#23262C" />
+      <rect x="868" y="76" width="72" height="9" rx="4.5" fill="#4A4F58" />
+      <rect x="868" y="100" width="46" height="18" rx="6" fill="#D8D6D2" />
+    </g>
+    <rect x="262" y="162" width="772" height="244" rx="12" fill="#15181D" stroke="#23262C" />
+    <g>
+      <rect x="284" y="186" width="120" height="10" rx="5" fill="#3A3E46" />
+      <rect x="284" y="224" width="728" height="1" fill="#22252B" />
+      <rect x="284" y="248" width="26" height="26" rx="8" fill="#22252B" />
+      <rect x="326" y="256" width="150" height="10" rx="5" fill="#7C818A" />
+      <rect x="880" y="256" width="88" height="10" rx="5" fill="#3A3E46" />
+      <rect x="284" y="292" width="26" height="26" rx="8" fill="#22252B" />
+      <rect x="326" y="300" width="196" height="10" rx="5" fill="#7C818A" />
+      <rect x="880" y="300" width="88" height="10" rx="5" fill="#3A3E46" />
+      <rect x="284" y="336" width="26" height="26" rx="8" fill="#22252B" />
+      <rect x="326" y="344" width="132" height="10" rx="5" fill="#7C818A" />
+      <rect x="880" y="344" width="88" height="10" rx="5" fill="#3A3E46" />
+    </g>
+  </g>
+
+  <!-- the window runs off the bottom edge rather than sitting on it -->
+  <rect x="0" y="640" width="2000" height="120" fill="url(#fade)" />
+</svg>
