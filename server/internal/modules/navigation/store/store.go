@@ -15,6 +15,7 @@ import (
 	"context"
 	"database/sql"
 	"strings"
+	"time"
 
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
@@ -28,6 +29,15 @@ type SQLServer struct {
 
 // New returns a store backed by db.
 func New(db *database.DB) *SQLServer { return &SQLServer{db: db} }
+
+// execer is what the pooled handle and a transaction have in common.
+//
+// It exists so a write is spelled once and reached two ways: on its own through the pool, or as one
+// step of ApplyLayout inside a transaction. The alternative was the same INSERT written twice, which
+// is how two code paths come to disagree about a column.
+type execer interface {
+	ExecContext(ctx context.Context, query string, args ...any) (sql.Result, error)
+}
 
 // scanner is what *sql.Row and *sql.Rows have in common, so one scan serves both.
 type scanner interface {
@@ -152,4 +162,43 @@ func collectTx[T any](
 		return nil, errs.Internalf(err, "%s", what)
 	}
 	return out, nil
+}
+
+// ApplyLayout writes a whole rearrangement, or writes none of it.
+//
+// One transaction for the reason the six single-row methods above cannot give: one gesture on the
+// screen now produces several changes at once, and a sequence of independent writes has no way to
+// fail halfway without leaving the pane half-rearranged. The reorder defect this replaces was
+// exactly that — two Move calls, the second failing, both rows left sharing a number.
+//
+// The order inside the transaction is not arbitrary. Headings are created before items are moved, or
+// an item could name a heading that does not exist yet; headings are deleted last, or deleting one
+// would strand the items being moved out of it. The schema's ON DELETE SET NULL is what makes the
+// last step safe for anything still pointing at a deleted heading.
+func (s *SQLServer) ApplyLayout(
+	ctx context.Context, plan domain.LayoutPlan, at time.Time,
+) error {
+	return s.inTransaction(ctx, func(tx *sql.Tx) error {
+		for _, g := range plan.CreateGroups {
+			if err := insertGroupTx(ctx, tx, g, at); err != nil {
+				return err
+			}
+		}
+		for _, g := range plan.UpdateGroups {
+			if err := updateGroupTx(ctx, tx, g, at); err != nil {
+				return err
+			}
+		}
+		for _, p := range plan.Items {
+			if err := writePlacementTx(ctx, tx, p, at); err != nil {
+				return err
+			}
+		}
+		for _, id := range plan.DeleteGroups {
+			if err := deleteGroupTx(ctx, tx, id); err != nil {
+				return err
+			}
+		}
+		return nil
+	})
 }

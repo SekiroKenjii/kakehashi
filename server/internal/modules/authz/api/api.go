@@ -5,9 +5,19 @@
 // the catalogue is assembled from declarations rather than typed into a table. The composition root
 // uses it to hand those declarations over at mount time.
 //
-// Note what is absent: no way to grant, and no way to ask about somebody else. Deciding who may do
-// what is this module's alone, and it answers the mux through the platform's auth.Permissions port
-// rather than through anything here.
+// Note what is absent: no way to grant. Deciding who may hold what is this module's alone, and it
+// answers the mux through the platform's auth.Permissions port rather than through anything here.
+//
+// This also said "no way to ask about somebody else", and GrantsForRole below is a reader of exactly
+// that, so the claim needs replacing rather than defending. What it reads is a role, not a person: it
+// grants nothing and authorizes nothing, and it exists so the navigation module can draw the pane a
+// colleague will see instead of the one the administrator happens to have.
+//
+// The honest caveat, since RolesOf is also here: the two together can be composed into "what may this
+// account do", and nothing in the type system stops it. What makes that a bug rather than a feature is
+// that the route gate is the only thing entitled to act on the answer — a module that computed its own
+// and enforced it would be a second authorization decision, drifting from the first. Read these to
+// explain and to draw. Do not read them to decide.
 package authzapi
 
 import (
@@ -107,4 +117,15 @@ type Grant struct {
 type Service interface {
 	// RolesOf lists the roles an account holds.
 	RolesOf(ctx context.Context, accountID string) ([]Role, error)
+
+	// GrantsForRole resolves what one role may do, in the form the route gate already speaks.
+	//
+	// It answers a question about a role rather than about a caller, which is what makes it useful to
+	// somebody arranging a screen for other people: the navigation module draws a pane with it, so an
+	// administrator can see what a colleague will see instead of guessing from their own.
+	//
+	// auth.Grants rather than []Grant on purpose. Every consumer wants to ask "does this allow X", and
+	// handing back a slice would make each of them rebuild the same map — and decide for itself how to
+	// read a scope, which is this module's business.
+	GrantsForRole(ctx context.Context, roleID string) (auth.Grants, error)
 }

@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
 using Kakehashi.Modules.Activity.Application.Activity;
@@ -11,19 +10,36 @@ namespace Kakehashi.Modules.Activity.Application.Abstractions {
   /// by the UI layer at composition time.
   /// </summary>
   /// <remarks>
-  /// One method, and there will never be a second write one. The feed is append-only and only the
-  /// server appends: entries are written by the server reacting to facts the modules announce, and
-  /// a history a client can write is a history that proves nothing.
+  /// This said "one method, and there will never be a second write one… a history a client can write
+  /// is a history that proves nothing", and <see cref="RecordAsync"/> is that second method, so the
+  /// claim deserves an answer rather than a deletion.
+  /// <para>
+  /// What makes a history worthless is a client that gets to say what happened. This one does not: it
+  /// picks from a two-value enum, neither of which is a security claim, and the server refuses
+  /// anything outside its own allow-list without taking this client's word for it. It cannot say
+  /// whose feed, cannot say when, and cannot write prose. The two facts it may report — which build
+  /// is running, which theme is set — are ones no server can observe for itself, so they arrive this
+  /// way or the feed simply does not have them.
+  /// </para>
   /// </remarks>
   public interface IActivityGateway {
     /// <summary>
-    /// Lists the signed-in account's most recent entries, newest first.
+    /// Lists one page of the signed-in account's entries, newest first.
     /// </summary>
-    /// <param name="take">
-    /// A cap on how many to return. The server clamps anything unreasonable rather than refusing
-    /// it, so no caller has to know the limit.
+    /// <param name="filter">
+    /// What to ask for. The server clamps an unreasonable page size rather than refusing it, so no
+    /// caller has to know the limit.
     /// </param>
-    Task<Result<IReadOnlyList<ActivityEntryDto>>> ListAsync(
-        int take, CancellationToken cancellationToken);
+    Task<Result<ActivityPageDto>> ListAsync(
+        ActivityFeedFilter filter, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Reports one fact about this client so the account's other devices can see it.
+    /// </summary>
+    /// <remarks>
+    /// A failure is a <see cref="Result"/> like any other, and the caller's usual answer is to log it
+    /// and carry on: nobody asked for this to happen, so nobody is waiting to be told it did not.
+    /// </remarks>
+    Task<Result> RecordAsync(ClientActivityKind kind, CancellationToken cancellationToken);
   }
 }

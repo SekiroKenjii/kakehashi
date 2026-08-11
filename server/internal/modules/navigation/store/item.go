@@ -171,3 +171,50 @@ func nullable(value string) any {
 func isForeignKeyViolation(err error) bool {
 	return err != nil && errorContains(err, "FOREIGN KEY constraint")
 }
+
+// writePlacementTx writes a placement whole: heading, order, overrides and visibility together.
+//
+// One statement rather than a Move followed by an Override, because ApplyLayout is writing a desired
+// state rather than performing two actions. Two statements would also touch UpdatedAt twice and, on
+// a failure between them, leave a row half-moved — which is the class of bug ApplyLayout exists to
+// make impossible.
+func writePlacementTx(
+	ctx context.Context, on execer, p domain.Placement, at time.Time,
+) error {
+	const q = `
+        UPDATE navigation.NavItem
+        SET GroupId = @p2, SortOrder = @p3, Title = @p4, Icon = @p5, IsVisible = @p6, UpdatedAt = @p7
+        WHERE Id = @p1;`
+
+	var group any
+	if p.GroupID != "" {
+		group = p.GroupID
+	}
+
+	result, err := on.ExecContext(
+		ctx, q, p.DestinationID, group, p.Order,
+		nullable(p.Title), nullable(p.Icon), p.IsVisible, at.UTC())
+	if isForeignKeyViolation(err) {
+		return errs.NotFoundf("No navigation heading with id %s.", p.GroupID)
+	}
+	if err != nil {
+		return errs.Internalf(err, "write navigation item")
+	}
+	return requireRow(result, "No navigation item with id %s.", p.DestinationID)
+}
+
+// DeleteItem removes a stored placement.
+//
+// The store will delete any row it is given; only the service knows which rows are leftovers from a
+// module this build no longer has, and it refuses the rest. Guarding here as well would mean this
+// package needing to know what the build declares, which is the one thing its doc comment says it
+// must not.
+func (s *SQLServer) DeleteItem(ctx context.Context, id string) error {
+	const q = `DELETE FROM navigation.NavItem WHERE Id = @p1;`
+
+	result, err := s.db.ExecContext(ctx, q, id)
+	if err != nil {
+		return errs.Internalf(err, "delete navigation item")
+	}
+	return requireRow(result, "No navigation item with id %s.", id)
+}

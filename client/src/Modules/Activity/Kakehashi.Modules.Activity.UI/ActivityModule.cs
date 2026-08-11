@@ -7,6 +7,7 @@ using Kakehashi.Modules.Activity.UI.Infrastructure;
 using Kakehashi.Modules.Activity.UI.ViewModels;
 using Kakehashi.Modules.Activity.UI.Views;
 using Kakehashi.UI.Contracts;
+using Kakehashi.UI.Contracts.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using ActivityV1 = Kakehashi.Activity.V1;
@@ -36,8 +37,14 @@ namespace Kakehashi.Modules.Activity.UI {
       services.AddBackendGrpcClient<ActivityV1.ActivityService.ActivityServiceClient>();
 
       services.TryAddSingleton<IActivityGateway, GrpcActivityGateway>();
+      services.TryAddSingleton<IAccountScreen, AccountScreen>();
       services.AddTransient<ActivityViewModel>();
       services.AddTransient<ActivityPage>();
+
+      // Registered as an awake-on-startup service, because what it listens for is announced during
+      // startup: an app update is noticed on the first run of a new build, and a listener created
+      // later would miss the one moment worth reporting.
+      services.AddSingleton<IAwakeOnStartup, ActivityReporter>();
     }
 
     public IReadOnlyList<NavigationItem> GetNavigationItems() {

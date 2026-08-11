@@ -385,6 +385,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     private static ActivityItem ToActivityItem(SecurityEventDto entry) {
       var (title, glyph, isAlert) = entry.Kind switch {
         "SignedIn" => ("Signed in", "", false),
+        "SignedOut" => ("Signed out", "", false),
         "NewDeviceSignedIn" => ("New device signed in", "", false),
         "PasswordChanged" => ("Password changed", "", false),
         "FailedSignIn" => ("Failed sign-in attempt", "", true),

@@ -10,7 +10,8 @@ import (
 var occurred = time.Date(2026, time.August, 6, 9, 30, 0, 0, time.UTC)
 
 func TestNewEntryKeepsEveryFieldItWasGiven(t *testing.T) {
-	entry, err := NewEntry("id-1", "account-1", "SignedIn", "laptop", "10.0.0.1", occurred)
+	entry, err := NewEntry(
+		"id-1", "account-1", "SignedIn", "session-1", "laptop", "10.0.0.1", occurred)
 	if err != nil {
 		t.Fatalf("NewEntry returned an error: %v", err)
 	}
@@ -19,6 +20,7 @@ func TestNewEntryKeepsEveryFieldItWasGiven(t *testing.T) {
 		ID:         "id-1",
 		UserID:     "account-1",
 		Kind:       "SignedIn",
+		SessionID:  "session-1",
 		Device:     "laptop",
 		IPAddress:  "10.0.0.1",
 		OccurredAt: occurred,
@@ -42,7 +44,8 @@ func TestNewEntryRejectsWhatWouldProduceAnUnusableRow(t *testing.T) {
 
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
-			_, err := NewEntry("id-1", c.userID, c.kind, "laptop", "10.0.0.1", c.occurredAt)
+			_, err := NewEntry(
+				"id-1", c.userID, c.kind, "session-1", "laptop", "10.0.0.1", c.occurredAt)
 			if err == nil {
 				t.Fatal("NewEntry accepted it")
 			}
@@ -53,10 +56,12 @@ func TestNewEntryRejectsWhatWouldProduceAnUnusableRow(t *testing.T) {
 	}
 }
 
-// Device and IP are the two fields that may legitimately be empty: an event published without a
-// request behind it has neither, and a row that says only "Password changed" is still worth having.
-func TestNewEntryAcceptsAnEntryWithNoDeviceOrAddress(t *testing.T) {
-	if _, err := NewEntry("id-1", "account-1", "PasswordChanged", "", "", occurred); err != nil {
+// Session, device and IP are the three fields that may legitimately be empty: an event published
+// without a request behind it has no device or address, a password change belongs to an account
+// rather than to a session, and a row that says only "Password changed" is still worth having.
+func TestNewEntryAcceptsAnEntryWithNoSessionDeviceOrAddress(t *testing.T) {
+	_, err := NewEntry("id-1", "account-1", "PasswordChanged", "", "", "", occurred)
+	if err != nil {
 		t.Errorf("NewEntry returned an error: %v", err)
 	}
 }

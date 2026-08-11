@@ -363,6 +363,11 @@ type ItemConfig struct {
 	Icon         string `protobuf:"bytes,5,opt,name=icon,proto3" json:"icon,omitempty"`
 	DefaultTitle string `protobuf:"bytes,6,opt,name=default_title,json=defaultTitle,proto3" json:"default_title,omitempty"`
 	DefaultIcon  string `protobuf:"bytes,7,opt,name=default_icon,json=defaultIcon,proto3" json:"default_icon,omitempty"`
+	// Where the code puts this destination when nothing has moved it. Sent so a screen can offer
+	// "reset to what the product shipped" — until now those were seeds the reconcile step wrote once
+	// and never re-applied, so a moved destination's intended place was unrecoverable through any API.
+	DefaultGroup string `protobuf:"bytes,13,opt,name=default_group,json=defaultGroup,proto3" json:"default_group,omitempty"`
+	DefaultOrder int32  `protobuf:"varint,14,opt,name=default_order,json=defaultOrder,proto3" json:"default_order,omitempty"`
 	SortOrder    int32  `protobuf:"varint,8,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
 	IsVisible    bool   `protobuf:"varint,9,opt,name=is_visible,json=isVisible,proto3" json:"is_visible,omitempty"`
 	// A stored row whose destination this build no longer has. Kept rather than deleted, because a
@@ -454,6 +459,20 @@ func (x *ItemConfig) GetDefaultIcon() string {
 		return x.DefaultIcon
 	}
 	return ""
+}
+
+func (x *ItemConfig) GetDefaultGroup() string {
+	if x != nil {
+		return x.DefaultGroup
+	}
+	return ""
+}
+
+func (x *ItemConfig) GetDefaultOrder() int32 {
+	if x != nil {
+		return x.DefaultOrder
+	}
+	return 0
 }
 
 func (x *ItemConfig) GetSortOrder() int32 {
@@ -1162,6 +1181,463 @@ func (x *UpdateItemResponse) GetItem() *ItemConfig {
 	return nil
 }
 
+// LayoutGroupSpec is a heading as an administrator wants it.
+//
+// An empty id means "create this one", and the server derives the identifier from the title. Any
+// stored heading absent from the request is deleted; the ones this product ships refuse that, so a
+// deployment cannot lose the heading its administrative screens live under.
+type LayoutGroupSpec struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	Title         string                 `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`
+	SortOrder     int32                  `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LayoutGroupSpec) Reset() {
+	*x = LayoutGroupSpec{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[20]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LayoutGroupSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LayoutGroupSpec) ProtoMessage() {}
+
+func (x *LayoutGroupSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[20]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LayoutGroupSpec.ProtoReflect.Descriptor instead.
+func (*LayoutGroupSpec) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{20}
+}
+
+func (x *LayoutGroupSpec) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LayoutGroupSpec) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *LayoutGroupSpec) GetSortOrder() int32 {
+	if x != nil {
+		return x.SortOrder
+	}
+	return 0
+}
+
+// LayoutItemSpec is a destination as an administrator wants it placed.
+//
+// Matched by id. A stored row absent from the request is left exactly as it is rather than deleted:
+// destinations come from code, so absence here means "not mentioned", never "remove it".
+type LayoutItemSpec struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	Id    string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	// Empty means ungrouped.
+	GroupId   string `protobuf:"bytes,2,opt,name=group_id,json=groupId,proto3" json:"group_id,omitempty"`
+	SortOrder int32  `protobuf:"varint,3,opt,name=sort_order,json=sortOrder,proto3" json:"sort_order,omitempty"`
+	// Empty clears the override and returns the destination to what the code calls it.
+	Title         string `protobuf:"bytes,4,opt,name=title,proto3" json:"title,omitempty"`
+	Icon          string `protobuf:"bytes,5,opt,name=icon,proto3" json:"icon,omitempty"`
+	IsVisible     bool   `protobuf:"varint,6,opt,name=is_visible,json=isVisible,proto3" json:"is_visible,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LayoutItemSpec) Reset() {
+	*x = LayoutItemSpec{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[21]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LayoutItemSpec) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LayoutItemSpec) ProtoMessage() {}
+
+func (x *LayoutItemSpec) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[21]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LayoutItemSpec.ProtoReflect.Descriptor instead.
+func (*LayoutItemSpec) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{21}
+}
+
+func (x *LayoutItemSpec) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *LayoutItemSpec) GetGroupId() string {
+	if x != nil {
+		return x.GroupId
+	}
+	return ""
+}
+
+func (x *LayoutItemSpec) GetSortOrder() int32 {
+	if x != nil {
+		return x.SortOrder
+	}
+	return 0
+}
+
+func (x *LayoutItemSpec) GetTitle() string {
+	if x != nil {
+		return x.Title
+	}
+	return ""
+}
+
+func (x *LayoutItemSpec) GetIcon() string {
+	if x != nil {
+		return x.Icon
+	}
+	return ""
+}
+
+func (x *LayoutItemSpec) GetIsVisible() bool {
+	if x != nil {
+		return x.IsVisible
+	}
+	return false
+}
+
+type ApplyLayoutRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Groups        []*LayoutGroupSpec     `protobuf:"bytes,1,rep,name=groups,proto3" json:"groups,omitempty"`
+	Items         []*LayoutItemSpec      `protobuf:"bytes,2,rep,name=items,proto3" json:"items,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyLayoutRequest) Reset() {
+	*x = ApplyLayoutRequest{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[22]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyLayoutRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyLayoutRequest) ProtoMessage() {}
+
+func (x *ApplyLayoutRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[22]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyLayoutRequest.ProtoReflect.Descriptor instead.
+func (*ApplyLayoutRequest) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{22}
+}
+
+func (x *ApplyLayoutRequest) GetGroups() []*LayoutGroupSpec {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
+func (x *ApplyLayoutRequest) GetItems() []*LayoutItemSpec {
+	if x != nil {
+		return x.Items
+	}
+	return nil
+}
+
+// ApplyLayoutResponse counts what actually changed, which is not what was sent: a screen posts the
+// whole arrangement, and most of it is usually already true.
+type ApplyLayoutResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	GroupsCreated int32                  `protobuf:"varint,1,opt,name=groups_created,json=groupsCreated,proto3" json:"groups_created,omitempty"`
+	GroupsUpdated int32                  `protobuf:"varint,2,opt,name=groups_updated,json=groupsUpdated,proto3" json:"groups_updated,omitempty"`
+	GroupsDeleted int32                  `protobuf:"varint,3,opt,name=groups_deleted,json=groupsDeleted,proto3" json:"groups_deleted,omitempty"`
+	ItemsChanged  int32                  `protobuf:"varint,4,opt,name=items_changed,json=itemsChanged,proto3" json:"items_changed,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *ApplyLayoutResponse) Reset() {
+	*x = ApplyLayoutResponse{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[23]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *ApplyLayoutResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*ApplyLayoutResponse) ProtoMessage() {}
+
+func (x *ApplyLayoutResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[23]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use ApplyLayoutResponse.ProtoReflect.Descriptor instead.
+func (*ApplyLayoutResponse) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *ApplyLayoutResponse) GetGroupsCreated() int32 {
+	if x != nil {
+		return x.GroupsCreated
+	}
+	return 0
+}
+
+func (x *ApplyLayoutResponse) GetGroupsUpdated() int32 {
+	if x != nil {
+		return x.GroupsUpdated
+	}
+	return 0
+}
+
+func (x *ApplyLayoutResponse) GetGroupsDeleted() int32 {
+	if x != nil {
+		return x.GroupsDeleted
+	}
+	return 0
+}
+
+func (x *ApplyLayoutResponse) GetItemsChanged() int32 {
+	if x != nil {
+		return x.ItemsChanged
+	}
+	return 0
+}
+
+type DeleteItemRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteItemRequest) Reset() {
+	*x = DeleteItemRequest{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[24]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteItemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteItemRequest) ProtoMessage() {}
+
+func (x *DeleteItemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[24]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteItemRequest.ProtoReflect.Descriptor instead.
+func (*DeleteItemRequest) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *DeleteItemRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type DeleteItemResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *DeleteItemResponse) Reset() {
+	*x = DeleteItemResponse{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[25]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *DeleteItemResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*DeleteItemResponse) ProtoMessage() {}
+
+func (x *DeleteItemResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[25]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use DeleteItemResponse.ProtoReflect.Descriptor instead.
+func (*DeleteItemResponse) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{25}
+}
+
+type PreviewLayoutRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Whose view to draw. Empty draws the pane for an account holding no permissions at all, which is
+	// the useful worst case.
+	RoleId        string `protobuf:"bytes,1,opt,name=role_id,json=roleId,proto3" json:"role_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewLayoutRequest) Reset() {
+	*x = PreviewLayoutRequest{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[26]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewLayoutRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewLayoutRequest) ProtoMessage() {}
+
+func (x *PreviewLayoutRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[26]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewLayoutRequest.ProtoReflect.Descriptor instead.
+func (*PreviewLayoutRequest) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *PreviewLayoutRequest) GetRoleId() string {
+	if x != nil {
+		return x.RoleId
+	}
+	return ""
+}
+
+// The same shape GetNavigation answers with, because it is the same question asked on behalf of
+// somebody else.
+type PreviewLayoutResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Ungrouped     []*Item                `protobuf:"bytes,1,rep,name=ungrouped,proto3" json:"ungrouped,omitempty"`
+	Groups        []*GroupedItems        `protobuf:"bytes,2,rep,name=groups,proto3" json:"groups,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *PreviewLayoutResponse) Reset() {
+	*x = PreviewLayoutResponse{}
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[27]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *PreviewLayoutResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PreviewLayoutResponse) ProtoMessage() {}
+
+func (x *PreviewLayoutResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_navigation_v1_navigation_proto_msgTypes[27]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PreviewLayoutResponse.ProtoReflect.Descriptor instead.
+func (*PreviewLayoutResponse) Descriptor() ([]byte, []int) {
+	return file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *PreviewLayoutResponse) GetUngrouped() []*Item {
+	if x != nil {
+		return x.Ungrouped
+	}
+	return nil
+}
+
+func (x *PreviewLayoutResponse) GetGroups() []*GroupedItems {
+	if x != nil {
+		return x.Groups
+	}
+	return nil
+}
+
 var File_kakehashi_navigation_v1_navigation_proto protoreflect.FileDescriptor
 
 const file_kakehashi_navigation_v1_navigation_proto_rawDesc = "" +
@@ -1186,7 +1662,7 @@ const file_kakehashi_navigation_v1_navigation_proto_rawDesc = "" +
 	"\x14GetNavigationRequest\"\x93\x01\n" +
 	"\x15GetNavigationResponse\x12;\n" +
 	"\tungrouped\x18\x01 \x03(\v2\x1d.kakehashi.navigation.v1.ItemR\tungrouped\x12=\n" +
-	"\x06groups\x18\x02 \x03(\v2%.kakehashi.navigation.v1.GroupedItemsR\x06groups\"\xfc\x02\n" +
+	"\x06groups\x18\x02 \x03(\v2%.kakehashi.navigation.v1.GroupedItemsR\x06groups\"\xc6\x03\n" +
 	"\n" +
 	"ItemConfig\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x1b\n" +
@@ -1195,7 +1671,9 @@ const file_kakehashi_navigation_v1_navigation_proto_rawDesc = "" +
 	"\x05title\x18\x04 \x01(\tR\x05title\x12\x12\n" +
 	"\x04icon\x18\x05 \x01(\tR\x04icon\x12#\n" +
 	"\rdefault_title\x18\x06 \x01(\tR\fdefaultTitle\x12!\n" +
-	"\fdefault_icon\x18\a \x01(\tR\vdefaultIcon\x12\x1d\n" +
+	"\fdefault_icon\x18\a \x01(\tR\vdefaultIcon\x12#\n" +
+	"\rdefault_group\x18\r \x01(\tR\fdefaultGroup\x12#\n" +
+	"\rdefault_order\x18\x0e \x01(\x05R\fdefaultOrder\x12\x1d\n" +
 	"\n" +
 	"sort_order\x18\b \x01(\x05R\tsortOrder\x12\x1d\n" +
 	"\n" +
@@ -1241,9 +1719,39 @@ const file_kakehashi_navigation_v1_navigation_proto_rawDesc = "" +
 	"\n" +
 	"is_visible\x18\x04 \x01(\bR\tisVisible\"M\n" +
 	"\x12UpdateItemResponse\x127\n" +
-	"\x04item\x18\x01 \x01(\v2#.kakehashi.navigation.v1.ItemConfigR\x04item2\x83\x01\n" +
+	"\x04item\x18\x01 \x01(\v2#.kakehashi.navigation.v1.ItemConfigR\x04item\"V\n" +
+	"\x0fLayoutGroupSpec\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
+	"\x05title\x18\x02 \x01(\tR\x05title\x12\x1d\n" +
+	"\n" +
+	"sort_order\x18\x03 \x01(\x05R\tsortOrder\"\xa3\x01\n" +
+	"\x0eLayoutItemSpec\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\x12\x19\n" +
+	"\bgroup_id\x18\x02 \x01(\tR\agroupId\x12\x1d\n" +
+	"\n" +
+	"sort_order\x18\x03 \x01(\x05R\tsortOrder\x12\x14\n" +
+	"\x05title\x18\x04 \x01(\tR\x05title\x12\x12\n" +
+	"\x04icon\x18\x05 \x01(\tR\x04icon\x12\x1d\n" +
+	"\n" +
+	"is_visible\x18\x06 \x01(\bR\tisVisible\"\x95\x01\n" +
+	"\x12ApplyLayoutRequest\x12@\n" +
+	"\x06groups\x18\x01 \x03(\v2(.kakehashi.navigation.v1.LayoutGroupSpecR\x06groups\x12=\n" +
+	"\x05items\x18\x02 \x03(\v2'.kakehashi.navigation.v1.LayoutItemSpecR\x05items\"\xaf\x01\n" +
+	"\x13ApplyLayoutResponse\x12%\n" +
+	"\x0egroups_created\x18\x01 \x01(\x05R\rgroupsCreated\x12%\n" +
+	"\x0egroups_updated\x18\x02 \x01(\x05R\rgroupsUpdated\x12%\n" +
+	"\x0egroups_deleted\x18\x03 \x01(\x05R\rgroupsDeleted\x12#\n" +
+	"\ritems_changed\x18\x04 \x01(\x05R\fitemsChanged\"#\n" +
+	"\x11DeleteItemRequest\x12\x0e\n" +
+	"\x02id\x18\x01 \x01(\tR\x02id\"\x14\n" +
+	"\x12DeleteItemResponse\"/\n" +
+	"\x14PreviewLayoutRequest\x12\x17\n" +
+	"\arole_id\x18\x01 \x01(\tR\x06roleId\"\x93\x01\n" +
+	"\x15PreviewLayoutResponse\x12;\n" +
+	"\tungrouped\x18\x01 \x03(\v2\x1d.kakehashi.navigation.v1.ItemR\tungrouped\x12=\n" +
+	"\x06groups\x18\x02 \x03(\v2%.kakehashi.navigation.v1.GroupedItemsR\x06groups2\x83\x01\n" +
 	"\x11NavigationService\x12n\n" +
-	"\rGetNavigation\x12-.kakehashi.navigation.v1.GetNavigationRequest\x1a..kakehashi.navigation.v1.GetNavigationResponse2\xe9\x05\n" +
+	"\rGetNavigation\x12-.kakehashi.navigation.v1.GetNavigationRequest\x1a..kakehashi.navigation.v1.GetNavigationResponse2\xaa\b\n" +
 	"\x16NavigationAdminService\x12e\n" +
 	"\n" +
 	"ListGroups\x12*.kakehashi.navigation.v1.ListGroupsRequest\x1a+.kakehashi.navigation.v1.ListGroupsResponse\x12h\n" +
@@ -1253,7 +1761,11 @@ const file_kakehashi_navigation_v1_navigation_proto_rawDesc = "" +
 	"\tListItems\x12).kakehashi.navigation.v1.ListItemsRequest\x1a*.kakehashi.navigation.v1.ListItemsResponse\x12_\n" +
 	"\bMoveItem\x12(.kakehashi.navigation.v1.MoveItemRequest\x1a).kakehashi.navigation.v1.MoveItemResponse\x12e\n" +
 	"\n" +
-	"UpdateItem\x12*.kakehashi.navigation.v1.UpdateItemRequest\x1a+.kakehashi.navigation.v1.UpdateItemResponseB\x88\x02\n" +
+	"UpdateItem\x12*.kakehashi.navigation.v1.UpdateItemRequest\x1a+.kakehashi.navigation.v1.UpdateItemResponse\x12h\n" +
+	"\vApplyLayout\x12+.kakehashi.navigation.v1.ApplyLayoutRequest\x1a,.kakehashi.navigation.v1.ApplyLayoutResponse\x12e\n" +
+	"\n" +
+	"DeleteItem\x12*.kakehashi.navigation.v1.DeleteItemRequest\x1a+.kakehashi.navigation.v1.DeleteItemResponse\x12n\n" +
+	"\rPreviewLayout\x12-.kakehashi.navigation.v1.PreviewLayoutRequest\x1a..kakehashi.navigation.v1.PreviewLayoutResponseB\x88\x02\n" +
 	"\x1bcom.kakehashi.navigation.v1B\x0fNavigationProtoP\x01ZZgithub.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/navigation/v1;navigationv1\xa2\x02\x03KNX\xaa\x02\x17Kakehashi.Navigation.V1\xca\x02\x17Kakehashi\\Navigation\\V1\xe2\x02#Kakehashi\\Navigation\\V1\\GPBMetadata\xea\x02\x19Kakehashi::Navigation::V1b\x06proto3"
 
 var (
@@ -1268,7 +1780,7 @@ func file_kakehashi_navigation_v1_navigation_proto_rawDescGZIP() []byte {
 	return file_kakehashi_navigation_v1_navigation_proto_rawDescData
 }
 
-var file_kakehashi_navigation_v1_navigation_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
+var file_kakehashi_navigation_v1_navigation_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_kakehashi_navigation_v1_navigation_proto_goTypes = []any{
 	(*Group)(nil),                 // 0: kakehashi.navigation.v1.Group
 	(*Item)(nil),                  // 1: kakehashi.navigation.v1.Item
@@ -1290,6 +1802,14 @@ var file_kakehashi_navigation_v1_navigation_proto_goTypes = []any{
 	(*MoveItemResponse)(nil),      // 17: kakehashi.navigation.v1.MoveItemResponse
 	(*UpdateItemRequest)(nil),     // 18: kakehashi.navigation.v1.UpdateItemRequest
 	(*UpdateItemResponse)(nil),    // 19: kakehashi.navigation.v1.UpdateItemResponse
+	(*LayoutGroupSpec)(nil),       // 20: kakehashi.navigation.v1.LayoutGroupSpec
+	(*LayoutItemSpec)(nil),        // 21: kakehashi.navigation.v1.LayoutItemSpec
+	(*ApplyLayoutRequest)(nil),    // 22: kakehashi.navigation.v1.ApplyLayoutRequest
+	(*ApplyLayoutResponse)(nil),   // 23: kakehashi.navigation.v1.ApplyLayoutResponse
+	(*DeleteItemRequest)(nil),     // 24: kakehashi.navigation.v1.DeleteItemRequest
+	(*DeleteItemResponse)(nil),    // 25: kakehashi.navigation.v1.DeleteItemResponse
+	(*PreviewLayoutRequest)(nil),  // 26: kakehashi.navigation.v1.PreviewLayoutRequest
+	(*PreviewLayoutResponse)(nil), // 27: kakehashi.navigation.v1.PreviewLayoutResponse
 }
 var file_kakehashi_navigation_v1_navigation_proto_depIdxs = []int32{
 	1,  // 0: kakehashi.navigation.v1.GroupedItems.items:type_name -> kakehashi.navigation.v1.Item
@@ -1301,27 +1821,37 @@ var file_kakehashi_navigation_v1_navigation_proto_depIdxs = []int32{
 	5,  // 6: kakehashi.navigation.v1.ListItemsResponse.items:type_name -> kakehashi.navigation.v1.ItemConfig
 	5,  // 7: kakehashi.navigation.v1.MoveItemResponse.item:type_name -> kakehashi.navigation.v1.ItemConfig
 	5,  // 8: kakehashi.navigation.v1.UpdateItemResponse.item:type_name -> kakehashi.navigation.v1.ItemConfig
-	3,  // 9: kakehashi.navigation.v1.NavigationService.GetNavigation:input_type -> kakehashi.navigation.v1.GetNavigationRequest
-	6,  // 10: kakehashi.navigation.v1.NavigationAdminService.ListGroups:input_type -> kakehashi.navigation.v1.ListGroupsRequest
-	8,  // 11: kakehashi.navigation.v1.NavigationAdminService.CreateGroup:input_type -> kakehashi.navigation.v1.CreateGroupRequest
-	10, // 12: kakehashi.navigation.v1.NavigationAdminService.UpdateGroup:input_type -> kakehashi.navigation.v1.UpdateGroupRequest
-	12, // 13: kakehashi.navigation.v1.NavigationAdminService.DeleteGroup:input_type -> kakehashi.navigation.v1.DeleteGroupRequest
-	14, // 14: kakehashi.navigation.v1.NavigationAdminService.ListItems:input_type -> kakehashi.navigation.v1.ListItemsRequest
-	16, // 15: kakehashi.navigation.v1.NavigationAdminService.MoveItem:input_type -> kakehashi.navigation.v1.MoveItemRequest
-	18, // 16: kakehashi.navigation.v1.NavigationAdminService.UpdateItem:input_type -> kakehashi.navigation.v1.UpdateItemRequest
-	4,  // 17: kakehashi.navigation.v1.NavigationService.GetNavigation:output_type -> kakehashi.navigation.v1.GetNavigationResponse
-	7,  // 18: kakehashi.navigation.v1.NavigationAdminService.ListGroups:output_type -> kakehashi.navigation.v1.ListGroupsResponse
-	9,  // 19: kakehashi.navigation.v1.NavigationAdminService.CreateGroup:output_type -> kakehashi.navigation.v1.CreateGroupResponse
-	11, // 20: kakehashi.navigation.v1.NavigationAdminService.UpdateGroup:output_type -> kakehashi.navigation.v1.UpdateGroupResponse
-	13, // 21: kakehashi.navigation.v1.NavigationAdminService.DeleteGroup:output_type -> kakehashi.navigation.v1.DeleteGroupResponse
-	15, // 22: kakehashi.navigation.v1.NavigationAdminService.ListItems:output_type -> kakehashi.navigation.v1.ListItemsResponse
-	17, // 23: kakehashi.navigation.v1.NavigationAdminService.MoveItem:output_type -> kakehashi.navigation.v1.MoveItemResponse
-	19, // 24: kakehashi.navigation.v1.NavigationAdminService.UpdateItem:output_type -> kakehashi.navigation.v1.UpdateItemResponse
-	17, // [17:25] is the sub-list for method output_type
-	9,  // [9:17] is the sub-list for method input_type
-	9,  // [9:9] is the sub-list for extension type_name
-	9,  // [9:9] is the sub-list for extension extendee
-	0,  // [0:9] is the sub-list for field type_name
+	20, // 9: kakehashi.navigation.v1.ApplyLayoutRequest.groups:type_name -> kakehashi.navigation.v1.LayoutGroupSpec
+	21, // 10: kakehashi.navigation.v1.ApplyLayoutRequest.items:type_name -> kakehashi.navigation.v1.LayoutItemSpec
+	1,  // 11: kakehashi.navigation.v1.PreviewLayoutResponse.ungrouped:type_name -> kakehashi.navigation.v1.Item
+	2,  // 12: kakehashi.navigation.v1.PreviewLayoutResponse.groups:type_name -> kakehashi.navigation.v1.GroupedItems
+	3,  // 13: kakehashi.navigation.v1.NavigationService.GetNavigation:input_type -> kakehashi.navigation.v1.GetNavigationRequest
+	6,  // 14: kakehashi.navigation.v1.NavigationAdminService.ListGroups:input_type -> kakehashi.navigation.v1.ListGroupsRequest
+	8,  // 15: kakehashi.navigation.v1.NavigationAdminService.CreateGroup:input_type -> kakehashi.navigation.v1.CreateGroupRequest
+	10, // 16: kakehashi.navigation.v1.NavigationAdminService.UpdateGroup:input_type -> kakehashi.navigation.v1.UpdateGroupRequest
+	12, // 17: kakehashi.navigation.v1.NavigationAdminService.DeleteGroup:input_type -> kakehashi.navigation.v1.DeleteGroupRequest
+	14, // 18: kakehashi.navigation.v1.NavigationAdminService.ListItems:input_type -> kakehashi.navigation.v1.ListItemsRequest
+	16, // 19: kakehashi.navigation.v1.NavigationAdminService.MoveItem:input_type -> kakehashi.navigation.v1.MoveItemRequest
+	18, // 20: kakehashi.navigation.v1.NavigationAdminService.UpdateItem:input_type -> kakehashi.navigation.v1.UpdateItemRequest
+	22, // 21: kakehashi.navigation.v1.NavigationAdminService.ApplyLayout:input_type -> kakehashi.navigation.v1.ApplyLayoutRequest
+	24, // 22: kakehashi.navigation.v1.NavigationAdminService.DeleteItem:input_type -> kakehashi.navigation.v1.DeleteItemRequest
+	26, // 23: kakehashi.navigation.v1.NavigationAdminService.PreviewLayout:input_type -> kakehashi.navigation.v1.PreviewLayoutRequest
+	4,  // 24: kakehashi.navigation.v1.NavigationService.GetNavigation:output_type -> kakehashi.navigation.v1.GetNavigationResponse
+	7,  // 25: kakehashi.navigation.v1.NavigationAdminService.ListGroups:output_type -> kakehashi.navigation.v1.ListGroupsResponse
+	9,  // 26: kakehashi.navigation.v1.NavigationAdminService.CreateGroup:output_type -> kakehashi.navigation.v1.CreateGroupResponse
+	11, // 27: kakehashi.navigation.v1.NavigationAdminService.UpdateGroup:output_type -> kakehashi.navigation.v1.UpdateGroupResponse
+	13, // 28: kakehashi.navigation.v1.NavigationAdminService.DeleteGroup:output_type -> kakehashi.navigation.v1.DeleteGroupResponse
+	15, // 29: kakehashi.navigation.v1.NavigationAdminService.ListItems:output_type -> kakehashi.navigation.v1.ListItemsResponse
+	17, // 30: kakehashi.navigation.v1.NavigationAdminService.MoveItem:output_type -> kakehashi.navigation.v1.MoveItemResponse
+	19, // 31: kakehashi.navigation.v1.NavigationAdminService.UpdateItem:output_type -> kakehashi.navigation.v1.UpdateItemResponse
+	23, // 32: kakehashi.navigation.v1.NavigationAdminService.ApplyLayout:output_type -> kakehashi.navigation.v1.ApplyLayoutResponse
+	25, // 33: kakehashi.navigation.v1.NavigationAdminService.DeleteItem:output_type -> kakehashi.navigation.v1.DeleteItemResponse
+	27, // 34: kakehashi.navigation.v1.NavigationAdminService.PreviewLayout:output_type -> kakehashi.navigation.v1.PreviewLayoutResponse
+	24, // [24:35] is the sub-list for method output_type
+	13, // [13:24] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_kakehashi_navigation_v1_navigation_proto_init() }
@@ -1335,7 +1865,7 @@ func file_kakehashi_navigation_v1_navigation_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kakehashi_navigation_v1_navigation_proto_rawDesc), len(file_kakehashi_navigation_v1_navigation_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   20,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   2,
 		},

@@ -34,8 +34,8 @@ type Store interface {
 	InsertSession(ctx context.Context, sess domain.UserSession) error
 	SessionCountsByAccount(ctx context.Context) (map[string]int, error)
 	SessionsForUser(ctx context.Context, userID string) ([]domain.UserSession, error)
-	DeleteSession(ctx context.Context, userID, id string) error
-	DeleteSessionsForUser(ctx context.Context, userID string) error
+	DeleteSession(ctx context.Context, userID, id string) (bool, error)
+	DeleteSessionsForUser(ctx context.Context, userID string) (int64, error)
 
 	CompleteAuthRequest(ctx context.Context, id, subject, sessionID string, at time.Time) error
 

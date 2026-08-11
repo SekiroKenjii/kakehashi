@@ -43,6 +43,9 @@ const (
 	// ActivityServiceListActivityProcedure is the fully-qualified name of the ActivityService's
 	// ListActivity RPC.
 	ActivityServiceListActivityProcedure = "/kakehashi.activity.v1.ActivityService/ListActivity"
+	// ActivityServiceRecordClientEventProcedure is the fully-qualified name of the ActivityService's
+	// RecordClientEvent RPC.
+	ActivityServiceRecordClientEventProcedure = "/kakehashi.activity.v1.ActivityService/RecordClientEvent"
 )
 
 // ActivityServiceClient is a client for the kakehashi.activity.v1.ActivityService service.
@@ -53,6 +56,12 @@ type ActivityServiceClient interface {
 	// way to ask for somebody else's. A call with no verified caller is UNAUTHENTICATED rather than
 	// an empty list: those two answers look identical on a screen and mean opposite things.
 	ListActivity(context.Context, *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error)
+	// Report one thing the client knows about itself and the server cannot observe.
+	//
+	// Narrow on purpose: nothing here can see which build somebody is running or what theme they set,
+	// so those two facts arrive from outside or they do not arrive at all. Any kind outside the
+	// allowed set is INVALID_ARGUMENT.
+	RecordClientEvent(context.Context, *connect.Request[v1.RecordClientEventRequest]) (*connect.Response[v1.RecordClientEventResponse], error)
 }
 
 // NewActivityServiceClient constructs a client for the kakehashi.activity.v1.ActivityService
@@ -72,17 +81,29 @@ func NewActivityServiceClient(httpClient connect.HTTPClient, baseURL string, opt
 			connect.WithSchema(activityServiceMethods.ByName("ListActivity")),
 			connect.WithClientOptions(opts...),
 		),
+		recordClientEvent: connect.NewClient[v1.RecordClientEventRequest, v1.RecordClientEventResponse](
+			httpClient,
+			baseURL+ActivityServiceRecordClientEventProcedure,
+			connect.WithSchema(activityServiceMethods.ByName("RecordClientEvent")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // activityServiceClient implements ActivityServiceClient.
 type activityServiceClient struct {
-	listActivity *connect.Client[v1.ListActivityRequest, v1.ListActivityResponse]
+	listActivity      *connect.Client[v1.ListActivityRequest, v1.ListActivityResponse]
+	recordClientEvent *connect.Client[v1.RecordClientEventRequest, v1.RecordClientEventResponse]
 }
 
 // ListActivity calls kakehashi.activity.v1.ActivityService.ListActivity.
 func (c *activityServiceClient) ListActivity(ctx context.Context, req *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error) {
 	return c.listActivity.CallUnary(ctx, req)
+}
+
+// RecordClientEvent calls kakehashi.activity.v1.ActivityService.RecordClientEvent.
+func (c *activityServiceClient) RecordClientEvent(ctx context.Context, req *connect.Request[v1.RecordClientEventRequest]) (*connect.Response[v1.RecordClientEventResponse], error) {
+	return c.recordClientEvent.CallUnary(ctx, req)
 }
 
 // ActivityServiceHandler is an implementation of the kakehashi.activity.v1.ActivityService service.
@@ -93,6 +114,12 @@ type ActivityServiceHandler interface {
 	// way to ask for somebody else's. A call with no verified caller is UNAUTHENTICATED rather than
 	// an empty list: those two answers look identical on a screen and mean opposite things.
 	ListActivity(context.Context, *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error)
+	// Report one thing the client knows about itself and the server cannot observe.
+	//
+	// Narrow on purpose: nothing here can see which build somebody is running or what theme they set,
+	// so those two facts arrive from outside or they do not arrive at all. Any kind outside the
+	// allowed set is INVALID_ARGUMENT.
+	RecordClientEvent(context.Context, *connect.Request[v1.RecordClientEventRequest]) (*connect.Response[v1.RecordClientEventResponse], error)
 }
 
 // NewActivityServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -108,10 +135,18 @@ func NewActivityServiceHandler(svc ActivityServiceHandler, opts ...connect.Handl
 		connect.WithSchema(activityServiceMethods.ByName("ListActivity")),
 		connect.WithHandlerOptions(opts...),
 	)
+	activityServiceRecordClientEventHandler := connect.NewUnaryHandler(
+		ActivityServiceRecordClientEventProcedure,
+		svc.RecordClientEvent,
+		connect.WithSchema(activityServiceMethods.ByName("RecordClientEvent")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/kakehashi.activity.v1.ActivityService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case ActivityServiceListActivityProcedure:
 			activityServiceListActivityHandler.ServeHTTP(w, r)
+		case ActivityServiceRecordClientEventProcedure:
+			activityServiceRecordClientEventHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -123,4 +158,8 @@ type UnimplementedActivityServiceHandler struct{}
 
 func (UnimplementedActivityServiceHandler) ListActivity(context.Context, *connect.Request[v1.ListActivityRequest]) (*connect.Response[v1.ListActivityResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kakehashi.activity.v1.ActivityService.ListActivity is not implemented"))
+}
+
+func (UnimplementedActivityServiceHandler) RecordClientEvent(context.Context, *connect.Request[v1.RecordClientEventRequest]) (*connect.Response[v1.RecordClientEventResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kakehashi.activity.v1.ActivityService.RecordClientEvent is not implemented"))
 }

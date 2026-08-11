@@ -78,10 +78,11 @@ func (m *Module) Indexes() []app.Index {
 			keys = append(keys, app.IndexKey{Field: k.Field, Descending: k.Descending})
 		}
 		out = append(out, app.Index{
-			Collection: ix.Collection,
-			Name:       ix.Name,
-			Unique:     ix.Unique,
-			Keys:       keys,
+			Collection:  ix.Collection,
+			Name:        ix.Name,
+			Unique:      ix.Unique,
+			Keys:        keys,
+			ExpireAfter: ix.ExpireAfter,
 		})
 	}
 	return out

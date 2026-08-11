@@ -3,7 +3,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:behaviors="using:Kakehashi.UI.Common.Behaviors"
-    xmlns:controls="using:Kakehashi.UI.Common.Controls"
+    xmlns:common="using:Kakehashi.UI.Common.Controls"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:local="using:Kakehashi.App.UI"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
@@ -23,20 +23,73 @@
             <Setter Property="CharacterSpacing" Value="40" />
             <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
         </Style>
+        <Style x:Key="MonoTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Mono,Consolas" />
+        </Style>
+        <Style x:Key="PillStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="9" />
+            <Setter Property="Padding" Value="7,1" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="RowIconButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="Padding" Value="6" />
+            <Setter Property="MinWidth" Value="0" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+        </Style>
+        <Style x:Key="FieldLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="FontWeight" Value="SemiBold" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorSecondaryBrush}" />
+        </Style>
+        <Style x:Key="FieldSectionStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource LayerFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="6" />
+            <Setter Property="Padding" Value="14" />
+        </Style>
+        <Style x:Key="HintTextStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+            <Setter Property="TextWrapping" Value="Wrap" />
+        </Style>
     </Page.Resources>
 
     <Grid Padding="24,12,24,20" RowSpacing="12">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
             <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <controls:PageHeader
-            Title="Navigation"
+        <common:PageHeader
             Grid.Row="0"
-            Section="Administration">
-            <StackPanel Orientation="Horizontal" Spacing="2">
+            Root="Kakehashi"
+            Section="Administration"
+            Title="Navigation">
+            <StackPanel
+                VerticalAlignment="Center"
+                Orientation="Horizontal"
+                Spacing="2">
+                <TextBlock
+                    Margin="8,0,4,0"
+                    VerticalAlignment="Center"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="Preview as:" />
+                <ComboBox
+                    MinWidth="180"
+                    AutomationProperties.Name="Preview the pane as"
+                    ItemsSource="{x:Bind ViewModel.PreviewRoles}"
+                    PlaceholderText="Yourself"
+                    SelectedItem="{x:Bind ViewModel.PreviewRole, Mode=TwoWay}" />
+                <Border Style="{StaticResource CommandBarDividerStyle}" />
                 <Button
                     AutomationProperties.Name="New heading"
                     Command="{x:Bind ViewModel.NewHeadingCommand}"
@@ -52,7 +105,6 @@
                         <TextBlock VerticalAlignment="Center" Text="New heading" />
                     </StackPanel>
                 </Button>
-                <Border Style="{StaticResource CommandBarDividerStyle}" />
                 <Button
                     AutomationProperties.Name="Refresh"
                     Command="{x:Bind ViewModel.LoadCommand}"
@@ -61,293 +113,635 @@
                     <FontIcon FontSize="14" Glyph="&#xE72C;" />
                 </Button>
             </StackPanel>
-        </controls:PageHeader>
+        </common:PageHeader>
+
+        <!--  What is staged. Nothing has reached the server while this is showing.  -->
+        <Border
+            Grid.Row="1"
+            Padding="14,10"
+            Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
+            BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
+            BorderThickness="1"
+            CornerRadius="6"
+            Visibility="{x:Bind ViewModel.HasChanges, Mode=OneWay}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel
+                    Grid.Column="0"
+                    VerticalAlignment="Center"
+                    Orientation="Horizontal"
+                    Spacing="10">
+                    <FontIcon
+                        VerticalAlignment="Center"
+                        FontSize="15"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        Glyph="&#xE7BA;" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                        Text="{x:Bind ViewModel.ChangeCountText, Mode=OneWay}" />
+                    <TextBlock
+                        VerticalAlignment="Center"
+                        FontSize="12.5"
+                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                        Text="{x:Bind ViewModel.ChangeSummary, Mode=OneWay}"
+                        TextTrimming="CharacterEllipsis" />
+                </StackPanel>
+
+                <StackPanel
+                    Grid.Column="1"
+                    Orientation="Horizontal"
+                    Spacing="6">
+                    <Button Click="OnViewDiffClicked" Content="View diff" />
+                    <Button Command="{x:Bind ViewModel.DiscardCommand}" Content="Discard" />
+                    <Button
+                        Command="{x:Bind ViewModel.ApplyCommand}"
+                        Content="Apply changes"
+                        Style="{StaticResource AccentButtonStyle}" />
+                </StackPanel>
+            </Grid>
+        </Border>
 
         <!--
-            The one thing this screen cannot do, said before somebody looks for the control. A screen
-            full of editable fields invites the assumption that everything on it is editable, and the
-            permission column would otherwise read as something a person forgot to make work.
+            The question this screen invites, answered before anybody has to ask it. Dismissible per
+            visit rather than remembered: it is worth answering again next time.
         -->
         <InfoBar
-            Grid.Row="1"
-            IsClosable="False"
-            IsOpen="True"
+            Grid.Row="2"
+            IsOpen="{x:Bind ViewModel.IsNoteOpen, Mode=TwoWay}"
             Message="Arranging the pane never changes who may open a screen. Each screen's permission is declared beside its code and enforced on every request, so the worst a change here can do is hide something."
             Severity="Informational" />
 
-        <Grid Grid.Row="2" ColumnSpacing="12">
+        <!--
+            The diff. A child of the page rather than a resource, because a ContentDialog in a resource
+            dictionary is not reachable by name and x:Bind cannot see into one. It draws nothing until
+            it is shown.
+        -->
+        <ContentDialog
+            x:Name="DiffDialog"
+            CloseButtonText="Close"
+            DefaultButton="Close"
+            Title="What would be applied">
+            <ScrollViewer MaxHeight="420">
+                <ItemsControl ItemsSource="{x:Bind ViewModel.Diff}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate x:DataType="local:NavChange">
+                            <Grid Padding="0,5" ColumnSpacing="12">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="180" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock
+                                    Grid.Column="0"
+                                    FontWeight="SemiBold"
+                                    Text="{x:Bind Subject}"
+                                    TextTrimming="CharacterEllipsis" />
+                                <TextBlock
+                                    Grid.Column="1"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="{x:Bind What}"
+                                    TextWrapping="Wrap" />
+                            </Grid>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+        </ContentDialog>
+
+        <Grid Grid.Row="3" ColumnSpacing="12">
             <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="300" />
+                <ColumnDefinition Width="400" />
                 <ColumnDefinition Width="*" />
             </Grid.ColumnDefinitions>
 
-            <!--  LEFT: the headings.  -->
+            <!--  LEFT: the structure. Headings, and the screens under each.  -->
             <Border Grid.Column="0" Style="{StaticResource CardStyle}">
-                <Grid RowSpacing="8">
+                <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto" />
                         <RowDefinition Height="*" />
-                        <RowDefinition Height="Auto" />
                     </Grid.RowDefinitions>
 
-                    <TextBlock
+                    <Grid
                         Grid.Row="0"
-                        Margin="16,14,16,0"
-                        Style="{StaticResource SectionLabelStyle}"
-                        Text="HEADINGS" />
-
-                    <ListView
-                        x:Name="HeadingList"
-                        Grid.Row="1"
-                        Padding="8,0,8,0"
-                        ItemsSource="{x:Bind ViewModel.Headings}"
-                        SelectedItem="{x:Bind ViewModel.SelectedHeading, Mode=TwoWay}"
-                        SelectionMode="Single">
-                        <ListView.ItemTemplate>
-                            <DataTemplate x:DataType="local:NavHeadingViewModel">
-                                <Grid
-                                    Padding="4,8"
-                                    AutomationProperties.Name="{x:Bind Title, Mode=OneWay}"
-                                    ColumnSpacing="8">
-                                    <Grid.ColumnDefinitions>
-                                        <ColumnDefinition Width="*" />
-                                        <ColumnDefinition Width="Auto" />
-                                    </Grid.ColumnDefinitions>
-                                    <StackPanel Grid.Column="0">
-                                        <TextBlock
-                                            Text="{x:Bind Title, Mode=OneWay}"
-                                            TextTrimming="CharacterEllipsis" />
-                                        <TextBlock
-                                            FontSize="12"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind Id}" />
-                                    </StackPanel>
-                                    <!--  The product's own headings, marked so the missing delete button reads as deliberate.  -->
-                                    <Border
-                                        Grid.Column="1"
-                                        Padding="6,2"
-                                        VerticalAlignment="Center"
-                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
-                                        CornerRadius="4"
-                                        Visibility="{x:Bind IsSystem}">
-                                        <TextBlock
-                                            FontSize="10"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="BUILT IN" />
-                                    </Border>
-                                </Grid>
-                            </DataTemplate>
-                        </ListView.ItemTemplate>
-                    </ListView>
-
-                    <!--  The editor for whichever heading is selected.  -->
-                    <StackPanel
-                        Grid.Row="2"
-                        Margin="16,0,16,14"
-                        Spacing="8"
-                        Visibility="{x:Bind local:NavigationLayoutPage.WhenPresent(ViewModel.SelectedHeading), Mode=OneWay}">
-                        <Border
-                            Height="1"
-                            Background="{ThemeResource CardStrokeColorDefaultBrush}" />
-                        <TextBox
-                            Header="Name"
-                            Text="{x:Bind ViewModel.SelectedHeading.Title, Mode=TwoWay}" />
-                        <NumberBox
-                            Header="Position"
-                            SpinButtonPlacementMode="Compact"
-                            Value="{x:Bind ViewModel.SelectedHeading.Position, Mode=TwoWay}" />
-                        <StackPanel Orientation="Horizontal" Spacing="8">
-                            <Button
-                                Command="{x:Bind ViewModel.SaveHeadingCommand}"
-                                Content="Save"
-                                Style="{StaticResource AccentButtonStyle}" />
-                            <Button
-                                AutomationProperties.Name="Delete heading"
-                                Command="{x:Bind ViewModel.DeleteHeadingCommand}"
-                                Content="Delete"
-                                IsEnabled="{x:Bind ViewModel.SelectedHeading.CanDelete, Mode=OneWay}" />
-                        </StackPanel>
-                    </StackPanel>
-                </Grid>
-            </Border>
-
-            <!--  RIGHT: every destination this build has, and where it sits.  -->
-            <Border Grid.Column="1" Style="{StaticResource CardStyle}">
-                <Grid RowSpacing="8">
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto" />
-                        <RowDefinition Height="*" />
-                    </Grid.RowDefinitions>
-
-                    <Grid Margin="16,14,16,0" ColumnSpacing="8">
+                        Padding="16,14,16,8"
+                        ColumnSpacing="8">
                         <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="Auto" />
                             <ColumnDefinition Width="*" />
                             <ColumnDefinition Width="Auto" />
                         </Grid.ColumnDefinitions>
                         <TextBlock
                             Grid.Column="0"
                             Style="{StaticResource SectionLabelStyle}"
-                            Text="SCREENS" />
-                        <ProgressRing
+                            Text="PANE STRUCTURE" />
+                        <TextBlock
                             Grid.Column="1"
+                            Style="{StaticResource HintTextStyle}"
+                            Text="Drag a screen onto a heading, or onto a row to sit above it" />
+                        <ProgressRing
+                            Grid.Column="2"
                             Width="16"
                             Height="16"
                             IsActive="{x:Bind ViewModel.IsLoading, Mode=OneWay}" />
                     </Grid>
 
-                    <ScrollViewer
-                        Grid.Row="1"
-                        Padding="16,0,16,14"
-                        HorizontalScrollBarVisibility="Disabled"
-                        HorizontalScrollMode="Disabled">
-                        <ItemsRepeater ItemsSource="{x:Bind ViewModel.Destinations}">
-                            <ItemsRepeater.Layout>
-                                <StackLayout Spacing="8" />
-                            </ItemsRepeater.Layout>
-                            <ItemsRepeater.ItemTemplate>
-                                <DataTemplate x:DataType="local:NavDestinationViewModel">
-                                    <Border
-                                        Padding="12"
-                                        Background="{ThemeResource SubtleFillColorTransparentBrush}"
-                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
-                                        BorderThickness="1"
-                                        CornerRadius="6">
-                                        <Grid ColumnSpacing="12" RowSpacing="8">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                                <ColumnDefinition Width="Auto" />
-                                            </Grid.ColumnDefinitions>
-                                            <Grid.RowDefinitions>
-                                                <RowDefinition Height="Auto" />
-                                                <RowDefinition Height="Auto" />
-                                            </Grid.RowDefinitions>
+                    <ScrollViewer Grid.Row="1" Padding="10,0,10,14">
+                        <ItemsControl ItemsSource="{x:Bind ViewModel.Headings}">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate x:DataType="local:NavHeadingNode">
+                                    <StackPanel Margin="0,0,0,8">
+                                        <!--  The heading row. Also a drop target: dropping here files at the end.  -->
+                                        <Border
+                                            AllowDrop="True"
+                                            Background="{ThemeResource LayerFillColorDefaultBrush}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            DragOver="OnRowDragOver"
+                                            Drop="OnHeadingDrop"
+                                            Padding="8"
+                                            Tag="{x:Bind}">
+                                            <Grid ColumnSpacing="8">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
 
-                                            <StackPanel
-                                                Grid.Row="0"
-                                                Grid.Column="0"
-                                                VerticalAlignment="Center">
-                                                <TextBlock
-                                                    FontWeight="SemiBold"
-                                                    Text="{x:Bind DisplayTitle, Mode=OneWay}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                                <TextBlock
-                                                    FontFamily="Consolas"
+                                                <FontIcon
+                                                    Grid.Column="0"
+                                                    VerticalAlignment="Center"
                                                     FontSize="12"
-                                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                    Text="{x:Bind Subtitle}"
-                                                    TextTrimming="CharacterEllipsis" />
-                                            </StackPanel>
+                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                    Glyph="&#xE700;" />
 
-                                            <!--
-                                                Which heading it sits under. Two things here are
-                                                deliberate and were both learned the hard way.
-                                                Each row binds its OWN snapshot of the choices:
-                                                clearing a collection a picker is bound to blanks
-                                                its selection, and the first version of this screen
-                                                read that as somebody moving every row it drew.
-                                                And the selection binds to a property on the row
-                                                rather than to a handler that reads the row back out
-                                                of Tag: the repeater recycles these controls, and
-                                                the value binding lands before the Tag binding does,
-                                                so the handler saw the new heading with the previous
-                                                row still attached. A property setter cannot be
-                                                wrong about which row it is on.
-                                            -->
-                                            <ComboBox
-                                                Grid.Row="0"
-                                                Grid.Column="1"
-                                                Width="170"
-                                                VerticalAlignment="Center"
-                                                AutomationProperties.Name="Heading"
-                                                IsEnabled="{x:Bind local:NavigationLayoutPage.Not(IsOrphan)}"
-                                                ItemsSource="{x:Bind Headings}"
-                                                SelectedItem="{x:Bind Heading, Mode=TwoWay}">
-                                                <ComboBox.ItemTemplate>
-                                                    <DataTemplate x:DataType="local:NavHeadingChoice">
-                                                        <TextBlock Text="{x:Bind Title}" />
-                                                    </DataTemplate>
-                                                </ComboBox.ItemTemplate>
-                                            </ComboBox>
+                                                <TextBox
+                                                    Grid.Column="1"
+                                                    AutomationProperties.Name="Heading name"
+                                                    BorderThickness="0"
+                                                    Background="Transparent"
+                                                    FontSize="12"
+                                                    FontWeight="SemiBold"
+                                                    IsEnabled="{x:Bind CanRename}"
+                                                    Text="{x:Bind Title, Mode=TwoWay}" />
 
-                                            <StackPanel
-                                                Grid.Row="0"
-                                                Grid.Column="2"
-                                                VerticalAlignment="Center"
-                                                Orientation="Horizontal"
-                                                Spacing="2">
-                                                <!--
-                                                    Disabled for a row this build no longer has a
-                                                    screen for: it sits in no heading, so there is
-                                                    nothing to reorder it among.
-                                                -->
+                                                <Border
+                                                    Grid.Column="2"
+                                                    Style="{StaticResource PillStyle}"
+                                                    Visibility="{x:Bind IsBuiltIn}">
+                                                    <TextBlock
+                                                        FontSize="9"
+                                                        FontWeight="SemiBold"
+                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                        Text="BUILT IN" />
+                                                </Border>
+
+                                                <Border Grid.Column="3" Style="{StaticResource PillStyle}">
+                                                    <TextBlock
+                                                        FontSize="10.5"
+                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                        Text="{x:Bind CountText, Mode=OneWay}" />
+                                                </Border>
+
                                                 <Button
-                                                    Width="32"
-                                                    AutomationProperties.Name="Move up"
-                                                    Command="{x:Bind MoveUpCommand}"
-                                                    IsEnabled="{x:Bind local:NavigationLayoutPage.Not(IsOrphan)}"
-                                                    ToolTipService.ToolTip="Move up">
+                                                    Grid.Column="4"
+                                                    AutomationProperties.Name="Move heading up"
+                                                    Click="OnHeadingUpClicked"
+                                                    Style="{StaticResource RowIconButtonStyle}"
+                                                    Tag="{x:Bind}"
+                                                    ToolTipService.ToolTip="Move up"
+                                                    Visibility="{x:Bind CanRename}">
                                                     <FontIcon FontSize="12" Glyph="&#xE70E;" />
                                                 </Button>
+
                                                 <Button
-                                                    Width="32"
-                                                    AutomationProperties.Name="Move down"
-                                                    Command="{x:Bind MoveDownCommand}"
-                                                    IsEnabled="{x:Bind local:NavigationLayoutPage.Not(IsOrphan)}"
-                                                    ToolTipService.ToolTip="Move down">
-                                                    <FontIcon FontSize="12" Glyph="&#xE70D;" />
+                                                    Grid.Column="5"
+                                                    AutomationProperties.Name="Delete heading"
+                                                    Click="OnDeleteHeadingClicked"
+                                                    Style="{StaticResource RowIconButtonStyle}"
+                                                    Tag="{x:Bind}"
+                                                    ToolTipService.ToolTip="Delete heading"
+                                                    Visibility="{x:Bind CanDelete}">
+                                                    <FontIcon FontSize="12" Glyph="&#xE74D;" />
                                                 </Button>
-                                            </StackPanel>
+                                            </Grid>
+                                        </Border>
 
-                                            <!--
-                                                Offered or not. Hiding a screen is not a permission:
-                                                it takes the row out of everybody's pane, and the
-                                                endpoints behind it stay exactly as protected as
-                                                they were.
-                                            -->
-                                            <ToggleSwitch
-                                                Grid.Row="0"
-                                                Grid.Column="3"
-                                                MinWidth="0"
-                                                VerticalAlignment="Center"
-                                                AutomationProperties.Name="Show in the pane"
-                                                IsOn="{x:Bind IsVisible, Mode=TwoWay}"
-                                                OffContent=""
-                                                OnContent=""
-                                                Tag="{x:Bind}"
-                                                Toggled="OnVisibilityToggled" />
+                                        <!--  The screens under it.  -->
+                                        <ItemsControl
+                                            Margin="18,4,0,0"
+                                            ItemsSource="{x:Bind Screens}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="local:NavScreenNode">
+                                                    <Border
+                                                        AllowDrop="True"
+                                                        Background="Transparent"
+                                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                                        BorderThickness="1"
+                                                        CanDrag="True"
+                                                        CornerRadius="4"
+                                                        DragOver="OnRowDragOver"
+                                                        DragStarting="OnScreenDragStarting"
+                                                        Drop="OnScreenDrop"
+                                                        Margin="0,0,0,2"
+                                                        Opacity="{x:Bind local:NavigationLayoutPage.RowOpacity(IsVisible), Mode=OneWay}"
+                                                        Padding="8"
+                                                        PointerPressed="OnScreenPressed"
+                                                        Tag="{x:Bind}">
+                                                        <Grid ColumnSpacing="9">
+                                                            <Grid.ColumnDefinitions>
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="*" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                                <ColumnDefinition Width="Auto" />
+                                                            </Grid.ColumnDefinitions>
 
-                                            <StackPanel
-                                                Grid.Row="1"
-                                                Grid.Column="0"
-                                                Grid.ColumnSpan="4"
-                                                Orientation="Horizontal"
-                                                Spacing="8">
-                                                <TextBox
-                                                    Width="220"
-                                                    AutomationProperties.Name="Label override"
-                                                    PlaceholderText="{x:Bind DefaultTitle}"
-                                                    Text="{x:Bind Title, Mode=TwoWay}" />
-                                                <TextBox
-                                                    Width="130"
-                                                    AutomationProperties.Name="Icon name override"
-                                                    PlaceholderText="{x:Bind local:NavigationLayoutPage.IconHint(DefaultIcon)}"
-                                                    Text="{x:Bind Icon, Mode=TwoWay}" />
-                                                <Button
-                                                    AutomationProperties.Name="Apply label"
-                                                    Command="{x:Bind ApplyCommand}"
-                                                    Content="Apply" />
-                                                <Button
-                                                    AutomationProperties.Name="Use the default label"
-                                                    Command="{x:Bind ResetCommand}"
-                                                    Content="Default" />
-                                            </StackPanel>
-                                        </Grid>
-                                    </Border>
+                                                            <FontIcon
+                                                                Grid.Column="0"
+                                                                VerticalAlignment="Center"
+                                                                FontSize="12"
+                                                                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                Glyph="&#xE700;" />
+
+                                                            <Border
+                                                                Grid.Column="1"
+                                                                Width="28"
+                                                                Height="28"
+                                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                                CornerRadius="7">
+                                                                <FontIcon FontSize="14" Glyph="{x:Bind Glyph, Mode=OneWay}" />
+                                                            </Border>
+
+                                                            <StackPanel
+                                                                Grid.Column="2"
+                                                                VerticalAlignment="Center"
+                                                                Orientation="Horizontal"
+                                                                Spacing="6">
+                                                                <TextBlock
+                                                                    VerticalAlignment="Center"
+                                                                    FontSize="13"
+                                                                    FontWeight="SemiBold"
+                                                                    Text="{x:Bind DisplayTitle, Mode=OneWay}"
+                                                                    TextTrimming="CharacterEllipsis" />
+                                                                <Ellipse
+                                                                    Width="6"
+                                                                    Height="6"
+                                                                    VerticalAlignment="Center"
+                                                                    Fill="{ThemeResource SystemFillColorCautionBrush}"
+                                                                    Visibility="{x:Bind IsModified, Mode=OneWay}" />
+                                                            </StackPanel>
+
+                                                            <Border
+                                                                Grid.Column="3"
+                                                                Style="{StaticResource PillStyle}"
+                                                                Visibility="{x:Bind local:NavigationLayoutPage.WhenSet(RequiredPermission)}">
+                                                                <TextBlock
+                                                                    FontSize="10"
+                                                                    Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                                    Style="{StaticResource MonoTextStyle}"
+                                                                    Text="{x:Bind RequiredPermission}" />
+                                                            </Border>
+
+                                                            <Button
+                                                                Grid.Column="4"
+                                                                AutomationProperties.Name="Show in the pane"
+                                                                Click="OnVisibilityClicked"
+                                                                IsEnabled="{x:Bind CanHide}"
+                                                                Style="{StaticResource RowIconButtonStyle}"
+                                                                Tag="{x:Bind}"
+                                                                ToolTipService.ToolTip="{x:Bind local:NavigationLayoutPage.VisibilityTip(IsVisible, CanHide), Mode=OneWay}">
+                                                                <FontIcon
+                                                                    FontSize="13"
+                                                                    Glyph="{x:Bind local:NavigationLayoutPage.EyeGlyph(IsVisible), Mode=OneWay}" />
+                                                            </Button>
+                                                        </Grid>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <!--  Nothing under it. Also the drop target that says so.  -->
+                                        <Border
+                                            Margin="18,4,0,0"
+                                            Padding="12"
+                                            AllowDrop="True"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                            BorderThickness="1"
+                                            CornerRadius="4"
+                                            DragOver="OnRowDragOver"
+                                            Drop="OnHeadingDrop"
+                                            Tag="{x:Bind}"
+                                            Visibility="{x:Bind IsEmpty, Mode=OneWay}">
+                                            <TextBlock
+                                                HorizontalAlignment="Center"
+                                                Style="{StaticResource HintTextStyle}"
+                                                Text="No screens yet. Drag one here — an empty heading is not drawn in the pane."
+                                                TextAlignment="Center" />
+                                        </Border>
+                                    </StackPanel>
                                 </DataTemplate>
-                            </ItemsRepeater.ItemTemplate>
-                        </ItemsRepeater>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!--  RIGHT: the selected screen.  -->
+            <Border Grid.Column="1" Style="{StaticResource CardStyle}">
+                <Grid>
+                    <TextBlock
+                        Margin="24"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center"
+                        Style="{StaticResource HintTextStyle}"
+                        Text="Pick a screen on the left to edit how it appears."
+                        Visibility="{x:Bind local:NavigationLayoutPage.WhenAbsent(ViewModel.SelectedScreen), Mode=OneWay}" />
+
+                    <ScrollViewer Visibility="{x:Bind ViewModel.HasSelection, Mode=OneWay}">
+                        <StackPanel Padding="20" Spacing="16">
+                            <Grid ColumnSpacing="14">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+
+                                <Border
+                                    Grid.Column="0"
+                                    Width="52"
+                                    Height="52"
+                                    Background="{ThemeResource AccentFillColorDefaultBrush}"
+                                    CornerRadius="12">
+                                    <FontIcon
+                                        FontSize="24"
+                                        Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                        Glyph="{x:Bind ViewModel.SelectedScreen.Glyph, Mode=OneWay}" />
+                                </Border>
+
+                                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                                    <TextBlock
+                                        FontSize="18"
+                                        FontWeight="SemiBold"
+                                        Text="{x:Bind ViewModel.SelectedScreen.DisplayTitle, Mode=OneWay}" />
+                                    <TextBlock
+                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                        Style="{StaticResource MonoTextStyle}"
+                                        Text="{x:Bind ViewModel.SelectedScreen.Subtitle, Mode=OneWay}" />
+                                </StackPanel>
+
+                                <Button
+                                    Grid.Column="2"
+                                    VerticalAlignment="Center"
+                                    Command="{x:Bind ViewModel.ResetScreenCommand}"
+                                    Content="Reset to what the code says" />
+                            </Grid>
+
+                            <!--  Display  -->
+                            <Border Style="{StaticResource FieldSectionStyle}">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Style="{StaticResource SectionLabelStyle}" Text="DISPLAY" />
+
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Name in the pane" />
+                                        <TextBox
+                                            PlaceholderText="{x:Bind ViewModel.SelectedScreen.DefaultTitle, Mode=OneWay}"
+                                            Text="{x:Bind ViewModel.SelectedScreen.Title, Mode=TwoWay}" />
+                                        <TextBlock
+                                            Style="{StaticResource HintTextStyle}"
+                                            Text="{x:Bind ViewModel.SelectedScreen.TitleHint, Mode=OneWay}" />
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Icon" />
+                                        <Grid ColumnSpacing="8">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto" />
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <Border
+                                                Grid.Column="0"
+                                                Width="30"
+                                                Height="30"
+                                                Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                CornerRadius="6">
+                                                <FontIcon FontSize="14" Glyph="{x:Bind ViewModel.SelectedScreen.Glyph, Mode=OneWay}" />
+                                            </Border>
+                                            <TextBox
+                                                Grid.Column="1"
+                                                FontFamily="Cascadia Mono,Consolas"
+                                                PlaceholderText="{x:Bind ViewModel.SelectedScreen.DefaultIcon, Mode=OneWay}"
+                                                Text="{x:Bind ViewModel.SelectedScreen.Icon, Mode=TwoWay}" />
+                                            <FontIcon
+                                                Grid.Column="2"
+                                                FontSize="14"
+                                                Foreground="{ThemeResource SystemFillColorSuccessBrush}"
+                                                Glyph="&#xE73E;"
+                                                Visibility="{x:Bind ViewModel.SelectedScreen.IsIconKnown, Mode=OneWay}" />
+                                            <FontIcon
+                                                Grid.Column="2"
+                                                FontSize="14"
+                                                Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                                Glyph="&#xE7BA;"
+                                                Visibility="{x:Bind ViewModel.SelectedScreen.IsIconUnknown, Mode=OneWay}" />
+                                        </Grid>
+
+                                        <ItemsControl ItemsSource="{x:Bind ViewModel.IconChoices}">
+                                            <ItemsControl.ItemsPanel>
+                                                <ItemsPanelTemplate>
+                                                    <common:WrapPanel HorizontalSpacing="5" VerticalSpacing="5" />
+                                                </ItemsPanelTemplate>
+                                            </ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="local:NavIconChoice">
+                                                    <Button
+                                                        Width="32"
+                                                        Height="32"
+                                                        Padding="0"
+                                                        AutomationProperties.Name="{x:Bind Name}"
+                                                        Click="OnIconClicked"
+                                                        Tag="{x:Bind}"
+                                                        ToolTipService.ToolTip="{x:Bind Name}">
+                                                        <FontIcon FontSize="14" Glyph="{x:Bind Glyph}" />
+                                                    </Button>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+
+                                        <TextBlock
+                                            Style="{StaticResource HintTextStyle}"
+                                            Text="A name this build does not know falls back to the page's own icon, and is marked above." />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Placement  -->
+                            <Border Style="{StaticResource FieldSectionStyle}">
+                                <StackPanel Spacing="12">
+                                    <TextBlock Style="{StaticResource SectionLabelStyle}" Text="PLACEMENT" />
+
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Heading" />
+                                        <ComboBox
+                                            HorizontalAlignment="Stretch"
+                                            AutomationProperties.Name="Heading"
+                                            DisplayMemberPath="Title"
+                                            ItemsSource="{x:Bind ViewModel.HeadingChoices}"
+                                            SelectionChanged="OnHeadingChosen"
+                                            x:Name="HeadingPicker" />
+                                    </StackPanel>
+
+                                    <StackPanel Spacing="5">
+                                        <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Position under it" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button
+                                                AutomationProperties.Name="Move up"
+                                                Click="OnMoveUpClicked"
+                                                ToolTipService.ToolTip="Move up">
+                                                <FontIcon FontSize="12" Glyph="&#xE70E;" />
+                                            </Button>
+                                            <Button
+                                                AutomationProperties.Name="Move down"
+                                                Click="OnMoveDownClicked"
+                                                ToolTipService.ToolTip="Move down">
+                                                <FontIcon FontSize="12" Glyph="&#xE70D;" />
+                                            </Button>
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontSize="12.5"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{x:Bind ViewModel.SelectedScreen.PositionText, Mode=OneWay}" />
+                                        </StackPanel>
+                                        <TextBlock
+                                            Style="{StaticResource HintTextStyle}"
+                                            Text="Or drag the row in the structure list." />
+                                    </StackPanel>
+
+                                    <Grid ColumnSpacing="12">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <StackPanel Grid.Column="0">
+                                            <TextBlock FontSize="13" FontWeight="SemiBold" Text="Offered in the pane" />
+                                            <TextBlock
+                                                Style="{StaticResource HintTextStyle}"
+                                                Text="Hiding it removes the entry from the pane only. Who may open it is governed by its permission, and the screen stays reachable in the app." />
+                                        </StackPanel>
+                                        <ToggleSwitch
+                                            Grid.Column="1"
+                                            MinWidth="0"
+                                            AutomationProperties.Name="Offered in the pane"
+                                            IsEnabled="{x:Bind ViewModel.SelectedScreen.CanHide, Mode=OneWay}"
+                                            IsOn="{x:Bind ViewModel.SelectedScreen.IsVisible, Mode=TwoWay}"
+                                            OffContent=""
+                                            OnContent="" />
+                                    </Grid>
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Owned by code  -->
+                            <Border Style="{StaticResource FieldSectionStyle}">
+                                <StackPanel Spacing="10">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon
+                                            VerticalAlignment="Center"
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Glyph="&#xE72E;" />
+                                        <TextBlock
+                                            Style="{StaticResource SectionLabelStyle}"
+                                            Text="OWNED BY CODE — READ ONLY" />
+                                    </StackPanel>
+
+                                    <ItemsControl ItemsSource="{x:Bind ViewModel.CodeFacts}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="local:NavCodeFact">
+                                                <Grid Padding="0,4" ColumnSpacing="12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="150" />
+                                                        <ColumnDefinition Width="*" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <TextBlock
+                                                        Grid.Column="0"
+                                                        FontSize="12.5"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        Text="{x:Bind Label}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        FontSize="12"
+                                                        Style="{StaticResource MonoTextStyle}"
+                                                        Text="{x:Bind Value}"
+                                                        TextWrapping="Wrap" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+
+                                    <TextBlock
+                                        Style="{StaticResource HintTextStyle}"
+                                        Text="Declared beside the screen's code and enforced on every request. They arrive here at startup and cannot be edited." />
+
+                                    <Button
+                                        HorizontalAlignment="Left"
+                                        Click="OnDeleteOrphanClicked"
+                                        Content="Remove this leftover row"
+                                        Style="{StaticResource DangerToolbarButtonStyle}"
+                                        Visibility="{x:Bind ViewModel.SelectedScreen.IsOrphan, Mode=OneWay}" />
+                                </StackPanel>
+                            </Border>
+
+                            <!--  Pane preview  -->
+                            <StackPanel Spacing="8">
+                                <TextBlock Style="{StaticResource SectionLabelStyle}" Text="PANE PREVIEW" />
+                                <Border
+                                    Padding="8"
+                                    Background="{ThemeResource SolidBackgroundFillColorBaseBrush}"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="1"
+                                    CornerRadius="6">
+                                    <ItemsControl ItemsSource="{x:Bind ViewModel.Preview}">
+                                        <ItemsControl.ItemTemplate>
+                                            <DataTemplate x:DataType="local:NavigationEntry">
+                                                <Grid Padding="10,7" ColumnSpacing="11">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <FontIcon
+                                                        Grid.Column="0"
+                                                        FontSize="15"
+                                                        Glyph="{x:Bind Item.IconGlyph}" />
+                                                    <TextBlock
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        Text="{x:Bind Item.Title}" />
+                                                    <TextBlock
+                                                        Grid.Column="2"
+                                                        VerticalAlignment="Center"
+                                                        Style="{StaticResource HintTextStyle}"
+                                                        Text="{x:Bind Item.Group}" />
+                                                </Grid>
+                                            </DataTemplate>
+                                        </ItemsControl.ItemTemplate>
+                                    </ItemsControl>
+                                </Border>
+                                <TextBlock
+                                    Style="{StaticResource HintTextStyle}"
+                                    Text="{x:Bind ViewModel.PreviewNote, Mode=OneWay}" />
+                            </StackPanel>
+                        </StackPanel>
                     </ScrollViewer>
                 </Grid>
             </Border>

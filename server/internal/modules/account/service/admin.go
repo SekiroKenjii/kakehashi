@@ -11,6 +11,7 @@ import (
 	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
 )
 
 // CreateAccount adds an account.
@@ -68,7 +69,7 @@ func (s *Service) ResetPassword(ctx context.Context, accountID, newPassword stri
 	if err := s.store.UpdateAccount(ctx, account); err != nil {
 		return err
 	}
-	if err := s.store.DeleteSessionsForUser(ctx, accountID); err != nil {
+	if _, err := s.store.DeleteSessionsForUser(ctx, accountID); err != nil {
 		return err
 	}
 
@@ -78,10 +79,29 @@ func (s *Service) ResetPassword(ctx context.Context, accountID, newPassword stri
 
 // RevokeAccountSession ends one of another account's sessions.
 func (s *Service) RevokeAccountSession(ctx context.Context, accountID, sessionID string) error {
-	if err := s.store.DeleteSession(ctx, accountID, sessionID); err != nil {
+	ended, err := s.store.DeleteSession(ctx, accountID, sessionID)
+	if err != nil {
 		return err
 	}
+	if !ended {
+		// Nothing happened, so nothing is announced. This is the path where saying otherwise would
+		// matter most: any session id at all would otherwise put "somebody else ended your session"
+		// into an account's security feed, which is the one line on that screen a person acts on.
+		return nil
+	}
+
 	s.record(ctx, accountID, accountapi.EventSessionRevoked, "", "")
+
+	// Announced, which it was not before: an administrator ending somebody's session was written
+	// into that account's own audit trail and told nobody else, so the activity feed — the screen a
+	// person opens to ask whether anyone has been in their account — was silent about the one event
+	// most worth its silence being broken.
+	eventbus.Publish(s.bus, ctx, accountapi.SessionRevoked{
+		UserID:    accountID,
+		SessionID: sessionID,
+		At:        s.now(),
+		ByAdmin:   true,
+	})
 	return nil
 }
 
@@ -148,7 +168,7 @@ func (s *Service) SetActive(ctx context.Context, accountID string, active bool, 
 		return nil
 	}
 
-	if err := s.store.DeleteSessionsForUser(ctx, accountID); err != nil {
+	if _, err := s.store.DeleteSessionsForUser(ctx, accountID); err != nil {
 		return err
 	}
 	s.record(ctx, accountID, accountapi.EventSessionRevoked, "", "")

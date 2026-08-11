@@ -128,3 +128,5 @@ credentials, and browsers will refuse to send them over plain HTTP anyway.
   promises are allowed to change
 - [`docs/RBAC.md`](docs/RBAC.md) — who may do what, to which rows, and where the scope is honoured
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — how the pane is arranged, and who decides what
+- [`docs/ACTIVITY.md`](docs/ACTIVITY.md) — what the feed records, the one write that comes from
+  outside, and how long it keeps things

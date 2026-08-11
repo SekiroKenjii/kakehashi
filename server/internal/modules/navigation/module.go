@@ -27,6 +27,7 @@ import (
 	"slices"
 
 	"github.com/SekiroKenjii/kakehashi/server/internal/app"
+	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/rpc"
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
@@ -95,6 +96,15 @@ func (m *Module) Finalize(ctx context.Context, k *app.Kernel) error {
 
 	m.destinations = declared
 	m.svc.WithDestinations(declared...)
+
+	// Optional, and resolved here for the same reason the declarations are: Finalize is the first
+	// point at which another module's service is guaranteed to exist. Without an authorization module
+	// there are no roles, and PreviewLayout says so rather than the boot failing over a screen nobody
+	// in that build can reach anyway.
+	if grants, ok := app.TryUse[authzapi.Service](k); ok {
+		m.svc.WithRoleGrants(grants)
+	}
+
 	return m.svc.Reconcile(ctx, systemGroups)
 }
 

@@ -71,25 +71,40 @@ func (s *SQLServer) TouchSession(ctx context.Context, id string, at time.Time) e
 	return nil
 }
 
-// DeleteSession ends one session. The account id is part of the predicate so a stolen session id
-// cannot be used to end someone else's.
-func (s *SQLServer) DeleteSession(ctx context.Context, accountID, id string) error {
+// DeleteSession ends one session, reporting whether there was one to end. The account id is part of
+// the predicate so a stolen session id cannot be used to end someone else's.
+//
+// The count is returned rather than swallowed because a caller announces this delete, and an
+// announcement about a row that was not there is a false entry in somebody's security feed.
+func (s *SQLServer) DeleteSession(ctx context.Context, accountID, id string) (bool, error) {
 	const q = `DELETE FROM account.UserSession WHERE AccountId = @p1 AND Id = @p2;`
 
-	if _, err := s.db.ExecContext(ctx, q, accountID, id); err != nil {
-		return errs.Internalf(err, "delete session")
+	res, err := s.db.ExecContext(ctx, q, accountID, id)
+	if err != nil {
+		return false, errs.Internalf(err, "delete session")
 	}
-	return nil
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return false, errs.Internalf(err, "delete session")
+	}
+	return affected > 0, nil
 }
 
-// DeleteSessionsForUser ends every session an account has.
-func (s *SQLServer) DeleteSessionsForUser(ctx context.Context, accountID string) error {
+// DeleteSessionsForUser ends every session an account has, reporting how many went.
+func (s *SQLServer) DeleteSessionsForUser(ctx context.Context, accountID string) (int64, error) {
 	const q = `DELETE FROM account.UserSession WHERE AccountId = @p1;`
 
-	if _, err := s.db.ExecContext(ctx, q, accountID); err != nil {
-		return errs.Internalf(err, "delete sessions")
+	res, err := s.db.ExecContext(ctx, q, accountID)
+	if err != nil {
+		return 0, errs.Internalf(err, "delete sessions")
 	}
-	return nil
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return 0, errs.Internalf(err, "delete sessions")
+	}
+	return affected, nil
 }
 
 // DeleteSessionsForUserClient ends the sessions an account holds with one client, which is what an

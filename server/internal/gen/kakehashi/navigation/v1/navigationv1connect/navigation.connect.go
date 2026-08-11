@@ -70,6 +70,15 @@ const (
 	// NavigationAdminServiceUpdateItemProcedure is the fully-qualified name of the
 	// NavigationAdminService's UpdateItem RPC.
 	NavigationAdminServiceUpdateItemProcedure = "/kakehashi.navigation.v1.NavigationAdminService/UpdateItem"
+	// NavigationAdminServiceApplyLayoutProcedure is the fully-qualified name of the
+	// NavigationAdminService's ApplyLayout RPC.
+	NavigationAdminServiceApplyLayoutProcedure = "/kakehashi.navigation.v1.NavigationAdminService/ApplyLayout"
+	// NavigationAdminServiceDeleteItemProcedure is the fully-qualified name of the
+	// NavigationAdminService's DeleteItem RPC.
+	NavigationAdminServiceDeleteItemProcedure = "/kakehashi.navigation.v1.NavigationAdminService/DeleteItem"
+	// NavigationAdminServicePreviewLayoutProcedure is the fully-qualified name of the
+	// NavigationAdminService's PreviewLayout RPC.
+	NavigationAdminServicePreviewLayoutProcedure = "/kakehashi.navigation.v1.NavigationAdminService/PreviewLayout"
 )
 
 // NavigationServiceClient is a client for the kakehashi.navigation.v1.NavigationService service.
@@ -157,6 +166,32 @@ type NavigationAdminServiceClient interface {
 	ListItems(context.Context, *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error)
 	MoveItem(context.Context, *connect.Request[v1.MoveItemRequest]) (*connect.Response[v1.MoveItemResponse], error)
 	UpdateItem(context.Context, *connect.Request[v1.UpdateItemRequest]) (*connect.Response[v1.UpdateItemResponse], error)
+	// ApplyLayout writes a whole arrangement at once, or writes none of it.
+	//
+	// The six procedures above each change one row, which is what a screen needed when every edit was
+	// applied the moment it was made. One gesture now produces several changes — dragging a screen
+	// into another heading renumbers what it landed among — and a sequence of single-row calls has no
+	// way to fail halfway without leaving the pane half-rearranged. That was a real defect: a reorder
+	// was two MoveItem calls, and a failure on the second left both rows sharing a number.
+	//
+	// Shaped after authz's SaveRoleGrants deliberately: the whole desired state in, an outcome summary
+	// out. Everything is validated before anything is written, so a refusal changes nothing.
+	//
+	// The six single-row procedures stay for now — removing one would break a client compiled against
+	// it — but nothing in this product calls the writing ones any more.
+	ApplyLayout(context.Context, *connect.Request[v1.ApplyLayoutRequest]) (*connect.Response[v1.ApplyLayoutResponse], error)
+	// DeleteItem removes a stored row whose destination no longer exists in this build.
+	//
+	// Only those. A row a module still declares would simply be recreated by the next reconcile, so
+	// deleting one is at best a no-op and at worst a confusing one; the refusal says so.
+	DeleteItem(context.Context, *connect.Request[v1.DeleteItemRequest]) (*connect.Response[v1.DeleteItemResponse], error)
+	// PreviewLayout answers what the pane looks like for a role other than the caller's.
+	//
+	// Arranging a pane you cannot see the effect of is guesswork: most screens are behind a permission,
+	// so an administrator holding everything sees a pane nobody else does. It is gated by the same
+	// navigation.manage as the rest of this service — somebody who may rearrange the pane may look at
+	// what they rearranged.
+	PreviewLayout(context.Context, *connect.Request[v1.PreviewLayoutRequest]) (*connect.Response[v1.PreviewLayoutResponse], error)
 }
 
 // NewNavigationAdminServiceClient constructs a client for the
@@ -213,18 +248,39 @@ func NewNavigationAdminServiceClient(httpClient connect.HTTPClient, baseURL stri
 			connect.WithSchema(navigationAdminServiceMethods.ByName("UpdateItem")),
 			connect.WithClientOptions(opts...),
 		),
+		applyLayout: connect.NewClient[v1.ApplyLayoutRequest, v1.ApplyLayoutResponse](
+			httpClient,
+			baseURL+NavigationAdminServiceApplyLayoutProcedure,
+			connect.WithSchema(navigationAdminServiceMethods.ByName("ApplyLayout")),
+			connect.WithClientOptions(opts...),
+		),
+		deleteItem: connect.NewClient[v1.DeleteItemRequest, v1.DeleteItemResponse](
+			httpClient,
+			baseURL+NavigationAdminServiceDeleteItemProcedure,
+			connect.WithSchema(navigationAdminServiceMethods.ByName("DeleteItem")),
+			connect.WithClientOptions(opts...),
+		),
+		previewLayout: connect.NewClient[v1.PreviewLayoutRequest, v1.PreviewLayoutResponse](
+			httpClient,
+			baseURL+NavigationAdminServicePreviewLayoutProcedure,
+			connect.WithSchema(navigationAdminServiceMethods.ByName("PreviewLayout")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // navigationAdminServiceClient implements NavigationAdminServiceClient.
 type navigationAdminServiceClient struct {
-	listGroups  *connect.Client[v1.ListGroupsRequest, v1.ListGroupsResponse]
-	createGroup *connect.Client[v1.CreateGroupRequest, v1.CreateGroupResponse]
-	updateGroup *connect.Client[v1.UpdateGroupRequest, v1.UpdateGroupResponse]
-	deleteGroup *connect.Client[v1.DeleteGroupRequest, v1.DeleteGroupResponse]
-	listItems   *connect.Client[v1.ListItemsRequest, v1.ListItemsResponse]
-	moveItem    *connect.Client[v1.MoveItemRequest, v1.MoveItemResponse]
-	updateItem  *connect.Client[v1.UpdateItemRequest, v1.UpdateItemResponse]
+	listGroups    *connect.Client[v1.ListGroupsRequest, v1.ListGroupsResponse]
+	createGroup   *connect.Client[v1.CreateGroupRequest, v1.CreateGroupResponse]
+	updateGroup   *connect.Client[v1.UpdateGroupRequest, v1.UpdateGroupResponse]
+	deleteGroup   *connect.Client[v1.DeleteGroupRequest, v1.DeleteGroupResponse]
+	listItems     *connect.Client[v1.ListItemsRequest, v1.ListItemsResponse]
+	moveItem      *connect.Client[v1.MoveItemRequest, v1.MoveItemResponse]
+	updateItem    *connect.Client[v1.UpdateItemRequest, v1.UpdateItemResponse]
+	applyLayout   *connect.Client[v1.ApplyLayoutRequest, v1.ApplyLayoutResponse]
+	deleteItem    *connect.Client[v1.DeleteItemRequest, v1.DeleteItemResponse]
+	previewLayout *connect.Client[v1.PreviewLayoutRequest, v1.PreviewLayoutResponse]
 }
 
 // ListGroups calls kakehashi.navigation.v1.NavigationAdminService.ListGroups.
@@ -262,6 +318,21 @@ func (c *navigationAdminServiceClient) UpdateItem(ctx context.Context, req *conn
 	return c.updateItem.CallUnary(ctx, req)
 }
 
+// ApplyLayout calls kakehashi.navigation.v1.NavigationAdminService.ApplyLayout.
+func (c *navigationAdminServiceClient) ApplyLayout(ctx context.Context, req *connect.Request[v1.ApplyLayoutRequest]) (*connect.Response[v1.ApplyLayoutResponse], error) {
+	return c.applyLayout.CallUnary(ctx, req)
+}
+
+// DeleteItem calls kakehashi.navigation.v1.NavigationAdminService.DeleteItem.
+func (c *navigationAdminServiceClient) DeleteItem(ctx context.Context, req *connect.Request[v1.DeleteItemRequest]) (*connect.Response[v1.DeleteItemResponse], error) {
+	return c.deleteItem.CallUnary(ctx, req)
+}
+
+// PreviewLayout calls kakehashi.navigation.v1.NavigationAdminService.PreviewLayout.
+func (c *navigationAdminServiceClient) PreviewLayout(ctx context.Context, req *connect.Request[v1.PreviewLayoutRequest]) (*connect.Response[v1.PreviewLayoutResponse], error) {
+	return c.previewLayout.CallUnary(ctx, req)
+}
+
 // NavigationAdminServiceHandler is an implementation of the
 // kakehashi.navigation.v1.NavigationAdminService service.
 type NavigationAdminServiceHandler interface {
@@ -272,6 +343,32 @@ type NavigationAdminServiceHandler interface {
 	ListItems(context.Context, *connect.Request[v1.ListItemsRequest]) (*connect.Response[v1.ListItemsResponse], error)
 	MoveItem(context.Context, *connect.Request[v1.MoveItemRequest]) (*connect.Response[v1.MoveItemResponse], error)
 	UpdateItem(context.Context, *connect.Request[v1.UpdateItemRequest]) (*connect.Response[v1.UpdateItemResponse], error)
+	// ApplyLayout writes a whole arrangement at once, or writes none of it.
+	//
+	// The six procedures above each change one row, which is what a screen needed when every edit was
+	// applied the moment it was made. One gesture now produces several changes — dragging a screen
+	// into another heading renumbers what it landed among — and a sequence of single-row calls has no
+	// way to fail halfway without leaving the pane half-rearranged. That was a real defect: a reorder
+	// was two MoveItem calls, and a failure on the second left both rows sharing a number.
+	//
+	// Shaped after authz's SaveRoleGrants deliberately: the whole desired state in, an outcome summary
+	// out. Everything is validated before anything is written, so a refusal changes nothing.
+	//
+	// The six single-row procedures stay for now — removing one would break a client compiled against
+	// it — but nothing in this product calls the writing ones any more.
+	ApplyLayout(context.Context, *connect.Request[v1.ApplyLayoutRequest]) (*connect.Response[v1.ApplyLayoutResponse], error)
+	// DeleteItem removes a stored row whose destination no longer exists in this build.
+	//
+	// Only those. A row a module still declares would simply be recreated by the next reconcile, so
+	// deleting one is at best a no-op and at worst a confusing one; the refusal says so.
+	DeleteItem(context.Context, *connect.Request[v1.DeleteItemRequest]) (*connect.Response[v1.DeleteItemResponse], error)
+	// PreviewLayout answers what the pane looks like for a role other than the caller's.
+	//
+	// Arranging a pane you cannot see the effect of is guesswork: most screens are behind a permission,
+	// so an administrator holding everything sees a pane nobody else does. It is gated by the same
+	// navigation.manage as the rest of this service — somebody who may rearrange the pane may look at
+	// what they rearranged.
+	PreviewLayout(context.Context, *connect.Request[v1.PreviewLayoutRequest]) (*connect.Response[v1.PreviewLayoutResponse], error)
 }
 
 // NewNavigationAdminServiceHandler builds an HTTP handler from the service implementation. It
@@ -323,6 +420,24 @@ func NewNavigationAdminServiceHandler(svc NavigationAdminServiceHandler, opts ..
 		connect.WithSchema(navigationAdminServiceMethods.ByName("UpdateItem")),
 		connect.WithHandlerOptions(opts...),
 	)
+	navigationAdminServiceApplyLayoutHandler := connect.NewUnaryHandler(
+		NavigationAdminServiceApplyLayoutProcedure,
+		svc.ApplyLayout,
+		connect.WithSchema(navigationAdminServiceMethods.ByName("ApplyLayout")),
+		connect.WithHandlerOptions(opts...),
+	)
+	navigationAdminServiceDeleteItemHandler := connect.NewUnaryHandler(
+		NavigationAdminServiceDeleteItemProcedure,
+		svc.DeleteItem,
+		connect.WithSchema(navigationAdminServiceMethods.ByName("DeleteItem")),
+		connect.WithHandlerOptions(opts...),
+	)
+	navigationAdminServicePreviewLayoutHandler := connect.NewUnaryHandler(
+		NavigationAdminServicePreviewLayoutProcedure,
+		svc.PreviewLayout,
+		connect.WithSchema(navigationAdminServiceMethods.ByName("PreviewLayout")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/kakehashi.navigation.v1.NavigationAdminService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case NavigationAdminServiceListGroupsProcedure:
@@ -339,6 +454,12 @@ func NewNavigationAdminServiceHandler(svc NavigationAdminServiceHandler, opts ..
 			navigationAdminServiceMoveItemHandler.ServeHTTP(w, r)
 		case NavigationAdminServiceUpdateItemProcedure:
 			navigationAdminServiceUpdateItemHandler.ServeHTTP(w, r)
+		case NavigationAdminServiceApplyLayoutProcedure:
+			navigationAdminServiceApplyLayoutHandler.ServeHTTP(w, r)
+		case NavigationAdminServiceDeleteItemProcedure:
+			navigationAdminServiceDeleteItemHandler.ServeHTTP(w, r)
+		case NavigationAdminServicePreviewLayoutProcedure:
+			navigationAdminServicePreviewLayoutHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -374,4 +495,16 @@ func (UnimplementedNavigationAdminServiceHandler) MoveItem(context.Context, *con
 
 func (UnimplementedNavigationAdminServiceHandler) UpdateItem(context.Context, *connect.Request[v1.UpdateItemRequest]) (*connect.Response[v1.UpdateItemResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kakehashi.navigation.v1.NavigationAdminService.UpdateItem is not implemented"))
+}
+
+func (UnimplementedNavigationAdminServiceHandler) ApplyLayout(context.Context, *connect.Request[v1.ApplyLayoutRequest]) (*connect.Response[v1.ApplyLayoutResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kakehashi.navigation.v1.NavigationAdminService.ApplyLayout is not implemented"))
+}
+
+func (UnimplementedNavigationAdminServiceHandler) DeleteItem(context.Context, *connect.Request[v1.DeleteItemRequest]) (*connect.Response[v1.DeleteItemResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kakehashi.navigation.v1.NavigationAdminService.DeleteItem is not implemented"))
+}
+
+func (UnimplementedNavigationAdminServiceHandler) PreviewLayout(context.Context, *connect.Request[v1.PreviewLayoutRequest]) (*connect.Response[v1.PreviewLayoutResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("kakehashi.navigation.v1.NavigationAdminService.PreviewLayout is not implemented"))
 }

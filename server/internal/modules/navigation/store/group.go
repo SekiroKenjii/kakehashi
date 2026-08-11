@@ -42,11 +42,16 @@ func (s *SQLServer) Group(ctx context.Context, id string) (domain.Group, error) 
 
 // InsertGroup stores a new heading.
 func (s *SQLServer) InsertGroup(ctx context.Context, g domain.Group, at time.Time) error {
+	return insertGroupTx(ctx, s.db, g, at)
+}
+
+// insertGroupTx is InsertGroup against either handle — see execer.
+func insertGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time) error {
 	const q = `
         INSERT INTO navigation.NavGroup (Id, Title, SortOrder, IsSystem, CreatedAt, UpdatedAt)
         VALUES (@p1, @p2, @p3, @p4, @p5, @p5);`
 
-	_, err := s.db.ExecContext(ctx, q, g.ID, g.Title, g.Order, g.IsSystem, at.UTC())
+	_, err := on.ExecContext(ctx, q, g.ID, g.Title, g.Order, g.IsSystem, at.UTC())
 	if isUniqueViolation(err) {
 		// Two constraints can fire here and they mean different things. The primary key is the
 		// identifier, which for a heading created from a title is derived — so "Ops / Tools" and
@@ -68,12 +73,17 @@ func (s *SQLServer) InsertGroup(ctx context.Context, g domain.Group, at time.Tim
 // UpdateGroup rewrites a heading's title and order. IsSystem is not editable: a heading the product
 // ships cannot become deletable by being edited.
 func (s *SQLServer) UpdateGroup(ctx context.Context, g domain.Group, at time.Time) error {
+	return updateGroupTx(ctx, s.db, g, at)
+}
+
+// updateGroupTx is UpdateGroup against either handle.
+func updateGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time) error {
 	const q = `
         UPDATE navigation.NavGroup
         SET Title = @p2, SortOrder = @p3, UpdatedAt = @p4
         WHERE Id = @p1;`
 
-	result, err := s.db.ExecContext(ctx, q, g.ID, g.Title, g.Order, at.UTC())
+	result, err := on.ExecContext(ctx, q, g.ID, g.Title, g.Order, at.UTC())
 	if isUniqueViolation(err) {
 		return errs.Conflictf("A navigation heading called %s already exists.", g.Title)
 	}
@@ -86,9 +96,14 @@ func (s *SQLServer) UpdateGroup(ctx context.Context, g domain.Group, at time.Tim
 // DeleteGroup removes a heading. The placements under it fall to ungrouped, which the foreign key
 // does rather than this method — one less thing that can be forgotten in a second code path.
 func (s *SQLServer) DeleteGroup(ctx context.Context, id string) error {
+	return deleteGroupTx(ctx, s.db, id)
+}
+
+// deleteGroupTx is DeleteGroup against either handle.
+func deleteGroupTx(ctx context.Context, on execer, id string) error {
 	const q = `DELETE FROM navigation.NavGroup WHERE Id = @p1 AND IsSystem = 0;`
 
-	result, err := s.db.ExecContext(ctx, q, id)
+	result, err := on.ExecContext(ctx, q, id)
 	if err != nil {
 		return errs.Internalf(err, "delete navigation group")
 	}

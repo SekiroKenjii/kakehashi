@@ -39,19 +39,46 @@ func (m *Module) subscribe(k *app.Kernel) {
 	// and device strings, and a feed that grew rows automatically because someone in another
 	// module added a struct would be a privacy bug waiting to happen.
 	//
-	// The honest loss, recorded where it happens: the account module distinguishes a first sign-in
-	// from a new machine in its own audit trail, but the published event carries no kind, so the
-	// feed records the coarser "SignedIn" where the account page says "New device signed in".
-	// Fixing it means adding a field to accountapi for this module's benefit — the inverted
-	// dependency this seam exists to avoid. The feed shows the coarser fact.
+	// This file once recorded a loss here: the account module told its own audit trail apart a
+	// first sign-in from a new machine, the published event carried no such flag, and the feed
+	// showed the coarser fact. The note argued that fixing it meant adding a field to accountapi
+	// "for this module's benefit — the inverted dependency this seam exists to avoid".
+	//
+	// That drew the line in the wrong place, and the flag is now on the event. What the seam
+	// forbids is a direction of dependency: activity calling into account, or account naming
+	// activity. Announcing a fact the publisher already worked out for itself is neither — the
+	// account module computes NewDevice to choose its own audit kind whether anybody listens or
+	// not, and publishing a conclusion it already reached costs it nothing and binds it to no one.
+	// The test is not "who benefits", it is "who now has to know about whom", and the answer here
+	// is still nobody.
 	app.Subscribe(k, func(ctx context.Context, e accountapi.SignedIn) {
-		m.record(ctx, e.UserID, activityapi.KindSignedIn, e.Device, e.IPAddress, e.At)
+		kind := activityapi.KindSignedIn
+		if e.NewDevice {
+			kind = activityapi.KindNewDeviceSignedIn
+		}
+		m.record(ctx, e.UserID, kind, e.SessionID, e.Device, e.IPAddress, e.At)
 	})
+
+	// Leaving and being ended arrive as two events now, and are two rows. They used to be one
+	// event, so the feed said "signed out" for a revocation the account page called a revocation.
 	app.Subscribe(k, func(ctx context.Context, e accountapi.SignedOut) {
-		m.record(ctx, e.UserID, activityapi.KindSignedOut, "", "", e.At)
+		m.record(ctx, e.UserID, activityapi.KindSignedOut, e.SessionID, "", "", e.At)
+	})
+	app.Subscribe(k, func(ctx context.Context, e accountapi.SessionRevoked) {
+		kind := activityapi.KindSessionRevoked
+		if e.ByAdmin {
+			kind = activityapi.KindSessionRevokedByAdmin
+		}
+		m.record(ctx, e.UserID, kind, e.SessionID, "", "", e.At)
+	})
+
+	// The device and address are the point of this row: a refused attempt is the one entry whose
+	// reader is asking "where did that come from", not "was that me".
+	app.Subscribe(k, func(ctx context.Context, e accountapi.FailedSignIn) {
+		m.record(ctx, e.UserID, activityapi.KindFailedSignIn, "", e.Device, e.IPAddress, e.At)
 	})
 	app.Subscribe(k, func(ctx context.Context, e accountapi.PasswordChanged) {
-		m.record(ctx, e.UserID, activityapi.KindPasswordChanged, "", "", e.At)
+		m.record(ctx, e.UserID, activityapi.KindPasswordChanged, "", "", "", e.At)
 	})
 }
 
@@ -63,9 +90,9 @@ func (m *Module) subscribe(k *app.Kernel) {
 // architecture makes it structural. Publish ignores whatever a handler does and recovers a panic,
 // so a dead Mongo cannot fail a sign-in even in principle.
 func (m *Module) record(
-	ctx context.Context, userID, kind, device, ip string, at time.Time,
+	ctx context.Context, userID, kind, sessionID, device, ip string, at time.Time,
 ) {
-	if err := m.svc.Record(ctx, userID, kind, device, ip, at); err != nil {
+	if err := m.svc.Record(ctx, userID, kind, sessionID, device, ip, at); err != nil {
 		m.log.ErrorContext(ctx, "activity entry not recorded", "kind", kind, "error", err)
 	}
 }

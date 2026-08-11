@@ -31,6 +31,59 @@ func newFakeStore() *fakeStore {
 	}
 }
 
+// ApplyLayout applies a whole plan, in the order the real store's transaction does.
+//
+// The order is copied deliberately: headings created before items move into them, headings deleted
+// last so nothing is stranded. A fake that applied a plan in a convenient order would pass a test the
+// real store would fail.
+func (f *fakeStore) ApplyLayout(
+	ctx context.Context, plan domain.LayoutPlan, at time.Time,
+) error {
+	for _, g := range plan.CreateGroups {
+		if err := f.InsertGroup(ctx, g, at); err != nil {
+			return err
+		}
+	}
+	for _, g := range plan.UpdateGroups {
+		if err := f.UpdateGroup(ctx, g, at); err != nil {
+			return err
+		}
+	}
+	for _, p := range plan.Items {
+		if _, ok := f.placements[p.DestinationID]; !ok {
+			return errs.NotFoundf("No navigation item with id %s.", p.DestinationID)
+		}
+		if p.GroupID != "" {
+			if _, ok := f.groups[p.GroupID]; !ok {
+				return errs.NotFoundf("No navigation heading with id %s.", p.GroupID)
+			}
+		}
+		f.placements[p.DestinationID] = p
+	}
+	for _, id := range plan.DeleteGroups {
+		if err := f.DeleteGroup(ctx, id); err != nil {
+			return err
+		}
+		// ON DELETE SET NULL, which the schema does and the service relies on.
+		for id2, p := range f.placements {
+			if p.GroupID == id {
+				p.GroupID = ""
+				f.placements[id2] = p
+			}
+		}
+	}
+	return nil
+}
+
+// DeleteItem removes a stored row. The fake refuses nothing: which rows may go is the service's rule.
+func (f *fakeStore) DeleteItem(_ context.Context, id string) error {
+	if _, ok := f.placements[id]; !ok {
+		return errs.NotFoundf("No navigation item with id %s.", id)
+	}
+	delete(f.placements, id)
+	return nil
+}
+
 // Layout is the one-snapshot read. The fake has no concurrency to protect against; it exists so the
 // service's real call has something to call.
 func (f *fakeStore) Layout(ctx context.Context) ([]domain.Group, []domain.Placement, error) {

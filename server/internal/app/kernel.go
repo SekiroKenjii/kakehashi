@@ -299,10 +299,11 @@ func toDBIndexes(in []Index) []mongodb.Index {
 			keys[j] = mongodb.Key{Field: k.Field, Descending: k.Descending}
 		}
 		out[i] = mongodb.Index{
-			Collection: ix.Collection,
-			Name:       ix.Name,
-			Unique:     ix.Unique,
-			Keys:       keys,
+			Collection:  ix.Collection,
+			Name:        ix.Name,
+			Unique:      ix.Unique,
+			Keys:        keys,
+			ExpireAfter: ix.ExpireAfter,
 		}
 	}
 	return out

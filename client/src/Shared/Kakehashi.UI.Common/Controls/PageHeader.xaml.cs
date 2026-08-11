@@ -31,7 +31,17 @@ namespace Kakehashi.UI.Common.Controls {
   /// </remarks>
   [ContentProperty(Name = nameof(Commands))]
   public sealed partial class PageHeader : UserControl {
-    /// <summary>The area this page belongs to — the muted first crumb. Empty hides the crumb.</summary>
+    /// <summary>
+    /// The product, which opens every trail. Empty hides the crumb.
+    /// </summary>
+    /// <remarks>
+    /// Defaulted rather than passed by each page: the trail starts at the same place on every screen,
+    /// so making each page repeat the word is an invitation for one of them to spell it differently.
+    /// </remarks>
+    public static readonly DependencyProperty RootProperty = DependencyProperty.Register(
+        nameof(Root), typeof(string), typeof(PageHeader), new PropertyMetadata("Kakehashi"));
+
+    /// <summary>The area this page belongs to — the muted middle crumb. Empty hides the crumb.</summary>
     public static readonly DependencyProperty SectionProperty = DependencyProperty.Register(
         nameof(Section), typeof(string), typeof(PageHeader), new PropertyMetadata(string.Empty));
 
@@ -45,6 +55,11 @@ namespace Kakehashi.UI.Common.Controls {
 
     public PageHeader() {
       InitializeComponent();
+    }
+
+    public string Root {
+      get => (string)GetValue(RootProperty);
+      set => SetValue(RootProperty, value);
     }
 
     public string Section {
@@ -62,7 +77,7 @@ namespace Kakehashi.UI.Common.Controls {
       set => SetValue(CommandsProperty, value);
     }
 
-    /// <summary>Shows the first crumb and its chevron only when there is a section to show.</summary>
+    /// <summary>Shows a crumb and its chevron only when there is something to put in it.</summary>
     public static Visibility WhenSet(string value) {
       return string.IsNullOrEmpty(value) ? Visibility.Collapsed : Visibility.Visible;
     }

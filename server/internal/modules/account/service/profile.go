@@ -66,7 +66,7 @@ func (s *Service) ChangePassword(ctx context.Context, userID, current, next stri
 
 	// A password change is usually a response to believing someone else has it. Leaving their
 	// sessions alive would make the change cosmetic.
-	if err := s.store.DeleteSessionsForUser(ctx, userID); err != nil {
+	if _, err := s.store.DeleteSessionsForUser(ctx, userID); err != nil {
 		return err
 	}
 

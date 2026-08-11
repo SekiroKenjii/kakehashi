@@ -147,6 +147,13 @@ be quick; anything slow spawns its own goroutine, with a context that is not the
 Events are facts, so they are published *after* the thing happened. A create that failed publishes
 nothing.
 
+**And neither does a delete that deleted nothing** — the harder half, because such a delete usually
+*succeeds*. Ending a session that is already gone is idempotent on purpose, and for a while it still
+announced a revocation: an administrator passing any session id at all could put "somebody else ended
+your session" into an account's feed. The rule that comes out of it is worth stating as a rule, since
+the compiler cannot: **if you publish after a write, the write has to tell you whether it did
+anything.** That is why `DeleteSession` returns a `bool` it could have discarded.
+
 ## Storage: two stores, on purpose
 
 | Store | For | Why |
@@ -155,16 +162,23 @@ nothing.
 | MongoDB | `activity` | Append-only, read newest-first, shape allowed to grow. Nothing here needs a transaction, and forcing it into rows would mean migrating the schema every time an event gains a field. |
 
 The `activity` module is where the second store earns its keep, and it is worth reading for what it
-does *not* do: no update, no delete, no transaction, and no unique key. Its entire schema management
-is one index. That is the shape of thing Mongo is for, and anything that starts wanting the missing
-operations back belongs in SQL Server instead.
+does *not* do: nothing updates an entry, nothing deletes one by hand, no transaction, and no unique
+key. Its entire schema management is two indexes. That is the shape of thing Mongo is for, and
+anything that starts wanting the missing operations back belongs in SQL Server instead.
+
+**Append-only is not the same as permanent.** Entries are never rewritten; they expire. Retention is
+ninety days, and it is a TTL index rather than a sweep this server schedules — a job would be a
+second thing to deploy and to keep from running on every replica at once, and Mongo already owns a
+monitor for exactly this. The trade is that expiry is approximate to about a minute, which is the
+precision "kept for ninety days" deserves. `docs/ACTIVITY.md` has the rest.
 
 Two consequences of no migrations, both of which bite once rather than gradually. A Mongo index
 cannot be altered — `EnsureIndexes` creates by name, so a name kept while its keys change fails the
 boot of every database that already has the old one, with no forward fix. Name an index after its
-keys, so changing them forces a new name. And the collection only grows: nothing prunes it, and the
-platform's `Index` has no field that could carry a TTL, so retention is a change to `platform/`
-rather than the one extra index it looks like.
+keys, so changing them forces a new name. And a TTL is a property of an index rather than of a
+collection, so retention arrives through `platform/mongodb`'s `Index.ExpireAfter` — the platform had
+to learn the word before the module could use it, which is why what looks like one extra index in a
+module was a change to shared code.
 
 **Each module owns a SQL schema named after its module ID** — `notes.Note`, and so on. `Migrate`
 creates the schema before a module's first migration runs, so the namespacing is structural rather

@@ -126,10 +126,83 @@ func toItemConfig(item service.ItemConfig) *navigationv1.ItemConfig {
 		Icon:               item.Icon,
 		DefaultTitle:       item.DefaultTitle,
 		DefaultIcon:        item.DefaultIcon,
+		DefaultGroup:       item.DefaultGroup,
+		DefaultOrder:       int32(item.DefaultOrder),
 		SortOrder:          int32(item.Order),
 		IsVisible:          item.IsVisible,
 		IsOrphan:           item.Orphan,
 		RequiredPermission: item.RequiredPermission,
 		HideWhenDenied:     item.HideWhenDenied,
 	}
+}
+
+// ApplyLayout writes a whole arrangement, or writes none of it.
+func (h *adminHandler) ApplyLayout(
+	ctx context.Context, req *connect.Request[navigationv1.ApplyLayoutRequest],
+) (*connect.Response[navigationv1.ApplyLayoutResponse], error) {
+	groups := make([]service.GroupSpec, 0, len(req.Msg.GetGroups()))
+	for _, g := range req.Msg.GetGroups() {
+		groups = append(groups, service.GroupSpec{
+			ID:    g.GetId(),
+			Title: g.GetTitle(),
+			Order: int(g.GetSortOrder()),
+		})
+	}
+
+	items := make([]service.ItemSpec, 0, len(req.Msg.GetItems()))
+	for _, i := range req.Msg.GetItems() {
+		items = append(items, service.ItemSpec{
+			ID:        i.GetId(),
+			GroupID:   i.GetGroupId(),
+			Order:     int(i.GetSortOrder()),
+			Title:     i.GetTitle(),
+			Icon:      i.GetIcon(),
+			IsVisible: i.GetIsVisible(),
+		})
+	}
+
+	outcome, err := h.svc.ApplyLayout(ctx, groups, items)
+	if err != nil {
+		return nil, err
+	}
+
+	return connect.NewResponse(&navigationv1.ApplyLayoutResponse{
+		GroupsCreated: int32(outcome.GroupsCreated),
+		GroupsUpdated: int32(outcome.GroupsUpdated),
+		GroupsDeleted: int32(outcome.GroupsDeleted),
+		ItemsChanged:  int32(outcome.ItemsChanged),
+	}), nil
+}
+
+// DeleteItem removes a row left over from a module this build no longer has.
+func (h *adminHandler) DeleteItem(
+	ctx context.Context, req *connect.Request[navigationv1.DeleteItemRequest],
+) (*connect.Response[navigationv1.DeleteItemResponse], error) {
+	if err := h.svc.DeleteItem(ctx, req.Msg.GetId()); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&navigationv1.DeleteItemResponse{}), nil
+}
+
+// PreviewLayout draws the pane as a role would see it.
+func (h *adminHandler) PreviewLayout(
+	ctx context.Context, req *connect.Request[navigationv1.PreviewLayoutRequest],
+) (*connect.Response[navigationv1.PreviewLayoutResponse], error) {
+	pane, err := h.svc.PreviewFor(ctx, req.Msg.GetRoleId())
+	if err != nil {
+		return nil, err
+	}
+
+	out := &navigationv1.PreviewLayoutResponse{
+		Ungrouped: toItems(pane.Ungrouped),
+		Groups:    make([]*navigationv1.GroupedItems, 0, len(pane.Groups)),
+	}
+	for _, group := range pane.Groups {
+		out.Groups = append(out.Groups, &navigationv1.GroupedItems{
+			GroupId: group.GroupID,
+			Title:   group.Title,
+			Items:   toItems(group.Items),
+		})
+	}
+	return connect.NewResponse(out), nil
 }

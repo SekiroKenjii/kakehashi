@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using CommunityToolkit.Mvvm.Messaging;
 using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.Modules.Auth.UI;
+using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services;
 using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.Extensions.DependencyInjection;
@@ -52,7 +53,17 @@ namespace Kakehashi.App.Services {
       ArgumentNullException.ThrowIfNull(serviceProvider);
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-      RecordAppUpdateIfAny();
+      // Deferred by one turn of the message loop, deliberately. Startup creates every awake service
+      // in registration order, so anything that registers for the announcement after this one runs
+      // would miss an app update — and that is the single run on which the update is worth
+      // announcing at all. Recording it a moment later costs nothing; announcing it to an empty room
+      // loses it for good.
+      // The null check is not defensive padding: there is no dispatcher on a thread that is not a UI
+      // thread, which is every thread a unit test runs on. The rest of this class guards it the same
+      // way for the same reason.
+      if (_dispatcherQueue is null || !_dispatcherQueue.TryEnqueue(RecordAppUpdateIfAny)) {
+        RecordAppUpdateIfAny();
+      }
 
       _lastTheme = _localSettings.Read<ElementTheme>(_themeSettingKey);
       // App-lifetime singleton: the subscription is deliberately never disposed.
@@ -77,6 +88,24 @@ namespace Kakehashi.App.Services {
       }
 
       _localSettings.Save(_entriesKey, _entries);
+
+      // Announced as well as stored, because two of these are facts no server can observe for
+      // itself and the activity module forwards them. This log keeps its own string kinds — they
+      // are the shape of what is already persisted in settings — and the announcement carries the
+      // shared enum instead, so the two assemblies cannot drift apart on a literal.
+      if (Announceable(kind) is { } announced) {
+        WeakReferenceMessenger.Default.Send(new AppActivityRecordedMessage(announced));
+      }
+    }
+
+    private static AppActivityKind? Announceable(string kind) {
+      return kind switch {
+        SignedInKind => AppActivityKind.SignedIn,
+        SignedOutKind => AppActivityKind.SignedOut,
+        AppUpdatedKind => AppActivityKind.AppUpdated,
+        ThemeChangedKind => AppActivityKind.ThemeChanged,
+        _ => null,
+      };
     }
 
     private void HandleAuthSessionChanged() {

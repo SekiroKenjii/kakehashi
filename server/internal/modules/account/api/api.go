@@ -23,6 +23,10 @@ const (
 	EventFailedSignIn      = "FailedSignIn"
 	EventPasswordChanged   = "PasswordChanged"
 	EventSessionRevoked    = "SessionRevoked"
+
+	// EventSignedOut is leaving on purpose, which until now was recorded as EventSessionRevoked —
+	// so the account page told people a session had been revoked every time they signed out.
+	EventSignedOut = "SignedOut"
 )
 
 // PermissionManageUsers guards the administrative account surface.
@@ -107,7 +111,16 @@ type Service interface {
 	// Sessions lists the account's live sessions. currentID marks which one is asking.
 	Sessions(ctx context.Context, userID, currentID string) ([]Session, error)
 
-	// RevokeSession ends one session. Revoking one that is already gone succeeds.
+	// SignOut ends the caller's own session because they asked to leave.
+	//
+	// Mechanically identical to RevokeSession, and separate anyway: only the caller knows which of
+	// the two happened, and "you signed out" and "a session was revoked" are different sentences to
+	// read in a feed a week later. Collapsing them into one method is what made the activity feed
+	// unable to tell them apart.
+	SignOut(ctx context.Context, userID, sessionID string) error
+
+	// RevokeSession ends one session the account owner picked out. Revoking one that is already
+	// gone succeeds.
 	RevokeSession(ctx context.Context, userID, sessionID string) error
 
 	// RevokeAllSessions ends every session for the account, including the caller's.
@@ -138,12 +151,50 @@ type SignedIn struct {
 	Device    string
 	IPAddress string
 	At        time.Time
+
+	// NewDevice is true when this account has no other session from this device.
+	//
+	// A field rather than a second event, because it is one fact with an attribute: the sign-in
+	// happened either way, and a subscriber that did not care would otherwise have to handle two
+	// events to see every sign-in. The account module already decides this to choose its own audit
+	// kind; this carries the answer instead of making every subscriber work it out again.
+	NewDevice bool
 }
 
-// SignedOut is published after a session ends, whether the user asked or an admin did.
+// SignedOut is published when the account holder ends their own session by asking to leave.
 type SignedOut struct {
 	UserID    string
 	SessionID string
+	At        time.Time
+}
+
+// SessionRevoked is published when a session is ended by a decision rather than by leaving —
+// the account owner picking a device off their list, clearing every device at once, or an
+// administrator ending somebody else's.
+//
+// SessionID is empty when every session went at once.
+type SessionRevoked struct {
+	UserID    string
+	SessionID string
+	At        time.Time
+
+	// ByAdmin is true when somebody other than the account holder ended it.
+	//
+	// The one actor distinction this server can honestly make, and it is worth making: "you ended a
+	// session" and "somebody else ended your session" are the difference between a line to skim and
+	// a line to act on. It is knowable because it is a different service method reached through a
+	// different route behind a different permission — not because anything guesses.
+	ByAdmin bool
+}
+
+// FailedSignIn is published when a password did not match, or the account was switched off.
+//
+// Only ever about an account that exists: there is nowhere to record an attempt on an address
+// nobody has registered, so an attacker guessing addresses produces no events at all.
+type FailedSignIn struct {
+	UserID    string
+	Device    string
+	IPAddress string
 	At        time.Time
 }
 

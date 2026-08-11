@@ -96,6 +96,12 @@ message ItemConfig {
   string default_title = 6;
   string default_icon = 7;
 
+  // Where the code puts this destination when nothing has moved it. Sent so a screen can offer
+  // "reset to what the product shipped" — until now those were seeds the reconcile step wrote once
+  // and never re-applied, so a moved destination's intended place was unrecoverable through any API.
+  string default_group = 13;
+  int32 default_order = 14;
+
   int32 sort_order = 8;
   bool is_visible = 9;
 
@@ -192,4 +198,95 @@ service NavigationAdminService {
   rpc ListItems(ListItemsRequest) returns (ListItemsResponse);
   rpc MoveItem(MoveItemRequest) returns (MoveItemResponse);
   rpc UpdateItem(UpdateItemRequest) returns (UpdateItemResponse);
+
+  // ApplyLayout writes a whole arrangement at once, or writes none of it.
+  //
+  // The six procedures above each change one row, which is what a screen needed when every edit was
+  // applied the moment it was made. One gesture now produces several changes — dragging a screen
+  // into another heading renumbers what it landed among — and a sequence of single-row calls has no
+  // way to fail halfway without leaving the pane half-rearranged. That was a real defect: a reorder
+  // was two MoveItem calls, and a failure on the second left both rows sharing a number.
+  //
+  // Shaped after authz's SaveRoleGrants deliberately: the whole desired state in, an outcome summary
+  // out. Everything is validated before anything is written, so a refusal changes nothing.
+  //
+  // The six single-row procedures stay for now — removing one would break a client compiled against
+  // it — but nothing in this product calls the writing ones any more.
+  rpc ApplyLayout(ApplyLayoutRequest) returns (ApplyLayoutResponse);
+
+  // DeleteItem removes a stored row whose destination no longer exists in this build.
+  //
+  // Only those. A row a module still declares would simply be recreated by the next reconcile, so
+  // deleting one is at best a no-op and at worst a confusing one; the refusal says so.
+  rpc DeleteItem(DeleteItemRequest) returns (DeleteItemResponse);
+
+  // PreviewLayout answers what the pane looks like for a role other than the caller's.
+  //
+  // Arranging a pane you cannot see the effect of is guesswork: most screens are behind a permission,
+  // so an administrator holding everything sees a pane nobody else does. It is gated by the same
+  // navigation.manage as the rest of this service — somebody who may rearrange the pane may look at
+  // what they rearranged.
+  rpc PreviewLayout(PreviewLayoutRequest) returns (PreviewLayoutResponse);
+}
+
+// LayoutGroupSpec is a heading as an administrator wants it.
+//
+// An empty id means "create this one", and the server derives the identifier from the title. Any
+// stored heading absent from the request is deleted; the ones this product ships refuse that, so a
+// deployment cannot lose the heading its administrative screens live under.
+message LayoutGroupSpec {
+  string id = 1;
+  string title = 2;
+  int32 sort_order = 3;
+}
+
+// LayoutItemSpec is a destination as an administrator wants it placed.
+//
+// Matched by id. A stored row absent from the request is left exactly as it is rather than deleted:
+// destinations come from code, so absence here means "not mentioned", never "remove it".
+message LayoutItemSpec {
+  string id = 1;
+
+  // Empty means ungrouped.
+  string group_id = 2;
+  int32 sort_order = 3;
+
+  // Empty clears the override and returns the destination to what the code calls it.
+  string title = 4;
+  string icon = 5;
+
+  bool is_visible = 6;
+}
+
+message ApplyLayoutRequest {
+  repeated LayoutGroupSpec groups = 1;
+  repeated LayoutItemSpec items = 2;
+}
+
+// ApplyLayoutResponse counts what actually changed, which is not what was sent: a screen posts the
+// whole arrangement, and most of it is usually already true.
+message ApplyLayoutResponse {
+  int32 groups_created = 1;
+  int32 groups_updated = 2;
+  int32 groups_deleted = 3;
+  int32 items_changed = 4;
+}
+
+message DeleteItemRequest {
+  string id = 1;
+}
+
+message DeleteItemResponse {}
+
+message PreviewLayoutRequest {
+  // Whose view to draw. Empty draws the pane for an account holding no permissions at all, which is
+  // the useful worst case.
+  string role_id = 1;
+}
+
+// The same shape GetNavigation answers with, because it is the same question asked on behalf of
+// somebody else.
+message PreviewLayoutResponse {
+  repeated Item ungrouped = 1;
+  repeated GroupedItems groups = 2;
 }

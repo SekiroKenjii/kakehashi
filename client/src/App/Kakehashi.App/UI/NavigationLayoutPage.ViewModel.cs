@@ -1,305 +1,162 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
+using System.Globalization;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Kakehashi.App.Services;
+using Kakehashi.UI.Common.Controls;
 using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.UI {
-  /// <summary>One heading, as the layout screen edits it.</summary>
-  public sealed partial class NavHeadingViewModel : ViewModel {
-    public NavHeadingViewModel(NavGroupRow row) {
-      ArgumentNullException.ThrowIfNull(row);
-      Id = row.Id;
-      Title = row.Title;
-      SortOrder = row.SortOrder;
-      IsSystem = row.IsSystem;
-    }
-
-    public string Id { get; }
-
-    public bool IsSystem { get; }
-
-    /// <summary>
-    /// Whether this heading can be deleted. A system heading cannot.
-    /// </summary>
-    /// <remarks>
-    /// The server refuses it too, with a sentence. This only keeps the button from being offered —
-    /// a control that exists to be refused is a control that teaches somebody to distrust the screen.
-    /// </remarks>
-    public bool CanDelete => !IsSystem;
-
-    [ObservableProperty]
-    public partial string Title { get; set; }
-
-    [ObservableProperty]
-    public partial int SortOrder { get; set; }
-
-    /// <summary>
-    /// The same position, as a double, because <c>NumberBox</c> has no integer value.
-    /// </summary>
-    /// <remarks>
-    /// A property rather than a converter: <c>x:Bind</c> checks a property against the control it is
-    /// bound to at compile time, and a converter defers the same mistake to runtime.
-    /// </remarks>
-    public double Position {
-      get => SortOrder;
-      set => SortOrder = (int)value;
-    }
-  }
-
-  /// <summary>One destination, as the layout screen edits it.</summary>
-  /// <remarks>
-  /// The commands are on the row rather than the page because a <c>DataTemplate</c> binds to the row:
-  /// reaching the page's view model from inside one means an ancestor binding, which <c>x:Bind</c>
-  /// cannot compile-check. The row calls back into the page's view model, which owns the service.
-  /// </remarks>
-  public sealed partial class NavDestinationViewModel : ViewModel {
-    private readonly NavigationLayoutViewModel _owner;
-
-    // What the server last confirmed. The picker and the switch both raise their change events while
-    // their bindings are being applied, so without something to compare against, drawing the list
-    // would look exactly like somebody editing every row in it.
-    private string _savedGroupId;
-    private bool _savedVisible;
-
-    public NavDestinationViewModel(
-        NavItemRow row, NavigationLayoutViewModel owner, IReadOnlyList<NavHeadingChoice> headings) {
-      ArgumentNullException.ThrowIfNull(row);
-      ArgumentNullException.ThrowIfNull(owner);
-      ArgumentNullException.ThrowIfNull(headings);
-      _owner = owner;
-      Headings = headings;
-
-      Id = row.Id;
-      ModuleId = row.ModuleId;
-      DefaultTitle = row.DefaultTitle;
-      DefaultIcon = row.DefaultIcon;
-      RequiredPermission = row.RequiredPermission;
-      HideWhenDenied = row.HideWhenDenied;
-      IsOrphan = row.IsOrphan;
-
-      Title = row.Title;
-      Icon = row.Icon;
-      GroupId = row.GroupId;
-      SortOrder = row.SortOrder;
-      IsVisible = row.IsVisible;
-      _savedGroupId = row.GroupId;
-      _savedVisible = row.IsVisible;
-    }
-
-    public string Id { get; }
-
-    public string ModuleId { get; }
-
-    public string DefaultTitle { get; }
-
-    public string DefaultIcon { get; }
-
-    public string RequiredPermission { get; }
-
-    public bool HideWhenDenied { get; }
-
-    /// <summary>A stored row whose destination this build no longer has.</summary>
-    public bool IsOrphan { get; }
-
-    /// <summary>The headings this destination can be moved to, for the row's picker.</summary>
-    /// <remarks>
-    /// On the row because a <c>DataTemplate</c> binds to the row: the page's own collection is not
-    /// addressable from inside one without an ancestor binding, which <c>x:Bind</c> cannot
-    /// compile-check.
-    /// <para>
-    /// A snapshot, and every row gets its own. Sharing one observable collection meant that reloading
-    /// the screen cleared a collection five pickers were bound to, blanking all five selections - and
-    /// a blanked selection is indistinguishable from somebody choosing "no heading". Rows are rebuilt
-    /// on every load anyway, so a snapshot costs nothing and cannot be pulled out from under a
-    /// control.
-    /// </para>
-    /// </remarks>
-    public IReadOnlyList<NavHeadingChoice> Headings { get; }
-
-    /// <summary>The label an administrator typed, or empty to use what the code calls it.</summary>
-    [ObservableProperty]
-    public partial string Title { get; set; }
-
-    /// <summary>A semantic icon name, or empty to use the one the page ships with.</summary>
-    [ObservableProperty]
-    public partial string Icon { get; set; }
-
-    [ObservableProperty]
-    public partial string GroupId { get; set; }
-
-    [ObservableProperty]
-    public partial int SortOrder { get; set; }
-
-    [ObservableProperty]
-    public partial bool IsVisible { get; set; }
-
-    /// <summary>What the pane will actually show: the override, or the code's own label.</summary>
-    public string DisplayTitle => Title.Length > 0 ? Title : DefaultTitle;
-
-    /// <summary>
-    /// The line under the label: what this destination is, and what protects it.
-    /// </summary>
-    /// <remarks>
-    /// The permission is on screen because it is the one thing here nobody can change, and somebody
-    /// wondering why a screen is invisible to a colleague needs to see it to find out.
-    /// </remarks>
-    public string Subtitle {
-      get {
-        if (IsOrphan) {
-          return $"{Id} · not in this build";
-        }
-        return RequiredPermission.Length == 0
-            ? $"{Id} · {ModuleId}"
-            : $"{Id} · {ModuleId} · needs {RequiredPermission}";
-      }
-    }
-
-    /// <summary>
-    /// The heading this destination sits under, as the picker's own item.
-    /// </summary>
-    /// <remarks>
-    /// The setter performs the move, which is the whole reason it exists. The previous version bound
-    /// the picker's value and read the row back out of the control's <c>Tag</c> in a
-    /// <c>SelectionChanged</c> handler — and on an <c>ItemsRepeater</c> recycling a row, the value
-    /// binding lands before the <c>Tag</c> binding does, so the handler ran with the new heading and
-    /// the PREVIOUS row and moved a destination nobody had touched. A property setter cannot be
-    /// wrong about which row it is on: it is on this one.
-    /// <para>
-    /// The guard is still needed. A binding settling writes here too, and a picker whose item list
-    /// is being replaced briefly writes null — which is not somebody choosing "No heading", because
-    /// that is a real item whose id happens to be empty.
-    /// </para>
-    /// </remarks>
-    public NavHeadingChoice? Heading {
-      get => Headings.FirstOrDefault(choice => choice.Id == GroupId);
-      set {
-        if (value is null || !WouldMoveTo(value.Id)) {
-          return;
-        }
-        _ = _owner.MoveAsync(this, value.Id, SortOrder);
-      }
-    }
-
-    /// <summary>Moves it earlier under its heading.</summary>
-    [RelayCommand]
-    private Task MoveUpAsync() {
-      return _owner.ReorderAsync(this, -1);
-    }
-
-    /// <summary>Moves it later under its heading.</summary>
-    [RelayCommand]
-    private Task MoveDownAsync() {
-      return _owner.ReorderAsync(this, +1);
-    }
-
-    /// <summary>Saves the label, icon and visibility as typed.</summary>
-    [RelayCommand]
-    private Task ApplyAsync() {
-      return _owner.ApplyAsync(this);
-    }
-
-    /// <summary>Clears the overrides, returning the destination to what the code calls it.</summary>
-    [RelayCommand]
-    private Task ResetAsync() {
-      Title = string.Empty;
-      Icon = string.Empty;
-      return _owner.ApplyAsync(this);
-    }
-
-    /// <summary>Whether a picked heading is actually a change, rather than a binding settling.</summary>
-    internal bool WouldMoveTo(string groupId) {
-      return groupId != _savedGroupId;
-    }
-
-    /// <summary>The same question for the visibility switch.</summary>
-    internal bool WouldChangeVisibility() {
-      return IsVisible != _savedVisible;
-    }
-
-    internal void Refresh(NavItemRow row) {
-      // The baselines FIRST. They are what the change handlers compare against, and assigning the
-      // observable properties raises those handlers — so updating the baselines afterwards let a
-      // value the server had just corrected read as a fresh edit and issue the write a second time.
-      _savedGroupId = row.GroupId;
-      _savedVisible = row.IsVisible;
-
-      Title = row.Title;
-      Icon = row.Icon;
-      GroupId = row.GroupId;
-      SortOrder = row.SortOrder;
-      IsVisible = row.IsVisible;
-      OnPropertyChanged(nameof(DisplayTitle));
-      OnPropertyChanged(nameof(Heading));
-    }
-  }
-
-  /// <summary>A heading as the group picker offers it, including "no heading".</summary>
-  public sealed record NavHeadingChoice(string Id, string Title);
-
   /// <summary>
   /// The Navigation screen: where each of this product's destinations sits in the pane.
   /// </summary>
   /// <remarks>
-  /// This is the screen the whole design exists for. Which destinations there ARE is compiled into
-  /// the clients and cannot be edited here — the list is read-only, and every row shows the
-  /// permission that protects it precisely because nothing on this screen can change it. What can be
-  /// edited is the arrangement: headings, order, labels, and whether a destination is offered.
+  /// Which destinations there ARE is compiled into the clients and cannot be edited here — every row
+  /// shows the permission that protects it precisely because nothing on this screen can change it.
+  /// What can be edited is the arrangement: headings, order, labels, icons, and whether a destination
+  /// is offered at all.
   /// <para>
-  /// Every edit is applied immediately rather than staged behind a save bar. Each one is a single
-  /// deliberate act — dropping a screen under a heading, hiding one — and none of them can leave the
-  /// layout half-changed, so there is nothing for a transaction to protect. That is the opposite of
-  /// the Role Permissions screen, where eight toggles are one decision and a partial save would be a
-  /// state nobody asked for.
+  /// Edits are staged and applied together, which reverses how this screen used to work. The old note
+  /// argued that each edit was "a single deliberate act… none of them can leave the layout
+  /// half-changed, so there is nothing for a transaction to protect", and that was true of a screen
+  /// whose only controls were one picker and one switch per row. It is not true of this one: dragging a
+  /// screen into another heading renumbers what it landed among, so one gesture is several writes, and
+  /// a sequence of single-row calls has no way to fail halfway without leaving the pane half-rearranged.
+  /// The reorder defect that motivated this was exactly that — two writes, the second failing, both
+  /// rows left sharing a number.
   /// </para>
   /// </remarks>
   public sealed partial class NavigationLayoutViewModel : ViewModel {
     private readonly INavigationAdminService _admin;
     private readonly INavigationLayoutService _layout;
+    private readonly IAccessAdminService _access;
     private readonly INotificationService _notifications;
     private readonly IDialogService _dialogs;
+    private readonly INavigationService _navigation;
+    private readonly NavigationPlanner _planner;
+
+    /// <summary>What the last read returned, which is what Discard rebuilds from.</summary>
+    /// <remarks>
+    /// Rebuilding beats asking each node to undo itself. A node can put its own name back, but nothing
+    /// on a node knows which heading it used to sit under or in what order — that is a fact about the
+    /// tree, and the tree is what a rebuild restores.
+    /// </remarks>
+    private IReadOnlyList<NavGroupRow> _loadedGroups = [];
+    private IReadOnlyList<NavItemRow> _loadedItems = [];
+
+    /// <summary>The order the saved headings were in, for noticing that somebody re-ordered them.</summary>
+    private IReadOnlyList<string> _savedHeadingOrder = [];
 
     public NavigationLayoutViewModel(
         INavigationAdminService admin,
         INavigationLayoutService layout,
+        IAccessAdminService access,
         INotificationService notifications,
-        IDialogService dialogs) {
+        IDialogService dialogs,
+        INavigationService navigation,
+        IModuleRegistry registry,
+        IPermissionService permissions) {
       ArgumentNullException.ThrowIfNull(admin);
       ArgumentNullException.ThrowIfNull(layout);
+      ArgumentNullException.ThrowIfNull(access);
       ArgumentNullException.ThrowIfNull(notifications);
       ArgumentNullException.ThrowIfNull(dialogs);
+      ArgumentNullException.ThrowIfNull(navigation);
+      ArgumentNullException.ThrowIfNull(registry);
+      ArgumentNullException.ThrowIfNull(permissions);
       _admin = admin;
       _layout = layout;
+      _access = access;
       _notifications = notifications;
       _dialogs = dialogs;
+      _navigation = navigation;
+      _planner = new NavigationPlanner(registry, permissions);
 
-      Headings = [];
-      HeadingChoices = [];
-      Destinations = [];
+      IconChoices = [.. NavigationIcons.Names.Select(
+          name => new NavIconChoice(name, NavigationIcons.Resolve(name, NavigationIcons.Unknown)))];
     }
 
-    public ObservableCollection<NavHeadingViewModel> Headings { get; }
+    /// <summary>The headings, in the order the pane draws them, with the unfiled bucket last.</summary>
+    public ObservableCollection<NavHeadingNode> Headings { get; } = [];
 
-    /// <summary>The headings a destination can be moved to, "No heading" first.</summary>
+    /// <summary>The headings a screen can be moved to, "no heading" first.</summary>
+    public ObservableCollection<NavHeadingChoice> HeadingChoices { get; } = [];
+
+    /// <summary>
+    /// Every icon name this build can draw.
+    /// </summary>
     /// <remarks>
-    /// Rebuilt on every load and handed to the rows as a snapshot, never bound to directly.
+    /// All of them, offered as a picker. The mockup showed five chips as suggestions relevant to the
+    /// selected screen, and there is nothing to base relevance on: the vocabulary is a flat list of
+    /// eight names with no notion of which suits a page. Offering the whole list is the honest version
+    /// of the same control.
     /// </remarks>
-    public List<NavHeadingChoice> HeadingChoices { get; }
+    public IReadOnlyList<NavIconChoice> IconChoices { get; }
 
-    public ObservableCollection<NavDestinationViewModel> Destinations { get; }
+    /// <summary>The roles the pane can be previewed as, "nobody" first.</summary>
+    public ObservableCollection<NavPreviewRole> PreviewRoles { get; } = [];
+
+    /// <summary>What the pane would look like: the staged arrangement, or a role's saved one.</summary>
+    public ObservableCollection<NavigationEntry> Preview { get; } = [];
+
+    /// <summary>The read-only facts about the selected screen.</summary>
+    public ObservableCollection<NavCodeFact> CodeFacts { get; } = [];
+
+    /// <summary>Every staged change, for the diff.</summary>
+    public ObservableCollection<NavChange> Diff { get; } = [];
 
     [ObservableProperty]
     public partial bool IsLoading { get; set; }
 
     [ObservableProperty]
-    public partial NavHeadingViewModel? SelectedHeading { get; set; }
+    public partial bool IsApplying { get; set; }
+
+    /// <summary>
+    /// Whether the note about permissions is showing.
+    /// </summary>
+    /// <remarks>
+    /// Dismissible per visit rather than remembered. It answers the question this screen invites —
+    /// "am I about to take somebody's access away" — and that question is worth answering again the
+    /// next time somebody opens it.
+    /// </remarks>
+    [ObservableProperty]
+    public partial bool IsNoteOpen { get; set; } = true;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasChanges))]
+    public partial int ChangedCount { get; set; }
+
+    [ObservableProperty]
+    public partial string ChangeSummary { get; set; } = string.Empty;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasSelection))]
+    [NotifyCanExecuteChangedFor(nameof(ResetScreenCommand))]
+    public partial NavScreenNode? SelectedScreen { get; set; }
+
+    [ObservableProperty]
+    public partial NavPreviewRole? PreviewRole { get; set; }
+
+    /// <summary>What the preview is currently showing, and whose arrangement it is.</summary>
+    [ObservableProperty]
+    public partial string PreviewNote { get; set; } = string.Empty;
+
+    public bool HasChanges => ChangedCount > 0;
+
+    public bool HasSelection => SelectedScreen is not null;
+
+    /// <summary>"3 unsaved changes", or the singular.</summary>
+    public string ChangeCountText => ChangedCount == 1
+        ? "1 unsaved change"
+        : string.Format(CultureInfo.CurrentCulture, "{0} unsaved changes", ChangedCount);
 
     [RelayCommand]
     private async Task LoadAsync(CancellationToken cancellationToken) {
@@ -317,202 +174,531 @@ namespace Kakehashi.App.UI {
           return;
         }
 
-        var selectedId = SelectedHeading?.Id;
-        Headings.Clear();
-        HeadingChoices.Clear();
-        HeadingChoices.Add(new NavHeadingChoice(string.Empty, "No heading"));
-        foreach (var group in groups.Value) {
-          Headings.Add(new NavHeadingViewModel(group));
-          HeadingChoices.Add(new NavHeadingChoice(group.Id, group.Title));
-        }
-        SelectedHeading = Headings.FirstOrDefault(heading => heading.Id == selectedId);
+        _loadedGroups = groups.Value;
+        _loadedItems = items.Value;
+        Rebuild();
 
-        // A snapshot for the rows, taken once the choices are settled. They must not share the list
-        // this method just rebuilt.
-        IReadOnlyList<NavHeadingChoice> choices = [.. HeadingChoices];
-        Destinations.Clear();
-        foreach (var item in items.Value) {
-          Destinations.Add(new NavDestinationViewModel(item, this, choices));
+        // The roles are for the preview picker, and a build without an authorization module has none.
+        // A failure here is not the screen failing: the arrangement loaded, and previewing as somebody
+        // else is the one thing that stops working.
+        var roles = await _access.ListRolesAsync(cancellationToken);
+        PreviewRoles.Clear();
+        PreviewRoles.Add(NavPreviewRole.Nobody);
+        if (roles.IsSuccess) {
+          foreach (var role in roles.Value) {
+            PreviewRoles.Add(new NavPreviewRole(role.Id, role.Name));
+          }
         }
+        PreviewRole = null;
       } finally {
         IsLoading = false;
       }
     }
 
-    /// <summary>Adds a heading, named so it can be renamed rather than demanding a name up front.</summary>
+    /// <summary>Adds a heading at the end, named so it can be renamed rather than demanding a name.</summary>
     /// <remarks>
-    /// The order is the end of the list, so a new heading appears at the bottom of the pane. Anywhere
-    /// else and creating one would silently reshuffle what was already there.
+    /// It is staged like everything else: nothing reaches the server until Apply. The identifier is
+    /// chosen here rather than derived from the title, which is what the server does when given an
+    /// empty one — because a screen dragged into a heading has to name it, and a title-derived
+    /// identifier is not knowable until the apply comes back. Deriving it in this client would mean
+    /// re-implementing the server's slug rule and keeping the two in step forever.
     /// </remarks>
     [RelayCommand]
-    private async Task NewHeadingAsync() {
-      var order = Headings.Count == 0 ? 10 : Headings.Max(heading => heading.SortOrder) + 10;
-      var title = UniqueTitle("New heading");
+    private void NewHeading() {
+      var heading = NavHeadingNode.NewHeading(UniqueTitle("New heading"), NextHeadingOrder());
+      heading.Id = UniqueHeadingId();
 
-      var created = await _admin.CreateGroupAsync(string.Empty, title, order, CancellationToken.None);
-      if (created.IsFailure) {
-        _notifications.Show(created.Error.Message, InfoBarSeverity.Error);
-        return;
-      }
-
-      await ReloadAsync();
-      SelectedHeading = Headings.FirstOrDefault(heading => heading.Id == created.Value.Id);
+      Watch(heading);
+      Headings.Insert(UnfiledIndex(), heading);
+      Recount();
     }
 
-    /// <summary>Saves the selected heading's name and position.</summary>
+    /// <summary>Removes a heading. What was under it becomes unfiled.</summary>
+    /// <remarks>
+    /// Confirmed only for a heading that exists on the server: one somebody added a moment ago and has
+    /// not applied is theirs to take back without being asked.
+    /// </remarks>
     [RelayCommand]
-    private async Task SaveHeadingAsync() {
-      if (SelectedHeading is not { } heading) {
+    private async Task DeleteHeadingAsync(NavHeadingNode? heading) {
+      if (heading is null || !heading.CanDelete) {
         return;
       }
 
-      var saved = await _admin.UpdateGroupAsync(
-          heading.Id, heading.Title, heading.SortOrder, CancellationToken.None);
-      if (saved.IsFailure) {
-        _notifications.Show(saved.Error.Message, InfoBarSeverity.Error);
+      if (!heading.IsNew) {
+        int affected = heading.Screens.Count;
+        bool confirmed = await _dialogs.ShowConfirmAsync(
+            $"Delete {heading.Title}?",
+            affected == 0
+                ? "It disappears from the pane when you apply."
+                : $"It disappears from the pane when you apply, and the {affected} screen(s) under it "
+                    + "become unfiled until somebody files them again.",
+            "Delete", "Cancel");
+        if (!confirmed) {
+          return;
+        }
+      }
+
+      var unfiled = Unfiled();
+      foreach (var screen in heading.Screens.ToList()) {
+        Move(screen, unfiled, unfiled.Screens.Count);
+      }
+
+      Headings.Remove(heading);
+      Recount();
+    }
+
+    /// <summary>Throws away every staged edit.</summary>
+    [RelayCommand]
+    private void Discard() {
+      Rebuild();
+    }
+
+    /// <summary>Writes the whole arrangement, or none of it.</summary>
+    [RelayCommand]
+    private async Task ApplyAsync(CancellationToken cancellationToken) {
+      if (!HasChanges) {
         return;
       }
 
-      _notifications.Show($"{saved.Value.Title} saved.", InfoBarSeverity.Success);
-      await ReloadAsync();
+      IsApplying = true;
+      try {
+        var applied = await _admin.ApplyLayoutAsync(
+            GroupSpecs(), ItemSpecs(), cancellationToken);
+        if (applied.IsFailure) {
+          // Nothing was written — the server validates the whole arrangement first — so what is on
+          // screen is still exactly what the person asked for, and throwing it away would make them
+          // do it again.
+          _notifications.Show(applied.Error.Message, InfoBarSeverity.Error);
+          return;
+        }
+
+        var outcome = applied.Value;
+        _notifications.Show(
+            outcome.Total == 0
+                ? "Nothing had changed."
+                : $"Applied: {outcome.GroupsCreated} heading(s) added, "
+                    + $"{outcome.GroupsUpdated} renamed, {outcome.GroupsDeleted} removed, "
+                    + $"{outcome.ItemsChanged} screen(s) moved.",
+            InfoBarSeverity.Success);
+
+        // Reloaded rather than assumed: the server derives identifiers for new headings, and somebody
+        // else may have applied something between this screen reading and writing.
+        await LoadAsync(cancellationToken);
+        await _layout.RefreshAsync(CancellationToken.None);
+      } finally {
+        IsApplying = false;
+      }
+    }
+
+    /// <summary>Fills the diff, for the dialog the page opens.</summary>
+    public void PrepareDiff() {
+      Diff.Clear();
+      foreach (var (subject, what) in StagedChanges()) {
+        Diff.Add(new NavChange(subject, what));
+      }
+    }
+
+    /// <summary>Moves the selected screen one place earlier under its heading.</summary>
+    [RelayCommand]
+    private void MoveUp(NavScreenNode? screen) {
+      Nudge(screen, -1);
+    }
+
+    /// <summary>Moves the selected screen one place later under its heading.</summary>
+    [RelayCommand]
+    private void MoveDown(NavScreenNode? screen) {
+      Nudge(screen, +1);
+    }
+
+    /// <summary>Puts a screen back where the code puts it, under the name the code gives it.</summary>
+    [RelayCommand(CanExecute = nameof(HasSelection))]
+    private void ResetScreen() {
+      if (SelectedScreen is not { } screen) {
+        return;
+      }
+
+      screen.Title = string.Empty;
+      screen.Icon = string.Empty;
+      screen.IsVisible = true;
+
+      // The heading the code declares, if this build still has it. A destination whose default heading
+      // a later release removed goes unfiled rather than nowhere.
+      var target = Headings.FirstOrDefault(
+          heading => !heading.IsUnfiled && heading.Id == screen.DefaultGroup) ?? Unfiled();
+
+      // Placed by the order the code declares rather than appended: "reset" means the arrangement the
+      // product shipped, and appending would put it last among screens that were never moved.
+      int index = target.Screens
+          .TakeWhile(other => !ReferenceEquals(other, screen)
+              && other.SavedOrder <= screen.DefaultOrder)
+          .Count();
+      Move(screen, target, index);
+      Recount();
+    }
+
+    /// <summary>Sets the selected screen's icon from the picker.</summary>
+    [RelayCommand]
+    private void PickIcon(NavIconChoice? choice) {
+      if (choice is not null && SelectedScreen is { } screen) {
+        screen.Icon = choice.Name;
+        Recount();
+      }
     }
 
     /// <summary>
-    /// Deletes the selected heading. What was under it falls out of every heading rather than
-    /// disappearing with it.
+    /// Removes a stored row left over from a module this build no longer has.
     /// </summary>
+    /// <remarks>
+    /// Not staged, unlike everything else here. It is not an arrangement — the row stops existing — and
+    /// the server takes it through its own call, so pretending it were part of the apply would mean a
+    /// pending bar that promised something Apply does not do.
+    /// </remarks>
     [RelayCommand]
-    private async Task DeleteHeadingAsync() {
-      if (SelectedHeading is not { } heading) {
+    private async Task DeleteOrphanAsync(NavScreenNode? screen) {
+      if (screen is not { IsOrphan: true }) {
         return;
       }
 
-      // Confirmed, because it lands on every client at once and nothing undoes it. The count is in
-      // the question: "delete Monitoring" and "unfile the three screens under it" are the same act,
-      // and only one of them is obvious from the button.
-      var affected = Destinations.Count(d => d.GroupId == heading.Id);
-      var confirmed = await _dialogs.ShowConfirmAsync(
-          $"Delete {heading.Title}?",
-          affected == 0
-              ? "The heading disappears from everyone's navigation pane."
-              : $"The heading disappears from everyone's navigation pane, and the {affected} "
-                  + "screen(s) under it become unfiled until somebody files them again.",
-          "Delete", "Cancel");
+      bool confirmed = await _dialogs.ShowConfirmAsync(
+          $"Remove {screen.DisplayTitle}?",
+          "This row is left over from a module this build no longer has. Removing it takes effect at "
+              + "once, and if that module comes back it will be filed wherever the code puts it.",
+          "Remove", "Cancel");
       if (!confirmed) {
         return;
       }
 
-      var deleted = await _admin.DeleteGroupAsync(heading.Id, CancellationToken.None);
-      if (deleted.IsFailure) {
-        _notifications.Show(deleted.Error.Message, InfoBarSeverity.Error);
+      var removed = await _admin.DeleteItemAsync(screen.Id, CancellationToken.None);
+      if (removed.IsFailure) {
+        _notifications.Show(removed.Error.Message, InfoBarSeverity.Error);
         return;
       }
 
-      _notifications.Show($"{heading.Title} deleted. What was under it is now unfiled.", InfoBarSeverity.Success);
-      SelectedHeading = null;
-      await ReloadAsync();
+      _notifications.Show($"{screen.DisplayTitle} removed.", InfoBarSeverity.Success);
+      await LoadAsync(CancellationToken.None);
     }
 
-    internal async Task MoveAsync(NavDestinationViewModel item, string groupId, int order) {
-      var moved = await _admin.MoveItemAsync(item.Id, groupId, order, CancellationToken.None);
-      if (moved.IsFailure) {
-        _notifications.Show(moved.Error.Message, InfoBarSeverity.Error);
-        // Put the row back where the server still has it, so the picker does not show a move that
-        // did not happen.
-        await ReloadAsync();
+    /// <summary>Moves a screen under a heading, at an index. What drag and drop calls.</summary>
+    public void MoveScreen(NavScreenNode screen, NavHeadingNode heading, int index) {
+      ArgumentNullException.ThrowIfNull(screen);
+      ArgumentNullException.ThrowIfNull(heading);
+
+      Move(screen, heading, index);
+      Recount();
+    }
+
+    /// <summary>Moves the whole heading to a new position among the headings.</summary>
+    public void MoveHeading(NavHeadingNode heading, int index) {
+      ArgumentNullException.ThrowIfNull(heading);
+      if (heading.IsUnfiled) {
         return;
       }
 
-      item.Refresh(moved.Value);
-      await RefreshPaneAsync();
+      int from = Headings.IndexOf(heading);
+      int to = Math.Clamp(index, 0, UnfiledIndex() - 1);
+      if (from < 0 || from == to) {
+        return;
+      }
+
+      Headings.Move(from, to);
+      Recount();
     }
 
-    /// <summary>
-    /// Moves a destination one place earlier or later under its own heading.
-    /// </summary>
-    /// <remarks>
-    /// It swaps orders with its neighbour rather than renumbering the list. Two writes instead of
-    /// one, and worth it: renumbering would rewrite every row under the heading, so a stale screen
-    /// could push somebody else's placement around while claiming to move one item.
-    /// </remarks>
-    internal async Task ReorderAsync(NavDestinationViewModel item, int direction) {
-      var siblings = Destinations
-          .Where(other => other.GroupId == item.GroupId && !other.IsOrphan)
-          .OrderBy(other => other.SortOrder)
-          .ThenBy(other => other.Id, StringComparer.Ordinal)
+    partial void OnSelectedScreenChanged(NavScreenNode? value) {
+      RebuildCodeFacts(value);
+    }
+
+    partial void OnPreviewRoleChanged(NavPreviewRole? value) {
+      _ = RefreshPreviewAsync();
+    }
+
+    /// <summary>Rebuilds the tree from the last read, discarding anything staged.</summary>
+    private void Rebuild() {
+      string? selectedId = SelectedScreen?.Id;
+
+      foreach (var heading in Headings) {
+        Unwatch(heading);
+        foreach (var screen in heading.Screens) {
+          screen.PropertyChanged -= OnNodeChanged;
+        }
+      }
+      Headings.Clear();
+
+      var unfiled = NavHeadingNode.Unfiled();
+      foreach (var row in _loadedGroups) {
+        var heading = new NavHeadingNode(row);
+        Watch(heading);
+        Headings.Add(heading);
+      }
+      Headings.Add(unfiled);
+
+      // Ordered by what the pane orders by. The server lists declared destinations in declaration
+      // order and orphans after them, which is not the order they are drawn in — OrderBy is stable, so
+      // the server's order survives as the tie-break exactly as the server's own sort intends.
+      foreach (var row in _loadedItems.OrderBy(row => row.SortOrder)) {
+        var target = Headings.FirstOrDefault(
+            heading => !heading.IsUnfiled && heading.Id == row.GroupId) ?? unfiled;
+
+        var screen = new NavScreenNode(row) { Heading = target, SavedHeading = target };
+        screen.PropertyChanged += OnNodeChanged;
+        target.Screens.Add(screen);
+      }
+
+      foreach (var heading in Headings) {
+        for (int i = 0; i < heading.Screens.Count; i++) {
+          heading.Screens[i].SavedIndex = i;
+        }
+        heading.SavedSequence = [.. heading.Screens.Select(screen => screen.Id)];
+      }
+      _savedHeadingOrder = [.. Headings.Where(h => !h.IsUnfiled).Select(h => h.Id)];
+
+      RebuildChoices();
+      SelectedScreen = Headings
+          .SelectMany(heading => heading.Screens)
+          .FirstOrDefault(screen => screen.Id == selectedId);
+      Recount();
+    }
+
+    private void RebuildChoices() {
+      HeadingChoices.Clear();
+      HeadingChoices.Add(new NavHeadingChoice(string.Empty, "No heading"));
+      foreach (var heading in Headings.Where(heading => !heading.IsUnfiled)) {
+        HeadingChoices.Add(new NavHeadingChoice(heading.Id, heading.Title));
+      }
+    }
+
+    /// <summary>Counts what is staged and says what it is.</summary>
+    private void Recount() {
+      var changes = StagedChanges();
+
+      ChangedCount = changes.Count;
+      OnPropertyChanged(nameof(ChangeCountText));
+      ChangeSummary = changes.Count == 0
+          ? string.Empty
+          : string.Join(" · ", changes.Take(3).Select(change => $"{change.Subject} {change.What}"))
+              + (changes.Count > 3
+                  ? string.Format(
+                      CultureInfo.CurrentCulture, " · and {0} more", changes.Count - 3)
+                  : string.Empty);
+
+      RebuildChoices();
+      _ = RefreshPreviewAsync();
+    }
+
+    /// <summary>Every staged change, in the order worth reading them.</summary>
+    private List<NavChange> StagedChanges() {
+      var changes = new List<NavChange>();
+
+      foreach (var heading in Headings.Where(heading => !heading.IsUnfiled)) {
+        foreach (var what in heading.Changes) {
+          changes.Add(new NavChange(heading.Title, what));
+        }
+      }
+
+      // A fact about the list rather than about any one heading, which is why no node reports it.
+      var order = Headings
+          .Where(heading => !heading.IsUnfiled && !heading.IsNew)
+          .Select(heading => heading.Id)
           .ToList();
-
-      // An orphan is not among its own siblings — the list above excludes them — so IndexOf
-      // returns -1, and -1 plus one is a perfectly valid index into somebody else's row. "Move
-      // down" on a leftover row reordered an unrelated destination; "move up" silently did nothing.
-      // The buttons are disabled for orphans now as well; this is the half that cannot be skipped.
-      var position = siblings.IndexOf(item);
-      if (position < 0) {
-        return;
+      if (!order.SequenceEqual(_savedHeadingOrder, StringComparer.Ordinal)) {
+        changes.Add(new NavChange("The headings", "were re-ordered"));
       }
 
-      var index = position + direction;
-      if (index < 0 || index >= siblings.Count) {
-        return;
+      foreach (var screen in Headings.SelectMany(heading => heading.Screens)) {
+        foreach (var what in screen.Changes) {
+          changes.Add(new NavChange(screen.DisplayTitle, what));
+        }
       }
-
-      var neighbour = siblings[index];
-      var (mine, theirs) = (item.SortOrder, neighbour.SortOrder);
-      if (mine == theirs) {
-        // Two destinations a deployment gave the same number: nudge one so the swap has an effect.
-        theirs = direction < 0 ? mine - 1 : mine + 1;
-      }
-
-      var moved = await _admin.MoveItemAsync(
-          item.Id, item.GroupId, theirs, CancellationToken.None);
-      if (moved.IsFailure) {
-        _notifications.Show(moved.Error.Message, InfoBarSeverity.Error);
-        return;
-      }
-
-      var swapped = await _admin.MoveItemAsync(
-          neighbour.Id, neighbour.GroupId, mine, CancellationToken.None);
-      if (swapped.IsFailure) {
-        _notifications.Show(swapped.Error.Message, InfoBarSeverity.Error);
-      }
-
-      await ReloadAsync();
-      await RefreshPaneAsync();
+      return changes;
     }
 
-    internal async Task ApplyAsync(NavDestinationViewModel item) {
-      var saved = await _admin.UpdateItemAsync(
-          item.Id, item.Title, item.Icon, item.IsVisible, CancellationToken.None);
-      if (saved.IsFailure) {
-        _notifications.Show(saved.Error.Message, InfoBarSeverity.Error);
-        await ReloadAsync();
-        return;
-      }
+    /// <summary>The headings to post, with the orders worked out from their positions.</summary>
+    private IReadOnlyList<NavGroupSpec> GroupSpecs() {
+      var headings = Headings.Where(heading => !heading.IsUnfiled).ToList();
 
-      item.Refresh(saved.Value);
-      await RefreshPaneAsync();
+      // Renumbered only when the order actually moved. Renumbering unconditionally would rewrite rows
+      // nobody touched — and on a deployment whose stored orders are 5 and 7, every apply would report
+      // changes that were nothing but this client's arithmetic.
+      bool renumber = headings.Any(heading => heading.IsNew)
+          || !headings.Where(heading => !heading.IsNew).Select(heading => heading.Id)
+              .SequenceEqual(_savedHeadingOrder, StringComparer.Ordinal);
+
+      return [.. headings.Select((heading, index) => new NavGroupSpec(
+          heading.Id, heading.Title, renumber ? (index + 1) * 10 : heading.SortOrder))];
     }
 
-    /// <summary>Re-reads the screen after a write.</summary>
+    /// <summary>The screens to post, with the orders worked out per heading.</summary>
+    private IReadOnlyList<NavItemSpec> ItemSpecs() {
+      var specs = new List<NavItemSpec>();
+
+      foreach (var heading in Headings) {
+        var sequence = heading.Screens.Select(screen => screen.Id).ToList();
+        bool renumber = !sequence.SequenceEqual(heading.SavedSequence, StringComparer.Ordinal);
+
+        for (int i = 0; i < heading.Screens.Count; i++) {
+          var screen = heading.Screens[i];
+          specs.Add(new NavItemSpec(
+              screen.Id,
+              heading.IsUnfiled ? string.Empty : heading.Id,
+              renumber ? (i + 1) * 10 : screen.SavedOrder,
+              screen.Title,
+              screen.Icon,
+              screen.IsVisible));
+        }
+      }
+      return specs;
+    }
+
+    /// <summary>Redraws the pane preview.</summary>
     /// <remarks>
-    /// It calls the method rather than the command. Re-entering an <c>IAsyncRelayCommand</c> cancels
-    /// the execution already running, and the cancelled one surfaced gRPC's own cancellation text as
-    /// an error bar and cleared IsLoading while its replacement was still running — a spinner that
-    /// stops early and an error about nothing.
+    /// Two different answers, and the note says which is on screen. With no role it is the staged
+    /// arrangement drawn locally, so it shows unapplied edits. With a role it is the server's answer
+    /// for that role, which reflects what is <em>saved</em> — the server has not been told about the
+    /// edits, and cannot be until Apply.
     /// </remarks>
-    private Task ReloadAsync() {
-      return LoadAsync(CancellationToken.None);
+    private async Task RefreshPreviewAsync() {
+      // No role picked: the arrangement as staged, drawn by the same planner the shell uses. This is
+      // the only preview that can show unapplied edits, because it is the only one this client draws.
+      if (PreviewRole is null) {
+        Draw(_planner.Plan(StagedLayout()));
+        PreviewNote = "Your own pane, including anything not applied yet.";
+        return;
+      }
+
+      // A role picked - "nobody" included, whose empty id is what the server reads as "no role". The
+      // server answers from what is stored, so this cannot show staged edits and says so.
+      var previewed = await _admin.PreviewLayoutAsync(PreviewRole.Id, CancellationToken.None);
+      if (previewed.IsFailure) {
+        _notifications.Show(previewed.Error.Message, InfoBarSeverity.Error);
+
+        // Back to the local preview rather than leaving the box showing somebody else's pane. Assigning
+        // null re-enters this method through the change hook, which is where the note is put right.
+        PreviewRole = null;
+        return;
+      }
+
+      Draw(_planner.Plan(previewed.Value));
+      PreviewNote =
+          $"As {PreviewRole.Name} sees it, from what is saved - not from your unapplied edits.";
     }
 
-    /// <summary>
-    /// Re-reads the pane so the change is visible in the navigation bar immediately.
-    /// </summary>
+    private void Draw(IReadOnlyList<NavigationEntry> entries) {
+      Preview.Clear();
+      foreach (var entry in entries) {
+        Preview.Add(entry);
+      }
+    }
+
+    /// <summary>The staged arrangement in the shape the pane's own planner reads.</summary>
+    private NavigationLayout StagedLayout() {
+      var unfiled = Unfiled();
+      IReadOnlyList<NavigationPlacement> ungrouped = [
+        .. unfiled.Screens.Where(screen => screen.IsVisible)
+            .Select(screen => new NavigationPlacement(
+                screen.Id, screen.Title, screen.Icon, IsEnabled: true)),
+      ];
+
+      IReadOnlyList<NavigationGroup> groups = [
+        .. Headings
+            .Where(heading => !heading.IsUnfiled)
+            .Select(heading => new NavigationGroup(
+                heading.Title,
+                [.. heading.Screens.Where(screen => screen.IsVisible)
+                    .Select(screen => new NavigationPlacement(
+                        screen.Id, screen.Title, screen.Icon, IsEnabled: true))]))
+            .Where(group => group.Items.Count > 0),
+      ];
+
+      return new NavigationLayout(ungrouped, groups);
+    }
+
+    /// <summary>The read-only card: what the code owns about the selected screen.</summary>
     /// <remarks>
-    /// Without this, an administrator arranges the pane and sees nothing happen until they sign in
-    /// again — which reads as the screen being broken rather than as a cache being stale.
+    /// Route and "declared in" come from this client, not the server. The server has no notion of a
+    /// route — it is the key the shell navigates by — and no way to know which file declares a page.
+    /// The mockup showed a source path; a page type and the assembly it lives in is the same fact this
+    /// client can actually stand behind.
     /// </remarks>
-    private Task RefreshPaneAsync() {
-      return _layout.RefreshAsync(CancellationToken.None);
+    private void RebuildCodeFacts(NavScreenNode? screen) {
+      CodeFacts.Clear();
+      if (screen is null) {
+        return;
+      }
+
+      CodeFacts.Add(new NavCodeFact("Screen key", screen.Id));
+      CodeFacts.Add(new NavCodeFact("Module", screen.ModuleId.Length > 0 ? screen.ModuleId : "—"));
+      CodeFacts.Add(new NavCodeFact(
+          "Required permission",
+          screen.RequiredPermission.Length > 0 ? screen.RequiredPermission : "none"));
+
+      var item = _planner.Find(screen.Id);
+      if (item is null) {
+        CodeFacts.Add(new NavCodeFact("Route", "not in this build"));
+        CodeFacts.Add(new NavCodeFact("Declared in", "not in this build"));
+        return;
+      }
+
+      CodeFacts.Add(new NavCodeFact("Route", _navigation.GetPageKey(item.PageType)));
+      CodeFacts.Add(new NavCodeFact(
+          "Declared in",
+          $"{item.PageType.FullName} · {item.PageType.Assembly.GetName().Name}"));
+    }
+
+    private void Nudge(NavScreenNode? screen, int direction) {
+      if (screen?.Heading is not { } heading) {
+        return;
+      }
+
+      int from = heading.Screens.IndexOf(screen);
+      int to = from + direction;
+      if (from < 0 || to < 0 || to >= heading.Screens.Count) {
+        return;
+      }
+
+      heading.Screens.Move(from, to);
+      Recount();
+    }
+
+    /// <summary>Reparents a screen without raising the count. Callers call Recount once.</summary>
+    private static void Move(NavScreenNode screen, NavHeadingNode heading, int index) {
+      screen.Heading?.Screens.Remove(screen);
+      screen.Heading = heading;
+      heading.Screens.Insert(Math.Clamp(index, 0, heading.Screens.Count), screen);
+    }
+
+    private void Watch(NavHeadingNode heading) {
+      heading.PropertyChanged += OnNodeChanged;
+    }
+
+    private void Unwatch(NavHeadingNode heading) {
+      heading.PropertyChanged -= OnNodeChanged;
+    }
+
+    /// <summary>Any staged edit on any node re-counts the whole screen.</summary>
+    /// <remarks>
+    /// Counting everything rather than adjusting a total. A change to one field can turn another
+    /// node's summary into a different sentence — renaming a heading changes what "moved to" says about
+    /// every screen under it — so an incremental count would drift from what is on screen.
+    /// </remarks>
+    private void OnNodeChanged(object? sender, PropertyChangedEventArgs e) {
+      if (e.PropertyName == nameof(NavScreenNode.IsModified)
+          || e.PropertyName == nameof(NavHeadingNode.IsModified)) {
+        return;
+      }
+      Recount();
+    }
+
+    private NavHeadingNode Unfiled() {
+      return Headings.First(heading => heading.IsUnfiled);
+    }
+
+    private int UnfiledIndex() {
+      return Headings.Count - 1;
+    }
+
+    private int NextHeadingOrder() {
+      var headings = Headings.Where(heading => !heading.IsUnfiled).ToList();
+      return headings.Count == 0 ? 10 : headings.Max(heading => heading.SortOrder) + 10;
     }
 
     private string UniqueTitle(string wanted) {
@@ -521,13 +707,39 @@ namespace Kakehashi.App.UI {
       }
 
       // Titles are unique in the database, so a second "New heading" would come back as a conflict
-      // rather than as a heading. Numbering it here turns that into nothing the user has to see.
-      for (var suffix = 2; ; suffix++) {
-        var candidate = $"{wanted} {suffix}";
+      // rather than as a heading. Numbering it here turns that into nothing anybody has to see.
+      for (int suffix = 2; ; suffix++) {
+        string candidate = string.Format(
+            CultureInfo.CurrentCulture, "{0} {1}", wanted, suffix);
         if (Headings.All(heading => heading.Title != candidate)) {
           return candidate;
         }
       }
+    }
+
+    private string UniqueHeadingId() {
+      for (int suffix = 1; ; suffix++) {
+        string candidate = string.Format(CultureInfo.InvariantCulture, "heading-{0}", suffix);
+        if (Headings.All(heading => heading.Id != candidate)) {
+          return candidate;
+        }
+      }
+    }
+  }
+
+  /// <summary>A role the pane can be previewed as, plus the "nobody" case.</summary>
+  public sealed record NavPreviewRole(string Id, string Name) {
+    /// <summary>
+    /// Somebody holding no permissions at all.
+    /// </summary>
+    /// <remarks>
+    /// The useful worst case: it answers "would a new colleague see anything". Its id is empty, which
+    /// is what the server reads as "no role".
+    /// </remarks>
+    public static NavPreviewRole Nobody { get; } = new(string.Empty, "Nobody (no permissions)");
+
+    public override string ToString() {
+      return Name;
     }
   }
 }

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Kakehashi.App.Services;
+using Kakehashi.UI.Common.Controls;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.App.UI {
@@ -122,6 +123,22 @@ namespace Kakehashi.App.UI {
     }
 
     /// <summary>
+    /// The compiled navigation item a stored row refers to, or null when this build has no such page.
+    /// </summary>
+    /// <remarks>
+    /// Exposed for the layout screen, which reports a screen's route and where it is declared. Those
+    /// come from the page type this build compiled, not from the server — the server has no notion of a
+    /// route, and no way to know which file declares a page. Reusing this join is what keeps the screen
+    /// from re-deriving a mapping the planner already owns.
+    /// </remarks>
+    public NavigationItem? Find(string id) {
+      if (id.Length == 0) {
+        return null;
+      }
+      return Available().TryGetValue(id, out var entry) ? entry.Item : null;
+    }
+
+    /// <summary>
     /// Every destination this client has and the user has not detached, keyed by its id.
     /// </summary>
     /// <remarks>
@@ -193,7 +210,7 @@ namespace Kakehashi.App.UI {
       entries.Add(new NavigationEntry(
           local.Item with {
             Title = placement.Title.Length == 0 ? local.Item.Title : placement.Title,
-            IconGlyph = NavigationGlyphs.Resolve(placement.Icon, local.Item.IconGlyph),
+            IconGlyph = NavigationIcons.Resolve(placement.Icon, local.Item.IconGlyph),
             Group = group,
           },
           placement.IsEnabled && local.IsEnabled));

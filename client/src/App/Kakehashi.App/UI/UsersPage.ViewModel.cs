@@ -14,6 +14,7 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut;
 using Kakehashi.Modules.Auth.Application.Sessions.Queries.GetCurrentSession;
 using Kakehashi.SharedKernel;
+using Kakehashi.UI.Common.Controls;
 using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
@@ -666,17 +667,17 @@ namespace Kakehashi.App.UI {
       StatCards.Add(new StatCard(
           "TOTAL USERS", TotalCount.ToString(),
           createdThisMonth == 0 ? "All accounts" : $"+{createdThisMonth} this month",
-          "", StatKind.Total));
+          "", StatKind.Accent));
       StatCards.Add(new StatCard(
-          "ACTIVE", ActiveCount.ToString(), $"{percent}% of total", "", StatKind.Active));
+          "ACTIVE", ActiveCount.ToString(), $"{percent}% of total", "", StatKind.Positive));
       StatCards.Add(new StatCard(
           // The detail line used to report the never-signed-in count, which is not a subset of
           // the number above it: an account can be active and never have signed in, so the card
           // said "3 inactive · 5 never signed in" about two different populations.
           "INACTIVE", InactiveCount.ToString(),
-          $"{NeverSignedInCount} never signed in", "", StatKind.Inactive));
+          $"{NeverSignedInCount} never signed in", "", StatKind.Muted));
       StatCards.Add(new StatCard(
-          "IDLE > 30 DAYS", IdleCount.ToString(), "Review for cleanup", "", StatKind.Idle));
+          "IDLE > 30 DAYS", IdleCount.ToString(), "Review for cleanup", "", StatKind.Warning));
     }
 
     private void RebuildRoleFilters() {

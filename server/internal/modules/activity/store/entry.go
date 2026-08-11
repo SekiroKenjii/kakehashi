@@ -17,6 +17,7 @@ package store
 
 import (
 	"context"
+	"regexp"
 	"time"
 
 	"go.mongodb.org/mongo-driver/v2/bson"
@@ -58,10 +59,28 @@ func Indexes() []mongodb.Index {
 				{Field: "_id", Descending: true},
 			},
 		},
+		{
+			// Retention, and the only thing in this module that removes anything. Its own index
+			// because Mongo honours a TTL only over a single date field, so it cannot be a flag on
+			// the compound index above.
+			//
+			// Deleting is Mongo's job rather than a job this server schedules: a background sweep
+			// here would be a second thing to deploy, to monitor and to get wrong, and it would have
+			// to be careful not to run on every replica at once. The trade is that expiry is
+			// approximate — the TTL monitor wakes about once a minute — which is exactly the
+			// precision "kept for ninety days" deserves.
+			Name:        "IX_Entry_OccurredAt_TTL",
+			Collection:  collection,
+			Keys:        []mongodb.Key{{Field: "occurred_at"}},
+			ExpireAfter: domain.Retention,
+		},
 	}
-	// `kind` is deliberately not indexed. Nothing filters or groups by it, and an index on a field
-	// no query mentions is a write cost with no reader. It is the field people index reflexively;
-	// make the next person justify it with a query.
+	// `kind` is still not indexed, and the counts are why that is now a decision rather than an
+	// oversight. CountByKind groups by it, but only after a match on user_id and a date range that
+	// the compound index above serves completely — so the group runs over one account's window,
+	// which is small, rather than over the collection. An index on `kind` would earn its write cost
+	// only if something matched on `kind` first, and nothing does: every read here starts from
+	// "whose feed is this".
 }
 
 // Mongo is the activity module's document store.
@@ -83,13 +102,15 @@ func (s *Mongo) Insert(ctx context.Context, e domain.Entry) error {
 	return nil
 }
 
-// List returns one account's most recent entries, newest first.
-func (s *Mongo) List(ctx context.Context, userID string, take int) ([]domain.Entry, error) {
+// List returns one account's entries matching the filter, newest first.
+func (s *Mongo) List(
+	ctx context.Context, userID string, filter domain.Filter, take int,
+) ([]domain.Entry, error) {
 	find := options.Find().
 		SetSort(bson.D{{Key: "occurred_at", Value: -1}, {Key: "_id", Value: -1}}).
 		SetLimit(int64(take))
 
-	cursor, err := s.entries.Find(ctx, bson.D{{Key: "user_id", Value: userID}}, find)
+	cursor, err := s.entries.Find(ctx, queryFor(userID, filter), find)
 	if err != nil {
 		return nil, errs.Internalf(err, "list activity entries")
 	}
@@ -106,6 +127,112 @@ func (s *Mongo) List(ctx context.Context, userID string, take int) ([]domain.Ent
 	return out, nil
 }
 
+// Count is how many entries match, which is the "of 214" a footer reports.
+//
+// It counts exactly the filter it is given, cursor included. Whether a total should ignore the page
+// somebody is on is the caller's decision, and a store method that quietly dropped a field it was
+// handed would be a surprise for the next caller who needed that field honoured.
+func (s *Mongo) Count(
+	ctx context.Context, userID string, filter domain.Filter,
+) (int, error) {
+	total, err := s.entries.CountDocuments(ctx, queryFor(userID, filter))
+	if err != nil {
+		return 0, errs.Internalf(err, "count activity entries")
+	}
+	return int(total), nil
+}
+
+// CountByKind is how many entries there are of each kind, for the counts beside a chip.
+//
+// Keyed by kind rather than by category for the reason Filter.Kinds is: the grouping belongs to the
+// api package, and the caller folds these into it.
+func (s *Mongo) CountByKind(
+	ctx context.Context, userID string, filter domain.Filter,
+) (map[string]int, error) {
+	pipeline := []bson.D{
+		{{Key: "$match", Value: queryFor(userID, filter)}},
+		{{Key: "$group", Value: bson.D{
+			{Key: "_id", Value: "$kind"},
+			{Key: "count", Value: bson.D{{Key: "$sum", Value: 1}}},
+		}}},
+	}
+
+	cursor, err := s.entries.Aggregate(ctx, pipeline)
+	if err != nil {
+		return nil, errs.Internalf(err, "count activity entries by kind")
+	}
+
+	var groups []struct {
+		Kind  string `bson:"_id"`
+		Count int    `bson:"count"`
+	}
+	if err := cursor.All(ctx, &groups); err != nil {
+		return nil, errs.Internalf(err, "count activity entries by kind")
+	}
+
+	out := make(map[string]int, len(groups))
+	for _, g := range groups {
+		out[g.Kind] = g.Count
+	}
+	return out, nil
+}
+
+// query builds the match. Clauses go into an explicit $and rather than one flat document, because a
+// range and a keyset cursor both constrain occurred_at and a BSON document with the same key twice
+// is not a document — one of the two silently wins.
+func queryFor(userID string, f domain.Filter) bson.D {
+	clauses := []bson.D{{{Key: "user_id", Value: userID}}}
+
+	if !f.From.IsZero() {
+		clauses = append(clauses, bson.D{
+			{Key: "occurred_at", Value: bson.D{{Key: "$gte", Value: f.From}}},
+		})
+	}
+	if !f.To.IsZero() {
+		clauses = append(clauses, bson.D{
+			{Key: "occurred_at", Value: bson.D{{Key: "$lte", Value: f.To}}},
+		})
+	}
+	if len(f.Kinds) > 0 {
+		clauses = append(clauses, bson.D{
+			{Key: "kind", Value: bson.D{{Key: "$in", Value: f.Kinds}}},
+		})
+	}
+	if f.Query != "" {
+		// Escaped, because the caller's text reaches a regular-expression engine: an unescaped "("
+		// is a syntax error the driver reports as a failed read, and an unescaped ".*" is a scan
+		// somebody did not mean to ask for.
+		//
+		// A regex rather than a text index. A text index would tokenise on word boundaries, and the
+		// three fields it would cover are an event kind, a user-agent string and an IP address —
+		// none of which is prose, and all of which people search by fragment ("203.0", "iPhone").
+		// It runs over one account's window, after the index has done the narrowing.
+		needle := bson.Regex{Pattern: regexp.QuoteMeta(f.Query), Options: "i"}
+		clauses = append(clauses, bson.D{{Key: "$or", Value: []bson.D{
+			{{Key: "kind", Value: needle}},
+			{{Key: "device", Value: needle}},
+			{{Key: "ip_address", Value: needle}},
+		}}})
+	}
+	if f.After != nil {
+		// Keyset, matching the sort and the index exactly: strictly older, or the same instant with
+		// a smaller id. Never skip-and-limit — new rows land at the head of this collection between
+		// any two reads, which is the case offset paging gets wrong.
+		clauses = append(clauses, bson.D{{Key: "$or", Value: []bson.D{
+			{{Key: "occurred_at", Value: bson.D{{Key: "$lt", Value: f.After.OccurredAt}}}},
+			{
+				{Key: "occurred_at", Value: f.After.OccurredAt},
+				{Key: "_id", Value: bson.D{{Key: "$lt", Value: f.After.ID}}},
+			},
+		}}})
+	}
+
+	if len(clauses) == 1 {
+		return clauses[0]
+	}
+	return bson.D{{Key: "$and", Value: clauses}}
+}
+
 // document is the stored shape.
 //
 // The bson tags live here rather than on domain.Entry, and the reason is that archlint would never
@@ -119,9 +246,15 @@ func (s *Mongo) List(ctx context.Context, userID string, take int) ([]domain.Ent
 // Rule 5 fences platform/mongodb and would not catch it, so this is a line a review holds rather
 // than a linter. Every other identifier in this server is a v4 UUID string.
 type document struct {
-	ID         string    `bson:"_id"`
-	UserID     string    `bson:"user_id"`
-	Kind       string    `bson:"kind"`
+	ID     string `bson:"_id"`
+	UserID string `bson:"user_id"`
+	Kind   string `bson:"kind"`
+
+	// Added after rows already existed, and needing no backfill: a document written before this
+	// field decodes it as empty, which is exactly what "this fact had no session" means. That is
+	// the whole of schema evolution in a store whose absent fields have a truthful zero value.
+	SessionID string `bson:"session_id"`
+
 	Device     string    `bson:"device"`
 	IPAddress  string    `bson:"ip_address"`
 	OccurredAt time.Time `bson:"occurred_at"`
@@ -132,6 +265,7 @@ func toDocument(e domain.Entry) document {
 		ID:         e.ID,
 		UserID:     e.UserID,
 		Kind:       e.Kind,
+		SessionID:  e.SessionID,
 		Device:     e.Device,
 		IPAddress:  e.IPAddress,
 		OccurredAt: e.OccurredAt,
@@ -143,6 +277,7 @@ func toDomain(d document) domain.Entry {
 		ID:         d.ID,
 		UserID:     d.UserID,
 		Kind:       d.Kind,
+		SessionID:  d.SessionID,
 		Device:     d.Device,
 		IPAddress:  d.IPAddress,
 		OccurredAt: d.OccurredAt,

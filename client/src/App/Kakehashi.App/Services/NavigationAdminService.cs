@@ -27,10 +27,33 @@ namespace Kakehashi.App.Services {
   /// What the code enforces. Read-only: it is declared beside the page and enforced by the route
   /// gate, and nothing on this screen can change it. That is what makes the rest safe to edit.
   /// </param>
+  /// <param name="DefaultGroup">
+  /// Where the code puts this destination when nothing has moved it. What a "reset to what the product
+  /// shipped" button needs: the reconcile step writes it once as a seed and deliberately never applies
+  /// it again, so without this the intended place is unrecoverable once somebody has moved the row.
+  /// </param>
   public sealed record NavItemRow(
       string Id, string ModuleId, string GroupId, string Title, string Icon,
       string DefaultTitle, string DefaultIcon, int SortOrder, bool IsVisible, bool IsOrphan,
-      string RequiredPermission, bool HideWhenDenied);
+      string RequiredPermission, bool HideWhenDenied,
+      string DefaultGroup, int DefaultOrder);
+
+  /// <summary>A heading as the screen wants it. An empty id means "create this one".</summary>
+  public sealed record NavGroupSpec(string Id, string Title, int SortOrder);
+
+  /// <summary>A destination as the screen wants it placed.</summary>
+  public sealed record NavItemSpec(
+      string Id, string GroupId, int SortOrder, string Title, string Icon, bool IsVisible);
+
+  /// <summary>What an apply actually changed, which is not what was sent.</summary>
+  /// <remarks>
+  /// The screen posts its whole arrangement, and most of it is usually already true. Reporting what
+  /// moved rather than what was submitted is what lets the confirmation say something worth reading.
+  /// </remarks>
+  public sealed record NavApplyOutcome(
+      int GroupsCreated, int GroupsUpdated, int GroupsDeleted, int ItemsChanged) {
+    public int Total => GroupsCreated + GroupsUpdated + GroupsDeleted + ItemsChanged;
+  }
 
   /// <summary>
   /// The layout operations behind the navigation screen, as a port.
@@ -57,6 +80,33 @@ namespace Kakehashi.App.Services {
 
     Task<Result<NavItemRow>> UpdateItemAsync(
         string id, string title, string icon, bool isVisible, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Writes a whole arrangement, or writes none of it.
+    /// </summary>
+    /// <remarks>
+    /// What the screen uses. The single-row calls above remain because removing one from the contract
+    /// would break a client compiled against it, but one gesture on this screen produces several
+    /// changes at once and a sequence of single-row writes cannot fail halfway without leaving the pane
+    /// half-rearranged.
+    /// </remarks>
+    Task<Result<NavApplyOutcome>> ApplyLayoutAsync(
+        IReadOnlyList<NavGroupSpec> groups,
+        IReadOnlyList<NavItemSpec> items,
+        CancellationToken cancellationToken);
+
+    /// <summary>Removes a stored row left over from a module this build no longer has.</summary>
+    Task<Result> DeleteItemAsync(string id, CancellationToken cancellationToken);
+
+    /// <summary>
+    /// Answers what the pane looks like for a role other than the caller's.
+    /// </summary>
+    /// <remarks>
+    /// It reflects what is <em>saved</em>, not what is staged: the server is answering about the
+    /// arrangement it holds, and it has not been told about unapplied edits.
+    /// </remarks>
+    Task<Result<NavigationLayout>> PreviewLayoutAsync(
+        string roleId, CancellationToken cancellationToken);
   }
 
   /// <summary>The administrator's client for the navigation layout service.</summary>
@@ -167,6 +217,74 @@ namespace Kakehashi.App.Services {
       });
     }
 
+    public Task<Result<NavApplyOutcome>> ApplyLayoutAsync(
+        IReadOnlyList<NavGroupSpec> groups,
+        IReadOnlyList<NavItemSpec> items,
+        CancellationToken ct) {
+      ArgumentNullException.ThrowIfNull(groups);
+      ArgumentNullException.ThrowIfNull(items);
+
+      return CallAsync(async () => {
+        var request = new NavigationV1.ApplyLayoutRequest();
+        foreach (var group in groups) {
+          request.Groups.Add(new NavigationV1.LayoutGroupSpec {
+            Id = group.Id,
+            Title = group.Title,
+            SortOrder = group.SortOrder,
+          });
+        }
+        foreach (var item in items) {
+          request.Items.Add(new NavigationV1.LayoutItemSpec {
+            Id = item.Id,
+            GroupId = item.GroupId,
+            SortOrder = item.SortOrder,
+            Title = item.Title,
+            Icon = item.Icon,
+            IsVisible = item.IsVisible,
+          });
+        }
+
+        var reply = await _client
+            .ApplyLayoutAsync(request, cancellationToken: ct)
+            .ResponseAsync.ConfigureAwait(false);
+
+        return new NavApplyOutcome(
+            reply.GroupsCreated, reply.GroupsUpdated, reply.GroupsDeleted, reply.ItemsChanged);
+      });
+    }
+
+    public Task<Result> DeleteItemAsync(string id, CancellationToken ct) {
+      return CallVoidAsync(() => _client
+          .DeleteItemAsync(new NavigationV1.DeleteItemRequest { Id = id }, cancellationToken: ct)
+          .ResponseAsync);
+    }
+
+    public Task<Result<NavigationLayout>> PreviewLayoutAsync(string roleId, CancellationToken ct) {
+      return CallAsync(async () => {
+        var reply = await _client
+            .PreviewLayoutAsync(
+                new NavigationV1.PreviewLayoutRequest { RoleId = roleId }, cancellationToken: ct)
+            .ResponseAsync.ConfigureAwait(false);
+
+        return new NavigationLayout(
+            [.. reply.Ungrouped.Select(ToPlacement)],
+            [.. reply.Groups.Select(group => new NavigationGroup(
+                group.Title, [.. group.Items.Select(ToPlacement)]))]);
+      });
+    }
+
+    /// <summary>
+    /// The same mapping the pane's own read does.
+    /// </summary>
+    /// <remarks>
+    /// Duplicated from NavigationLayoutService rather than shared, and only just worth it: that one
+    /// maps the read every client makes and this one maps a preview only an administrator asks for. If
+    /// a third caller appears, the mapping moves.
+    /// </remarks>
+    private static NavigationPlacement ToPlacement(NavigationV1.Item item) {
+      return new NavigationPlacement(item.Id, item.Title, item.Icon, item.Enabled);
+    }
+
     private static NavGroupRow ToRow(NavigationV1.Group group) {
       return new NavGroupRow(group.Id, group.Title, group.SortOrder, group.IsSystem);
     }
@@ -175,7 +293,8 @@ namespace Kakehashi.App.Services {
       return new NavItemRow(
           item.Id, item.ModuleId, item.GroupId, item.Title, item.Icon,
           item.DefaultTitle, item.DefaultIcon, item.SortOrder, item.IsVisible, item.IsOrphan,
-          item.RequiredPermission, item.HideWhenDenied);
+          item.RequiredPermission, item.HideWhenDenied,
+          item.DefaultGroup, item.DefaultOrder);
     }
 
     private static async Task<Result<T>> CallAsync<T>(Func<Task<T>> call) {

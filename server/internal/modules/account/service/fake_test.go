@@ -150,20 +150,23 @@ func (f *fakeStore) SessionsForUser(_ context.Context, userID string) ([]domain.
 	return out, nil
 }
 
-func (f *fakeStore) DeleteSession(_ context.Context, userID, id string) error {
+func (f *fakeStore) DeleteSession(_ context.Context, userID, id string) (bool, error) {
 	if sess, ok := f.sessions[id]; ok && sess.UserID == userID {
 		delete(f.sessions, id)
+		return true, nil
 	}
-	return nil
+	return false, nil
 }
 
-func (f *fakeStore) DeleteSessionsForUser(_ context.Context, userID string) error {
+func (f *fakeStore) DeleteSessionsForUser(_ context.Context, userID string) (int64, error) {
+	var ended int64
 	for id, sess := range f.sessions {
 		if sess.UserID == userID {
 			delete(f.sessions, id)
+			ended++
 		}
 	}
-	return nil
+	return ended, nil
 }
 
 func (f *fakeStore) CompleteAuthRequest(

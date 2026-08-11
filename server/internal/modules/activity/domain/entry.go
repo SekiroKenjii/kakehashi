@@ -5,6 +5,11 @@
 // domain/doc.go makes the same ruling about its SecurityEvent, and it is true of Entry clause for
 // clause.
 //
+// Append-only is not the same as permanent, and the distinction arrived with Retention below. An
+// entry is never edited and never deleted by anything this code calls; it expires, on a schedule
+// Mongo runs, once it is older than Retention. Nobody can rewrite history — history simply stops
+// going back forever, which is what the screen means when it says how far it goes.
+//
 // This module therefore has zero aggregate roots and one record type, which is why there is no
 // doc.go — that appears once a package has more than one root to name.
 //
@@ -19,6 +24,16 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
+// Retention is how long an entry is kept before the store deletes it.
+//
+// A rule about the record rather than about the storage, which is why it is here and not in store/ —
+// the store implements it with a TTL index, but "ninety days" is a decision about how long somebody
+// can look back, and the only reason the number lives in one place is so the index and the number
+// the screen reports cannot come to disagree.
+//
+// It is also this module's first deletion of anything. See the note on Entry below.
+const Retention = 90 * 24 * time.Hour
+
 // Entry is one recorded fact about an account.
 //
 // The fields are exported so the store can map them onto its document; construction goes through
@@ -28,6 +43,10 @@ type Entry struct {
 	ID     string
 	UserID string
 	Kind   string
+
+	// SessionID is empty for facts that have no session: a password change belongs to an account,
+	// not to a device, and clearing every session at once names none of them.
+	SessionID string
 
 	Device    string
 	IPAddress string
@@ -40,7 +59,9 @@ type Entry struct {
 // Unlike the notes module's constructor, these messages never reach a user: no caller submits an
 // entry, a subscriber does, and the subscriber logs the failure and drops it rather than failing
 // the request that caused it. Write them for whoever reads the log.
-func NewEntry(id, userID, kind, device, ip string, occurredAt time.Time) (Entry, error) {
+func NewEntry(
+	id, userID, kind, sessionID, device, ip string, occurredAt time.Time,
+) (Entry, error) {
 	if userID == "" {
 		// Every read filters on the user id, so an entry without one is unreachable by the only
 		// query this module has: silent garbage that nobody will ever see or delete.
@@ -59,6 +80,7 @@ func NewEntry(id, userID, kind, device, ip string, occurredAt time.Time) (Entry,
 		ID:         id,
 		UserID:     userID,
 		Kind:       kind,
+		SessionID:  sessionID,
 		Device:     device,
 		IPAddress:  ip,
 		OccurredAt: occurredAt,

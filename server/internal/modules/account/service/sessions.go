@@ -37,15 +37,42 @@ func (s *Service) Sessions(
 	return out, nil
 }
 
-// RevokeSession ends one session. Revoking one that is already gone succeeds, for the same reason
-// deleting an absent note does.
-func (s *Service) RevokeSession(ctx context.Context, userID, sessionID string) error {
-	if err := s.store.DeleteSession(ctx, userID, sessionID); err != nil {
+// SignOut ends the caller's own session because they asked to leave.
+//
+// The same delete as RevokeSession, announced differently. Only the caller knows which of the two
+// this is, so only the caller can say — and a week later "you signed out" and "a session was
+// revoked" are the difference between a reassuring line and one worth acting on.
+func (s *Service) SignOut(ctx context.Context, userID, sessionID string) error {
+	ended, err := s.store.DeleteSession(ctx, userID, sessionID)
+	if err != nil {
 		return err
+	}
+	if !ended {
+		return nil
+	}
+
+	s.record(ctx, userID, accountapi.EventSignedOut, "", "")
+	eventbus.Publish(s.bus, ctx, accountapi.SignedOut{
+		UserID: userID, SessionID: sessionID, At: s.now(),
+	})
+	return nil
+}
+
+// RevokeSession ends one session the owner picked off their device list. Revoking one that is
+// already gone succeeds, for the same reason deleting an absent note does — but it announces
+// nothing, because a feed that said "a session was revoked" twice for one revocation would be
+// describing an event that did not happen.
+func (s *Service) RevokeSession(ctx context.Context, userID, sessionID string) error {
+	ended, err := s.store.DeleteSession(ctx, userID, sessionID)
+	if err != nil {
+		return err
+	}
+	if !ended {
+		return nil
 	}
 
 	s.record(ctx, userID, accountapi.EventSessionRevoked, "", "")
-	eventbus.Publish(s.bus, ctx, accountapi.SignedOut{
+	eventbus.Publish(s.bus, ctx, accountapi.SessionRevoked{
 		UserID: userID, SessionID: sessionID, At: s.now(),
 	})
 	return nil
@@ -53,11 +80,16 @@ func (s *Service) RevokeSession(ctx context.Context, userID, sessionID string) e
 
 // RevokeAllSessions ends every session for the account, including the caller's.
 func (s *Service) RevokeAllSessions(ctx context.Context, userID string) error {
-	if err := s.store.DeleteSessionsForUser(ctx, userID); err != nil {
+	ended, err := s.store.DeleteSessionsForUser(ctx, userID)
+	if err != nil {
 		return err
 	}
+	if ended == 0 {
+		return nil
+	}
 
+	// No session id: every one of them went, so naming one would be picking a survivor at random.
 	s.record(ctx, userID, accountapi.EventSessionRevoked, "", "")
-	eventbus.Publish(s.bus, ctx, accountapi.SignedOut{UserID: userID, At: s.now()})
+	eventbus.Publish(s.bus, ctx, accountapi.SessionRevoked{UserID: userID, At: s.now()})
 	return nil
 }

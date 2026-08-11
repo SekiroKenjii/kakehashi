@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Threading;
 using System.Threading.Tasks;
+using Google.Protobuf.WellKnownTypes;
 using Grpc.Core;
 using Kakehashi.Modules.Activity.Application.Abstractions;
 using Kakehashi.Modules.Activity.Application.Activity;
@@ -33,13 +34,30 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
       _logger = logger;
     }
 
-    public async Task<Result<IReadOnlyList<ActivityEntryDto>>> ListAsync(
-        int take, CancellationToken cancellationToken) {
+    public async Task<Result<ActivityPageDto>> ListAsync(
+        ActivityFeedFilter filter, CancellationToken cancellationToken) {
+      ArgumentNullException.ThrowIfNull(filter);
+
+      var request = new ActivityV1.ListActivityRequest {
+        PageSize = filter.PageSize,
+        PageToken = filter.PageToken,
+        Category = filter.Category,
+        Query = filter.Search,
+      };
+
+      // Left unset rather than sent as a zero timestamp: the server reads an absent bound as
+      // unbounded, and the epoch is a real instant that would quietly exclude nothing on one side
+      // while looking deliberate.
+      if (filter.From is { } from) {
+        request.From = Timestamp.FromDateTimeOffset(from);
+      }
+      if (filter.To is { } to) {
+        request.To = Timestamp.FromDateTimeOffset(to);
+      }
+
       try {
         var reply = await _client
-            .ListActivityAsync(
-                new ActivityV1.ListActivityRequest { PageSize = take },
-                cancellationToken: cancellationToken)
+            .ListActivityAsync(request, cancellationToken: cancellationToken)
             .ResponseAsync
             .ConfigureAwait(false);
 
@@ -47,15 +65,83 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
         foreach (var entry in reply.Entries) {
           entries.Add(ToDto(entry));
         }
-        return Result.Success<IReadOnlyList<ActivityEntryDto>>(entries);
+
+        var counts = new Dictionary<string, int>(reply.Counts.Count, StringComparer.Ordinal);
+        foreach (var count in reply.Counts) {
+          counts[count.Category] = count.Count;
+        }
+
+        var kindCounts = new Dictionary<string, int>(
+            reply.KindCounts.Count, StringComparer.Ordinal);
+        foreach (var count in reply.KindCounts) {
+          kindCounts[count.Kind] = count.Count;
+        }
+
+        return Result.Success(new ActivityPageDto(
+            entries, reply.NextPageToken, reply.TotalCount, counts, kindCounts,
+            reply.RetentionDays));
       } catch (RpcException exception) {
-        return Result.Failure<IReadOnlyList<ActivityEntryDto>>(Translate(exception));
+        // InvalidArgument here is an unreadable page token, which means this client and the server
+        // disagree about where the reader is. Reported as its own failure so the view model can start
+        // the list again rather than sit under a "load more" button that will never work.
+        if (exception.StatusCode == StatusCode.InvalidArgument) {
+          LogFailed(exception.StatusCode, exception);
+          return Result.Failure<ActivityPageDto>(ActivityErrors.PageLost);
+        }
+        return Result.Failure<ActivityPageDto>(Translate(exception));
       }
+    }
+
+    public async Task<Result> RecordAsync(
+        ClientActivityKind kind, CancellationToken cancellationToken) {
+      try {
+        await _client
+            .RecordClientEventAsync(
+                new ActivityV1.RecordClientEventRequest { Kind = WireName(kind) },
+                cancellationToken: cancellationToken)
+            .ResponseAsync
+            .ConfigureAwait(false);
+        return Result.Success();
+      } catch (RpcException exception) {
+        // Mapped here rather than in Translate because InvalidArgument means something different on
+        // each call: on a list it is an unreadable page token, and on this one it is the server
+        // refusing a kind — which can only happen if this client is newer than the server it is
+        // talking to.
+        if (exception.StatusCode == StatusCode.InvalidArgument) {
+          LogFailed(exception.StatusCode, exception);
+          return Result.Failure(ActivityErrors.ReportRefused);
+        }
+        return Result.Failure(Translate(exception));
+      }
+    }
+
+    /// <summary>
+    /// The name the server knows this fact by.
+    /// </summary>
+    /// <remarks>
+    /// A switch with no default arm, on purpose: adding a value to
+    /// <see cref="ClientActivityKind"/> without deciding what to call it on the wire should not
+    /// compile. The alternative — a default that sends the enum's own name — would send a string the
+    /// server has never heard of and turn a missed edit into a runtime refusal.
+    /// </remarks>
+    private static string WireName(ClientActivityKind kind) {
+      return kind switch {
+        ClientActivityKind.AppUpdated => "AppUpdated",
+        ClientActivityKind.ThemeChanged => "ThemeChanged",
+        _ => throw new ArgumentOutOfRangeException(nameof(kind)),
+      };
     }
 
     private static ActivityEntryDto ToDto(ActivityV1.Entry entry) {
       return new ActivityEntryDto(
-          entry.Kind, entry.Device, entry.IpAddress, entry.OccurredAt.ToDateTimeOffset());
+          entry.Id,
+          entry.Kind,
+          entry.Category,
+          entry.SessionId,
+          entry.Device,
+          entry.Platform,
+          entry.IpAddress,
+          entry.OccurredAt.ToDateTimeOffset());
     }
 
     private Error Translate(RpcException exception) {
@@ -79,7 +165,7 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
       return ActivityErrors.RequestFailed;
     }
 
-    [LoggerMessage(Level = LogLevel.Warning, Message = "Activity list failed with {Status}.")]
+    [LoggerMessage(Level = LogLevel.Warning, Message = "Activity request failed with {Status}.")]
     private partial void LogFailed(StatusCode status, Exception exception);
   }
 }

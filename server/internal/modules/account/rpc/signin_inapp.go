@@ -146,7 +146,7 @@ func (h *inAppSignInHandler) signOut(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.svc.RevokeSession(r.Context(), subject.ID, subject.SessionID); err != nil {
+	if err := h.svc.SignOut(r.Context(), subject.ID, subject.SessionID); err != nil {
 		writeError(w, err)
 		return
 	}

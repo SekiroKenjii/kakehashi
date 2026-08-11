@@ -6,6 +6,7 @@ using Kakehashi.App.Services;
 using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.Modules.Auth.Domain;
 using Kakehashi.Modules.Auth.UI;
+using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml;
 using NSubstitute;
@@ -29,6 +30,51 @@ namespace Kakehashi.App.Tests.Services {
       foreach (var log in _initialized) {
         WeakReferenceMessenger.Default.UnregisterAll(log);
       }
+    }
+
+    /// <summary>
+    /// Recording announces, because two of these facts are ones no server can observe for itself and
+    /// a feature module forwards them. The log keeps its own string kinds — that is the shape already
+    /// persisted in settings — and announces the shared enum, so neither side depends on a literal
+    /// the other might edit.
+    /// </summary>
+    [Theory]
+    [InlineData(AppActivityLog.SignedInKind, AppActivityKind.SignedIn)]
+    [InlineData(AppActivityLog.SignedOutKind, AppActivityKind.SignedOut)]
+    [InlineData(AppActivityLog.AppUpdatedKind, AppActivityKind.AppUpdated)]
+    [InlineData(AppActivityLog.ThemeChangedKind, AppActivityKind.ThemeChanged)]
+    public void Record_AnnouncesTheMatchingKind(string kind, AppActivityKind expected) {
+      var log = new AppActivityLog(new InMemoryLocalSettings());
+      var announced = new List<AppActivityKind>();
+      object recipient = new();
+      WeakReferenceMessenger.Default.Register<AppActivityRecordedMessage>(
+          recipient, (_, message) => announced.Add(message.Kind));
+
+      try {
+        log.Record(kind, "Title", "detail");
+      } finally {
+        WeakReferenceMessenger.Default.UnregisterAll(recipient);
+      }
+
+      Assert.Equal([expected], announced);
+    }
+
+    /// <summary>A kind nobody shares stays local rather than being announced as something else.</summary>
+    [Fact]
+    public void Record_DoesNotAnnounceAKindNothingElseKnows() {
+      var log = new AppActivityLog(new InMemoryLocalSettings());
+      var announced = new List<AppActivityKind>();
+      object recipient = new();
+      WeakReferenceMessenger.Default.Register<AppActivityRecordedMessage>(
+          recipient, (_, message) => announced.Add(message.Kind));
+
+      try {
+        log.Record("SomethingLocal", "Title", "detail");
+      } finally {
+        WeakReferenceMessenger.Default.UnregisterAll(recipient);
+      }
+
+      Assert.Empty(announced);
     }
 
     [Fact]

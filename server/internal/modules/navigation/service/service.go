@@ -32,6 +32,10 @@ type Store interface {
 	EnsurePlacements(ctx context.Context, seeds []domain.Placement, at time.Time) error
 	Move(ctx context.Context, id, groupID string, order int, at time.Time) error
 	Override(ctx context.Context, id, title, icon string, isVisible bool, at time.Time) error
+	DeleteItem(ctx context.Context, id string) error
+
+	// ApplyLayout writes a whole rearrangement in one transaction, or writes none of it.
+	ApplyLayout(ctx context.Context, plan domain.LayoutPlan, at time.Time) error
 }
 
 // Clock is injected so a test can pin it.
@@ -57,6 +61,10 @@ type Service struct {
 	// writes to publish, and that is the point at which a counter earns its keep.
 	mu     sync.RWMutex
 	cached *layout
+
+	// roleGrants answers what a role may do, for previewing somebody else's pane. Optional: a build
+	// with no authorization module has no roles, and nothing else here needs it.
+	roleGrants RoleGrants
 }
 
 // layout is the stored half of the pane: the headings, and where each destination sits.

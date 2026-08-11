@@ -232,6 +232,24 @@ codes has started knowing it is on a network.
 
 Reserve panics for programmer errors. `app.Use[T]` panicking at boot is deliberate.
 
+### Activity kinds, and writes that come from a client
+
+Two rules, both about the activity feed, and neither is a style preference.
+
+**A kind is named in exactly one place: `activity/api/api.go`.** The constant, the category it maps
+to, and whether a client may report it all live in that file. Adding a kind means editing it and the
+publisher — nothing else, and never a second table in the client. Categories are the server's because
+counts are over everything retained, which only the server can see.
+
+**A write path from a client goes through a closed allow-list or it does not exist.**
+`RecordClientEvent` is the only one, and `activityapi.CanReport` is the list. Anything a caller could
+choose is decided by the server instead: the subject comes from the token, the timestamp from the
+server's clock, the device and address from the connection. The refusal names no kinds — listing what
+is allowed teaches a caller what else to try.
+
+Extending that list is a security decision. Answer "could a compromised client use this to tell a lie
+a reader would act on?" before adding to it, and read `docs/ACTIVITY.md` first.
+
 ### Storage rules
 
 - **Each module owns a SQL schema named after its module ID** (`notes.Note`). `Migrate` creates it

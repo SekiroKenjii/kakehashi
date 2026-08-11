@@ -56,7 +56,31 @@ type Entry struct {
 	// spoofed string. Possibly empty.
 	IpAddress string `protobuf:"bytes,3,opt,name=ip_address,json=ipAddress,proto3" json:"ip_address,omitempty"`
 	// When it happened, which is not when it was stored and not when it was read.
-	OccurredAt    *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	OccurredAt *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=occurred_at,json=occurredAt,proto3" json:"occurred_at,omitempty"`
+	// This entry's identifier, for a reader who wants to quote one — "copy this event", "report this
+	// one". The account it belongs to is the caller, so the row is nobody else's secret.
+	Id string `protobuf:"bytes,5,opt,name=id,proto3" json:"id,omitempty"`
+	// Which chip along the top of the feed this entry sits under, and what the counts count.
+	//
+	// Resolved by the server rather than by the client mapping kinds to categories itself, for two
+	// reasons: the set of kinds is the server's, so a client-side map is a second place to edit every
+	// time one is added; and the counts are over everything retained rather than over the page that
+	// was fetched, which only the server can see. A category this client does not recognise is still
+	// printable, for the same reason kind is a string.
+	Category string `protobuf:"bytes,6,opt,name=category,proto3" json:"category,omitempty"`
+	// The session this fact belongs to, empty where there is none: a password change belongs to an
+	// account rather than to a device, and clearing every session at once names none of them.
+	//
+	// It is what lets a client show that nine sign-outs were one session rather than nine separate
+	// events, which is the difference between a feed and a wall of noise.
+	SessionId string `protobuf:"bytes,7,opt,name=session_id,json=sessionId,proto3" json:"session_id,omitempty"`
+	// The operating system family read out of device, empty when it says nothing recognisable.
+	//
+	// Sent as well as device, not instead of it. "Windows" is the answer to "was that me?"; the raw
+	// string is what somebody pastes into a support conversation when the answer was no. Derived on
+	// the way out of the server rather than stored, so a better reading applies to rows already
+	// written.
+	Platform      string `protobuf:"bytes,8,opt,name=platform,proto3" json:"platform,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -119,22 +143,70 @@ func (x *Entry) GetOccurredAt() *timestamppb.Timestamp {
 	return nil
 }
 
+func (x *Entry) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+func (x *Entry) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *Entry) GetSessionId() string {
+	if x != nil {
+		return x.SessionId
+	}
+	return ""
+}
+
+func (x *Entry) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
 type ListActivityRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// How many of the newest entries to return. Anything less than one means the server's default,
-	// and anything unreasonably large is clamped rather than rejected: a client that asks for a
-	// million rows deserves an answer rather than an error.
+	// How many entries to return. Anything less than one means the server's default, and anything
+	// larger than the server's ceiling is clamped down to it rather than rejected: a client that asks
+	// for a million rows deserves an answer rather than an error.
 	//
-	// A cap, not a cursor. A note list is bounded by how many notes a person writes; a feed only
-	// ever grows, so "return everything" is wrong from the first week rather than eventually. The
-	// cursor is still deliberately absent, for the reason the notes contract gives: paging is easy
-	// to get wrong early and additive later — page_token here and next_page_token below both are.
+	// Clamped down, not reset — an earlier server answered an over-large request with its default,
+	// which quietly made a client's paging arithmetic wrong.
+	PageSize int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Where to continue from: the next_page_token of the previous response. Empty starts at the
+	// newest entry.
 	//
-	// When it does arrive it must be keyset, never skip and limit. New rows land at the head of this
-	// collection between every pair of reads, which is precisely the case offset paging gets wrong,
-	// and it is the case a note list never hits. The collection's index already ends in _id so that
-	// cursor is index-served the day someone adds it.
-	PageSize      int32 `protobuf:"varint,1,opt,name=page_size,json=pageSize,proto3" json:"page_size,omitempty"`
+	// Keyset, never skip-and-limit, and opaque. New entries land at the head of this feed between any
+	// two reads, which is exactly the case an offset gets wrong — page two of an offset would repeat
+	// rows page one already showed. The token is base64 rather than readable so that its shape stays
+	// the server's business; a client that could compose one would make the cursor contract forever.
+	//
+	// A token this server cannot read is refused rather than ignored. Starting over from the newest
+	// entry would draw page one again under a "load more" button, and the reader would conclude the
+	// feed loops.
+	PageToken string `protobuf:"bytes,2,opt,name=page_token,json=pageToken,proto3" json:"page_token,omitempty"`
+	// Bound occurred_at inclusively. Unset means unbounded on that side, so "the last 7 days" sets
+	// only from.
+	From *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=from,proto3" json:"from,omitempty"`
+	To   *timestamppb.Timestamp `protobuf:"bytes,4,opt,name=to,proto3" json:"to,omitempty"`
+	// One category's worth of entries — see Entry.category. Empty means every category. A category
+	// the server does not recognise is ignored rather than refused, so a client one release ahead
+	// gets the whole feed instead of an error.
+	Category string `protobuf:"bytes,5,opt,name=category,proto3" json:"category,omitempty"`
+	// A substring of the kind, the device or the address, matched case-insensitively. Empty matches
+	// everything.
+	//
+	// Searched by the server rather than filtered by the client, because the client only has the page
+	// it fetched: a search that only looked at what is on screen would answer "no matches" for
+	// something three pages down.
+	Query         string `protobuf:"bytes,6,opt,name=query,proto3" json:"query,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -176,17 +248,276 @@ func (x *ListActivityRequest) GetPageSize() int32 {
 	return 0
 }
 
+func (x *ListActivityRequest) GetPageToken() string {
+	if x != nil {
+		return x.PageToken
+	}
+	return ""
+}
+
+func (x *ListActivityRequest) GetFrom() *timestamppb.Timestamp {
+	if x != nil {
+		return x.From
+	}
+	return nil
+}
+
+func (x *ListActivityRequest) GetTo() *timestamppb.Timestamp {
+	if x != nil {
+		return x.To
+	}
+	return nil
+}
+
+func (x *ListActivityRequest) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *ListActivityRequest) GetQuery() string {
+	if x != nil {
+		return x.Query
+	}
+	return ""
+}
+
+type RecordClientEventRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// Which fact happened. One of the kinds the server allows a client to report — today "AppUpdated"
+	// and "ThemeChanged" — and anything else is refused.
+	//
+	// The only field, and the omissions are the design. There is no account id: whose feed this is
+	// comes from the verified token, so a client cannot write into somebody else's. There is no
+	// timestamp: the server stamps it, because a client with a wrong clock — or a bad intention —
+	// could otherwise slot a row in between two security events and change what the sequence appears
+	// to say. And there is no free text, because a row people read to decide whether to change their
+	// password should not contain a sentence somebody else composed.
+	Kind          string `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordClientEventRequest) Reset() {
+	*x = RecordClientEventRequest{}
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordClientEventRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordClientEventRequest) ProtoMessage() {}
+
+func (x *RecordClientEventRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordClientEventRequest.ProtoReflect.Descriptor instead.
+func (*RecordClientEventRequest) Descriptor() ([]byte, []int) {
+	return file_kakehashi_activity_v1_activity_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *RecordClientEventRequest) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+// Deliberately empty. The client has nothing to do with the answer, and a field added here later is
+// additive; a field removed is not.
+type RecordClientEventResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *RecordClientEventResponse) Reset() {
+	*x = RecordClientEventResponse{}
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *RecordClientEventResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*RecordClientEventResponse) ProtoMessage() {}
+
+func (x *RecordClientEventResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use RecordClientEventResponse.ProtoReflect.Descriptor instead.
+func (*RecordClientEventResponse) Descriptor() ([]byte, []int) {
+	return file_kakehashi_activity_v1_activity_proto_rawDescGZIP(), []int{3}
+}
+
+// KindCount is one kind's count.
+//
+// Sent alongside the category counts rather than instead of them, because the two answer different
+// questions: a chip filters by category, and a summary card states one exact fact — "one sign-in was
+// refused in the last seven days". Deriving that from a category total is impossible, since Security
+// also contains password changes, and deriving it from the page that was fetched would be a number
+// that changes as somebody scrolls.
+type KindCount struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Kind          string                 `protobuf:"bytes,1,opt,name=kind,proto3" json:"kind,omitempty"`
+	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *KindCount) Reset() {
+	*x = KindCount{}
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *KindCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*KindCount) ProtoMessage() {}
+
+func (x *KindCount) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use KindCount.ProtoReflect.Descriptor instead.
+func (*KindCount) Descriptor() ([]byte, []int) {
+	return file_kakehashi_activity_v1_activity_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *KindCount) GetKind() string {
+	if x != nil {
+		return x.Kind
+	}
+	return ""
+}
+
+func (x *KindCount) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
+// CategoryCount is one chip's count.
+//
+// A repeated pair rather than a map, so the wire order is the server's and a client can draw the
+// chips in it. Protobuf maps have no defined order, and a chip row that reshuffles between refreshes
+// looks broken even when the numbers are right.
+type CategoryCount struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Category      string                 `protobuf:"bytes,1,opt,name=category,proto3" json:"category,omitempty"`
+	Count         int32                  `protobuf:"varint,2,opt,name=count,proto3" json:"count,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CategoryCount) Reset() {
+	*x = CategoryCount{}
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CategoryCount) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CategoryCount) ProtoMessage() {}
+
+func (x *CategoryCount) ProtoReflect() protoreflect.Message {
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CategoryCount.ProtoReflect.Descriptor instead.
+func (*CategoryCount) Descriptor() ([]byte, []int) {
+	return file_kakehashi_activity_v1_activity_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *CategoryCount) GetCategory() string {
+	if x != nil {
+		return x.Category
+	}
+	return ""
+}
+
+func (x *CategoryCount) GetCount() int32 {
+	if x != nil {
+		return x.Count
+	}
+	return 0
+}
+
 type ListActivityResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// Newest first.
-	Entries       []*Entry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	Entries []*Entry `protobuf:"bytes,1,rep,name=entries,proto3" json:"entries,omitempty"`
+	// Empty when this is the last page. Feed it back as page_token to continue.
+	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
+	// How many entries match the whole request, so a footer can say "8 of 214". It counts what is
+	// being paged through, category and query included.
+	TotalCount int32 `protobuf:"varint,3,opt,name=total_count,json=totalCount,proto3" json:"total_count,omitempty"`
+	// How many entries there are per category, so each chip can show its own count.
+	//
+	// Not narrowed by the requested category: a chip has to show its count while a different chip is
+	// the active one, and counting the filtered set would leave every chip but one at zero. Sent only
+	// with the first page — paging cannot change them, and the client already has them.
+	Counts []*CategoryCount `protobuf:"bytes,4,rep,name=counts,proto3" json:"counts,omitempty"`
+	// How far back the feed goes at all. A footer says so rather than leaving somebody to wonder
+	// whether an entry they remember is missing or simply expired.
+	RetentionDays int32 `protobuf:"varint,5,opt,name=retention_days,json=retentionDays,proto3" json:"retention_days,omitempty"`
+	// How many entries there are of each kind, on the same terms as counts: narrowed by the range and
+	// the query, not by the requested category, and sent only with the first page.
+	KindCounts    []*KindCount `protobuf:"bytes,6,rep,name=kind_counts,json=kindCounts,proto3" json:"kind_counts,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
 
 func (x *ListActivityResponse) Reset() {
 	*x = ListActivityResponse{}
-	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[2]
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -198,7 +529,7 @@ func (x *ListActivityResponse) String() string {
 func (*ListActivityResponse) ProtoMessage() {}
 
 func (x *ListActivityResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[2]
+	mi := &file_kakehashi_activity_v1_activity_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -211,7 +542,7 @@ func (x *ListActivityResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListActivityResponse.ProtoReflect.Descriptor instead.
 func (*ListActivityResponse) Descriptor() ([]byte, []int) {
-	return file_kakehashi_activity_v1_activity_proto_rawDescGZIP(), []int{2}
+	return file_kakehashi_activity_v1_activity_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListActivityResponse) GetEntries() []*Entry {
@@ -221,24 +552,87 @@ func (x *ListActivityResponse) GetEntries() []*Entry {
 	return nil
 }
 
+func (x *ListActivityResponse) GetNextPageToken() string {
+	if x != nil {
+		return x.NextPageToken
+	}
+	return ""
+}
+
+func (x *ListActivityResponse) GetTotalCount() int32 {
+	if x != nil {
+		return x.TotalCount
+	}
+	return 0
+}
+
+func (x *ListActivityResponse) GetCounts() []*CategoryCount {
+	if x != nil {
+		return x.Counts
+	}
+	return nil
+}
+
+func (x *ListActivityResponse) GetRetentionDays() int32 {
+	if x != nil {
+		return x.RetentionDays
+	}
+	return 0
+}
+
+func (x *ListActivityResponse) GetKindCounts() []*KindCount {
+	if x != nil {
+		return x.KindCounts
+	}
+	return nil
+}
+
 var File_kakehashi_activity_v1_activity_proto protoreflect.FileDescriptor
 
 const file_kakehashi_activity_v1_activity_proto_rawDesc = "" +
 	"\n" +
-	"$kakehashi/activity/v1/activity.proto\x12\x15kakehashi.activity.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\x8f\x01\n" +
+	"$kakehashi/activity/v1/activity.proto\x12\x15kakehashi.activity.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"\xf6\x01\n" +
 	"\x05Entry\x12\x12\n" +
 	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x16\n" +
 	"\x06device\x18\x02 \x01(\tR\x06device\x12\x1d\n" +
 	"\n" +
 	"ip_address\x18\x03 \x01(\tR\tipAddress\x12;\n" +
 	"\voccurred_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"occurredAt\"2\n" +
+	"occurredAt\x12\x0e\n" +
+	"\x02id\x18\x05 \x01(\tR\x02id\x12\x1a\n" +
+	"\bcategory\x18\x06 \x01(\tR\bcategory\x12\x1d\n" +
+	"\n" +
+	"session_id\x18\a \x01(\tR\tsessionId\x12\x1a\n" +
+	"\bplatform\x18\b \x01(\tR\bplatform\"\xdf\x01\n" +
 	"\x13ListActivityRequest\x12\x1b\n" +
-	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\"N\n" +
+	"\tpage_size\x18\x01 \x01(\x05R\bpageSize\x12\x1d\n" +
+	"\n" +
+	"page_token\x18\x02 \x01(\tR\tpageToken\x12.\n" +
+	"\x04from\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\x04from\x12*\n" +
+	"\x02to\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\x02to\x12\x1a\n" +
+	"\bcategory\x18\x05 \x01(\tR\bcategory\x12\x14\n" +
+	"\x05query\x18\x06 \x01(\tR\x05query\".\n" +
+	"\x18RecordClientEventRequest\x12\x12\n" +
+	"\x04kind\x18\x01 \x01(\tR\x04kind\"\x1b\n" +
+	"\x19RecordClientEventResponse\"5\n" +
+	"\tKindCount\x12\x12\n" +
+	"\x04kind\x18\x01 \x01(\tR\x04kind\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\"A\n" +
+	"\rCategoryCount\x12\x1a\n" +
+	"\bcategory\x18\x01 \x01(\tR\bcategory\x12\x14\n" +
+	"\x05count\x18\x02 \x01(\x05R\x05count\"\xbf\x02\n" +
 	"\x14ListActivityResponse\x126\n" +
-	"\aentries\x18\x01 \x03(\v2\x1c.kakehashi.activity.v1.EntryR\aentries2z\n" +
+	"\aentries\x18\x01 \x03(\v2\x1c.kakehashi.activity.v1.EntryR\aentries\x12&\n" +
+	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\x12\x1f\n" +
+	"\vtotal_count\x18\x03 \x01(\x05R\n" +
+	"totalCount\x12<\n" +
+	"\x06counts\x18\x04 \x03(\v2$.kakehashi.activity.v1.CategoryCountR\x06counts\x12%\n" +
+	"\x0eretention_days\x18\x05 \x01(\x05R\rretentionDays\x12A\n" +
+	"\vkind_counts\x18\x06 \x03(\v2 .kakehashi.activity.v1.KindCountR\n" +
+	"kindCounts2\xf2\x01\n" +
 	"\x0fActivityService\x12g\n" +
-	"\fListActivity\x12*.kakehashi.activity.v1.ListActivityRequest\x1a+.kakehashi.activity.v1.ListActivityResponseB\xf8\x01\n" +
+	"\fListActivity\x12*.kakehashi.activity.v1.ListActivityRequest\x1a+.kakehashi.activity.v1.ListActivityResponse\x12v\n" +
+	"\x11RecordClientEvent\x12/.kakehashi.activity.v1.RecordClientEventRequest\x1a0.kakehashi.activity.v1.RecordClientEventResponseB\xf8\x01\n" +
 	"\x19com.kakehashi.activity.v1B\rActivityProtoP\x01ZVgithub.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/activity/v1;activityv1\xa2\x02\x03KAX\xaa\x02\x15Kakehashi.Activity.V1\xca\x02\x15Kakehashi\\Activity\\V1\xe2\x02!Kakehashi\\Activity\\V1\\GPBMetadata\xea\x02\x17Kakehashi::Activity::V1b\x06proto3"
 
 var (
@@ -253,23 +647,33 @@ func file_kakehashi_activity_v1_activity_proto_rawDescGZIP() []byte {
 	return file_kakehashi_activity_v1_activity_proto_rawDescData
 }
 
-var file_kakehashi_activity_v1_activity_proto_msgTypes = make([]protoimpl.MessageInfo, 3)
+var file_kakehashi_activity_v1_activity_proto_msgTypes = make([]protoimpl.MessageInfo, 7)
 var file_kakehashi_activity_v1_activity_proto_goTypes = []any{
-	(*Entry)(nil),                 // 0: kakehashi.activity.v1.Entry
-	(*ListActivityRequest)(nil),   // 1: kakehashi.activity.v1.ListActivityRequest
-	(*ListActivityResponse)(nil),  // 2: kakehashi.activity.v1.ListActivityResponse
-	(*timestamppb.Timestamp)(nil), // 3: google.protobuf.Timestamp
+	(*Entry)(nil),                     // 0: kakehashi.activity.v1.Entry
+	(*ListActivityRequest)(nil),       // 1: kakehashi.activity.v1.ListActivityRequest
+	(*RecordClientEventRequest)(nil),  // 2: kakehashi.activity.v1.RecordClientEventRequest
+	(*RecordClientEventResponse)(nil), // 3: kakehashi.activity.v1.RecordClientEventResponse
+	(*KindCount)(nil),                 // 4: kakehashi.activity.v1.KindCount
+	(*CategoryCount)(nil),             // 5: kakehashi.activity.v1.CategoryCount
+	(*ListActivityResponse)(nil),      // 6: kakehashi.activity.v1.ListActivityResponse
+	(*timestamppb.Timestamp)(nil),     // 7: google.protobuf.Timestamp
 }
 var file_kakehashi_activity_v1_activity_proto_depIdxs = []int32{
-	3, // 0: kakehashi.activity.v1.Entry.occurred_at:type_name -> google.protobuf.Timestamp
-	0, // 1: kakehashi.activity.v1.ListActivityResponse.entries:type_name -> kakehashi.activity.v1.Entry
-	1, // 2: kakehashi.activity.v1.ActivityService.ListActivity:input_type -> kakehashi.activity.v1.ListActivityRequest
-	2, // 3: kakehashi.activity.v1.ActivityService.ListActivity:output_type -> kakehashi.activity.v1.ListActivityResponse
-	3, // [3:4] is the sub-list for method output_type
-	2, // [2:3] is the sub-list for method input_type
-	2, // [2:2] is the sub-list for extension type_name
-	2, // [2:2] is the sub-list for extension extendee
-	0, // [0:2] is the sub-list for field type_name
+	7, // 0: kakehashi.activity.v1.Entry.occurred_at:type_name -> google.protobuf.Timestamp
+	7, // 1: kakehashi.activity.v1.ListActivityRequest.from:type_name -> google.protobuf.Timestamp
+	7, // 2: kakehashi.activity.v1.ListActivityRequest.to:type_name -> google.protobuf.Timestamp
+	0, // 3: kakehashi.activity.v1.ListActivityResponse.entries:type_name -> kakehashi.activity.v1.Entry
+	5, // 4: kakehashi.activity.v1.ListActivityResponse.counts:type_name -> kakehashi.activity.v1.CategoryCount
+	4, // 5: kakehashi.activity.v1.ListActivityResponse.kind_counts:type_name -> kakehashi.activity.v1.KindCount
+	1, // 6: kakehashi.activity.v1.ActivityService.ListActivity:input_type -> kakehashi.activity.v1.ListActivityRequest
+	2, // 7: kakehashi.activity.v1.ActivityService.RecordClientEvent:input_type -> kakehashi.activity.v1.RecordClientEventRequest
+	6, // 8: kakehashi.activity.v1.ActivityService.ListActivity:output_type -> kakehashi.activity.v1.ListActivityResponse
+	3, // 9: kakehashi.activity.v1.ActivityService.RecordClientEvent:output_type -> kakehashi.activity.v1.RecordClientEventResponse
+	8, // [8:10] is the sub-list for method output_type
+	6, // [6:8] is the sub-list for method input_type
+	6, // [6:6] is the sub-list for extension type_name
+	6, // [6:6] is the sub-list for extension extendee
+	0, // [0:6] is the sub-list for field type_name
 }
 
 func init() { file_kakehashi_activity_v1_activity_proto_init() }
@@ -283,7 +687,7 @@ func file_kakehashi_activity_v1_activity_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_kakehashi_activity_v1_activity_proto_rawDesc), len(file_kakehashi_activity_v1_activity_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   3,
+			NumMessages:   7,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

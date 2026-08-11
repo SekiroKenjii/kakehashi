@@ -96,6 +96,29 @@ func (s *Service) RolesOf(ctx context.Context, accountID string) ([]authzapi.Rol
 	return toAPIRoles(roles), nil
 }
 
+// GrantsForRole resolves one role's grants into the form the request gate speaks.
+//
+// Not on the hot path, unlike Resolve: nothing authorizes a request with this. It answers "what would
+// somebody holding this role be able to do", which is what lets the navigation module draw the pane a
+// colleague will see rather than the one the administrator has.
+//
+// Widest for the reason Resolve gives — a scope stored in the database that this build does not
+// recognise has to narrow, and Widest is the one place that rule lives. A role with two grants on the
+// same permission is not a shape the admin screen can produce, but the merge costs nothing and means
+// this cannot be the code that trusts it.
+func (s *Service) GrantsForRole(ctx context.Context, roleID string) (auth.Grants, error) {
+	raw, err := s.RoleGrants(ctx, roleID)
+	if err != nil {
+		return nil, err
+	}
+
+	grants := make(auth.Grants, len(raw))
+	for _, g := range raw {
+		grants[g.PermissionKey] = auth.Widest(grants[g.PermissionKey], auth.Scope(g.Scope))
+	}
+	return grants, nil
+}
+
 func toAPIRoles(roles []domain.Role) []authzapi.Role {
 	out := make([]authzapi.Role, len(roles))
 	for i, r := range roles {

@@ -15,7 +15,11 @@ package rpc
 
 import (
 	"context"
+	"net"
 	"net/http"
+	"sort"
+	"strings"
+	"time"
 
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -27,14 +31,89 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
+// feed is what this wire layer needs of the service.
+//
+// Declared here rather than taken from activityapi, which is deliberately read-only: another module
+// must not be able to append to somebody's history, but the module's own wire layer is not another
+// module. Widening activityapi.Service to make this compile would hand the write to every module in
+// the server to solve a problem inside one of them.
+type feed interface {
+	List(ctx context.Context, userID string, q activityapi.Query) (activityapi.Page, error)
+	Record(
+		ctx context.Context, userID, kind, sessionID, device, ip string, at time.Time,
+	) error
+}
+
 // NewRoute builds the Connect handler for ActivityService.
-func NewRoute(svc activityapi.Service, opts []connect.HandlerOption) (string, http.Handler) {
+func NewRoute(svc feed, opts []connect.HandlerOption) (string, http.Handler) {
 	return activityv1connect.NewActivityServiceHandler(&handler{svc: svc}, opts...)
 }
 
 // handler adapts activityapi.Service to the generated interface.
 type handler struct {
-	svc activityapi.Service
+	svc feed
+}
+
+// RecordClientEvent stores one fact the client knows about itself.
+//
+// Four things the request does not get to decide, which together are what make the write safe:
+// whose feed (the token), when (the server's clock), where from (the connection), and what kind of
+// fact (a closed list). All that is left for the caller to choose is which of two things happened.
+func (h *handler) RecordClientEvent(
+	ctx context.Context, req *connect.Request[activityv1.RecordClientEventRequest],
+) (*connect.Response[activityv1.RecordClientEventResponse], error) {
+	subject, ok := auth.SubjectFrom(ctx)
+	if !ok {
+		return nil, errs.Unauthenticatedf("Sign in to record activity.")
+	}
+
+	kind := req.Msg.GetKind()
+	if !activityapi.CanReport(kind) {
+		// The message names no kinds. A refusal that listed what is allowed would be a refusal that
+		// taught a caller what else to try, and the client already knows: it sends one of two
+		// constants it was compiled with.
+		return nil, errs.Invalidf("That is not something a client may record.")
+	}
+
+	device, ip := callerFacts(req)
+
+	// No session id. These facts belong to an installation rather than to a sign-in — the app was
+	// already updated before anybody authenticated — and naming the session that happened to be open
+	// would imply the two were connected.
+	//
+	// The time is the server's. A client with a wrong clock would otherwise scatter rows through the
+	// history, and a client with a bad intention could slot one between two security events and
+	// change what the sequence appears to say.
+	if err := h.svc.Record(ctx, subject.ID, kind, "", device, ip, time.Now()); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&activityv1.RecordClientEventResponse{}), nil
+}
+
+// callerFacts reads the two claims worth storing off the connection.
+//
+// Both are claims rather than facts — a user agent lies freely and an address may be a proxy — which
+// is why they are only ever displayed and never used for a decision.
+//
+// It duplicates the account module's edge helper of the same name, and that is the module boundary
+// working rather than failing: that one reads a *http.Request from a REST handler, this one reads a
+// Connect request, and neither module may import the other. If a second Connect handler ever needs
+// this, it belongs in platform/rpc — one caller is not yet a reason to put it there.
+func callerFacts(req connect.AnyRequest) (device, ip string) {
+	device = strings.TrimSpace(req.Header().Get("User-Agent"))
+	if len(device) > 256 {
+		device = device[:256]
+	}
+
+	// Behind the reverse proxy the peer address is the proxy's; the original is in the header it
+	// appends. First value wins: everything after it was added by hops we trust less.
+	if forwarded := req.Header().Get("X-Forwarded-For"); forwarded != "" {
+		return device, strings.TrimSpace(strings.Split(forwarded, ",")[0])
+	}
+	if host, _, err := net.SplitHostPort(req.Peer().Addr); err == nil {
+		return device, host
+	}
+	return device, req.Peer().Addr
 }
 
 func (h *handler) ListActivity(
@@ -56,22 +135,95 @@ func (h *handler) ListActivity(
 		return nil, errs.Unauthenticatedf("Sign in to see your activity.")
 	}
 
-	entries, err := h.svc.List(ctx, subject.ID, int(req.Msg.GetPageSize()))
+	page, err := h.svc.List(ctx, subject.ID, activityapi.Query{
+		From:      asTime(req.Msg.GetFrom()),
+		To:        asTime(req.Msg.GetTo()),
+		Category:  req.Msg.GetCategory(),
+		Search:    req.Msg.GetQuery(),
+		PageToken: req.Msg.GetPageToken(),
+		PageSize:  int(req.Msg.GetPageSize()),
+	})
 	if err != nil {
 		return nil, err
 	}
 
-	out := make([]*activityv1.Entry, len(entries))
-	for i, e := range entries {
-		out[i] = toProto(e)
+	entries := make([]*activityv1.Entry, len(page.Entries))
+	for i, e := range page.Entries {
+		entries[i] = toProto(e)
 	}
-	return connect.NewResponse(&activityv1.ListActivityResponse{Entries: out}), nil
+
+	return connect.NewResponse(&activityv1.ListActivityResponse{
+		Entries:       entries,
+		NextPageToken: page.NextPageToken,
+		TotalCount:    int32(page.Total),
+		Counts:        toCounts(page.Counts),
+		KindCounts:    toKindCounts(page.KindCounts),
+		RetentionDays: int32(page.RetentionDays),
+	}), nil
+}
+
+// asTime reads an optional timestamp. An unset one is the zero time, which every layer below reads
+// as "unbounded on that side" — so a client sending only `from` needs no sentinel value.
+func asTime(ts *timestamppb.Timestamp) time.Time {
+	if ts == nil {
+		return time.Time{}
+	}
+	return ts.AsTime()
+}
+
+// toKindCounts puts the per-kind numbers in a defined order, for the same reason toCounts does.
+func toKindCounts(counts map[string]int) []*activityv1.KindCount {
+	if len(counts) == 0 {
+		return nil
+	}
+
+	kinds := make([]string, 0, len(counts))
+	for kind := range counts {
+		kinds = append(kinds, kind)
+	}
+	sort.Strings(kinds)
+
+	out := make([]*activityv1.KindCount, len(kinds))
+	for i, kind := range kinds {
+		out[i] = &activityv1.KindCount{Kind: kind, Count: int32(counts[kind])}
+	}
+	return out
+}
+
+// toCounts puts the chips in a defined order.
+//
+// The service answers with a map, because a count per category is what it is; the wire needs an
+// order, because a chip row that reshuffles between refreshes looks broken. Sorting by name is
+// arbitrary but stable, which is the whole requirement.
+func toCounts(counts map[string]int) []*activityv1.CategoryCount {
+	if len(counts) == 0 {
+		return nil
+	}
+
+	categories := make([]string, 0, len(counts))
+	for category := range counts {
+		categories = append(categories, category)
+	}
+	sort.Strings(categories)
+
+	out := make([]*activityv1.CategoryCount, len(categories))
+	for i, category := range categories {
+		out[i] = &activityv1.CategoryCount{
+			Category: category,
+			Count:    int32(counts[category]),
+		}
+	}
+	return out
 }
 
 func toProto(e activityapi.Entry) *activityv1.Entry {
 	return &activityv1.Entry{
+		Id:         e.ID,
 		Kind:       e.Kind,
+		Category:   e.Category,
+		SessionId:  e.SessionID,
 		Device:     e.Device,
+		Platform:   e.Platform,
 		IpAddress:  e.IPAddress,
 		OccurredAt: timestamppb.New(e.OccurredAt),
 	}

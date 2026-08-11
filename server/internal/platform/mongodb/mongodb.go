@@ -53,6 +53,16 @@ type Index struct {
 	// Keys are the indexed fields, in order. Order matters: an index on (a, b) serves a query on
 	// a, and a query on a and b, but not a query on b alone.
 	Keys []Key
+
+	// ExpireAfter turns this into a TTL index: Mongo deletes a document once the indexed date is
+	// that far in the past. Zero means it is an ordinary index.
+	//
+	// Two rules the driver will not enforce. Mongo only honours it on an index over a single date
+	// field, so a TTL index cannot be the compound one a read is served by — it is always its own
+	// index. And zero has to mean "not a TTL index" here, because the value the driver understands
+	// as zero means "delete as soon as the date passes", which would empty a collection the moment
+	// somebody left the field unset.
+	ExpireAfter time.Duration
 }
 
 // Key is one field in an index.
@@ -75,10 +85,15 @@ func (ix Index) model() mongo.IndexModel {
 		keys = append(keys, bson.E{Key: k.Field, Value: order})
 	}
 
-	return mongo.IndexModel{
-		Keys:    keys,
-		Options: options.Index().SetName(ix.Name).SetUnique(ix.Unique),
+	opts := options.Index().SetName(ix.Name).SetUnique(ix.Unique)
+	if ix.ExpireAfter > 0 {
+		// Guarded rather than set unconditionally: SetExpireAfterSeconds(0) is a valid instruction
+		// meaning "expire the moment the date passes", so passing an unset duration straight through
+		// would turn every ordinary index into one that empties its collection.
+		opts = opts.SetExpireAfterSeconds(int32(ix.ExpireAfter.Seconds()))
 	}
+
+	return mongo.IndexModel{Keys: keys, Options: opts}
 }
 
 // Open connects to Mongo and verifies the connection is usable.

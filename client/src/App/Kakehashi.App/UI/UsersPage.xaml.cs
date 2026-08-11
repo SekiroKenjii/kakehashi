@@ -8,18 +8,6 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.App.UI {
-  /// <summary>Which of the four stat cards this is. Decides the icon square's colour.</summary>
-  public enum StatKind {
-    Total,
-    Active,
-    Inactive,
-    Idle,
-  }
-
-  /// <summary>One of the four counts along the top of the Users screen.</summary>
-  public sealed record StatCard(
-      string Label, string Value, string Detail, string Glyph, StatKind Kind);
-
   /// <summary>
   /// The Users screen.
   /// </summary>
@@ -180,32 +168,6 @@ namespace Kakehashi.App.UI {
       return value ? Visibility.Collapsed : Visibility.Visible;
     }
 
-    /// <summary>
-    /// The icon square's colour, per card kind.
-    /// </summary>
-    /// <remarks>
-    /// Three fixed colours carry meaning — green reads as healthy, grey as dormant, amber as worth
-    /// a look — so they are the mockup's rather than the theme's. Total means nothing in
-    /// particular, so it takes the app accent and matches the avatars two rows below it.
-    /// </remarks>
-    public static Brush StatBrush(StatKind kind) {
-      return kind switch {
-        StatKind.Active => _statActive,
-        StatKind.Inactive => _statInactive,
-        StatKind.Idle => _statIdle,
-        // Fully qualified: this project has a Kakehashi.Application namespace, so a bare
-        // Application binds to that rather than to the XAML one.
-        _ => (Brush)Microsoft.UI.Xaml.Application.Current.Resources[
-            "AccentFillColorDefaultBrush"],
-      };
-    }
-
-    private static readonly SolidColorBrush _statActive =
-        new(Color.FromArgb(0xFF, 0x2E, 0x9E, 0x44));
-    private static readonly SolidColorBrush _statInactive =
-        new(Color.FromArgb(0xFF, 0x76, 0x76, 0x76));
-    private static readonly SolidColorBrush _statIdle =
-        new(Color.FromArgb(0xFF, 0xF2, 0x9A, 0x4D));
     private static readonly SolidColorBrush _statusActive =
         new(Color.FromArgb(0xFF, 0x2E, 0x9E, 0x44));
     private static readonly SolidColorBrush _statusInactive =

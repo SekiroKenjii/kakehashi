@@ -34,43 +34,6 @@
         <Style x:Key="MonoTextStyle" TargetType="TextBlock">
             <Setter Property="FontFamily" Value="Cascadia Mono,Consolas" />
         </Style>
-
-        <!--  One card, four times, so the four stay identical.  -->
-        <DataTemplate x:Key="StatCardTemplate" x:DataType="local:StatCard">
-            <Border Padding="14,12" Style="{StaticResource CardStyle}">
-                <Grid ColumnSpacing="12">
-                    <Grid.ColumnDefinitions>
-                        <ColumnDefinition Width="Auto" />
-                        <ColumnDefinition Width="*" />
-                    </Grid.ColumnDefinitions>
-
-                    <Border
-                        Grid.Column="0"
-                        Width="36"
-                        Height="36"
-                        VerticalAlignment="Center"
-                        Background="{x:Bind local:UsersPage.StatBrush(Kind)}"
-                        CornerRadius="8">
-                        <FontIcon
-                            FontSize="16"
-                            Foreground="White"
-                            Glyph="{x:Bind Glyph}" />
-                    </Border>
-
-                    <StackPanel Grid.Column="1" VerticalAlignment="Center">
-                        <TextBlock Style="{StaticResource SectionLabelStyle}" Text="{x:Bind Label}" />
-                        <TextBlock
-                            FontSize="20"
-                            FontWeight="SemiBold"
-                            Text="{x:Bind Value}" />
-                        <TextBlock
-                            FontSize="11"
-                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                            Text="{x:Bind Detail}" />
-                    </StackPanel>
-                </Grid>
-            </Border>
-        </DataTemplate>
     </Page.Resources>
 
     <Grid Padding="24,12,24,20" RowSpacing="12">
@@ -134,10 +97,12 @@
             ItemsStretch=Fill gives the four equal columns the mockup has, where a horizontal
             StackPanel would huddle them at the left of a wide window.
         -->
-        <ItemsRepeater
-            Grid.Row="1"
-            ItemTemplate="{StaticResource StatCardTemplate}"
-            ItemsSource="{x:Bind ViewModel.StatCards}">
+        <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind ViewModel.StatCards}">
+            <ItemsRepeater.ItemTemplate>
+                <DataTemplate x:DataType="controls:StatCard">
+                    <controls:StatCardView Card="{x:Bind}" />
+                </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
             <ItemsRepeater.Layout>
                 <UniformGridLayout
                     ItemsStretch="Fill"

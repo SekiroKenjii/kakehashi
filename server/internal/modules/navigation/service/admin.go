@@ -19,6 +19,15 @@ type ItemConfig struct {
 	DefaultTitle string
 	DefaultIcon  string
 
+	// Where the code puts this destination when nothing has moved it.
+	//
+	// Reported so a screen can offer "reset to what the product shipped". Until this was carried, the
+	// answer existed only in the running build: Reconcile writes DefaultGroup and DefaultOrder once,
+	// as seeds, and deliberately never re-applies them — so a destination somebody had moved could not
+	// be put back through any API.
+	DefaultGroup string
+	DefaultOrder int
+
 	// Orphan marks a row whose destination this build no longer has.
 	Orphan bool
 
@@ -61,6 +70,8 @@ func (s *Service) Items(ctx context.Context) ([]ItemConfig, error) {
 			Placement:          placement,
 			DefaultTitle:       d.DefaultTitle,
 			DefaultIcon:        d.DefaultIcon,
+			DefaultGroup:       d.DefaultGroup,
+			DefaultOrder:       d.DefaultOrder,
 			RequiredPermission: s.gateOf(d),
 			HideWhenDenied:     d.HideWhenDenied,
 		})
@@ -225,7 +236,41 @@ func (s *Service) itemOf(ctx context.Context, id string) (ItemConfig, error) {
 		Placement:          placement,
 		DefaultTitle:       d.DefaultTitle,
 		DefaultIcon:        d.DefaultIcon,
+		DefaultGroup:       d.DefaultGroup,
+		DefaultOrder:       d.DefaultOrder,
 		RequiredPermission: s.gateOf(d),
 		HideWhenDenied:     d.HideWhenDenied,
 	}, nil
+}
+
+// DeleteItem removes a stored row left over from a module this build no longer has.
+//
+// Only those. A row whose destination the build still declares would be written straight back by the
+// next Reconcile, so deleting it is at best a no-op and at worst one that looks like it worked until
+// the server restarts. The refusal says which it is, and points at the thing that does work.
+func (s *Service) DeleteItem(ctx context.Context, id string) error {
+	stored, err := s.layoutOf(ctx)
+	if err != nil {
+		return err
+	}
+
+	placement, ok := stored.placements[id]
+	if !ok {
+		return errs.NotFoundf("No navigation item with id %s.", id)
+	}
+
+	// Keyed by what the store holds rather than by what the caller passed, for the reason itemOf
+	// gives: SQL Server compares case-insensitively and this map does not.
+	if d, declared := s.byID[placement.DestinationID]; declared {
+		return errs.Invalidf(
+			"%s is a screen this build still has, so removing its row would be undone the next time "+
+				"the server starts. Hide it instead, or take its permission away.", d.DefaultTitle)
+	}
+
+	if err := s.store.DeleteItem(ctx, id); err != nil {
+		return err
+	}
+
+	s.invalidate()
+	return nil
 }

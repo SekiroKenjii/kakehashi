@@ -3,6 +3,7 @@ package app
 import (
 	"context"
 	"net/http"
+	"time"
 )
 
 // Module is one bounded context inside the monolith. Everything a feature owns (its domain types,
@@ -73,6 +74,12 @@ type Index struct {
 
 	// Keys are the indexed fields, in order.
 	Keys []IndexKey
+
+	// ExpireAfter turns this into a TTL index: Mongo deletes a document once the indexed date is
+	// that far in the past. Zero means an ordinary index. Mongo honours it only on an index over a
+	// single date field, so a retention index is always its own index rather than a flag on the
+	// compound one a read uses.
+	ExpireAfter time.Duration
 }
 
 // IndexKey is one field in an Index.
