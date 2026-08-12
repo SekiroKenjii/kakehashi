@@ -230,8 +230,9 @@ namespace Kakehashi.App.UI {
             user.LastSignInAt is { } at && now - at > _idleThreshold);
         var createdThisMonth = _all.Count(user =>
             user.CreatedAt.Year == now.Year && user.CreatedAt.Month == now.Month);
+        var inactiveNeverSignedIn = _all.Count(user => !user.IsActive && user.LastSignInAt is null);
 
-        RebuildStatCards(createdThisMonth);
+        RebuildStatCards(createdThisMonth, inactiveNeverSignedIn);
         RebuildRoleFilters();
         ApplyFilter();
 
@@ -658,7 +659,7 @@ namespace Kakehashi.App.UI {
           : value;
     }
 
-    private void RebuildStatCards(int createdThisMonth) {
+    private void RebuildStatCards(int createdThisMonth, int inactiveNeverSignedIn) {
       var percent = TotalCount == 0 ? 0 : ActiveCount * 100 / TotalCount;
 
       // Uppercase, because every other section label on this screen is. WinUI has no
@@ -671,11 +672,10 @@ namespace Kakehashi.App.UI {
       StatCards.Add(new StatCard(
           "ACTIVE", ActiveCount.ToString(), $"{percent}% of total", "", StatKind.Positive));
       StatCards.Add(new StatCard(
-          // The detail line used to report the never-signed-in count, which is not a subset of
-          // the number above it: an account can be active and never have signed in, so the card
-          // said "3 inactive · 5 never signed in" about two different populations.
+          // The detail must count within the card's population. NeverSignedInCount also includes
+          // active accounts, so it can exceed the inactive total it would sit under.
           "INACTIVE", InactiveCount.ToString(),
-          $"{NeverSignedInCount} never signed in", "", StatKind.Muted));
+          $"{inactiveNeverSignedIn} never signed in", "", StatKind.Muted));
       StatCards.Add(new StatCard(
           "IDLE > 30 DAYS", IdleCount.ToString(), "Review for cleanup", "", StatKind.Warning));
     }
