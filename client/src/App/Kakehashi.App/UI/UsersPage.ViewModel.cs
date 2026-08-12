@@ -20,23 +20,16 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.UI {
-  // One role the selected user holds, with the button that takes it away.
-  //
-  // The command travels with the row so x:Bind in the item template can reach it. Binding
-  // up to the page's view model from inside a DataTemplate means either an ElementName
-  // Binding — which is not compile-checked — or a named ancestor this codebase would rather
-  // not introduce for one button.
+  // The command travels with the row so x:Bind in the item template can reach it. Binding up to the
+  // page's view model from inside a DataTemplate means either an ElementName Binding — which is not
+  // compile-checked — or a named ancestor this codebase would rather not introduce for one button.
   public sealed record AssignedRole(
       string Name, bool CanRemove, IAsyncRelayCommand<string> RemoveCommand);
 
-  // One of the selected user's sessions, with the command that ends it.
-  //
   // Same reason the role chip carries its command: an item template cannot reach the page's view
   // model without an ElementName binding, which is not compile-checked.
   public sealed record SessionEntry(SessionRow Session, IAsyncRelayCommand<string> RevokeCommand);
 
-  // The Users screen: who exists, what they hold, and the switches an administrator has.
-  //
   // The list comes from two server modules — the account module owns people, the authorization
   // module owns what they may do — and is joined by the service beneath this. Neither module holds
   // a copy of the other's fact, which is what stops them disagreeing.
@@ -44,11 +37,9 @@ namespace Kakehashi.App.UI {
   // Nothing here is enforcement. Every call needs users.manage or roles.manage and
   // the server checks it; this page's own check keeps a screen nobody can use out of the way.
   public sealed partial class UsersViewModel : ViewModel {
-    // The wildcard entries the two filter combos open with.
     public const string AllRoles = "All roles";
     public const string AllStatus = "All status";
 
-    // An account with no sign-in for this long is worth reviewing.
     private static readonly TimeSpan _idleThreshold = TimeSpan.FromDays(30);
 
     private readonly IAccessAdminService _admin;
@@ -86,22 +77,18 @@ namespace Kakehashi.App.UI {
       _sender = sender;
     }
 
-    // Whether the account may use this screen at all.
     public bool IsPermitted => _permissions.Allows(PermissionKeys.ManageUsers);
 
-    // Whether roles can be changed from here. A second permission: listing who holds what is part
-    // of managing users, and deciding it is not.
+    // A second permission: listing who holds what is part of managing users, and deciding it is
+    // not.
     public bool CanManageRoles => _permissions.Allows(PermissionKeys.ManageRoles);
 
     public ObservableCollection<UserRow> Users { get; } = [];
 
     public ObservableCollection<RoleRow> Roles { get; } = [];
 
-    // The selected user's roles, each with its own remove button.
     public ObservableCollection<AssignedRole> AssignedRoles { get; } = [];
 
-    // The newest few of the selected user's sessions.
-    //
     // Capped, because the list is every session the account has ever opened that has not been
     // revoked — a development account that has signed in from a script fifty times shows fifty
     // rows, and the detail panel becomes a scroll of near-identical lines. The newest three answer
@@ -109,19 +96,14 @@ namespace Kakehashi.App.UI {
     // counted rather than drawn.
     public ObservableCollection<SessionEntry> Sessions { get; } = [];
 
-    // The roles the selected user does NOT hold — the only ones worth offering.
-    //
-    // Offering a role somebody already has is the bug this replaces: the server accepted it
-    // idempotently, so the button appeared to do nothing at all.
+    // Only the roles the selected user does NOT hold. Offering one somebody already has is the bug
+    // this replaces: the server accepted it idempotently, so the button appeared to do nothing.
     public ObservableCollection<RoleRow> AssignableRoles { get; } = [];
 
-    // The four counts along the top, as the cards that render them.
-    //
     // Built from the whole set rather than the filtered one: a search must not make the number of
     // inactive accounts appear to drop.
     public ObservableCollection<StatCard> StatCards { get; } = [];
 
-    // The choices in the two filter combos. Roles refresh from the data.
     public ObservableCollection<string> RoleFilters { get; } = [AllRoles];
 
     public IReadOnlyList<string> StatusFilters { get; } =
@@ -130,8 +112,6 @@ namespace Kakehashi.App.UI {
     [ObservableProperty]
     public partial UserRow? SelectedUser { get; set; }
 
-    // Whether the detail panel is showing.
-    //
     // Its own flag rather than "is a row selected", and the two are genuinely different questions:
     // the row stays selected and highlighted after the panel is closed, which is what a list is
     // supposed to do. Deriving the panel from the selection also meant closing it required
@@ -145,8 +125,6 @@ namespace Kakehashi.App.UI {
     [NotifyCanExecuteChangedFor(nameof(AssignRoleCommand))]
     public partial RoleRow? RoleToAssign { get; set; }
 
-    // Whether there is a role chosen to assign.
-    //
     // The Add button had no CanExecute, so pressing it with the picker empty did nothing and
     // reported nothing — indistinguishable, from the outside, from a request that failed.
     public bool CanAssignRole => RoleToAssign is not null;
@@ -181,11 +159,10 @@ namespace Kakehashi.App.UI {
     [ObservableProperty]
     public partial int IdleCount { get; set; }
 
-    // "+4 more" under the session list, or empty when everything is shown.
     [ObservableProperty]
     public partial string MoreSessions { get; set; } = string.Empty;
 
-    // How many sessions the account has in total, for the section heading.
+    // Every session the account has, not just the ones drawn.
     [ObservableProperty]
     public partial int SessionCount { get; set; }
 
@@ -213,8 +190,9 @@ namespace Kakehashi.App.UI {
             user.LastSignInAt is { } at && now - at > _idleThreshold);
         var createdThisMonth = _all.Count(user =>
             user.CreatedAt.Year == now.Year && user.CreatedAt.Month == now.Month);
+        var inactiveNeverSignedIn = _all.Count(user => !user.IsActive && user.LastSignInAt is null);
 
-        RebuildStatCards(createdThisMonth);
+        RebuildStatCards(createdThisMonth, inactiveNeverSignedIn);
         RebuildRoleFilters();
         ApplyFilter();
 
@@ -233,10 +211,8 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    // Creates an account, with a password the administrator hands over.
-    //
-    // Set rather than mailed, because this server has no mail. The dialog says so, and the first
-    // thing the new owner should do is change it from their own account page.
+    // The password is set rather than mailed, because this server has no mail. The dialog says so,
+    // and the first thing the new owner should do is change it from their own account page.
     [RelayCommand]
     private async Task AddUserAsync(CancellationToken cancellationToken) {
       var values = await _dialogs.ShowInputsAsync(
@@ -260,9 +236,7 @@ namespace Kakehashi.App.UI {
       SelectedUser = Users.FirstOrDefault(user => user.Id == result.Value.Id);
     }
 
-    // Writes the list to a CSV where the user asks for it.
-    //
-    // It exports what is on screen — the filtered set — because that is what somebody who has just
+    // Exports what is on screen — the filtered set — because that is what somebody who has just
     // filtered the list means by "export".
     //
     // The save dialog replaces a hardcoded folder under LocalAppData. An export that lands
@@ -306,7 +280,6 @@ namespace Kakehashi.App.UI {
       _notifications.Show($"Exported {Users.Count} users to {path}", InfoBarSeverity.Success);
     }
 
-    // Edits the selected account's profile.
     [RelayCommand]
     private async Task EditAsync(CancellationToken cancellationToken) {
       if (SelectedUser is not { } user) {
@@ -333,7 +306,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    // Sets a new password and signs the account out everywhere.
     [RelayCommand]
     private async Task ResetPasswordAsync(CancellationToken cancellationToken) {
       if (SelectedUser is not { } user) {
@@ -344,9 +316,10 @@ namespace Kakehashi.App.UI {
           $"Reset password for {user.DisplayName}", "Reset",
           ("New password (at least 12 characters)", string.Empty, true));
 
-      // Said before it happens, not after. This server has no mail, so nothing reaches the person
-      // whose password was just changed — and every session they have ends immediately. An
-      // administrator who did not know that has locked somebody out and told nobody.
+      // The dialog says it before it happens, not after. This server has no mail, so nothing
+      // reaches the person whose password was just changed — and every session they have ends
+      // immediately. An administrator who did not know that has locked somebody out and told
+      // nobody.
       if (values is null || string.IsNullOrWhiteSpace(values[0])) {
         return;
       }
@@ -363,7 +336,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    // Ends one session.
     [RelayCommand]
     private async Task RevokeSessionAsync(string sessionId) {
       if (SelectedUser is not { } user) {
@@ -378,19 +350,18 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(CancellationToken.None);
     }
 
-    // Ends every session the account has.
     [RelayCommand]
     private async Task SignOutEverywhereAsync(CancellationToken cancellationToken) {
       if (SelectedUser is not { } user) {
         return;
       }
 
-      // Read the sessions BEFORE asking, and from the server rather than from the panel's cache.
-      // The panel shows the newest three and is empty until the detail has loaded at all, so the
-      // old version counted a stale cache in its question and revoked a stale cache in its answer —
-      // reporting "Signed out everywhere" after revoking nothing whenever the load had not happened
-      // or had failed. A success message for work that did not happen is the one kind of lie a
-      // person cannot detect.
+      // Read BEFORE asking, and from the server rather than from the panel's cache. The panel shows
+      // the newest three and is empty until the detail has loaded at all, so the old version
+      // counted a stale cache in its question and revoked a stale cache in its answer — reporting
+      // "Signed out everywhere" after revoking nothing whenever the load had not happened or had
+      // failed. A success message for work that did not happen is the one kind of lie a person
+      // cannot detect.
       var live = await _admin.ListUserSessionsAsync(user.Id, cancellationToken);
       if (live.IsFailure) {
         Notify(live.Error);
@@ -436,7 +407,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    // Copies the selected account's email address.
     [RelayCommand]
     private void CopyEmail() {
       if (SelectedUser is not { } user) {
@@ -446,7 +416,6 @@ namespace Kakehashi.App.UI {
       _notifications.Show($"{user.Email} copied.", InfoBarSeverity.Informational);
     }
 
-    // Copies the selected account's id — what a support ticket actually needs.
     [RelayCommand]
     private void CopyAccountId() {
       if (SelectedUser is not { } user) {
@@ -456,7 +425,6 @@ namespace Kakehashi.App.UI {
       _notifications.Show("Account ID copied.", InfoBarSeverity.Informational);
     }
 
-    // Gives the selected user the selected role.
     [RelayCommand(CanExecute = nameof(CanAssignRole))]
     private async Task AssignRoleAsync(CancellationToken cancellationToken) {
       if (SelectedUser is null || RoleToAssign is null) {
@@ -480,7 +448,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    // Takes a role away by name, as the detail panel lists them.
     [RelayCommand]
     private async Task UnassignRoleAsync(string roleName) {
       if (SelectedUser is null) {
@@ -501,7 +468,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(CancellationToken.None);
     }
 
-    // Switches the selected account off, or back on.
     [RelayCommand]
     private async Task ToggleActiveAsync(CancellationToken cancellationToken) {
       if (SelectedUser is null) {
@@ -528,7 +494,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    // Removes the selected account permanently, after asking in plain words.
     [RelayCommand]
     private async Task DeleteUserAsync(CancellationToken cancellationToken) {
       if (SelectedUser is null) {
@@ -561,7 +526,7 @@ namespace Kakehashi.App.UI {
 
     partial void OnStatusFilterChanged(string value) => ApplyFilter();
 
-    // Closes the detail panel. The row stays selected.
+    // The row stays selected.
     [RelayCommand]
     private void CloseDetail() {
       IsDetailOpen = false;
@@ -589,7 +554,6 @@ namespace Kakehashi.App.UI {
       _ = LoadSessionsAsync(value.Id);
     }
 
-    // Offers only the roles the selected user does not already hold.
     private void RebuildAssignableRoles(UserRow user) {
       AssignableRoles.Clear();
       foreach (var role in Roles.Where(role => !user.RoleNames.Contains(role.Name))) {
@@ -597,14 +561,10 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    // Re-reads the list and puts the selection back on the same person.
-    //
     // The rows are records, so the reloaded one is a different object and the selection would
     // otherwise land on nothing — closing the detail panel in front of somebody who has just
-    // pressed a button in it.
+    // pressed a button in it. ApplyFilter is what puts it back, by id.
     private async Task ReloadKeepingSelectionAsync(CancellationToken cancellationToken) {
-      // The reload runs through ApplyFilter, which restores the selection by id — the rows are
-      // records, so the reloaded one is a different object and the old reference matches nothing.
       await LoadAsync(cancellationToken);
     }
 
@@ -630,14 +590,14 @@ namespace Kakehashi.App.UI {
       MoreSessions = hidden > 0 ? $"+{hidden} older session(s) not shown" : string.Empty;
     }
 
-    // Quotes a CSV field, which matters the moment a display name contains a comma.
+    // Matters the moment a display name contains a comma.
     private static string Csv(string value) {
       return value.Contains(',') || value.Contains('"')
           ? $"\"{value.Replace("\"", "\"\"")}\""
           : value;
     }
 
-    private void RebuildStatCards(int createdThisMonth) {
+    private void RebuildStatCards(int createdThisMonth, int inactiveNeverSignedIn) {
       var percent = TotalCount == 0 ? 0 : ActiveCount * 100 / TotalCount;
 
       // Uppercase, because every other section label on this screen is. WinUI has no
@@ -649,12 +609,12 @@ namespace Kakehashi.App.UI {
           "", StatKind.Accent));
       StatCards.Add(new StatCard(
           "ACTIVE", ActiveCount.ToString(), $"{percent}% of total", "", StatKind.Positive));
+      // The detail counts inside the card's own population. NeverSignedInCount is every account
+      // that never signed in, active ones included, so putting it here read as "3 inactive,
+      // 5 never signed in" - a subset larger than the set it sat under.
       StatCards.Add(new StatCard(
-          // The detail line used to report the never-signed-in count, which is not a subset of
-          // the number above it: an account can be active and never have signed in, so the card
-          // said "3 inactive · 5 never signed in" about two different populations.
           "INACTIVE", InactiveCount.ToString(),
-          $"{NeverSignedInCount} never signed in", "", StatKind.Muted));
+          $"{inactiveNeverSignedIn} never signed in", "", StatKind.Muted));
       StatCards.Add(new StatCard(
           "IDLE > 30 DAYS", IdleCount.ToString(), "Review for cleanup", "", StatKind.Warning));
     }
@@ -719,8 +679,6 @@ namespace Kakehashi.App.UI {
       };
     }
 
-    // Reports a failure, and re-reads the caller's own permissions when the failure was a refusal.
-    //
     // See the same method on the role screen: a refusal mid-session means this client's idea of
     // what the account may do is stale, and the honest answer is the locked panel rather than an
     // error bar over a screen that looks like it works.

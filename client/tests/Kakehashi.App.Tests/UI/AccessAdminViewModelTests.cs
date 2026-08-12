@@ -14,15 +14,9 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.UI {
-  /// <summary>
-  /// Unit tests for the two administration screens.
-  /// </summary>
-  /// <remarks>
-  /// What is worth testing here is the staging: the Role Permissions screen holds edits until Save,
-  /// and every visible number — the changed count, the per-category summary, the payload that goes
-  /// on the wire — is derived from that. None of it involves a control, so none of it needs a UI
-  /// thread.
-  /// </remarks>
+  // The Role Permissions screen holds edits until Save, and every visible number — the changed
+  // count, the per-category summary, the payload on the wire — is derived from that staging. None
+  // of it involves a control, so none of it needs a UI thread.
   public sealed class AccessAdminViewModelTests {
     private static readonly RoleRow _admin = new("role-1", "Admin", "Everything", true, 2, 1);
     private static readonly RoleRow _viewer = new("role-2", "Viewer", "Read only", true, 1, 4);
@@ -77,7 +71,7 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal(2, sut.Roles.Count);
       Assert.Equal(_admin.Id, sut.SelectedRole?.Id);
 
-      // Two categories, in the order the catalogue arrived.
+      // Categories keep the order the catalogue arrived in.
       Assert.Equal(["Administration", "Module access"], sut.Groups.Select(g => g.Name));
       Assert.Equal("1 / 2", sut.Groups[0].Summary);
       Assert.Equal("2 of 3 enabled", sut.GrantSummary);
@@ -199,13 +193,36 @@ namespace Kakehashi.App.Tests.UI {
 
       Assert.False(sut.IsPermitted);
 
-      // Awaited, and the "does not load" half asserted. Fire-and-forget meant the command had not
-      // finished when the assertion ran, so this passed with the permission guard deleted: an empty
-      // collection proves nothing if nothing has had a chance to fill it.
+      // Awaited, not fire-and-forget: unawaited, the command had not finished when the assertion
+      // ran, so this passed with the permission guard deleted — an empty collection proves nothing
+      // if nothing has had a chance to fill it.
       await sut.LoadCommand.ExecuteAsync(parameter: null);
 
       Assert.Empty(sut.Roles);
       await _admins.DidNotReceive().ListRolesAsync(Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Users_InactiveCardCountsNeverSignedInWithinItsOwnPopulation() {
+      var now = DateTimeOffset.Now;
+      _admins.ListUsersAsync(Arg.Any<CancellationToken>())
+          .Returns(Result.Success<IReadOnlyList<UserRow>>([
+            // Active and never signed in: the case that made the card report a detail bigger than
+            // the number it sat under. The earlier test's data hid it, because its only
+            // never-signed-in account happened to be the inactive one too.
+            new UserRow("1", "new@x.test", "New", "", "", true, null, now, 0, []),
+            new UserRow("2", "gone@x.test", "Gone", "", "", false, null, now, 0, []),
+          ]));
+
+      var sut = CreateUsers();
+      await sut.LoadCommand.ExecuteAsync(null);
+
+      Assert.Equal(2, sut.NeverSignedInCount);
+      Assert.Equal(1, sut.InactiveCount);
+
+      var inactive = sut.StatCards.Single(card => card.Label == "INACTIVE");
+      Assert.Equal("1", inactive.Value);
+      Assert.Equal("1 never signed in", inactive.Detail);
     }
 
     [Fact]
@@ -296,8 +313,7 @@ namespace Kakehashi.App.Tests.UI {
           Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
-    // The four regressions the review found. Each was a real defect, so each keeps a test.
-
+    // The four tests below each guard a defect that shipped once; none is hypothetical.
     [Fact]
     public async Task AllOn_DoesNotWidenAGrantThatWasAlreadyOnAtANarrowerScope() {
       var sut = CreateRoles();
@@ -356,13 +372,12 @@ namespace Kakehashi.App.Tests.UI {
       await sut.LoadCommand.ExecuteAsync(null);
       sut.SelectedUser = sut.Users.Single(user => user.Id == "1");
 
-      // A row the search still matches keeps its selection; the detail panel stays open.
       sut.SearchText = "ada";
 
       Assert.Equal("1", sut.SelectedUser?.Id);
       Assert.Single(sut.AssignedRoles);
 
-      // A search that excludes them clears it, which is the honest answer — the row is gone.
+      // A search that excludes them clears the selection; keeping a hidden row selected would lie.
       sut.SearchText = "bob";
 
       Assert.Null(sut.SelectedUser);
@@ -407,8 +422,6 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Single(sut.Sessions);
       Assert.True(sut.Sessions[0].Session.IsCurrent);
     }
-
-    // The detail panel's own behaviour: what it offers, and what it deliberately does not.
 
     [Fact]
     public async Task AddRoleList_OffersOnlyRolesTheUserDoesNotAlreadyHold() {
@@ -485,7 +498,6 @@ namespace Kakehashi.App.Tests.UI {
 
       await sut.SignOutEverywhereCommand.ExecuteAsync(null);
 
-      // Four, not the three the panel draws.
       await _admins.Received(4).RevokeSessionAsync(
           "1", Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
@@ -526,13 +538,11 @@ namespace Kakehashi.App.Tests.UI {
 
       Assert.True(sut.IsDetailOpen);
 
-      // Closing hides the panel and leaves the row selected, which is what a list should do.
       sut.CloseDetailCommand.Execute(null);
 
       Assert.False(sut.IsDetailOpen);
       Assert.NotNull(sut.SelectedUser);
 
-      // Deselecting is the other path, and it empties the panel's state.
       sut.SelectedUser = null;
       Assert.Empty(sut.AssignedRoles);
       Assert.Empty(sut.Sessions);
