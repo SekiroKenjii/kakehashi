@@ -5,7 +5,7 @@ halves are modular monoliths. Read `docs/ARCHITECTURE.md` before making a struct
 
 ## How to work — agent behavior
 
-> These four rules address the most common LLM coding mistakes.
+> These five rules address the most common LLM coding mistakes.
 > They override any instinct to be thorough, helpful, or proactive beyond the request.
 
 **Tradeoff:** These bias toward caution over speed. Use judgment for trivial one-line fixes.
@@ -49,7 +49,16 @@ Touch only what the request requires.
 **Your orphans are your responsibility:** remove imports, variables, handlers and registrations that
 *your* change made unused. Leave pre-existing dead code alone unless asked.
 
-### 4. Verifiable execution
+### 4. Comments — [docs/COMMENTS.md](docs/COMMENTS.md) is the law
+
+> **Comments.** State facts, not narrative. Present tense, current code only — history belongs in
+> the PR or an ADR. No doc comment on a member whose name already says everything. A comment block
+> over 6 lines belongs in docs/adr/. Never quote an old comment inside a new one.
+
+When you touch a file for another reason, comments inside your change conform to the convention;
+leave the rest alone.
+
+### 5. Verifiable execution
 
 Define success before writing code. For multi-step tasks, state the plan first:
 
@@ -113,6 +122,33 @@ Everything lands through a pull request whose CI is green. A release or hotfix g
 merge prevents.
 
 Full walkthrough, including the release and hotfix sequences: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Commit messages — Conventional Commits, no exceptions
+
+**Every commit subject starts with a type and a colon.** This is not a preference, it is what the
+history already is, and a subject without one has to be rewritten by hand afterwards.
+
+```text
+<type>: <subject in the imperative, lower case, no full stop>
+
+<body: why, not what. Wrap at 72 columns.>
+```
+
+| Type | For |
+| --- | --- |
+| `feat` | a capability the product did not have |
+| `fix` | a defect somebody could hit |
+| `refactor` | the behaviour is identical and the code is not |
+| `docs` | documentation, comments, README, the docs/ tree |
+| `test` | tests only |
+| `chore` | tooling, scripts, dependencies, repository plumbing |
+| `ci` | the workflow files |
+
+Scope is optional and used sparingly: `feat(navigation):`. Breaking changes take `!` before the
+colon and explain themselves in the body. Pick the type from what the change *is*, not from the
+phase of a plan it belongs to.
+
+**Never write the `Co-Authored-By` trailer.**
 
 ---
 
