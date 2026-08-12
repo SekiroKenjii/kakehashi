@@ -3,21 +3,14 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Kakehashi.UI.Common.Controls {
-  /// <summary>
-  /// Every icon the font this app ships with can draw, by the name Microsoft gives it.
-  /// </summary>
-  /// <remarks>
-  /// Generated from the official table at
-  /// https://learn.microsoft.com/windows/apps/design/style/segoe-fluent-icons-font - not hand
-  /// written, and not to be hand edited. Regenerate it rather than adding a line.
-  /// <para>
-  /// This is the long tail behind <see cref="NavigationIcons"/>. That short list is the vocabulary a
-  /// deployment is expected to use, because those names say what a screen is <em>about</em> and so
-  /// mean something to a client shipping a different icon font. A name from this catalogue is still
-  /// a name rather than a code point, so it crosses the wire the same way and degrades the same way:
-  /// a client that cannot draw it falls back to the icon the page was compiled with.
-  /// </para>
-  /// </remarks>
+  // Generated from the official table at
+  // https://learn.microsoft.com/windows/apps/design/style/segoe-fluent-icons-font. Regenerate it
+  // rather than adding a line by hand.
+  //
+  // The long tail behind NavigationIcons. Prefer that short vocabulary, whose names say what a
+  // screen is about and so mean something to a client shipping a different icon font; a name from
+  // here still crosses the wire as a name, so a client that cannot draw it falls back to the icon
+  // the page was compiled with.
   public static class SegoeFluentIcons {
     private static readonly (string Name, string Glyph)[] _catalogue = [
       ("GlobalNavButton", "\uE700"),
@@ -1555,33 +1548,24 @@ namespace Kakehashi.UI.Common.Controls {
       ("EthernetVPN", "\uF8CC"),
     ];
 
-    // Ordinal, not case-insensitive: resolving a name is exact everywhere, so one stored name always
-    // means one glyph. Searching is the forgiving half - you type "mail" and are offered "Mail".
-    // Without that split, the curated "home" and this catalogue's "Home" become two spellings of one
-    // thing, and a deployment could not tell which vocabulary a name came from.
+    // Ordinal, not case-insensitive: resolving a name is exact everywhere, so one stored name
+    // always means one glyph, while Search stays forgiving. Without that split the curated "home"
+    // and this catalogue's "Home" become two spellings of one thing, and a deployment could not
+    // tell which vocabulary a name came from.
     private static readonly Dictionary<string, string> _glyphs =
         _catalogue.ToDictionary(entry => entry.Name, entry => entry.Glyph, StringComparer.Ordinal);
 
-    /// <summary>How many icons the catalogue holds.</summary>
     public static int Count => _catalogue.Length;
 
-    /// <summary>Whether the font can draw an icon by this name.</summary>
     public static bool Knows(string name) {
       return name.Length > 0 && _glyphs.ContainsKey(name);
     }
 
-    /// <summary>The glyph for a name, or an empty string when the catalogue has no such icon.</summary>
     public static string Glyph(string name) {
       return _glyphs.TryGetValue(name, out string? glyph) ? glyph : string.Empty;
     }
 
-    /// <summary>
-    /// The icons whose name contains <paramref name="query"/>, best matches first.
-    /// </summary>
-    /// <remarks>
-    /// Capped, because fifteen hundred results is not a list anybody reads. Names that start with
-    /// the query come first: searching "mail" should offer Mail before ReplyMirrored.
-    /// </remarks>
+    // Callers must cap: fifteen hundred results is not a list anybody reads.
     public static IReadOnlyList<(string Name, string Glyph)> Search(string query, int take) {
       if (take <= 0) {
         return [];

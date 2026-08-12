@@ -7,7 +7,6 @@ using Kakehashi.Modules.Auth.Application.Sessions.Events;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut {
-  // Ends the server session (best-effort), clears local state, and notifies other modules.
   public sealed class SignOutCommandHandler : IRequestHandler<SignOutCommand, Result> {
     private readonly IInteractiveAuthenticator _authenticator;
     private readonly IAuthSessionAccessor _session;

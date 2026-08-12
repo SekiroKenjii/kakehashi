@@ -7,17 +7,13 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.App.UI {
-  // The Role Permissions screen.
+  // Loads on FrameworkElement.Loaded, not OnNavigatedTo: the navigation service sets Frame.Content
+  // directly — pages come from the container, not from Frame.Navigate — so the navigation overrides
+  // never fire. Every page in this app loads the same way.
   //
-  // Loads on FrameworkElement.Loaded, not OnNavigatedTo: the navigation
-  // service sets Frame.Content directly — pages come from the container, not from
-  // Frame.Navigate — so the navigation overrides never fire. Every page in this app loads
-  // the same way.
-  //
-  // The static helpers exist because x:Bind calls functions but does not do arithmetic or
-  // string formatting. They are on the page rather than in converters for the reason the rest of
-  // this codebase prefers: a function is compile-checked against its arguments, a converter is
-  // not.
+  // The static helpers exist because x:Bind calls functions but does not do arithmetic or string
+  // formatting. They are on the page rather than in converters for the reason the rest of this
+  // codebase prefers: a function is compile-checked against its arguments, a converter is not.
   public sealed partial class RolePermissionsPage : Page {
     public RolePermissionsPage(RolePermissionsViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
@@ -29,7 +25,6 @@ namespace Kakehashi.App.UI {
 
     public RolePermissionsViewModel ViewModel { get; }
 
-    // "22/34 perms" on a role card.
     public static string DescribePerms(int permissionCount, int permissionTotal) {
       return $"{permissionCount}/{permissionTotal} perms";
     }
@@ -38,8 +33,6 @@ namespace Kakehashi.App.UI {
       return accountCount == 1 ? "1 user" : $"{accountCount} users";
     }
 
-    // The matrix header's one-line summary of the selected role.
-    //
     // The description is deliberately absent: it is already on the role card two inches to the
     // left, and including it here pushed the line past the header's width, so the counts — the
     // part that is only here — were the half that got trimmed away.
@@ -59,12 +52,10 @@ namespace Kakehashi.App.UI {
       return role is null ? string.Empty : AdminFormat.Initials(role.Name);
     }
 
-    // The unsaved-changes bar's headline.
     public static string DescribeChanges(int count) {
       return count == 1 ? "1 unsaved change" : $"{count} unsaved changes";
     }
 
-    // The icon on a category header.
     public static string GroupGlyph(string category) {
       return category switch {
         "Administration" => "",
@@ -73,33 +64,27 @@ namespace Kakehashi.App.UI {
       };
     }
 
-    // The headline of one audit entry.
     public static string DescribeAudit(string action, string roleName, string permissionKey) {
       return permissionKey.Length == 0
           ? $"{action} · {roleName}"
           : $"{action} · {roleName} · {permissionKey}";
     }
 
-    // Who did it and when, plus whatever the entry carried.
     public static string DescribeActor(string actorName, DateTimeOffset at, string detail) {
       var line = $"{actorName} · {AdminFormat.Relative(at)}";
       return detail.Length == 0 ? line : $"{line} · {detail}";
     }
 
-    // The changed-row tint: a caution wash behind a staged row, nothing otherwise.
     public static SolidColorBrush ChangedBackground(bool isChanged) {
       return isChanged ? _changedBackground : _transparent;
     }
 
-    // The 3px caution edge on a staged row — the mockup's changed marker.
     public static SolidColorBrush ChangedBorder(bool isChanged) {
       return isChanged ? _changedBorder : _transparent;
     }
 
-    // The inverse of a flag, as a visibility.
-    //
-    // x:Bind converts a bool to Visibility on its own but has no operator for "not", and a
-    // second property on the view model for every negated one is worse than one function here.
+    // x:Bind converts a bool to Visibility on its own but has no operator for "not", and a second
+    // property on the view model for every negated one is worse than one function here.
     public static Visibility Not(bool value) {
       return value ? Visibility.Collapsed : Visibility.Visible;
     }

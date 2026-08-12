@@ -8,9 +8,9 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.Services.Platform {
-  // Shows pages in the shell's content Frame. Pages are resolved from the container
-  // (so they get constructor injection), which is why navigation sets Frame.Content
-  // directly and keeps its own back stack rather than using the frame's reflection-based journal.
+  // Pages are resolved from the container so they get constructor injection, which is why this sets
+  // Frame.Content directly and keeps its own back stack rather than using the frame's
+  // reflection-based journal.
   public sealed class NavigationService : INavigationService {
     private readonly IServiceProvider _services;
     private readonly IModuleRegistry _moduleRegistry;
@@ -105,7 +105,8 @@ namespace Kakehashi.App.Services.Platform {
 
       while (_backStack.Count > 0) {
         var entry = _backStack.Pop();
-        // Entries whose module was detached after they were pushed are skipped.
+        // A module can be detached after its entry was pushed, so keep popping rather than
+        // navigating to it.
         if (IsDetached(entry.PageKey)) {
           continue;
         }
@@ -127,8 +128,8 @@ namespace Kakehashi.App.Services.Platform {
     }
 
     private Page? Resolve(Type pageType) {
-      // Pages are registered in the container (host pages in AppHost, module pages via IModule), so
-      // they are resolved with constructor injection. An unregistered page yields null (no navigation).
+      // Host pages are registered in AppHost, module pages via IModule; anything unregistered
+      // yields null, which callers treat as "do not navigate".
       return _services.GetService(pageType) as Page;
     }
 

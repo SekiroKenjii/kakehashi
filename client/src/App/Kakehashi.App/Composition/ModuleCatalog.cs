@@ -5,8 +5,6 @@ using Kakehashi.Modules.Notes.UI;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.App.Composition {
-  // The single place that lists the feature modules composed into the application. Add a module by
-  // referencing its UI project and adding its IModule here.
   internal static class ModuleCatalog {
     public static IReadOnlyList<IModule> Modules { get; } = [
       new NotesModule(),

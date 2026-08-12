@@ -7,11 +7,8 @@ using Kakehashi.Modules.Auth.Domain;
 using Xunit;
 
 namespace Kakehashi.ArchitectureTests {
-  /// <summary>
-  /// Auth-module counterparts to <see cref="LayeringTests"/>. Kept in a separate file (with its own
-  /// referenced project assemblies) so the Auth module and its architecture coverage can be removed
-  /// as a unit by the setup script, without editing the shared <see cref="LayeringTests"/>.
-  /// </summary>
+  // A separate file, with its own referenced project assemblies, so the setup script can remove the
+  // Auth module and its architecture coverage as a unit without editing the shared LayeringTests.
   public sealed class AuthLayeringTests {
     private static readonly Assembly _authDomain = typeof(AuthSession).Assembly;
     private static readonly Assembly _authApplication =

@@ -8,25 +8,21 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Applying a whole arrangement at once.
-//
-// The rest of admin.go changes one row per call, which is what a screen needed when every edit was
-// written the moment it was made. One gesture now produces several changes — dragging a screen into
-// another heading renumbers what it landed among — and a sequence of single-row calls cannot fail
-// halfway without leaving the pane half-rearranged.
+// Applying a whole arrangement at once. One gesture produces several changes — dragging a screen
+// into another heading renumbers what it landed among — and the single-row calls in admin.go cannot
+// fail halfway without leaving the pane half-rearranged.
 //
 // Everything here validates before anything writes. That ordering is the feature: a refusal leaves
-// the stored layout exactly as it was, so an administrator who mistyped one heading has not silently
-// half-applied the other eleven changes.
+// the stored layout exactly as it was, so an administrator who mistyped one heading has not
+// silently half-applied the other eleven changes.
 
-// GroupSpec is a heading as an administrator wants it. An empty ID means "create it".
+// GroupSpec with an empty ID means "create it".
 type GroupSpec struct {
 	ID    string
 	Title string
 	Order int
 }
 
-// ItemSpec is a destination as an administrator wants it placed.
 type ItemSpec struct {
 	ID      string
 	GroupID string
@@ -40,8 +36,8 @@ type ItemSpec struct {
 	IsVisible bool
 }
 
-// ApplyOutcome counts what changed, which is not what was sent: a screen posts its whole arrangement
-// and most of it is usually already true.
+// ApplyOutcome counts what changed, which is not what was sent: a screen posts its whole
+// arrangement and most of it is usually already true.
 type ApplyOutcome struct {
 	GroupsCreated int
 	GroupsUpdated int
@@ -66,8 +62,8 @@ func (s *Service) ApplyLayout(
 		return ApplyOutcome{}, err
 	}
 
-	// Nothing to do, and nothing to open a transaction for. A screen that posts an unchanged
-	// arrangement gets a successful answer with four zeroes, which is the truthful one.
+	// Nothing to open a transaction for. A screen that posts an unchanged arrangement gets a
+	// successful answer with four zeroes.
 	if plan.IsEmpty() {
 		return ApplyOutcome{}, nil
 	}
@@ -80,7 +76,6 @@ func (s *Service) ApplyLayout(
 	return outcome, nil
 }
 
-// planGroups turns the wanted headings into creates, updates and deletes.
 func (s *Service) planGroups(
 	specs []GroupSpec, stored *layout,
 ) (*domain.LayoutPlan, ApplyOutcome, error) {
@@ -98,7 +93,7 @@ func (s *Service) planGroups(
 	titles := make(map[string]string, len(specs))
 
 	for _, spec := range specs {
-		// IsSystem is read from what is stored rather than taken from the request. A heading the
+		// IsSystem is read from what is stored rather than taken from the request: a heading the
 		// product ships must not become deletable by being submitted as an ordinary one.
 		isSystem := false
 		if current, ok := existing[spec.ID]; ok {
@@ -116,9 +111,9 @@ func (s *Service) planGroups(
 		}
 		wanted[group.ID] = struct{}{}
 
-		// Titles are unique in the database, so a collision would surface as a conflict from the
-		// middle of a transaction naming one row. Caught here it names both, before anything is
-		// written. Compared case-insensitively because the database's collation is.
+		// Titles are unique in the database, so a collision would otherwise surface as a conflict
+		// from the middle of a transaction naming one row. Compared case-insensitively because the
+		// database's collation is.
 		folded := strings.ToLower(group.Title)
 		if other, clash := titles[folded]; clash {
 			return nil, ApplyOutcome{}, errs.Invalidf(
@@ -144,8 +139,8 @@ func (s *Service) planGroups(
 			continue
 		}
 		if g.IsSystem {
-			// The same refusal DeleteGroup gives, and for the same reason: a deployment that deleted
-			// the heading its administrative screens live under would have nowhere left to put them.
+			// The same refusal DeleteGroup gives: a deployment that deleted the heading its
+			// administrative screens live under would have nowhere left to put them.
 			return nil, ApplyOutcome{}, errs.Invalidf(
 				"%s is one of the headings this product ships, so it cannot be deleted. Rename it, "+
 					"or move what is under it somewhere else.", g.Title)
@@ -157,17 +152,15 @@ func (s *Service) planGroups(
 	return &plan, outcome, nil
 }
 
-// planItems adds the placements that differ from what is stored.
-//
 // A stored row absent from the request is left exactly as it is. Destinations come from code, so
 // absence here means "not mentioned" and never "remove it" — the opposite of how headings work, and
 // the asymmetry is deliberate: an administrator owns the headings and the code owns the screens.
 func (s *Service) planItems(
 	specs []ItemSpec, stored *layout, plan *domain.LayoutPlan, outcome *ApplyOutcome,
 ) error {
-	// The headings this arrangement will end with, which is what an item may be placed under — not
-	// the ones stored now. A screen that creates a heading and drops a destination into it in one
-	// gesture is the ordinary case, and checking against the stored set would refuse it.
+	// The headings this arrangement will end with, not the ones stored now. A screen that creates a
+	// heading and drops a destination into it in one gesture is the ordinary case, and checking
+	// against the stored set would refuse it.
 	available := make(map[string]struct{}, len(plan.CreateGroups)+len(stored.groups))
 	for _, g := range plan.CreateGroups {
 		available[g.ID] = struct{}{}
@@ -180,10 +173,9 @@ func (s *Service) planItems(
 	}
 
 	// Headings on their way out, kept separately rather than removed from available. An item still
-	// pointing at one is not an error: the schema ungroups whatever was under a deleted heading, and
-	// the single-row DeleteGroup relies on exactly that. Refusing here would make the two ways of
-	// deleting a heading disagree about what happens to its contents, and a screen would have to
-	// renumber every affected row to say something the server already knows.
+	// pointing at one is not an error: the schema ungroups whatever was under a deleted heading,
+	// and the single-row DeleteGroup relies on exactly that. Refusing here would make the two ways
+	// of deleting a heading disagree about what happens to its contents.
 	deleting := make(map[string]struct{}, len(plan.DeleteGroups))
 	for _, id := range plan.DeleteGroups {
 		delete(available, id)
@@ -204,10 +196,10 @@ func (s *Service) planItems(
 
 		groupID := spec.GroupID
 		if groupID != "" {
-			// Validated in Go before the write, because the database is more forgiving than the pane:
-			// SQL Server compares case-insensitively, so the foreign key accepts "Administration" for
-			// the heading whose id is "administration" — and then Build, which matches exactly, finds
-			// no such heading and drops the destination out of every pane it belonged in.
+			// Validated in Go before the write, for the reason MoveItem gives: SQL Server compares
+			// case-insensitively, so the foreign key accepts "Administration" for the heading whose
+			// id is "administration" — and then Build, which matches exactly, finds no such heading
+			// and drops the destination out of every pane it belonged in.
 			if err := domain.ValidateSlug(groupID); err != nil {
 				return err
 			}

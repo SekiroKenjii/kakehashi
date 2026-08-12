@@ -9,9 +9,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // The startup login gate. When authentication is configured it first tries a silent session
-  // restore (refresh-token exchange); if that fails it shows the LoginWindow and waits
-  // for interactive sign-in. When authentication is not configured it returns immediately.
   public sealed class AuthenticationGate : IAuthenticationGate {
     private readonly IServiceProvider _services;
     private readonly AuthOptions _options;
@@ -42,8 +39,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       var window = _services.GetRequiredService<LoginWindow>();
       window.Activate();
 
-      // The window confirms with the user before closing without a sign-in; a false outcome means
-      // the user chose to quit. Surface that as cancellation so startup stops gracefully.
+      // The window already confirmed with the user, so a false outcome means they chose to quit.
+      // Surfaced as cancellation so startup stops gracefully.
       bool didSignIn = await window.Outcome.WaitAsync(cancellationToken).ConfigureAwait(true);
       if (!didSignIn) {
         throw new OperationCanceledException(

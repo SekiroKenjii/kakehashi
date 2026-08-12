@@ -23,11 +23,9 @@ const (
 	claimSession = "sid"
 )
 
-// storage implements op.Storage over the module's store.
-//
-// It is glue, on purpose. Every decision — what a valid password is, when a session exists, which
-// events get recorded — lives in domain/ and service/; this file translates op's vocabulary into
-// theirs and nothing more.
+// Glue, on purpose. Every decision — what a valid password is, when a session exists, which events
+// get recorded — lives in domain/ and service/; this file translates op's vocabulary into theirs
+// and nothing more.
 type storage struct {
 	store    *store.SQLServer
 	client   *client
@@ -42,8 +40,8 @@ func newStorage(
 	return &storage{store: st, client: c, tokenTTL: tokenTTL, signer: signer}
 }
 
-// CreateAuthRequest stores the parsed /authorize request. userID is empty for the code flow: the
-// user has not signed in yet, that is what the browser sign-in page is about to do.
+// userID is empty for the code flow: the user has not signed in yet, that is what the browser
+// sign-in page is about to do.
 func (s *storage) CreateAuthRequest(
 	ctx context.Context, r *oidc.AuthRequest, userID string,
 ) (op.AuthRequest, error) {
@@ -93,8 +91,7 @@ func (s *storage) DeleteAuthRequest(ctx context.Context, id string) error {
 	return s.store.DeleteAuthRequest(ctx, id)
 }
 
-// CreateAccessToken issues an access token with no refresh token — the path taken when
-// offline_access was not requested.
+// No refresh token — the path taken when offline_access was not requested.
 func (s *storage) CreateAccessToken(
 	ctx context.Context, request op.TokenRequest,
 ) (string, time.Time, error) {
@@ -105,12 +102,7 @@ func (s *storage) CreateAccessToken(
 	return token.ID, token.ExpiresAt, nil
 }
 
-// CreateAccessAndRefreshTokens issues an access token and rotates the refresh token.
-//
-// On the first exchange currentRefreshToken is empty and a fresh one is minted. On a refresh the
-// old token row is deleted before the new one is written: a refresh token that has been used is a
-// refresh token that no longer exists, so a replay of it fails loudly instead of silently minting
-// a second session.
+// On the first exchange currentRefreshToken is empty and a fresh one is minted.
 func (s *storage) CreateAccessAndRefreshTokens(
 	ctx context.Context, request op.TokenRequest, currentRefreshToken string,
 ) (string, string, time.Time, error) {
@@ -136,13 +128,13 @@ func (s *storage) TokenRequestByRefreshToken(
 	return &refreshTokenRequest{row: row}, nil
 }
 
-// TerminateSession is the end-session endpoint's storage half: the user asked to sign out of this
-// client, so their sessions with it end and the cascade takes the tokens.
+// The user asked to sign out of this client, so their sessions with it end and the cascade takes
+// the tokens.
 func (s *storage) TerminateSession(ctx context.Context, userID, clientID string) error {
 	return s.store.DeleteSessionsForUserClient(ctx, userID, clientID)
 }
 
-// RevokeToken handles RFC 7009 revocation, of either kind of token.
+// RFC 7009 revocation, of either kind of token.
 func (s *storage) RevokeToken(
 	ctx context.Context, tokenOrTokenID, userID, clientID string,
 ) *oidc.Error {
@@ -187,14 +179,14 @@ func (s *storage) GetClientByClientID(ctx context.Context, clientID string) (op.
 	return s.client, nil
 }
 
-// AuthorizeClientIDSecret always fails: the only client is public, and a public client that
-// presents a secret is misconfigured somewhere worth hearing about.
+// Always fails: the only client is public, and a public client that presents a secret is
+// misconfigured somewhere worth hearing about.
 func (s *storage) AuthorizeClientIDSecret(ctx context.Context, clientID, secret string) error {
 	return errs.Unauthenticatedf("This provider has no confidential clients.")
 }
 
-// SetUserinfoFromScopes fills the userinfo response — and, through the claims assertion, the ID
-// token — from the account row. Each scope unlocks its claims and nothing else's.
+// Fills the userinfo response and, through the claims assertion, the ID token. Each scope unlocks
+// its claims and nothing else's.
 func (s *storage) SetUserinfoFromScopes(
 	ctx context.Context, userinfo *oidc.UserInfo, userID, clientID string, scopes []string,
 ) error {
@@ -220,8 +212,8 @@ func (s *storage) SetUserinfoFromScopes(
 	return nil
 }
 
-// SetUserinfoFromToken serves the userinfo endpoint: the access token has already been verified,
-// so this resolves what it may see and delegates to the scope logic above.
+// The userinfo endpoint. The access token has already been verified, so this only resolves what it
+// may see.
 func (s *storage) SetUserinfoFromToken(
 	ctx context.Context, userinfo *oidc.UserInfo, tokenID, subject, origin string,
 ) error {
@@ -251,20 +243,17 @@ func (s *storage) SetIntrospectionFromToken(
 	return nil
 }
 
-// GetPrivateClaimsFromScopes adds the non-standard claims to JWT access tokens.
 func (s *storage) GetPrivateClaimsFromScopes(
 	ctx context.Context, userID, clientID string, scopes []string,
 ) (map[string]any, error) {
 	// Nothing to add today. Roles left this module when authorization became its own: a token that
 	// carried them would be a second source of truth with a ten-minute lag, and the gate resolves
-	// the real answer per request. Kept as a hook because op asks for it either way, and the next
-	// private claim will want somewhere to go.
+	// the real answer per request. Kept as a hook because op asks for it either way.
 	return map[string]any{}, nil
 }
 
-// GetPrivateClaimsFromRequest is the request-aware variant op prefers when the storage offers it.
-// It exists so the session id can ride inside the access token: the request knows which session
-// issued it, the scopes alone do not.
+// The request-aware variant op prefers when the storage offers it. It exists so the session id can
+// ride inside the access token: the request knows which session issued it, the scopes alone do not.
 func (s *storage) GetPrivateClaimsFromRequest(
 	ctx context.Context, request op.TokenRequest, restrictedScopes []string,
 ) (map[string]any, error) {
@@ -300,9 +289,6 @@ func (s *storage) Health(ctx context.Context) error {
 	return s.store.Health(ctx)
 }
 
-// insertToken writes one issued-token row for whichever request shape op handed us.
-// insertToken writes a token, retiring the refresh token it replaces in the same transaction.
-//
 // retire is empty on the first exchange of a session. On a refresh it is the token being spent: a
 // refresh token that has been used is a refresh token that no longer exists, so a replay of it
 // fails loudly instead of silently minting a second session.
@@ -347,7 +333,6 @@ func (s *storage) insertToken(
 	return token, nil
 }
 
-// sessionIDOf extracts which session a token request belongs to, for the shapes that know.
 func sessionIDOf(request op.TokenRequest) string {
 	switch r := request.(type) {
 	case *authRequest:

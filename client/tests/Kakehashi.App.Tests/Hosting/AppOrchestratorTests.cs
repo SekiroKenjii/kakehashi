@@ -8,11 +8,8 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.Hosting {
-  /// <summary>
-  /// Unit tests for <see cref="AppOrchestrator"/>: it runs the registered startup orchestrators in
-  /// ascending <see cref="IStartupOrchestrator.Order"/> and honors cancellation. Run with an empty
-  /// awake-service list so the loop that touches the app's static service provider is not entered.
-  /// </summary>
+  // Run with an empty awake-service list so the loop that touches the app's static service provider
+  // is never entered.
   public sealed class AppOrchestratorTests {
     private static readonly IEnumerable<IAwakeOnStartup> _noAwakeServices = [];
 

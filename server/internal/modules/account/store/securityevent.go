@@ -7,7 +7,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// InsertSecurityEvent appends to an account's audit trail.
 func (s *SQLServer) InsertSecurityEvent(ctx context.Context, e domain.SecurityEvent) error {
 	const q = `
         INSERT INTO account.SecurityEvent (Id, AccountId, Kind, Device, IpAddress, OccurredAt)
@@ -21,7 +20,6 @@ func (s *SQLServer) InsertSecurityEvent(ctx context.Context, e domain.SecurityEv
 	return nil
 }
 
-// SecurityEventsForUser returns the most recent entries, newest first.
 func (s *SQLServer) SecurityEventsForUser(
 	ctx context.Context, accountID string, take int,
 ) ([]domain.SecurityEvent, error) {

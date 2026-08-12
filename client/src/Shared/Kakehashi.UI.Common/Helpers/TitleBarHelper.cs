@@ -4,25 +4,17 @@ using Microsoft.UI.Xaml;
 using Windows.UI;
 
 namespace Kakehashi.UI.Common.Helpers {
-  /// <summary>
-  /// Themes the title bar's system caption buttons. With <c>ExtendsContentIntoTitleBar</c> the caption
-  /// buttons are drawn by the system, so their colors are set on <c>AppWindow.TitleBar</c>. When the
-  /// app theme is <see cref="ElementTheme.Default"/> the buttons must follow the *effective* theme
-  /// (resolved from the content root's <see cref="FrameworkElement.ActualTheme"/>), otherwise they
-  /// keep stale colors at startup and after a live system-theme switch.
-  /// </summary>
+  // With ExtendsContentIntoTitleBar the system draws the caption buttons, so their colors live on
+  // AppWindow.TitleBar rather than in XAML. ElementTheme.Default has to be resolved to the content
+  // root's effective theme first, or the buttons keep stale colors at startup and after a live
+  // system-theme switch.
   public static class TitleBarHelper {
-    /// <summary>
-    /// Applies caption-button colors for the given requested theme, resolving
-    /// <see cref="ElementTheme.Default"/> to the content root's actual (effective) theme.
-    /// </summary>
     public static void UpdateTitleBarAppearance(WinUIEx.WindowEx window, ElementTheme requestedTheme) {
       var theme = ResolveTheme(window.Content, requestedTheme);
       ApplyCaptionColors(window.AppWindow.TitleBar, theme);
       ForceRedraw(window);
     }
 
-    /// <summary>Applies caption-button colors that follow the system/effective theme.</summary>
     public static void ApplySystemThemeToCaptionButtons(this WinUIEx.WindowEx window) {
       UpdateTitleBarAppearance(window, ElementTheme.Default);
     }
@@ -32,7 +24,6 @@ namespace Kakehashi.UI.Common.Helpers {
         return requestedTheme;
       }
 
-      // Follow the effective theme of the content root (which itself follows the OS when Default).
       return uiElement is FrameworkElement root
           ? root.ActualTheme
           : ElementTheme.Default;
@@ -66,7 +57,8 @@ namespace Kakehashi.UI.Common.Helpers {
     private static void ForceRedraw(WinUIEx.WindowEx window) {
       nint hWnd = WinRT.Interop.WindowNative.GetWindowHandle(window);
 
-      // Force the system to redraw the caption buttons
+      // The system repaints the caption buttons only on an activation change, hence the WM_ACTIVATE
+      // pair; the order depends on which state the window is already in.
       if (hWnd == WindowInterop.GetActiveWindow()) {
         WindowInterop.SendMessage(
           hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.InActive, nint.Zero);

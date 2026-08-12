@@ -1,16 +1,12 @@
-// Package notes is the reference feature module: a full vertical slice from the database to the
-// wire.
+// Package notes is the reference feature module: copy this directory to start a new one.
 //
-// Copy this directory to start a new module. What each layer is for:
-//
-//	api/      the contract. Interfaces, DTOs, events. The only package other modules may import,
-//	          and the only one that may not import them.
-//	domain/   entities and the rules they enforce. Knows nothing about SQL or protobuf, which is
-//	          what makes it testable in isolation.
+//	api/      the contract. The only package other modules may import, and the only one that may
+//	          not import them.
+//	domain/   entities and the rules they enforce. No SQL, no protobuf, which is what makes it
+//	          testable in isolation.
 //	store/    persistence. Owns every table prefixed notes_.
 //	service/  use cases. Orchestrates domain and store, publishes events.
 //	rpc/      the wire. The only package that may import generated code.
-//	module.go the wiring below.
 package notes
 
 import (
@@ -21,7 +17,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/store"
 )
 
-// Module is the notes feature.
 type Module struct {
 	svc *service.Service
 }
@@ -31,11 +26,10 @@ func New() *Module { return &Module{} }
 // ID namespaces the module's tables (notes_*) and its configuration keys.
 func (m *Module) ID() string { return "notes" }
 
-// Migrations hands the kernel this module's schema. The kernel applies whatever has not run yet,
-// in order, before any module starts.
+// The kernel applies whatever has not run yet, in order, before any module starts.
 //
-// The loop converts between two identical-looking types on purpose: returning the store's own type
-// would mean naming it here, and tools/archlint reserves the database packages for store/.
+// The loop converts between two identical-looking types on purpose: naming the store's own type
+// here would pull in a database package, which tools/archlint reserves for store/.
 func (m *Module) Migrations() []app.Migration {
 	src := store.Migrations()
 
@@ -46,7 +40,6 @@ func (m *Module) Migrations() []app.Migration {
 	return out
 }
 
-// Register builds the service and publishes it under the api interface.
 func (m *Module) Register(k *app.Kernel) error {
 	m.svc = service.New(store.New(k.SQL), k.Bus, nil)
 
@@ -54,12 +47,10 @@ func (m *Module) Register(k *app.Kernel) error {
 	return nil
 }
 
-// Routes contributes the RPC service.
 func (m *Module) Routes(k *app.Kernel) []app.Route {
 	pattern, handler := rpc.NewRoute(m.svc, k.RPC)
 
-	// The ordinary case: gated on notes.access, so the pane's lock and the server's refusal read
-	// the same row.
+	// Gated on notes.access, so the pane's lock and the server's refusal read the same row.
 	return []app.Route{
 		{Pattern: pattern, Handler: handler, Policy: app.ModuleAccess()},
 	}

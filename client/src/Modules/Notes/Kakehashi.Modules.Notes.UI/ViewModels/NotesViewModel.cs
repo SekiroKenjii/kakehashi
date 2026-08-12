@@ -15,19 +15,12 @@ using Kakehashi.Modules.Notes.Application.Notes.Queries.GetNotes;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.Modules.Notes.UI.ViewModels {
-  // A row in the notes list.
   public sealed record NoteListItem(long Id, string Title, string Preview, string TimeText) {
     public bool HasPreview => Preview.Length > 0;
 
     public bool HasNoPreview => !HasPreview;
   }
 
-  // Presentation logic for the Notes page: the note list (paged client-side), and the create,
-  // edit and delete dialogs.
-  //
-  // It reaches the server exclusively through the mediator. It has never heard of gRPC, and
-  // swapping the transport underneath would not change a line in this file — which is the point
-  // of the gateway port sitting between them.
   public sealed partial class NotesViewModel : ViewModel {
     private const int _pageSize = 5;
     private const int _previewLength = 90;
@@ -81,7 +74,7 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
     [ObservableProperty]
     public partial string DeletePrompt { get; set; }
 
-    // The current page of notes, at most _pageSize rows.
+    // The current page only, at most _pageSize rows; _allNotes holds the rest.
     public ObservableCollection<NoteListItem> Notes { get; } = [];
 
     public bool HasError => !string.IsNullOrEmpty(ErrorMessage);
@@ -102,8 +95,8 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
         var result = await _sender.Send(new GetNotesQuery());
         if (result.IsFailure) {
           ErrorMessage = result.Error.Message;
-          // Leave whatever is on screen alone. A backend that blinked should not also wipe the
-          // list the user was reading.
+          // Leave what is on screen alone: a backend that blinked should not also wipe the list
+          // the user was reading.
           return;
         }
 
@@ -125,7 +118,6 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
       ShowPage(_page + 1);
     }
 
-    // Resets the dialog for a new note.
     public void PrepareCreate() {
       _editingId = null;
       DialogHeader = "New note";
@@ -134,7 +126,6 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
       EditBody = string.Empty;
     }
 
-    // Prefills the dialog from an existing row.
     public async Task PrepareEditAsync(NoteListItem item) {
       ArgumentNullException.ThrowIfNull(item);
 
@@ -144,8 +135,8 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
       EditTitle = item.Title;
       EditBody = string.Empty;
 
-      // The row only carries a preview, so the body comes from the list the server last gave us.
-      // Re-fetching keeps the dialog honest when another device changed the note in between.
+      // The row carries only a preview, so the body is refetched — which also catches a change
+      // made on another device.
       var result = await _sender.Send(new GetNotesQuery());
       if (result.IsSuccess) {
         var current = result.Value.FirstOrDefault(note => note.Id == item.Id);
@@ -156,8 +147,8 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
       }
     }
 
-    // Saves the dialog. Returns false — after setting DialogError — to keep it open,
-    // so a rejected title does not cost the user what they typed.
+    // Returns false, after setting DialogError, to keep the dialog open so a rejected title does
+    // not cost the user what they typed.
     public async Task<bool> SaveAsync() {
       DialogError = null;
 
@@ -178,14 +169,12 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
       return true;
     }
 
-    // Arms the delete confirmation for a row.
     public void PrepareDelete(NoteListItem item) {
       ArgumentNullException.ThrowIfNull(item);
       _pendingDelete = item;
       DeletePrompt = $"Delete “{item.Title}”? This cannot be undone.";
     }
 
-    // Performs the armed delete. Returns false if it failed.
     public async Task<bool> ConfirmDeleteAsync() {
       if (_pendingDelete is not { } item) {
         return false;
@@ -207,7 +196,6 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
           note.Id, note.Title, BuildPreview(note.Body), FormatRelative(note.UpdatedAt));
     }
 
-    // Collapses the body to a single line short enough for a list row.
     private static string BuildPreview(string body) {
       // Honouring newlines would make every row a different height and the list would jump around
       // as it pages.
@@ -223,7 +211,6 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
           : elements.SubstringByTextElements(0, _previewLength) + "…";
     }
 
-    // "now", "3h ago", then an absolute date once relative stops being useful.
     private static string FormatRelative(DateTimeOffset moment) {
       var elapsed = DateTimeOffset.UtcNow - moment;
 

@@ -12,10 +12,6 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
-  /// <summary>
-  /// Unit tests for <see cref="LoginViewModel"/>: which screen each <see cref="AuthMode"/> shows,
-  /// what the sign-in command sends in each, and the guards around a half-filled form.
-  /// </summary>
   public sealed class LoginViewModelTests {
     private readonly ISender _sender = Substitute.For<ISender>();
 

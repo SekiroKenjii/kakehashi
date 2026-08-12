@@ -7,10 +7,8 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
 )
 
-// Reconcile brings the stored layout in step with what this build declares.
-//
-// Two sources of truth need one moment where they meet, and this is it: it runs at boot, after the
-// migrations and before the server serves.
+// Reconcile is where the two sources of truth meet: it runs at boot, after the migrations and
+// before the server serves.
 //
 // Three cases, and the difference between them is the whole design:
 //
@@ -27,8 +25,8 @@ import (
 func (s *Service) Reconcile(ctx context.Context, systemGroups []navigationapi.SystemGroup) error {
 	at := s.now()
 
-	// Headings first: a placement names one, so seeding them in the other order would be a
-	// placement pointing at a heading that is not there yet.
+	// Headings first: a placement names one, so the other order would seed a placement pointing at
+	// a heading that is not there yet.
 	for _, wanted := range systemGroups {
 		group, err := domain.NewGroup(wanted.ID, wanted.Title, wanted.Order, true)
 		if err != nil {

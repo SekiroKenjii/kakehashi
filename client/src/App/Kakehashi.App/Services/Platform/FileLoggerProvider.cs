@@ -6,12 +6,9 @@ using System.Threading;
 using Microsoft.Extensions.Logging;
 
 namespace Kakehashi.App.Services.Platform {
-  // Writes the application log to a file under %LOCALAPPDATA%\Kakehashi\logs.
-  //
-  // This exists because the alternative was nothing. The host registered only
-  // AddDebug(), which writes through OutputDebugString — visible to a debugger and
-  // to nobody else. A packaged build handed to a tester therefore produced no record at all, and
-  // the first question after any crash report ("what does the log say?") had no answer.
+  // This exists because the alternative was nothing: the host registered only AddDebug(), which
+  // writes through OutputDebugString — visible to a debugger and to nobody else — so a build handed
+  // to a tester kept no record of what went wrong.
   //
   // Hand-rolled rather than a logging package, because the whole job is a line of text and a file
   // handle. One file per day, appended, and never deleted by this code: a log that rotates itself
@@ -41,10 +38,8 @@ namespace Kakehashi.App.Services.Platform {
       _writer.Start();
     }
 
-    // The lowest level written. Everything below it is dropped before it is formatted.
     public LogLevel Minimum { get; }
 
-    // Where the log is being written, so the app can tell a user where to look.
     // Named LogPath rather than Path, which would shadow System.IO.Path.
     public string LogPath => _path;
 
@@ -113,8 +108,8 @@ namespace Kakehashi.App.Services.Platform {
             .Append(formatter(state, exception))
             .AppendLine();
 
-        // The whole exception, inner ones included. A log that recorded only the message would
-        // answer "something failed" and not "where", which is the only part worth writing down.
+        // The whole exception, inner ones included: the message alone answers "something failed"
+        // and not "where", which is the part worth writing down.
         if (exception is not null) {
           line.AppendLine(exception.ToString());
         }

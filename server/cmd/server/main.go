@@ -1,13 +1,6 @@
-// Command server is the entry point and the composition root.
-//
-// It names two things and nothing else: every module this build ships, and the modules permitted to
-// serve a route that checks no permission. Acquiring the datastores, booting the kernel and serving
-// are internal/app's job; what a module IS — its tables, its permissions, its screen and what
-// protects it — is the module's own.
-//
-// Neither list grows because a module was added. modules() gains one line; the other changes only
-// when somebody decides to exempt a route from the permission check, which is a decision worth
-// seeing in a diff.
+// Command server is the composition root. It names two things and nothing else: every module this
+// build ships, and the modules permitted to serve a route that checks no permission. Acquiring the
+// datastores, booting the kernel and serving are internal/app's job.
 package main
 
 import (
@@ -32,13 +25,12 @@ import (
 func main() {
 	log := logging.FromEnv()
 
-	// The context is cancelled on SIGINT or SIGTERM, which is what a container runtime sends
-	// before it resorts to SIGKILL. Everything downstream treats cancellation as "wind up", so
-	// this one line is the whole graceful-shutdown trigger.
+	// Everything downstream treats cancellation as "wind up", so this one line is the whole
+	// graceful-shutdown trigger. SIGTERM is what a container runtime sends before SIGKILL.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Default signal handling is restored the moment the first signal arrives, so a second Ctrl-C
+	// Restores default signal handling the moment the first signal arrives, so a second Ctrl-C
 	// during a slow shutdown kills the process. Deferring stop() alone kept the handler installed
 	// for the whole shutdown window, which swallowed exactly the signal somebody sends because the
 	// shutdown is taking too long.
@@ -54,11 +46,9 @@ func main() {
 	log.Info("server stopped")
 }
 
-// run boots the server, serves it, and releases what the boot acquired.
-//
-// Three statements, and the order of the last two is the point: Run returns only once the requests
-// in flight have finished, and Close is what shuts the modules and stores those requests were
-// using. Reversed, shutdown would close a database underneath a handler still reading from it.
+// The order of the last two statements is the point: Run returns only once the requests in flight
+// have finished, and Close is what shuts the modules and stores those requests were using.
+// Reversed, shutdown would close a database underneath a handler still reading from it.
 func run(ctx context.Context, log *slog.Logger) error {
 	rt, err := app.Boot(ctx, app.BootOptions{
 		Log:                     log,
@@ -82,9 +72,6 @@ func run(ctx context.Context, log *slog.Logger) error {
 	return errors.Join(serveErr, rt.Close(closeCtx))
 }
 
-// modules builds the mount list. It is the only function that names every module, and the only
-// thing in this file that grows when one is added: one line, and nothing else about it.
-//
 // Order decides two things and no more: the order migrations run in, and the reverse order modules
 // stop in. Which module can see which service does not depend on it — that is what the kernel's
 // staged boot is for.
@@ -103,9 +90,9 @@ func modules() []app.Module {
 
 // unprotectedRouteModules are the modules permitted to serve a route whose policy checks no
 // permission. The kernel refuses at boot any route declaring Public or SignedIn from a module that
-// is not named here, giving both the module and the pattern.
+// is not named here.
 //
-// Four, and each for a reason that would break the server without it:
+// Each of the four would break the server without it:
 //
 //	health       a liveness probe that needs an account is not a liveness probe.
 //	account      signing in cannot require a permission you can only have after signing in, and
@@ -114,17 +101,11 @@ func modules() []app.Module {
 //	navigation   a client cannot draw a locked door until it knows the door is there, so an account
 //	             with no grants must still be able to ask what its pane looks like.
 //
-// Each of the four also serves an administrative surface, and each of those names its own
-// permission on its own route. Being on this list buys a module permission to ASK for an
-// unprotected route, not blanket exemption — which is the difference from the list it replaces,
-// where naming a module here removed the check from every route it served, so the account module's
-// user directory was protected only by a wrapper somebody had written by hand.
+// Being on this list buys a module permission to ASK for an unprotected route, not blanket
+// exemption — the difference from the list it replaces, where naming a module here removed the
+// check from every route it served, so the account module's user directory was protected only by a
+// wrapper somebody had written by hand.
 //
-// It lives here rather than as something a module declares about itself, because exemption is a
-// security decision. A module that could exempt itself would opt out by editing one line of its own
-// file — and the documented way to add a module is to copy an existing one, which is exactly how a
-// stray app.Public() travels. Named at the composition root, it is a one-line diff in the file a
-// reviewer already reads to learn what this server is made of.
-//
-// It grows per security exemption. It does not grow when a module is added.
+// Exemption is a security decision, so it is named here rather than declared by a module about
+// itself — see Kernel.AllowUnprotectedRoutes. It grows per security exemption, not per module.
 var unprotectedRouteModules = []string{"health", "account", "authz", "navigation"}

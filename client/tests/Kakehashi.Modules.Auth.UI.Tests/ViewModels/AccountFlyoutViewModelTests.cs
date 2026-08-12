@@ -16,11 +16,6 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
-  /// <summary>
-  /// Unit tests for <see cref="AccountFlyoutViewModel"/>: the identity/status it loads from the
-  /// current session, the "signed in ago" formatting (using a fixed <see cref="IClock"/>), the
-  /// theme index, and that sign-out only dispatches when authenticated.
-  /// </summary>
   public sealed class AccountFlyoutViewModelTests {
     private static readonly DateTimeOffset _now =
         new(2026, 6, 13, 12, 0, 0, TimeSpan.Zero);

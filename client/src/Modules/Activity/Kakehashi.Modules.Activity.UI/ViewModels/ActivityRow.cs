@@ -6,23 +6,15 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Kakehashi.Modules.Activity.Application.Activity;
 
 namespace Kakehashi.Modules.Activity.UI.ViewModels {
-  // One key-and-value line inside an expanded row.
   public sealed record ActivityDetail(string Label, string Value);
 
-  // One row in the feed, which may stand for several entries.
-  //
   // An observable object rather than a record because a row is expandable, and expansion is state
   // the row owns. The facts themselves are get-only: an entry never changes once it happened.
-  //
-  // The wording, the icon and the grouping are all decided here rather than sent by the server. The
-  // server ships a stable kind and structured facts, which is what lets this page be re-worded and
-  // re-illustrated without a server release — and what stops a server from owning presentation for
-  // clients it cannot see.
   public sealed partial class ActivityRow : ObservableObject {
-    // Written as escapes rather than as literal characters. These are Private Use Area code points,
-    // so a literal shows as nothing at all in an editor and in a diff — which is how a glyph mapping
-    // gets destroyed by an edit that looked harmless. The older screens in this repo still hold
-    // literals; this is the direction to move them.
+    // Glyphs are written as escapes, not literal characters: these are Private Use Area code
+    // points, so a literal shows as nothing at all in an editor and in a diff — which is how a
+    // glyph mapping gets destroyed by an edit that looked harmless. The older screens in this repo
+    // still hold literals; this is the direction to move them.
     private const string _fallbackGlyph = "\uE946";
 
     private ActivityRow(IReadOnlyList<ActivityEntryDto> entries) {
@@ -46,38 +38,29 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       Facts = Describe(first);
     }
 
-    // The entries this row stands for, newest first. One, unless it is a burst.
+    // Newest first. One entry unless this row is a burst.
     public IReadOnlyList<ActivityEntryDto> Entries { get; }
 
-    // The kind the server reported, which is what the wording and the badges key on.
     public string Kind { get; }
 
-    // The category the server put this in, for the label the row may carry.
     public string Category { get; }
 
-    // What happened, in this client's words.
     public string Title { get; }
 
-    // The muted line under the title: where it happened.
     public string Meta { get; }
 
     public string TimeText { get; }
     public string Glyph { get; }
 
-    // Whether this row is the reason somebody opened the page.
     public bool IsAlert { get; }
 
-    // Whether to badge this as a first sighting of a device.
     public bool IsNew { get; }
 
-    // The timestamps a burst collapsed, newest first. Empty for a single entry.
+    // Newest first. Empty for a single entry.
     public IReadOnlyList<string> Occurrences { get; }
 
-    // The detail lines shown when the row is opened.
     public IReadOnlyList<ActivityDetail> Facts { get; }
 
-    // Whether this row offers a way to act on it.
-    //
     // Only where the answer to "was that me?" could be no. Offering it on every row would make the
     // offer meaningless, which is the same reason the mockup only draws it twice.
     public bool CanSecure =>
@@ -85,24 +68,19 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
             or ActivityKinds.NewDeviceSignedIn
             or ActivityKinds.SessionRevokedByAdmin;
 
-    // How many entries this row stands for. One unless it is a burst.
     public int Count => Entries.Count;
 
     public bool IsBurst => Entries.Count > 1;
 
-    // The multiplier badge, "×9".
     public string CountText => "×" + Count.ToString(CultureInfo.CurrentCulture);
 
     public bool HasMeta => Meta.Length > 0;
 
-    // Whether to label the row with its category.
-    //
     // Sign-in rows are not labelled. A feed of an account's activity is mostly sessions, so a chip
     // repeating "SignIn" on two rows in three is decoration; a chip on the ones that are not is
     // information.
     public bool ShowCategory => Category.Length > 0 && Category != ActivityCategories.SignIn;
 
-    // The category, spelled for a person.
     public string CategoryText => Category switch {
       ActivityCategories.Security => "Security",
       ActivityCategories.System => "System",
@@ -113,11 +91,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     [NotifyPropertyChangedFor(nameof(AnnouncedName))]
     public partial bool IsExpanded { get; set; }
 
-    // What a screen reader says for this row.
-    //
-    // The state belongs in the name because the chevron is a glyph inside the row rather than a
-    // control of its own: there is no expander for UIA to report an expand-collapse pattern on, so
-    // a reader pressing Enter had no way to hear that anything had happened.
+    // The expanded state belongs in the name because the chevron is a glyph inside the row rather
+    // than a control of its own: there is no expander for UIA to report an expand-collapse pattern
+    // on, so a reader pressing Enter had no way to hear that anything had happened.
     public string AnnouncedName {
       get {
         string burst = IsBurst ? $", {Count} times" : string.Empty;
@@ -125,8 +101,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       }
     }
 
-    // Builds one row per entry, collapsing consecutive repeats into a burst.
-    //
     // Consecutive is load-bearing. Grouping every matching entry in the page would reorder the feed
     // — nine sign-outs from this morning would swallow one from last week and claim it happened at
     // breakfast. Only a run of the same fact, from the same session, inside a short window is one
@@ -149,8 +123,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return rows;
     }
 
-    // Whether next is more of the same thing as last.
-    //
     // Entries with no session are never collapsed even when they match. A password change has no
     // session, and two of them minutes apart are two decisions somebody made rather than one event
     // reported twice.
@@ -162,16 +134,16 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
 
     private static (string Title, string Glyph, bool IsAlert) Present(string kind) {
-      // An unrecognised kind shows its raw value rather than being dropped. Every module added to
-      // this boilerplate contributes kinds of its own, and a feed that silently hides what it does
-      // not recognise is a feed you cannot trust to be complete.
+      // An unrecognised kind shows its raw value rather than being dropped. Every module added here
+      // contributes kinds of its own, and a feed that silently hides what it does not recognise is
+      // a feed you cannot trust to be complete.
       return kind switch {
         ActivityKinds.SignedIn => ("Signed in", "\uE930", false),
         ActivityKinds.SignedOut => ("Signed out", "\uE7E8", false),
         ActivityKinds.NewDeviceSignedIn => ("New device signed in", "\uE717", false),
         ActivityKinds.SessionRevoked => ("Session revoked", "\uEE35", false),
-        // The one row that says another person acted on this account, so it is drawn as an alert
-        // even though it shares the revocation glyph.
+        // The one row saying another person acted on this account, so it is an alert even though it
+        // shares the revocation glyph.
         ActivityKinds.SessionRevokedByAdmin =>
             ("Session revoked by an administrator", "\uEE35", true),
         ActivityKinds.FailedSignIn => ("Failed sign-in attempt", "\uE783", true),
@@ -182,8 +154,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       };
     }
 
-    // The detail lines, with every empty one left out.
-    //
     // The mockup this page follows also drew an "Initiated by" line. There is no such field, at any
     // layer — the server records what happened, not who asked — and inventing one would be a
     // fabrication on the single screen somebody opens to check whether a stranger has been in their
@@ -213,7 +183,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return entry.OccurredAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture);
     }
 
-    // The span a burst covers, oldest to newest, as the mockup draws it.
     private static string Span(IReadOnlyList<ActivityEntryDto> entries) {
       string oldest = entries[^1].OccurredAt.ToLocalTime()
           .ToString("HH:mm", CultureInfo.CurrentCulture);
@@ -222,7 +191,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return oldest == newest ? newest : oldest + "–" + newest;
     }
 
-    // Clock time, plus how long ago while that is still the more useful answer.
     private static string Moment(DateTimeOffset occurred) {
       string clock = occurred.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
       string relative = Relative(occurred);
@@ -251,10 +219,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
   }
 
-  // One day's rows, which is what the list groups by.
-  //
-  // The boundary is the reader's local midnight, not the server's. A sign-in at 00:30 in Ho Chi Minh
-  // City belongs under today for the person reading it, whatever UTC thinks.
+  // The day boundary is the reader's local midnight, not the server's. A sign-in at 00:30 in Ho Chi
+  // Minh City belongs under today for the person reading it, whatever UTC thinks.
   public sealed class ActivityDay {
     public ActivityDay(DateTime day, IReadOnlyList<ActivityRow> items) {
       Items = items;

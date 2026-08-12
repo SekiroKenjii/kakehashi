@@ -27,7 +27,7 @@ func TestSlugMakesAStableIdentifierOutOfATitle(t *testing.T) {
 	}
 }
 
-// A slug ends up in a URL, a log line and a configuration file. Anything that would arrive at those
+// A slug ends up in a URL, a log line and a configuration file: anything that would arrive at those
 // three places spelled differently is refused rather than mangled.
 func TestValidateSlugRefusesAnythingThatWouldNotSurviveBeingAnIdentifier(t *testing.T) {
 	for _, id := range []string{"", "Utilities", "ops tools", "ops/tools", "ops_tools", "ops.tools"} {

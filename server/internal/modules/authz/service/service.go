@@ -1,8 +1,4 @@
 // Package service implements the authorization use cases. It is private to the module.
-//
-// Three files. This one is the seam plus the read the request gate runs on every gated request.
-// admin.go holds what an administrator does. bootstrap.go holds what boot does — reconciling the
-// catalogue and seeding the roles the product ships.
 package service
 
 import (
@@ -14,7 +10,7 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
 )
 
-// Store is the persistence these use cases need, declared here rather than in store/.
+// Declared here rather than in store/, so these use cases own the shape they depend on.
 type Store interface {
 	Permissions(ctx context.Context) ([]domain.Permission, error)
 	ReconcilePermissions(ctx context.Context, declared []domain.Permission) error
@@ -46,7 +42,6 @@ type (
 	IDs   func() string
 )
 
-// Service answers what a caller may do, and lets an administrator change it.
 type Service struct {
 	store    Store
 	now      Clock
@@ -54,7 +49,7 @@ type Service struct {
 	accounts Accounts
 }
 
-// New builds the service. Pass nil for clock or ids to use the wall clock and random UUIDs.
+// Pass nil for clock or ids to use the wall clock and random UUIDs.
 func New(store Store, clock Clock, ids IDs) *Service {
 	if clock == nil {
 		clock = time.Now
@@ -65,12 +60,8 @@ func New(store Store, clock Clock, ids IDs) *Service {
 	return &Service{store: store, now: clock, newID: ids}
 }
 
-// Resolve is the question the request gate asks, and the only one on the hot path.
-//
-// It returns every permission the caller holds, each at the widest scope any of their roles gives.
-// One query: the widening happens in SQL because the answer is one row per permission either way,
-// and pulling every role's every grant back to merge in Go would move the same data and then do
-// the work twice.
+// The question the request gate asks, and the only one on the hot path. Every permission the caller
+// holds, each at the widest scope any of their roles gives; the widening happens in SQL.
 func (s *Service) Resolve(ctx context.Context, subject auth.Subject) (auth.Grants, error) {
 	raw, err := s.store.GrantsOfAccount(ctx, subject.ID)
 	if err != nil {
@@ -87,7 +78,6 @@ func (s *Service) Resolve(ctx context.Context, subject auth.Subject) (auth.Grant
 	return grants, nil
 }
 
-// RolesOf lists the roles an account holds, for the account module's user list.
 func (s *Service) RolesOf(ctx context.Context, accountID string) ([]authzapi.Role, error) {
 	roles, err := s.store.RolesOf(ctx, accountID)
 	if err != nil {
@@ -96,16 +86,12 @@ func (s *Service) RolesOf(ctx context.Context, accountID string) ([]authzapi.Rol
 	return toAPIRoles(roles), nil
 }
 
-// GrantsForRole resolves one role's grants into the form the request gate speaks.
+// Not on the hot path, unlike Resolve: nothing authorizes a request with this. It answers what
+// somebody holding this role would be able to do, which is how the navigation module draws the pane
+// a colleague will see rather than the one the administrator has.
 //
-// Not on the hot path, unlike Resolve: nothing authorizes a request with this. It answers "what would
-// somebody holding this role be able to do", which is what lets the navigation module draw the pane a
-// colleague will see rather than the one the administrator has.
-//
-// Widest for the reason Resolve gives — a scope stored in the database that this build does not
-// recognise has to narrow, and Widest is the one place that rule lives. A role with two grants on the
-// same permission is not a shape the admin screen can produce, but the merge costs nothing and means
-// this cannot be the code that trusts it.
+// Widest for the reason Resolve gives. Two grants on the same permission is not a shape the admin
+// screen can produce, but the merge costs nothing and means this cannot be the code that trusts it.
 func (s *Service) GrantsForRole(ctx context.Context, roleID string) (auth.Grants, error) {
 	raw, err := s.RoleGrants(ctx, roleID)
 	if err != nil {

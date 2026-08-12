@@ -9,15 +9,10 @@ using Kakehashi.Modules.Notes.Domain.Notes;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Notes.IntegrationTests {
-  /// <summary>
-  /// Stands in for the server, reproducing the behaviour the contract promises: server-assigned
-  /// ids, newest-first ordering, and a delete that succeeds even when there is nothing to delete.
-  /// </summary>
-  /// <remarks>
-  /// Writing the server's semantics down here is the point. If the real service ever stops
-  /// behaving this way, these tests keep passing and the end-to-end run fails — which is the right
-  /// division of labour, because only one of those two can be run on every commit.
-  /// </remarks>
+  // Reproduces what the server's contract promises: server-assigned ids, newest-first ordering,
+  // and a delete that succeeds even when there is nothing to delete. If the real service ever
+  // stops behaving this way these tests keep passing and the end-to-end run is what fails — the
+  // right division of labour, because only one of the two can run on every commit.
   internal sealed class InMemoryNotesGateway : INotesGateway {
     private readonly Dictionary<long, NoteDto> _notes = [];
     private long _nextId = 1;

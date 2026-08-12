@@ -15,10 +15,8 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// The administrator's surface. A separate route from the one above, because the module wraps this
-// path in a permission check and that wrapper is what protects every procedure added here later.
-
-// NewAdminRoute builds the Connect handler for AuthzAdminService.
+// A separate route from the caller's own view, because the module wraps this path in a permission
+// check and that wrapper is what protects every procedure added here later.
 func NewAdminRoute(svc *service.Service, opts []connect.HandlerOption) (string, http.Handler) {
 	return authzv1connect.NewAuthzAdminServiceHandler(&adminHandler{svc: svc}, opts...)
 }
@@ -210,11 +208,9 @@ func (h *adminHandler) ListAccountRoles(
 	return connect.NewResponse(&authzv1.ListAccountRolesResponse{Accounts: out}), nil
 }
 
-// ListAuditEntries needs audit.view on top of the roles.manage the route already required.
-//
-// The one hand-written check in this file, and it is here rather than on the route because the
-// route is the service and a second Connect service for one procedure is more machinery than the
-// three lines below.
+// Needs audit.view on top of the roles.manage the route already required. The one hand-written
+// check in this file, and it is here rather than on the route because the route is the whole
+// service and a second Connect service for one procedure is more machinery than three lines.
 func (h *adminHandler) ListAuditEntries(
 	ctx context.Context, req *connect.Request[authzv1.ListAuditEntriesRequest],
 ) (*connect.Response[authzv1.ListAuditEntriesResponse], error) {
@@ -253,8 +249,6 @@ func toProtoGrants(grants []authzapi.Grant) []*authzv1.Grant {
 	return out
 }
 
-// actorFrom reads who is making the change.
-//
 // Off the context, never off the request: an actor a client could send is an audit trail a client
 // could forge, and the whole value of the trail is that it cannot be.
 func actorFrom(ctx context.Context) (service.Actor, error) {
@@ -263,8 +257,8 @@ func actorFrom(ctx context.Context) (service.Actor, error) {
 		return service.Actor{}, errs.Unauthenticatedf("Sign in to change access.")
 	}
 
-	// The address stands in when the token carries no name. When it carries neither, the name is
-	// left empty on purpose: the service looks it up, which it can do and this cannot.
+	// The address stands in when the token carries no name. With neither, the name is left empty on
+	// purpose: the service looks it up, which it can do and this cannot.
 	name := subject.Name
 	if name == "" {
 		name = subject.Email

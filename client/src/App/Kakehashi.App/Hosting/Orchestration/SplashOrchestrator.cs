@@ -5,7 +5,6 @@ using Kakehashi.App.UI;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  // Shows the splash window first and performs any startup warm-up.
   public sealed class SplashOrchestrator : IStartupOrchestrator {
     private readonly IServiceProvider _services;
     private readonly StartupContext _context;
@@ -26,8 +25,8 @@ namespace Kakehashi.App.Hosting.Orchestration {
       _context.Splash = splash;
       splash.Activate();
 
-      // Stand-in for real warm-up (priming caches, the backend channel, etc.). The brief delay also
-      // ensures the splash is visible even on fast machines; replace with genuine startup work.
+      // A stand-in for real warm-up (priming caches, the backend channel), still to be written. The
+      // delay also keeps the splash visible on fast machines.
       await Task.Delay(TimeSpan.FromMilliseconds(500), cancellationToken);
     }
   }

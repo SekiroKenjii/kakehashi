@@ -10,13 +10,8 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// The headings.
-
-// Groups returns every heading in the order they should be drawn.
-//
-// Unpaged: the count is how many headings a person felt like making, which is a number a person
-// maintains by hand.
-// groupsQuery is shared with Layout, so the two readers cannot drift on ordering.
+// Shared with Layout, so the two readers cannot drift on ordering. Unpaged: the count is how many
+// headings a person felt like making by hand.
 const groupsQuery = `
         SELECT g.Id, g.Title, g.SortOrder, g.IsSystem
         FROM navigation.NavGroup AS g
@@ -26,7 +21,6 @@ func (s *SQLServer) Groups(ctx context.Context) ([]domain.Group, error) {
 	return collect(ctx, s.db, "list navigation groups", groupsQuery, nil, scanGroup)
 }
 
-// Group returns one heading.
 func (s *SQLServer) Group(ctx context.Context, id string) (domain.Group, error) {
 	const q = `
         SELECT g.Id, g.Title, g.SortOrder, g.IsSystem
@@ -40,12 +34,10 @@ func (s *SQLServer) Group(ctx context.Context, id string) (domain.Group, error) 
 	return group, err
 }
 
-// InsertGroup stores a new heading.
 func (s *SQLServer) InsertGroup(ctx context.Context, g domain.Group, at time.Time) error {
 	return insertGroupTx(ctx, s.db, g, at)
 }
 
-// insertGroupTx is InsertGroup against either handle — see execer.
 func insertGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time) error {
 	const q = `
         INSERT INTO navigation.NavGroup (Id, Title, SortOrder, IsSystem, CreatedAt, UpdatedAt)
@@ -53,10 +45,10 @@ func insertGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time)
 
 	_, err := on.ExecContext(ctx, q, g.ID, g.Title, g.Order, g.IsSystem, at.UTC())
 	if isUniqueViolation(err) {
-		// Two constraints can fire here and they mean different things. The primary key is the
-		// identifier, which for a heading created from a title is derived — so "Ops / Tools" and
-		// "Ops Tools" collide on ops-tools while their titles differ. Reporting that as a title
-		// collision sent somebody looking for a heading that does not exist.
+		// Two constraints can fire here and they mean different things. The identifier is derived
+		// from the title, so "Ops / Tools" and "Ops Tools" collide on ops-tools while their titles
+		// differ — and reporting that as a title collision sent somebody looking for a heading that
+		// does not exist.
 		if errorContains(err, "PK_NavGroupId") {
 			return errs.Conflictf(
 				"The identifier %s is already taken by another heading. Give this one an "+
@@ -70,13 +62,11 @@ func insertGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time)
 	return nil
 }
 
-// UpdateGroup rewrites a heading's title and order. IsSystem is not editable: a heading the product
-// ships cannot become deletable by being edited.
+// IsSystem is not editable: a heading the product ships cannot become deletable by being edited.
 func (s *SQLServer) UpdateGroup(ctx context.Context, g domain.Group, at time.Time) error {
 	return updateGroupTx(ctx, s.db, g, at)
 }
 
-// updateGroupTx is UpdateGroup against either handle.
 func updateGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time) error {
 	const q = `
         UPDATE navigation.NavGroup
@@ -93,13 +83,12 @@ func updateGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time)
 	return requireRow(result, "No navigation heading with id %s.", g.ID)
 }
 
-// DeleteGroup removes a heading. The placements under it fall to ungrouped, which the foreign key
-// does rather than this method — one less thing that can be forgotten in a second code path.
+// The placements under a deleted heading fall to ungrouped, which the foreign key does rather than
+// this method — one less thing that can be forgotten in a second code path.
 func (s *SQLServer) DeleteGroup(ctx context.Context, id string) error {
 	return deleteGroupTx(ctx, s.db, id)
 }
 
-// deleteGroupTx is DeleteGroup against either handle.
 func deleteGroupTx(ctx context.Context, on execer, id string) error {
 	const q = `DELETE FROM navigation.NavGroup WHERE Id = @p1 AND IsSystem = 0;`
 
@@ -110,11 +99,9 @@ func deleteGroupTx(ctx context.Context, on execer, id string) error {
 	return requireRow(result, "No deletable navigation heading with id %s.", id)
 }
 
-// EnsureGroup seeds a heading if it is not there, and leaves it entirely alone if it is.
-//
-// Leaving it alone is the half that matters. This runs on every boot, and a version that also
-// refreshed the title would undo an administrator's rename every time the process restarted —
-// silently, and only in production, where restarts happen without anybody watching.
+// Leaving an existing heading alone is the half that matters. This runs on every boot, and a
+// version that also refreshed the title would undo an administrator's rename every time the process
+// restarted — silently, and only in production, where restarts happen without anybody watching.
 func (s *SQLServer) EnsureGroup(ctx context.Context, g domain.Group, at time.Time) error {
 	const q = `
         IF NOT EXISTS (SELECT 1 FROM navigation.NavGroup AS g WHERE g.Id = @p1)
@@ -147,8 +134,6 @@ func scanGroup(row scanner) (domain.Group, error) {
 	return g, nil
 }
 
-// requireRow turns "the statement ran and changed nothing" into a not-found.
-//
 // An UPDATE that matched no row is not a failure to the driver, so without this a rename of a
 // heading somebody else just deleted reports success and does nothing.
 func requireRow(result sql.Result, format string, a ...any) error {

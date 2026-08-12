@@ -2,7 +2,6 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Windows.ApplicationModel.DataTransfer;
 
 namespace Kakehashi.App.Services.Platform {
-  // Puts text on the Windows clipboard.
   public sealed class ClipboardService : IClipboardService {
     public void SetText(string text) {
       var package = new DataPackage { RequestedOperation = DataPackageOperation.Copy };

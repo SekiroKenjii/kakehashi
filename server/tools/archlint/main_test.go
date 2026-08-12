@@ -2,12 +2,12 @@ package main
 
 import "testing"
 
-// mod stands in for the real module path. Using a fake one keeps the tests honest: nothing here
-// depends on the repository actually containing the packages being described.
+// A fake module path keeps the tests honest: nothing here depends on the repository actually
+// containing the packages being described.
 const mod = "example.com/app"
 
-// TestCheck covers every rule in both directions. A linter that only has tests for the things it
-// rejects will happily reject everything.
+// Every rule is covered in both directions: a linter that only has tests for the things it rejects
+// will happily reject everything.
 func TestCheck(t *testing.T) {
 	tests := []struct {
 		name    string
@@ -15,7 +15,7 @@ func TestCheck(t *testing.T) {
 		to      string
 		blocked bool
 	}{
-		// Rule 1 — cross-module reach.
+		// Rule 1.
 		{
 			name: "module reaches another module through its api",
 			from: mod + "/internal/modules/notes/rpc",
@@ -33,7 +33,7 @@ func TestCheck(t *testing.T) {
 			to:   mod + "/internal/modules/notes/domain",
 		},
 
-		// Rule 2 — contracts must not reference each other.
+		// Rule 2.
 		{
 			name:    "api imports another module's api",
 			from:    mod + "/internal/modules/notes/api",
@@ -41,7 +41,7 @@ func TestCheck(t *testing.T) {
 			blocked: true,
 		},
 
-		// Rule 3 — dependencies point inward.
+		// Rule 3.
 		{
 			name:    "platform imports a module",
 			from:    mod + "/internal/platform/database",
@@ -49,7 +49,7 @@ func TestCheck(t *testing.T) {
 			blocked: true,
 		},
 
-		// Rule 4 — only cmd mounts modules.
+		// Rule 4.
 		{
 			name:    "kernel imports a module",
 			from:    mod + "/internal/app",
@@ -62,7 +62,7 @@ func TestCheck(t *testing.T) {
 			to:   mod + "/internal/modules/notes",
 		},
 
-		// Rule 5 — persistence belongs to store/.
+		// Rule 5.
 		{
 			name: "store imports the sql database package",
 			from: mod + "/internal/modules/notes/store",
@@ -91,7 +91,7 @@ func TestCheck(t *testing.T) {
 			to:   mod + "/internal/platform/database",
 		},
 
-		// Rule 6 — generated code stops at rpc/.
+		// Rule 6.
 		{
 			name: "rpc imports generated code",
 			from: mod + "/internal/modules/notes/rpc",
@@ -117,7 +117,7 @@ func TestCheck(t *testing.T) {
 			to:   mod + "/internal/gen/kakehashi/notes/v1",
 		},
 
-		// Rule 7 — one module issues tokens.
+		// Rule 7.
 		{
 			name: "identity imports an oidc library",
 			from: mod + "/internal/modules/account/rpc",
@@ -169,8 +169,7 @@ func TestCheck(t *testing.T) {
 	}
 }
 
-// TestCheckReportsEveryEdge guards against a rule that returns after the first violation: a linter
-// that reports one problem per run turns a ten-minute fix into ten CI cycles.
+// A rule that returned after the first violation would turn a ten-minute fix into ten CI cycles.
 func TestCheckReportsEveryEdge(t *testing.T) {
 	got := check(mod, []pkg{
 		{

@@ -21,20 +21,15 @@ using SignInRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignI
 using SignOutRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut.SignOutCommand;
 
 namespace Kakehashi.Modules.Auth.UI.ViewModels {
-  // A row in the active sessions list.
   public sealed record SessionItem(string Id, string Title, string Subtitle, bool IsCurrent) {
     public bool IsNotCurrent => !IsCurrent;
   }
 
-  // A row in the security activity feed.
   public sealed record ActivityItem(
       string Title, string Subtitle, string TimeText, string Glyph, bool IsAlert) {
     public bool IsNotAlert => !IsAlert;
   }
 
-  // Presentation logic for the Account page: the signed-in profile, the active sessions and
-  // security activity fetched from the authorization server (paged client-side), the session
-  // actions, and the edit-profile / change-password dialogs.
   public sealed partial class AccountViewModel : ViewModel {
     private const int _pageSize = 5;
 
@@ -85,7 +80,6 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     [ObservableProperty]
     public partial string ActivityPageLabel { get; set; }
 
-    // Edit-profile / change-password dialog state.
     [ObservableProperty]
     public partial string EditDisplayName { get; set; }
 
@@ -188,8 +182,8 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
 
     [RelayCommand]
     private async Task SignOutEverywhereAsync() {
-      // Confirmed, because it ends this session too: the button signs the person pressing it out
-      // of the machine they are pressing it on, which is not what "all devices" reads like until it
+      // Confirmed because it ends this session too: the button signs the person pressing it out of
+      // the machine they are pressing it on, which is not what "all devices" reads like until it
       // has happened.
       var confirmed = await _dialogs.ShowConfirmAsync(
           "Sign out of all devices?",
@@ -253,7 +247,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       ShowActivityPage(_activityPage + 1);
     }
 
-    // Prefills the edit-profile dialog from the server (best-effort).
+    // Best-effort: a failed fetch leaves the locally known values in the fields.
     public async Task PrepareEditProfileAsync() {
       DialogError = null;
       EditDisplayName = DisplayName ?? string.Empty;
@@ -265,7 +259,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       }
     }
 
-    // Saves the profile dialog. Returns false (and sets the error) to keep it open.
+    // Returns false to keep the dialog open with the error visible.
     public async Task<bool> SaveProfileAsync() {
       DialogError = null;
       var result = await _sender.Send(new UpdateRemoteProfileCommand(
@@ -287,7 +281,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       ConfirmPassword = string.Empty;
     }
 
-    // Submits the password dialog. Returns false (and sets the error) to keep it open.
+    // Returns false to keep the dialog open with the error visible.
     public async Task<bool> ChangePasswordAsync() {
       DialogError = null;
       if (string.IsNullOrEmpty(CurrentPassword) || string.IsNullOrEmpty(NewPassword)) {
@@ -326,19 +320,16 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       if (activity.IsSuccess) {
         _allActivity = [.. activity.Value.Select(ToActivityItem)];
       } else {
-        // Said, not swallowed. An empty card is how this screen shows "nothing has ever happened to
-        // your account", which is the single most reassuring thing it could say — and exactly the
-        // wrong thing to say when the truth is that nobody could ask.
+        // Said, not swallowed. An empty card reads as "nothing has ever happened to your account",
+        // which is exactly the wrong thing to say when the truth is that nobody could ask.
         _allActivity = [];
         ErrorMessage = activity.Error.Message;
       }
       ShowActivityPage(1);
     }
 
-    // Whether each pager button has anywhere to go.
-    //
-    // The buttons were never disabled, so at the first page "previous" was a live control that did
-    // nothing — which reads as a broken button rather than as the end of the list.
+    // The pager buttons were never disabled, so at the first page "previous" was a live control
+    // that did nothing — which reads as a broken button rather than as the end of the list.
     [ObservableProperty]
     public partial bool CanPageSessionsBack { get; set; }
 

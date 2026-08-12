@@ -6,7 +6,6 @@ using Kakehashi.Modules.Notes.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Notes.Application.Notes.Commands.DeleteNote {
-  // Asks the server to remove a note.
   public sealed class DeleteNoteCommandHandler : IRequestHandler<DeleteNoteCommand, Result> {
     private readonly INotesGateway _notes;
 
@@ -15,9 +14,8 @@ namespace Kakehashi.Modules.Notes.Application.Notes.Commands.DeleteNote {
       _notes = notes;
     }
 
-    // Nothing to validate: an id either names a note or does not, and the server is the only one
-    // who knows which. It treats a delete of something already gone as success, so a retry after a
-    // dropped connection does not surface as an error the user has to interpret.
+    // Nothing to validate: only the server knows whether an id names a note. It treats a delete of
+    // something already gone as success, so a retry after a dropped connection is not an error.
     public Task<Result> Handle(DeleteNoteCommand request, CancellationToken cancellationToken) {
       ArgumentNullException.ThrowIfNull(request);
       return _notes.DeleteAsync(request.Id, cancellationToken);

@@ -21,13 +21,8 @@ using AuthzV1 = Kakehashi.Authz.V1;
 using NavigationV1 = Kakehashi.Navigation.V1;
 
 namespace Kakehashi.App.Hosting {
-  // Builds the application's IHost: configuration, logging, observability, the backend
-  // client, the platform services, the windows/pages/view models, the startup orchestrators, and the
-  // feature modules. This is the one place composition happens; App.xaml.cs just runs it.
+  // The one place composition happens; App.xaml.cs just runs it.
   internal static class AppHost {
-    // Builds the application's host, which is the container for all services and composition. This is the one place composition happens; App.xaml.cs just runs it.
-    //
-    // Returns: The built IHost instance.
     public static IHost Build() {
       var builder = Host.CreateApplicationBuilder();
 
@@ -46,9 +41,9 @@ namespace Kakehashi.App.Hosting {
 
       builder.Logging.AddDebug();
 
-      // A file log beside the debug one. AddDebug alone writes through OutputDebugString, which a
-      // debugger sees and nobody else does — so a build handed to anyone but its author kept no
-      // record of what went wrong. Level comes from configuration; the default is Information.
+      // A file log beside the debug one: AddDebug alone writes through OutputDebugString, which a
+      // debugger sees and nobody else does, so a build handed to anyone but its author kept no
+      // record of what went wrong.
       builder.Logging.AddProvider(new FileLoggerProvider(
           builder.Configuration.GetValue("Logging:File:MinimumLevel", LogLevel.Information)));
 

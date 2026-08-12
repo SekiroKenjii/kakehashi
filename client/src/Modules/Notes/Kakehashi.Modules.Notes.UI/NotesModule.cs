@@ -12,8 +12,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using NotesV1 = Kakehashi.Notes.V1;
 
 namespace Kakehashi.Modules.Notes.UI {
-  // Composition entry point for the Notes module: registers the application layer, the gRPC
-  // client for its own contract, the adapter behind the gateway port, and the page.
   public sealed class NotesModule : IModule {
     public string Name => "Notes";
 
@@ -29,8 +27,8 @@ namespace Kakehashi.Modules.Notes.UI {
       services.AddNotesApplication();
 
       // The host's helper rather than a hand-rolled channel, so the access token is attached the
-      // same way it is everywhere else. A module that wired its own client would work right up
-      // until the server started checking.
+      // same way it is everywhere else. A module wiring its own client would work right up until
+      // the server started checking.
       services.AddBackendGrpcClient<NotesV1.NotesService.NotesServiceClient>();
 
       services.TryAddSingleton<INotesGateway, GrpcNotesGateway>();

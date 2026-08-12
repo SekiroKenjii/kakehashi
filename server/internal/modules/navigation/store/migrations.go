@@ -2,9 +2,8 @@ package store
 
 import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
 
-// The schema history, whole, because its value is its order.
-
-// Migrations is the module's append-only schema history.
+// Migrations is the module's append-only schema history, kept in one file because its value is its
+// order.
 //
 // Never edit one that has shipped: it is keyed by name, so changed SQL will not re-run on a database
 // that already has it and the schema silently diverges. Add another.

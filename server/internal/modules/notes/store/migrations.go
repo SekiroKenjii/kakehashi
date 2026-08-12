@@ -2,11 +2,8 @@ package store
 
 import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
 
-// The schema history, whole. It is one unit because its value is its order: migration 2 only reads
-// correctly underneath migration 1, and splitting a sequence turns "has this shipped?" into a
-// question you answer by opening every file.
-
-// Migrations is the module's append-only schema history.
+// Migrations is the module's append-only schema history, kept in one file because its value is its
+// order.
 //
 // Never edit a migration that has shipped: it is keyed by name, so a released migration whose SQL
 // changed will not re-run on a database that already has it, and the schema silently diverges

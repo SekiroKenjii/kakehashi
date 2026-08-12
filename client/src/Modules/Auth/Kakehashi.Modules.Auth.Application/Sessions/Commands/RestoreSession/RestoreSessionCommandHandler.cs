@@ -7,7 +7,6 @@ using Kakehashi.Modules.Auth.Domain;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Commands.RestoreSession {
-  // Loads the stored refresh token and exchanges it for a fresh session, or clears it.
   public sealed class RestoreSessionCommandHandler : IRequestHandler<RestoreSessionCommand, Result> {
     private readonly IInteractiveAuthenticator _authenticator;
     private readonly IAuthSessionAccessor _session;

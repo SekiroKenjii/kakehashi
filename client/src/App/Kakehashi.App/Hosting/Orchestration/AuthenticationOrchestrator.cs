@@ -5,9 +5,8 @@ using System.Threading.Tasks;
 using Kakehashi.UI.Contracts.Services;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  // Runs any registered IAuthenticationGate before the shell is created, so a module
-  // (for example Auth) can require sign-in. When no gate is registered this is a no-op and startup
-  // proceeds, which is what keeps the Auth module fully optional.
+  // Order 15: gates run before the shell is created, so a module can require sign-in. With no gate
+  // registered this is a no-op and startup proceeds, which is what keeps the Auth module optional.
   public sealed class AuthenticationOrchestrator : IStartupOrchestrator {
     private readonly IEnumerable<IAuthenticationGate> _gates;
 

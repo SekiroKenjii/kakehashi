@@ -56,9 +56,9 @@ func TestNewEntryRejectsWhatWouldProduceAnUnusableRow(t *testing.T) {
 	}
 }
 
-// Session, device and IP are the three fields that may legitimately be empty: an event published
-// without a request behind it has no device or address, a password change belongs to an account
-// rather than to a session, and a row that says only "Password changed" is still worth having.
+// Session, device and IP may legitimately be empty: an event published without a request behind it
+// has no device or address, a password change belongs to an account rather than to a session, and a
+// row that says only "Password changed" is still worth having.
 func TestNewEntryAcceptsAnEntryWithNoSessionDeviceOrAddress(t *testing.T) {
 	_, err := NewEntry("id-1", "account-1", "PasswordChanged", "", "", "", occurred)
 	if err != nil {

@@ -7,10 +7,8 @@ using Kakehashi.Modules.Notes.Domain.Notes;
 using Xunit;
 
 namespace Kakehashi.ArchitectureTests {
-  /// <summary>
-  /// Notes-module counterparts to <see cref="LayeringTests"/>. Per-module coverage lives with its
-  /// module so that adding or removing one never means editing the shared file.
-  /// </summary>
+  // Per-module coverage lives with its module so adding or removing one never means editing the
+  // shared LayeringTests.
   public sealed class NotesLayeringTests {
     private static readonly Assembly _notesDomain = typeof(NoteDraft).Assembly;
     private static readonly Assembly _notesApplication =
@@ -56,12 +54,11 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void ApplicationAndDomain_DoNotDependOnTheGeneratedContract() {
-      // Generated protobuf types are the wire's shape, not the module's. Letting them past the UI
-      // layer would make a change to the schema a change to a use case, which is exactly the
-      // coupling the gateway port exists to prevent. This is the client-side statement of the
-      // server rule that only rpc/ may import internal/gen — there enforced by archlint, here by
-      // this test, because the generated code lives in one shared project rather than one per
-      // module.
+      // Generated protobuf types are the wire's shape, not the module's: letting them past the UI
+      // layer makes a schema change a use-case change, the coupling the gateway port prevents.
+      // This is the client-side statement of the server rule that only rpc/ may import
+      // internal/gen — archlint enforces it there, this test here, because the generated code lives
+      // in one shared project rather than one per module.
       foreach (var assembly in new[] { _notesDomain, _notesApplication }) {
         var references = ReferencedAssemblyNames(assembly);
 

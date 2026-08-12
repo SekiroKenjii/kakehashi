@@ -14,18 +14,10 @@ namespace Kakehashi.UI.Common.Behaviors {
     Minimal
   }
 
-  /// <summary>
-  /// Keeps the <see cref="NavigationView"/> header in sync with the current page. It reacts to
-  /// navigation through <see cref="INavigationService.OnNavigated"/> and supports per-page header
-  /// content, templates and modes via attached properties.
-  /// </summary>
-  /// <remarks>
-  /// The XAML runtime constructs behaviors via <c>new()</c>, so this type cannot receive its
-  /// dependencies through constructor injection. Instead it resolves the (singleton) navigation
-  /// service and the per-attachment subscription sink from <see cref="ContractServices"/> in
-  /// <see cref="OnAttached"/> - i.e. on the very instance XAML created and attached - which is what
-  /// makes the singleton lifetimes line up. Configure <see cref="ContractServices"/> once at startup.
-  /// </remarks>
+  // The XAML runtime constructs behaviors with new(), so dependencies cannot arrive by constructor
+  // injection. OnAttached resolves them from ContractServices on the instance XAML actually
+  // attached, which is what makes the singleton lifetimes line up; configure ContractServices once
+  // at startup.
   public class NavigationViewHeaderBehavior : Behavior<NavigationView> {
     private static NavigationViewHeaderBehavior? _current;
     private Page? _currentPage;

@@ -9,10 +9,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Every query against notes.Note. One file per table is the store package's unit, and this module
-// has one table.
-
-// List returns every note, most recently updated first.
 func (s *SQLServer) List(ctx context.Context) ([]domain.Note, error) {
 	const q = `
         SELECT n.Id, n.Title, n.Body, n.CreatedAt, n.UpdatedAt
@@ -39,7 +35,6 @@ func (s *SQLServer) List(ctx context.Context) ([]domain.Note, error) {
 	return notes, nil
 }
 
-// Get returns the note with the given ID.
 func (s *SQLServer) Get(ctx context.Context, id int64) (domain.Note, error) {
 	const q = `
         SELECT n.Id, n.Title, n.Body, n.CreatedAt, n.UpdatedAt
@@ -56,19 +51,18 @@ func (s *SQLServer) Get(ctx context.Context, id int64) (domain.Note, error) {
 	return n, nil
 }
 
-// Insert stores n and returns it with its assigned ID.
 func (s *SQLServer) Insert(ctx context.Context, n domain.Note) (domain.Note, error) {
 	// OUTPUT INSERTED.id rather than a follow-up SELECT: go-mssqldb does not implement
-	// LastInsertId, and OUTPUT is the answer that stays correct under concurrent inserts and
-	// triggers, which SCOPE_IDENTITY() only mostly is.
+	// LastInsertId, and OUTPUT stays correct under concurrent inserts and triggers, which
+	// SCOPE_IDENTITY() only mostly is.
 	const q = `
         INSERT INTO notes.Note (Title, Body, CreatedAt, UpdatedAt)
         OUTPUT INSERTED.Id
         VALUES (@p1, @p2, @p3, @p4);`
 
-	// Truncated to what the column can hold, and returned that way, so the note the caller gets
-	// back is the note that is actually stored. Without this, a create answers with nanoseconds,
-	// the next read answers with milliseconds, and the timestamp appears to change on its own.
+	// Truncated to what the column can hold, and returned that way, so the caller gets the note
+	// that was actually stored. Without this a create answers with nanoseconds, the next read
+	// answers with milliseconds, and the timestamp appears to change on its own.
 	n.CreatedAt = storable(n.CreatedAt)
 	n.UpdatedAt = storable(n.UpdatedAt)
 
@@ -84,9 +78,7 @@ func (s *SQLServer) Insert(ctx context.Context, n domain.Note) (domain.Note, err
 	return n, nil
 }
 
-// Update rewrites an existing note.
-//
-// It takes a pointer so the truncated UpdatedAt goes back to the caller, for the same reason
+// Update takes a pointer so the truncated UpdatedAt goes back to the caller, for the same reason
 // Insert returns the note it stored.
 func (s *SQLServer) Update(ctx context.Context, n *domain.Note) error {
 	const q = `
@@ -111,8 +103,8 @@ func (s *SQLServer) Update(ctx context.Context, n *domain.Note) error {
 	return nil
 }
 
-// Delete removes a note. Deleting one that does not exist is not an error: the caller asked for it
-// to be gone, and afterwards it is.
+// Deleting a note that does not exist is not an error: the caller asked for it to be gone, and
+// afterwards it is.
 func (s *SQLServer) Delete(ctx context.Context, id int64) error {
 	const q = `DELETE FROM notes.Note WHERE Id = @p1;`
 

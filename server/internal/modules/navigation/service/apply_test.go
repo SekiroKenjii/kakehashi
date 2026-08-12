@@ -9,7 +9,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// applying returns a reconciled service over a fresh store, with notes and users seeded.
 func applying(t *testing.T) (*service.Service, *fakeStore) {
 	t.Helper()
 
@@ -21,8 +20,7 @@ func applying(t *testing.T) (*service.Service, *fakeStore) {
 	return svc, store
 }
 
-// asStored reads the arrangement back as specs, which is what a screen posts: the whole thing, with
-// most of it unchanged.
+// Specs are what a screen posts: the whole arrangement, with most of it unchanged.
 func asStored(t *testing.T, svc *service.Service) ([]service.GroupSpec, []service.ItemSpec) {
 	t.Helper()
 	ctx := context.Background()
@@ -50,8 +48,8 @@ func asStored(t *testing.T, svc *service.Service) ([]service.GroupSpec, []servic
 	return groupSpecs, itemSpecs
 }
 
-// The whole reason this procedure exists. A sequence of single-row writes had no way to fail halfway
-// without leaving the pane half-rearranged; this one validates everything first, so a refusal changes
+// Why this procedure exists: a sequence of single-row writes had no way to fail halfway without
+// leaving the pane half-rearranged. This one validates everything first, so a refusal changes
 // nothing at all.
 func TestApplyLayoutWritesNothingWhenAnyPartIsRefused(t *testing.T) {
 	svc, store := applying(t)
@@ -124,9 +122,8 @@ func TestApplyLayoutCountsOnlyWhatChanged(t *testing.T) {
 	}
 }
 
-// The ordinary gesture: make a heading and drop something into it in one post. Checking the wanted
-// heading against what is stored now, rather than against what this arrangement will end with, would
-// refuse it.
+// The ordinary gesture: make a heading and drop something into it in one post. Checking against
+// what is stored now, rather than against what this arrangement will end with, would refuse it.
 func TestApplyLayoutAcceptsAHeadingAndAPlacementIntoItAtOnce(t *testing.T) {
 	svc, store := applying(t)
 	ctx := context.Background()
@@ -194,8 +191,8 @@ func TestApplyLayoutDeletesAHeadingLeftOutAndUngroupsWhatWasUnderIt(t *testing.T
 	}
 }
 
-// A deployment that deleted the heading its administrative screens live under would have nowhere left
-// to put them, so leaving one out is refused with the reason rather than a bare no.
+// A deployment that deleted the heading its administrative screens live under would have nowhere
+// left to put them, so leaving one out is refused with the reason rather than a bare no.
 func TestApplyLayoutRefusesToDeleteAHeadingTheProductShips(t *testing.T) {
 	svc, store := applying(t)
 	ctx := context.Background()
@@ -217,8 +214,8 @@ func TestApplyLayoutRefusesToDeleteAHeadingTheProductShips(t *testing.T) {
 	}
 }
 
-// Titles are unique in the database, so a collision would otherwise surface from inside a transaction
-// naming one row. Caught first, it names both and nothing is written.
+// Titles are unique in the database, so a collision would otherwise surface from inside a
+// transaction naming one row. Caught first, it names both and nothing is written.
 func TestApplyLayoutRefusesTwoHeadingsWithOneName(t *testing.T) {
 	svc, _ := applying(t)
 
@@ -254,8 +251,8 @@ func TestDeleteItemRemovesALeftoverRow(t *testing.T) {
 		t.Fatalf("reconcile: %v", err)
 	}
 
-	// A deploy that removed the notes module. Its row is still there, which is why the layout screen
-	// lists it and why somebody needs a way to be rid of it.
+	// A deploy that removed the notes module. Its row is still there, which is why the layout
+	// screen lists it and why somebody needs a way to be rid of it.
 	after := service.New(store, nil, users)
 	if err := after.Reconcile(ctx, systemGroups); err != nil {
 		t.Fatalf("reconcile after removal: %v", err)
@@ -269,9 +266,9 @@ func TestDeleteItemRemovesALeftoverRow(t *testing.T) {
 	}
 }
 
-// What a reset button needs, and what nothing carried before: Reconcile writes these once as seeds and
-// deliberately never re-applies them, so without reporting them a moved destination's intended place
-// cannot be recovered through any API.
+// What a reset button needs: Reconcile writes these once as seeds and deliberately never re-applies
+// them, so without reporting them a moved destination's intended place cannot be recovered through
+// any API.
 func TestItemsReportWhereTheCodePutsADestination(t *testing.T) {
 	svc, _ := applying(t)
 	ctx := context.Background()

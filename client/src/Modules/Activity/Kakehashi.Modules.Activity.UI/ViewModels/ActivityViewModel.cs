@@ -20,7 +20,6 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.Modules.Activity.UI.ViewModels {
-  // One filter chip along the top of the feed.
   public sealed partial class ActivityChip : ObservableObject {
     public ActivityChip(string label, string category) {
       Label = label;
@@ -41,8 +40,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     public string CountText => Count.ToString(CultureInfo.CurrentCulture);
 
-    // What a screen reader says for this chip.
-    //
     // The count and the selected state are both drawn rather than announced — the count in a second
     // TextBlock, the selection in a brush — so a reader heard "Security, button" and could not tell
     // how many there were or which chip the feed was filtered by.
@@ -53,26 +50,19 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
   }
 
-  // How far back to look.
   public sealed record ActivityRange(string Label, int Days) {
-    // What the picker shows. A ComboBox draws an item by its ToString.
+    // A ComboBox draws an item by its ToString.
     public override string ToString() {
       return Label;
     }
   }
 
-  // Presentation logic for the Activity page: the account's own feed, newest first.
-  //
-  // It reaches the server exclusively through the mediator and has never heard of gRPC.
-  //
   // The filtering, the counts and the paging are all the server's, and deliberately so. A page that
   // filtered what it had already fetched would answer "no matches" for something three pages down,
-  // and counts taken over the loaded rows would change as somebody scrolled. What is decided here is
-  // everything that depends on the reader: the wording, the icons, which day a moment belongs to, and
-  // which repeats are one event.
+  // and counts taken over the loaded rows would change as somebody scrolled. What is decided here
+  // is everything that depends on the reader: the wording, the icons, which day a moment belongs
+  // to, and which repeats are one event.
   public sealed partial class ActivityViewModel : ViewModel {
-    // How close two identical facts have to be to count as one.
-    //
     // Fifteen minutes is a judgement, not a measurement: long enough to swallow a client retrying a
     // sign-out, short enough that two deliberate acts an hour apart stay two rows.
     private static readonly TimeSpan _burstWindow = TimeSpan.FromMinutes(15);
@@ -83,7 +73,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     private readonly INotificationService _notifications;
     private readonly IAccountScreen _accountScreen;
 
-    // Everything fetched so far, newest first, across every page loaded.
+    // Newest first, across every page loaded so far.
     private readonly List<ActivityEntryDto> _entries = [];
 
     private string _nextPageToken = string.Empty;
@@ -91,11 +81,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     private int _total;
     private string _appliedSearch = string.Empty;
 
-    // Whether construction has finished.
-    //
-    // Choosing the default range in the constructor raises the change hook, and without this the view
-    // model would start a network call while it was still being built — before the page that owns it
-    // exists, and in every test that merely constructs one.
+    // Choosing the default range in the constructor raises the change hook, and without this the
+    // view model would start a network call while it was still being built — before the page that
+    // owns it exists, and in every test that merely constructs one.
     private bool _ready;
 
     public ActivityViewModel(
@@ -122,14 +110,10 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       _ready = true;
     }
 
-    // The feed, grouped by the reader's own days, newest first.
     public ObservableCollection<ActivityDay> Days { get; } = [];
 
-    // The four counts along the top.
     public ObservableCollection<StatCard> StatCards { get; } = [];
 
-    // The category filters. "All" first, and it is this client's own idea — see
-    // ActivityCategories.All.
     public ObservableCollection<ActivityChip> Chips { get; } = [
       new("All", ActivityCategories.All),
       new("Sign-ins", ActivityCategories.SignIn),
@@ -137,7 +121,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       new("System", ActivityCategories.System),
     ];
 
-    // The ranges offered, none of them longer than the feed is kept.
+    // None of them longer than the server keeps the feed.
     public IReadOnlyList<ActivityRange> Ranges { get; } = [
       new("Last 24 hours", 1),
       new("Last 7 days", 7),
@@ -166,17 +150,14 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     [ObservableProperty]
     public partial bool HasMore { get; set; }
 
-    // "Showing 8 of 214 events · kept for 90 days".
     [ObservableProperty]
     public partial string CountSummary { get; set; } = string.Empty;
 
     public bool HasError => ErrorMessage is not null;
 
-    // Whether to show the empty state: nothing to show, nothing to blame, nothing in flight.
     // A feed that is loading and a feed that is genuinely empty are different pictures.
     public bool IsEmpty => !IsBusy && !HasError && Days.Count == 0;
 
-    // Fetches the first page, replacing whatever is on screen.
     [RelayCommand]
     private async Task LoadAsync(CancellationToken cancellationToken) {
       IsBusy = true;
@@ -191,18 +172,16 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
         _entries.Clear();
         Absorb(result.Value, isFirstPage: true);
       } catch (OperationCanceledException) {
-        // The page was navigated away from mid-refresh. Not an error, and nothing to report.
+        // Navigated away mid-refresh. Not an error, and nothing to report.
       } finally {
         IsBusy = false;
         OnPropertyChanged(nameof(IsEmpty));
       }
     }
 
-    // Appends the next page.
-    //
-    // Appends rather than replaces, and re-groups everything: a page boundary can fall in the middle
-    // of a day or in the middle of a burst, so the last group and the last row have to be rebuilt
-    // with the new entries rather than added after them.
+    // Appends rather than replaces, and re-groups everything: a page boundary can fall in the
+    // middle of a day or in the middle of a burst, so the last group and the last row have to be
+    // rebuilt with the new entries rather than added after them.
     [RelayCommand]
     private async Task LoadMoreAsync(CancellationToken cancellationToken) {
       if (_nextPageToken.Length == 0 || IsLoadingMore) {
@@ -227,18 +206,15 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       }
     }
 
-    // Applies the search box. Submitted rather than typed — see the remark.
-    //
-    // The search runs on the server, so a request per keystroke would be a request per keystroke.
-    // Clearing the box is different: it applies immediately, because nobody expects to press Enter
-    // to stop filtering.
+    // Applied on submit: the search runs on the server, so a request per keystroke would be a
+    // request per keystroke. Clearing the box is different — it applies immediately, because nobody
+    // expects to press Enter to stop filtering.
     [RelayCommand]
     private Task SearchAsync(CancellationToken cancellationToken) {
       _appliedSearch = SearchText.Trim();
       return LoadAsync(cancellationToken);
     }
 
-    // Selects one category chip.
     [RelayCommand]
     private Task SelectCategoryAsync(ActivityChip chip) {
       ArgumentNullException.ThrowIfNull(chip);
@@ -252,7 +228,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return LoadAsync(CancellationToken.None);
     }
 
-    // Puts one entry on the clipboard, for pasting into a support conversation.
     [RelayCommand]
     private void CopyEvent(ActivityRow row) {
       ArgumentNullException.ThrowIfNull(row);
@@ -268,12 +243,10 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       _notifications.Show("Event copied.", InfoBarSeverity.Success);
     }
 
-    // Takes somebody to the screen where they can end sessions and change a password.
-    //
     // Through a port, because the screen belongs to another module and the only join available is a
-    // navigation key with nothing checking it — see IAccountScreen. The failure is
-    // handled rather than assumed: if that module is not mounted, saying where to go is better than a
-    // link that does nothing.
+    // navigation key with nothing checking it — see IAccountScreen. The failure is handled rather
+    // than assumed: if that module is not mounted, saying where to go beats a link that does
+    // nothing.
     [RelayCommand]
     private void SecureAccount() {
       if (!_accountScreen.Open()) {
@@ -283,11 +256,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       }
     }
 
-    // Writes what is on screen to a CSV file.
-    //
-    // What is on screen, and it says so: the file holds the entries that have been loaded, not every
-    // entry in the range. Exporting the whole range would mean paging the entire feed behind a button
-    // that looks instant.
+    // The file holds the entries that have been loaded, not every entry in the range, and the count
+    // it reports says so. Exporting the whole range would mean paging the entire feed behind a
+    // button that looks instant.
     [RelayCommand]
     private async Task ExportAsync() {
       if (_entries.Count == 0) {
@@ -330,16 +301,15 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
 
     partial void OnSearchTextChanged(string value) {
-      // Only the emptying case. Applying on every keystroke would be a server round-trip per
-      // character; leaving a cleared box filtered would be a list that stays narrow for no visible
-      // reason.
+      // Only the emptying case: applying on every keystroke would be a server round-trip per
+      // character, and leaving a cleared box filtered would be a list that stays narrow for no
+      // visible reason.
       if (value.Length == 0 && _appliedSearch.Length > 0) {
         _appliedSearch = string.Empty;
         _ = LoadCommand.ExecuteAsync(parameter: null);
       }
     }
 
-    // What to ask for, from the state of the filter bar.
     private ActivityFeedFilter Filter() {
       string category = Chips.FirstOrDefault(chip => chip.IsSelected)?.Category
           ?? ActivityCategories.All;
@@ -354,12 +324,12 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     private void Fail(Error error) {
       ErrorMessage = error.Message;
 
-      // Cleared for two failures and no others. A page left open across a sign-out keeps refreshing,
-      // and a feed that held its rows would go on showing the previous account's devices and addresses
-      // to whoever signs in next. A lost page means this client and the server disagree about where
-      // the reader is, so what is on screen cannot be trusted to continue from. A network blip is
-      // different: there the rows are still true, and throwing them away would make a flaky connection
-      // look like an empty history.
+      // Cleared for these two failures and no others. A page left open across a sign-out keeps
+      // refreshing, and a feed that held its rows would go on showing the previous account's
+      // devices and addresses to whoever signs in next; a lost page means this client and the
+      // server disagree about where the reader is, so what is on screen cannot be continued from.
+      // A network blip is different — the rows are still true, and throwing them away would make a
+      // flaky connection look like an empty history.
       if (error == ActivityErrors.NotSignedIn || error == ActivityErrors.PageLost) {
         _entries.Clear();
         _nextPageToken = string.Empty;
@@ -368,7 +338,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       }
     }
 
-    // Takes in a page: its entries, its counts, and what it says about the whole feed.
     private void Absorb(ActivityPageDto page, bool isFirstPage) {
       _entries.AddRange(page.Entries);
       _nextPageToken = page.NextPageToken;
@@ -376,8 +345,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       _total = page.Total;
 
       // Only the first page carries the counts, so a later page must not overwrite them. Asking the
-      // reply whether it has any would look equivalent and is not: an account whose feed is genuinely
-      // empty sends no counts either, and every chip would then keep whatever it last showed.
+      // reply whether it has any would look equivalent and is not: an account whose feed is
+      // genuinely empty sends no counts either, and every chip would keep whatever it last showed.
       if (isFirstPage) {
         _retentionDays = page.RetentionDays;
         foreach (var chip in Chips) {
@@ -392,8 +361,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       RebuildSummary();
     }
 
-    // Rebuilds the rows and the day groups from everything loaded.
-    //
     // Which rows were open is carried across the rebuild. Every row is a new object here — a burst
     // can grow a member and stop being the row it was — so without this, pressing "load more" while
     // reading an expanded entry closed it, which reads as the app losing the reader's place.
@@ -431,13 +398,11 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
           : $"Showing {shown} of {_total} {Events(_total)}{kept}";
     }
 
-    // The four cards, each stating something the server counted rather than something inferred from
-    // the page that happens to be loaded.
-    //
-    // The mockup this page follows had a "Devices" card counting distinct machines over the range.
-    // That count does not exist: the server groups by kind and by category, not by device, and
-    // counting the loaded rows would give a number that grew as somebody pressed "load more". The
-    // card here says what it actually counts.
+    // Each card states something the server counted, not something inferred from the page that
+    // happens to be loaded. The mockup this page follows had a "Devices" card counting distinct
+    // machines over the range; that count does not exist — the server groups by kind and by
+    // category, not by device — and counting the loaded rows would give a number that grew as
+    // somebody pressed "load more". The card here says what it actually counts.
     private void RebuildStatCards(ActivityPageDto page) {
       int refused = page.CountOf(ActivityKinds.FailedSignIn);
       int signIns = page.CountOf(ActivityKinds.SignedIn)
@@ -470,7 +435,6 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return count == 1 ? "event" : "events";
     }
 
-    // Quotes a CSV field, doubling any quote inside it.
     private static string Csv(string value) {
       return "\"" + value.Replace("\"", "\"\"", StringComparison.Ordinal) + "\"";
     }

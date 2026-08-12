@@ -1,13 +1,7 @@
 namespace Kakehashi.Modules.Activity.Application.Activity {
-  // The entry kinds this client knows by name, as the server spells them.
-  //
-  // Named here rather than inline because two things now need them: the row chooses a wording and an
-  // icon per kind, and a summary card states an exact count of one of them. Two files holding the
-  // same literal is how one of them ends up spelled differently.
-  //
-  // The list is not exhaustive and does not have to be. A kind this client has never heard of still
-  // arrives, still counts, and is drawn with its raw value — which is why kind is a string on
-  // the wire in the first place.
+  // Spelled as the server spells them, and deliberately not exhaustive: a kind this client has
+  // never heard of still arrives, still counts, and is drawn with its raw value — which is why kind
+  // is a string on the wire in the first place.
   public static class ActivityKinds {
     public const string SignedIn = "SignedIn";
     public const string SignedOut = "SignedOut";

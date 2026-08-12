@@ -5,10 +5,6 @@ using System.Threading.Tasks;
 using Kakehashi.Application.Abstractions.Messaging;
 
 namespace Kakehashi.Mediator {
-  /// <summary>
-  /// Default in-process <see cref="IMediator"/>. Resolves handlers and pipeline behaviors from the
-  /// container on demand and caches the closed-generic dispatch wrappers per message type.
-  /// </summary>
   public sealed class Mediator : IMediator {
     private static readonly ConcurrentDictionary<Type, RequestHandlerWrapperBase> _requestWrappers =
         new();

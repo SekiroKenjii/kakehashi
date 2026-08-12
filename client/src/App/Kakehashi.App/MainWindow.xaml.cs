@@ -5,8 +5,6 @@ using Microsoft.UI.Xaml;
 using WinUIEx;
 
 namespace Kakehashi.App {
-  // The main container for the app's content. It hosts the ShellPage and registers the
-  // shell's custom title bar; lifecycle is driven by the startup orchestrators.
   public sealed partial class MainWindow : WindowEx {
     public MainWindow() {
       InitializeComponent();
@@ -17,7 +15,6 @@ namespace Kakehashi.App {
       Closed += OnMainWindowClosed;
     }
 
-    // Hosts the shell in the window and wires its custom title bar.
     internal void AttachShell(ShellPage shell) {
       ArgumentNullException.ThrowIfNull(shell);
 

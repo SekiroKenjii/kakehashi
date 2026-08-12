@@ -1,4 +1,3 @@
-// Package service implements the notes use cases. It is private to the module.
 package service
 
 import (
@@ -11,16 +10,11 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
 )
 
-// Store is the persistence this service needs, declared here rather than in store/.
-//
-// The interface belongs to the consumer, which is what lets these use cases be tested against a
-// fake in microseconds. The desktop original could take the concrete store instead, because SQLite
-// has an in-memory mode and a real database per test costs nothing. SQL Server has no such mode:
-// without this seam, every service test would need a container, and tests that need a container
-// are tests people stop running.
-//
-// The database is still tested — by the integration tests, against a real server. What is not
-// worth doing is testing the orchestration and the SQL together, every time, on every machine.
+// Store is the persistence this service needs, declared here rather than in store/: the interface
+// belongs to the consumer, which is what lets these use cases be tested against a fake in
+// microseconds. SQL Server has no in-memory mode, so without this seam every service test would
+// need a container — and tests that need a container are tests people stop running. The SQL itself
+// is covered by the integration tests, against a real server.
 type Store interface {
 	List(ctx context.Context) ([]domain.Note, error)
 	Get(ctx context.Context, id int64) (domain.Note, error)
@@ -34,20 +28,16 @@ type Store interface {
 	Delete(ctx context.Context, id int64) error
 }
 
-// Clock hands the service the current time.
-//
-// It exists so tests can pin "now" instead of asserting on ranges. The production value is
-// time.Now, and that is the only place the real clock is read.
+// Clock exists so tests can pin "now" instead of asserting on ranges. time.Now is read here and
+// nowhere else.
 type Clock func() time.Time
 
-// Service is the notesapi.Service implementation.
 type Service struct {
 	store Store
 	bus   *eventbus.Bus
 	now   Clock
 }
 
-// New builds the service. Pass nil for clock to use the wall clock.
 func New(store Store, bus *eventbus.Bus, clock Clock) *Service {
 	if clock == nil {
 		clock = time.Now
@@ -55,7 +45,6 @@ func New(store Store, bus *eventbus.Bus, clock Clock) *Service {
 	return &Service{store: store, bus: bus, now: clock}
 }
 
-// List returns every note, most recently updated first.
 func (s *Service) List(ctx context.Context) ([]notesapi.Note, error) {
 	notes, err := s.store.List(ctx)
 	if err != nil {
@@ -69,7 +58,6 @@ func (s *Service) List(ctx context.Context) ([]notesapi.Note, error) {
 	return out, nil
 }
 
-// Get returns one note.
 func (s *Service) Get(ctx context.Context, id int64) (notesapi.Note, error) {
 	n, err := s.store.Get(ctx, id)
 	if err != nil {
@@ -78,10 +66,9 @@ func (s *Service) Get(ctx context.Context, id int64) (notesapi.Note, error) {
 	return toAPI(n), nil
 }
 
-// Create validates and stores a new note, then announces it.
 func (s *Service) Create(ctx context.Context, title, body string) (notesapi.Note, error) {
-	// The domain decides whether this is a legal note. The service's job is to orchestrate (ask
-	// the domain, then the store), not to re-implement the rules.
+	// The domain decides whether this is a legal note. The service orchestrates rather than
+	// re-implementing the rules.
 	n, err := domain.NewNote(title, body, s.now())
 	if err != nil {
 		return notesapi.Note{}, err
@@ -93,13 +80,11 @@ func (s *Service) Create(ctx context.Context, title, body string) (notesapi.Note
 	}
 
 	out := toAPI(stored)
-	// Published after the write, never before. An event is a statement that something happened,
-	// and a create that failed did not happen.
+	// After the write, never before: a create that failed did not happen.
 	eventbus.Publish(s.bus, ctx, notesapi.Created{Note: out})
 	return out, nil
 }
 
-// Update rewrites a note.
 func (s *Service) Update(
 	ctx context.Context, id int64, title, body string,
 ) (notesapi.Note, error) {
@@ -125,15 +110,13 @@ func (s *Service) Update(
 	return out, nil
 }
 
-// Delete removes a note and announces it.
 func (s *Service) Delete(ctx context.Context, id int64) error {
-	// Fetch first, purely so the event can carry the title. Subscribers cannot look it up
-	// afterwards. That is the whole problem with deletion events.
+	// Fetch first, purely so the event can carry the title: subscribers cannot look it up
+	// afterwards.
 	n, err := s.store.Get(ctx, id)
 	if errs.KindOf(err) == errs.NotFound {
-		// Already gone, which is what the caller asked for, so this succeeded. Reporting NotFound
-		// here would make a delete retried after a dropped connection look like a failure — and
-		// the second attempt is exactly when a client is least able to tell the difference.
+		// Already gone is what the caller asked for. Reporting NotFound would make a delete
+		// retried after a dropped connection look like a failure.
 		//
 		// Nothing is published: this call removed nothing, and the call that did already said so.
 		return nil
@@ -150,8 +133,7 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// toAPI maps the domain entity onto the DTO the rest of the application sees. It is the border
-// checkpoint: nothing crosses out of the module without passing through here.
+// toAPI is the border checkpoint: no domain entity leaves the module without passing through here.
 func toAPI(n domain.Note) notesapi.Note {
 	return notesapi.Note{
 		ID:        n.ID,

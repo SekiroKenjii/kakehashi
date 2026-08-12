@@ -6,8 +6,8 @@ import (
 	"time"
 )
 
-// pinned is a fixed instant, so the assertion is an equality rather than a range. Reading the real
-// clock in a test buys a flake that reproduces once a month, at midnight.
+// Fixed, so the assertion is an equality rather than a range: reading the real clock buys a flake
+// that reproduces once a month, at midnight.
 var pinned = time.Date(2026, time.August, 5, 12, 0, 0, 0, time.UTC)
 
 func TestPingEchoesTheMessage(t *testing.T) {
@@ -24,8 +24,8 @@ func TestPingEchoesTheMessage(t *testing.T) {
 }
 
 func TestPingReportsTheClockInUTC(t *testing.T) {
-	// A clock in another zone, to prove the service normalises rather than passing it through: the
-	// wire type is defined as UTC, and a server in Asia/Ho_Chi_Minh must not report local time.
+	// Another zone, to prove the service normalises rather than passing it through: the wire type
+	// is defined as UTC, and a server in Asia/Ho_Chi_Minh must not report local time.
 	saigon := time.FixedZone("ICT", 7*60*60)
 	svc := New(func() time.Time { return pinned.In(saigon) })
 

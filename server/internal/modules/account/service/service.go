@@ -3,8 +3,7 @@
 // The files here are grouped by the caller that drives them, not by the aggregate they touch,
 // because most of these use cases touch several. signin.go holds the three calls the sign-in
 // handlers make in sequence — and, not by coincidence, the exact three that accountapi.Service
-// withholds from other modules. profile.go, sessions.go and securityevent.go hold the seven
-// behind the /account endpoints.
+// withholds from other modules.
 //
 // This file is the seam: the port, the injected dependencies, the type and its constructor. No
 // use case belongs here.
@@ -19,8 +18,8 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
 )
 
-// Store is the persistence these use cases need, declared here so they can be tested against a
-// fake. See the notes module for the longer argument; it applies unchanged.
+// Declared here, by the consumer, so these use cases can be tested against a fake. See the notes
+// module for the longer argument; it applies unchanged.
 type Store interface {
 	AccountByID(ctx context.Context, id string) (domain.Account, error)
 	AccountByEmail(ctx context.Context, email string) (domain.Account, error)
@@ -51,7 +50,6 @@ type (
 	IDs   func() string
 )
 
-// Service implements accountapi.Service and the authentication both sign-in paths drive.
 type Service struct {
 	store Store
 	bus   *eventbus.Bus
@@ -59,7 +57,7 @@ type Service struct {
 	newID IDs
 }
 
-// New builds the service. Pass nil for clock or ids to use the wall clock and random UUIDs.
+// Pass nil for clock or ids to use the wall clock and random UUIDs.
 func New(store Store, bus *eventbus.Bus, clock Clock, ids IDs) *Service {
 	if clock == nil {
 		clock = time.Now

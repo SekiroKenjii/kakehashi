@@ -6,8 +6,7 @@ import (
 )
 
 func TestWidestNeverNarrows(t *testing.T) {
-	// The rule that makes roles safe to add: two roles combine to the wider grant, so gaining a
-	// role can never take access away.
+	// Two roles combine to the wider grant, so gaining a role can never take access away.
 	cases := []struct {
 		a, b, want Scope
 	}{
@@ -18,8 +17,8 @@ func TestWidestNeverNarrows(t *testing.T) {
 		{ScopeNone, ScopeOwn, ScopeOwn},
 		{ScopeOwn, ScopeNone, ScopeOwn},
 		{ScopeAll, ScopeAll, ScopeAll},
-		// A scope this build does not recognise ranks below everything, so an unknown value
-		// narrows rather than silently granting more than it should.
+		// An unknown scope ranks below everything, so it narrows rather than silently granting
+		// more than it should.
 		{Scope("galaxy"), ScopeOwn, ScopeOwn},
 	}
 

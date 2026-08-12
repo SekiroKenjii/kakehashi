@@ -6,13 +6,10 @@ using Kakehashi.SharedKernel;
 using Xunit;
 
 namespace Kakehashi.ArchitectureTests {
-  /// <summary>
-  /// Enforces the modular-monolith dependency rules that hold no matter which feature modules are
-  /// composed in. Per-module layering lives alongside its module (see
-  /// <see cref="AuthLayeringTests"/>), so adding or removing a module never means editing this
-  /// file. Checks inspect referenced assembly names (no assemblies are loaded), which keeps these
-  /// tests fast and free of the WinUI layers.
-  /// </summary>
+  // Only the rules that hold no matter which feature modules are composed in; per-module layering
+  // lives alongside its module (see AuthLayeringTests), so adding or removing one never means
+  // editing this file. Checks read referenced assembly names rather than loading assemblies, which
+  // keeps them off the WinUI layers.
   public sealed class LayeringTests {
     private static readonly Assembly _sharedKernel = typeof(Result).Assembly;
 

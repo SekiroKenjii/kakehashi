@@ -12,11 +12,6 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.UI {
-  /// <summary>
-  /// Unit tests for <see cref="NavigationLayoutViewModel"/>: the staging, and the traps it was built
-  /// around — an arrangement that claims unsaved changes the moment it opens, a move into a heading
-  /// that has no identifier yet, and an apply that rewrites rows nobody touched.
-  /// </summary>
   public sealed class NavigationLayoutViewModelTests {
     private readonly INavigationAdminService _admin = Substitute.For<INavigationAdminService>();
     private readonly INavigationLayoutService _layout =
@@ -91,11 +86,9 @@ namespace Kakehashi.App.Tests.UI {
           .Single(screen => screen.Id == id);
     }
 
-    /// <summary>
-    /// A screen with no heading, and a leftover from a module this build no longer has, both need
-    /// somewhere to be — the mockup had nowhere for either, and this is the one screen where anybody
-    /// can discover the leftover exists.
-    /// </summary>
+    // A screen with no heading, and a leftover from a module this build no longer has, both need
+    // somewhere to be — the mockup had nowhere for either, and this is the one screen where anybody
+    // can discover the leftover exists.
     [Fact]
     public async Task Load_PutsEverythingSomewhere() {
       var viewModel = await LoadedAsync(
@@ -108,16 +101,13 @@ namespace Kakehashi.App.Tests.UI {
 
       Assert.Single(Heading(viewModel, "utilities").Screens);
       Assert.Equal(2, Unfiled(viewModel).Screens.Count);
-      // The bucket is last, and it is not a heading anybody can act on.
       Assert.True(viewModel.Headings[^1].IsUnfiled);
       Assert.False(viewModel.Headings[^1].CanDelete);
       Assert.False(viewModel.Headings[^1].CanRename);
     }
 
-    /// <summary>
-    /// Ordered the way the pane orders. The server lists declared destinations in declaration order and
-    /// orphans after them, which is not the order they are drawn in.
-    /// </summary>
+    // The server lists declared destinations in declaration order and orphans after them, which is
+    // not the order the pane draws them in.
     [Fact]
     public async Task Load_OrdersScreensTheWayThePaneWill() {
       var viewModel = await LoadedAsync(
@@ -129,11 +119,9 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal("second", screens[1].Id);
     }
 
-    /// <summary>
-    /// Nothing is unsaved the moment the screen opens — including on a deployment whose stored orders
-    /// are not multiples of ten. A positional comparison is what makes that true; comparing against a
-    /// freshly renumbered 10 and 20 would have claimed two changes nobody made.
-    /// </summary>
+    // Nothing is unsaved the moment the screen opens, including on a deployment whose stored orders
+    // are not multiples of ten. A positional comparison is what makes that true; comparing against
+    // a freshly renumbered 10 and 20 claimed two changes nobody made.
     [Fact]
     public async Task Load_ClaimsNoChangesEvenWhenStoredOrdersAreOdd() {
       var viewModel = await LoadedAsync(
@@ -164,11 +152,9 @@ namespace Kakehashi.App.Tests.UI {
           Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// A heading created on screen has no identifier until the apply comes back, so comparing headings
-    /// by identifier read "moved from unfiled into a brand-new heading" as no change at all — both
-    /// sides being empty. The comparison is by reference for exactly this case.
-    /// </summary>
+    // A heading created on screen has no identifier until the apply comes back, so comparing
+    // headings by identifier read "moved from unfiled into a brand-new heading" as no change at
+    // all — both sides being empty. The comparison is by reference for exactly this case.
     [Fact]
     public async Task MovingAnUnfiledScreenIntoABrandNewHeadingIsNoticed() {
       var viewModel = await LoadedAsync(
@@ -182,11 +168,9 @@ namespace Kakehashi.App.Tests.UI {
       Assert.True(Screen(viewModel, "nowhere").IsModified);
     }
 
-    /// <summary>
-    /// A new heading is given an identifier here rather than left for the server to derive, because a
-    /// screen dropped into it has to name it — and a title-derived identifier is not knowable until the
-    /// apply has already happened.
-    /// </summary>
+    // A new heading is given an identifier here rather than left for the server to derive, because
+    // a screen dropped into it has to name it — and a title-derived identifier is not knowable
+    // until the apply has already happened.
     [Fact]
     public async Task ApplyingANewHeadingNamesItSoItsScreensCanReferToIt() {
       var viewModel = await LoadedAsync(
@@ -207,10 +191,8 @@ namespace Kakehashi.App.Tests.UI {
           Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// Renumbering only where the order moved. Renumbering everything would rewrite rows nobody
-    /// touched, which is the defect the old per-row reorder was criticised for.
-    /// </summary>
+    // Renumber only where the order moved: renumbering everything rewrites rows nobody touched,
+    // which is the defect the old per-row reorder was criticised for.
     [Fact]
     public async Task ApplyKeepsTheOrdersOfHeadingsNobodyReordered() {
       var viewModel = await LoadedAsync(
@@ -221,7 +203,6 @@ namespace Kakehashi.App.Tests.UI {
             Item("users", "administration", 3),
           ]);
 
-      // One heading re-ordered; the other untouched.
       var utilities = Heading(viewModel, "utilities");
       viewModel.MoveScreen(Screen(viewModel, "activity"), utilities, 0);
 
@@ -239,10 +220,8 @@ namespace Kakehashi.App.Tests.UI {
           Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// Discard restores the placement, which no node can do for itself: a node can put its own name
-    /// back, but nothing on it knows which heading it used to sit under.
-    /// </summary>
+    // Discard restores the placement, which no node can do for itself: a node can put its own name
+    // back, but nothing on it knows which heading it used to sit under.
     [Fact]
     public async Task DiscardPutsEverythingBackIncludingWhereScreensSat() {
       var viewModel = await LoadedAsync(
@@ -271,16 +250,13 @@ namespace Kakehashi.App.Tests.UI {
 
       Assert.DoesNotContain(viewModel.Headings, heading => heading.Id == "monitoring");
       Assert.Single(Unfiled(viewModel).Screens);
-      // Staged: the removal is part of the next apply, not a call of its own.
+      // The removal is part of the next apply, not a call of its own.
       await _admin.DidNotReceive().DeleteGroupAsync(
           Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// A heading the product ships offers no delete button at all. The server refuses it too; this is
-    /// what stops it being offered, because a control that exists to be refused teaches somebody to
-    /// distrust the screen.
-    /// </summary>
+    // The server refuses this too; hiding the button is what stops it being offered, because a
+    // control that exists to be refused teaches somebody to distrust the screen.
     [Fact]
     public async Task AHeadingTheProductShipsCannotBeDeleted() {
       var viewModel = await LoadedAsync([Group("administration", "Administration", 20)], []);
@@ -289,10 +265,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.True(Heading(viewModel, "administration").CanRename);
     }
 
-    /// <summary>
-    /// Three of the five rows on this screen used to carry a switch the server always rejected, and the
-    /// only way to find out was to try it and read the error bar.
-    /// </summary>
+    // Three of the five rows on this screen used to carry a switch the server always rejected, and
+    // the only way to find out was to try it and read the error bar.
     [Fact]
     public async Task AScreenThatManagesThePaneOffersNoWayToHideIt() {
       var viewModel = await LoadedAsync(
@@ -302,11 +276,9 @@ namespace Kakehashi.App.Tests.UI {
       Assert.False(Screen(viewModel, "navigation.layout").CanHide);
     }
 
-    /// <summary>
-    /// Nothing was written — the server validates the whole arrangement before it writes any of it — so
-    /// what is on screen is still what the person asked for, and throwing it away would make them do it
-    /// again.
-    /// </summary>
+    // Nothing was written — the server validates the whole arrangement before it writes any of
+    // it — so what is on screen is still what the person asked for, and throwing it away would make
+    // them do it again.
     [Fact]
     public async Task AFailedApplyKeepsEverythingStaged() {
       var viewModel = await LoadedAsync(
@@ -327,7 +299,6 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Single(Heading(viewModel, "administration").Screens);
     }
 
-    /// <summary>Reset puts a screen back where the code puts it, under the name the code gives it.</summary>
     [Fact]
     public async Task ResetPutsAScreenBackWhereTheCodePutsIt() {
       var viewModel = await LoadedAsync(
@@ -344,10 +315,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal("utilities", screen.Heading?.Id);
     }
 
-    /// <summary>
-    /// Removing a leftover row is not an arrangement — the row stops existing — so it takes effect at
-    /// once rather than waiting for Apply, which is what its own confirmation says.
-    /// </summary>
+    // Removing a leftover row is not an arrangement — the row stops existing — so it takes effect
+    // at once rather than waiting for Apply, which is what its own confirmation says.
     [Fact]
     public async Task RemovingALeftoverRowHappensAtOnce() {
       var viewModel = await LoadedAsync(
@@ -363,7 +332,7 @@ namespace Kakehashi.App.Tests.UI {
           "a-module-this-build-lost", Arg.Any<CancellationToken>());
     }
 
-    /// <summary>A screen this build still has offers no such button, and the command refuses it.</summary>
+    // The row offers no such button; the command refuses it regardless.
     [Fact]
     public async Task RemovingARowTheBuildStillHasIsRefused() {
       var viewModel = await LoadedAsync(
@@ -376,10 +345,8 @@ namespace Kakehashi.App.Tests.UI {
           Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// Previewing as a role asks the server, because only the server knows what a role may reach. It
-    /// answers from what is stored, which the note on screen has to say.
-    /// </summary>
+    // Only the server knows what a role may reach, and it answers from what is stored — which the
+    // note on screen has to say.
     [Fact]
     public async Task PreviewingAsARoleAsksTheServer() {
       var viewModel = await LoadedAsync(
@@ -394,8 +361,7 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Contains("from what is saved", viewModel.PreviewNote, StringComparison.Ordinal);
     }
 
-    /// <summary>With no role it is the staged arrangement, which is the only preview that can show
-    /// unapplied edits.</summary>
+    // With no role it is the staged arrangement, the only preview that can show unapplied edits.
     [Fact]
     public async Task PreviewingYourOwnPaneAsksNobody() {
       var viewModel = await LoadedAsync(
@@ -407,11 +373,9 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Contains("not applied yet", viewModel.PreviewNote, StringComparison.Ordinal);
     }
 
-    /// <summary>
-    /// A failed read says why and builds nothing. Note the arrange order: the stubs are set up by
-    /// Create, so the failure has to be installed after it — an earlier version of this test set it
-    /// first, had it overwritten, and passed a successful empty load off as a failure.
-    /// </summary>
+    // Note the arrange order: Create sets up the stubs, so the failure has to be installed after
+    // it — an earlier version set it first, had it overwritten, and passed a successful empty load
+    // off as a failure.
     [Fact]
     public async Task AFailedLoadIsReportedAndBuildsNothing() {
       var viewModel = Create([], []);
@@ -428,10 +392,8 @@ namespace Kakehashi.App.Tests.UI {
           Arg.Any<string?>());
     }
 
-    /// <summary>
-    /// An account with nothing arranged still gets the unfiled bucket, because that is where a screen
-    /// with no heading would go the moment one appears.
-    /// </summary>
+    // An account with nothing arranged still gets the unfiled bucket, because that is where a
+    // screen with no heading goes the moment one appears.
     [Fact]
     public async Task AnEmptyArrangementStillHasSomewhereToPutThings() {
       var viewModel = await LoadedAsync([], []);

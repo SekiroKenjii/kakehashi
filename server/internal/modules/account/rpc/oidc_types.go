@@ -8,8 +8,7 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/op"
 )
 
-// authRequest adapts a stored authorization onto op.AuthRequest. Everything is a projection of
-// the row; the wrapper holds no state of its own.
+// Every method is a projection of the row; the wrapper holds no state of its own.
 type authRequest struct {
 	row domain.AuthRequest
 }
@@ -25,19 +24,18 @@ func (a *authRequest) GetSubject() string     { return a.row.Subject }
 func (a *authRequest) Done() bool             { return a.row.Done }
 func (a *authRequest) GetAuthTime() time.Time { return a.row.AuthTime }
 
-// GetAMR reports how the user authenticated. The login page checks a password; there is nothing
-// else yet, so the answer is static.
+// How the user authenticated. The login page checks a password; there is nothing else yet, so the
+// answer is static.
 func (a *authRequest) GetAMR() []string { return []string{"pwd"} }
 
-// GetAudience names who the issued tokens are for: the requesting client.
 func (a *authRequest) GetAudience() []string { return []string{a.row.ClientID} }
 
 func (a *authRequest) GetResponseType() oidc.ResponseType {
 	return oidc.ResponseType(a.row.ResponseType)
 }
 
-// GetResponseMode is empty: the default mode for a response type is always what the desktop
-// client expects, and offering others is surface without a caller.
+// Empty: the default mode for a response type is always what the desktop client expects, and
+// offering others is surface without a caller.
 func (a *authRequest) GetResponseMode() oidc.ResponseMode { return "" }
 
 func (a *authRequest) GetCodeChallenge() *oidc.CodeChallenge {
@@ -53,8 +51,6 @@ func (a *authRequest) GetCodeChallenge() *oidc.CodeChallenge {
 
 var _ op.AuthRequest = (*authRequest)(nil)
 
-// refreshTokenRequest adapts a stored token row onto op.RefreshTokenRequest for the
-// refresh_token grant.
 type refreshTokenRequest struct {
 	row domain.IssuedToken
 }
@@ -73,8 +69,6 @@ func (r *refreshTokenRequest) SetCurrentScopes(scopes []string) {
 
 var _ op.RefreshTokenRequest = (*refreshTokenRequest)(nil)
 
-// client is the desktop application, described the way op wants it.
-//
 // There is exactly one, configured rather than stored: a boilerplate has one first-party client,
 // and a table plus registration UI for it would be shape without users. When a second client
 // appears, this struct is the thing that becomes a row.
@@ -88,11 +82,11 @@ func (c *client) GetID() string                    { return c.id }
 func (c *client) RedirectURIs() []string           { return c.redirectURIs }
 func (c *client) PostLogoutRedirectURIs() []string { return c.redirectURIs }
 
-// ApplicationType is native: a desktop app using a loopback redirect, per RFC 8252.
+// Native: a desktop app using a loopback redirect, per RFC 8252.
 func (c *client) ApplicationType() op.ApplicationType { return op.ApplicationTypeNative }
 
-// AuthMethod is none: a public client cannot keep a secret, so it does not get one. PKCE is what
-// binds the code to the caller instead.
+// None: a public client cannot keep a secret, so it does not get one. PKCE is what binds the code
+// to the caller instead.
 func (c *client) AuthMethod() oidc.AuthMethod { return oidc.AuthMethodNone }
 
 func (c *client) ResponseTypes() []oidc.ResponseType {
@@ -107,15 +101,15 @@ func (c *client) LoginURL(id string) string {
 	return "/account/browser/sign-in?authRequestID=" + id
 }
 
-// AccessTokenType is JWT so resource servers — including this process's own Connect handlers —
-// can verify tokens against the JWKS without a database round trip per request.
+// JWT so resource servers — including this process's own Connect handlers — can verify tokens
+// against the JWKS without a database round trip per request.
 func (c *client) AccessTokenType() op.AccessTokenType { return op.AccessTokenTypeJWT }
 
 func (c *client) IDTokenLifetime() time.Duration { return time.Hour }
 
-// DevMode skips the redirect-URI scheme checks, which is what allows plain http loopback
-// redirects when the issuer itself is plain http. It follows the issuer's scheme so a production
-// deployment (https issuer) gets the strict checks without anyone remembering to flip it.
+// Skips the redirect-URI scheme checks, which is what allows plain http loopback redirects when
+// the issuer itself is plain http. It follows the issuer's scheme so a production deployment
+// (https issuer) gets the strict checks without anyone remembering to flip it.
 func (c *client) DevMode() bool { return c.devMode }
 
 func (c *client) RestrictAdditionalIdTokenScopes() func(scopes []string) []string {
@@ -132,8 +126,8 @@ func (c *client) IsScopeAllowed(scope string) bool {
 	return scope == scopeRoles
 }
 
-// IDTokenUserinfoClaimsAssertion puts the userinfo claims straight into the ID token, which is
-// what lets the client greet the user by name without a second request during sign-in.
+// Puts the userinfo claims straight into the ID token, which is what lets the client greet the
+// user by name without a second request during sign-in.
 func (c *client) IDTokenUserinfoClaimsAssertion() bool { return true }
 
 func (c *client) ClockSkew() time.Duration { return 0 }

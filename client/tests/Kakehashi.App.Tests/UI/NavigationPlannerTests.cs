@@ -8,16 +8,10 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.UI {
-  /// <summary>
-  /// Unit tests for <see cref="NavigationPlanner"/>: which destinations reach the pane, in what order,
-  /// under which heading, and which of them are reachable.
-  /// </summary>
-  /// <remarks>
-  /// The class joins two halves — what this build has, and where the deployment puts it — so the tests
-  /// come in two sets. One set covers the join. The other covers the fallback the pane uses before the
-  /// deployment has answered, which is the path an unreachable server takes and therefore the one
-  /// nobody would notice was broken.
-  /// </remarks>
+  // The planner joins two halves: what this build has, and where the deployment puts it. The
+  // PlanWithoutALayout tests cover the fallback the pane uses before the deployment has answered,
+  // which is the path an unreachable server takes and therefore the one nobody would notice was
+  // broken.
   public sealed class NavigationPlannerTests {
     private readonly IModuleRegistry _registry = Substitute.For<IModuleRegistry>();
     private readonly IPermissionService _permissions = Substitute.For<IPermissionService>();
@@ -53,12 +47,8 @@ namespace Kakehashi.App.Tests.UI {
       return new NavigationPlanner(_registry, _permissions, hostItems);
     }
 
-    // --- The join: the deployment decides the menu, this build decides what it has. ---
-
-    /// <summary>
-    /// The headings, their order, and the order within them all come from the deployment — not from
-    /// the order the modules happen to be mounted in.
-    /// </summary>
+    // The headings, their order, and the order within them all come from the deployment, not from
+    // the order the modules happen to be mounted in.
     [Fact]
     public void Plan_DrawsTheHeadingsAndOrderTheDeploymentChose() {
       var notes = Module("Notes", "notes",
@@ -92,10 +82,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal("Scratchpad", Assert.Single(plan).Item.Title);
     }
 
-    /// <summary>
-    /// A deployment sends an icon NAME; which glyph draws it is this build's business. An unknown name
-    /// leaves the page's own glyph alone rather than blanking the row.
-    /// </summary>
+    // A deployment sends an icon NAME; which glyph draws it is this build's business. An unknown
+    // name leaves the page's own glyph alone rather than blanking the row.
     [Fact]
     public void Plan_KeepsThisBuildsGlyphWhenTheIconNameMeansNothingToIt() {
       var notes = Module("Notes", "notes",
@@ -109,10 +97,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal("compiled-glyph", Assert.Single(plan).Item.IconGlyph);
     }
 
-    /// <summary>
-    /// A layout naming a page this build does not contain is skipped. There is no page to open, so a
-    /// row for it would navigate nowhere.
-    /// </summary>
+    // There is no page to open for a placement this build does not contain, so a row for it would
+    // navigate nowhere.
     [Fact]
     public void Plan_SkipsAPlacementForSomethingThisBuildDoesNotHave() {
       _registry.All.Returns([]);
@@ -136,10 +122,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.False(Assert.Single(plan).IsEnabled);
     }
 
-    /// <summary>
-    /// Detaching is the user's own preference about their own composition, and no deployment is
-    /// entitled to overrule it.
-    /// </summary>
+    // Detaching is the user's own preference about their own composition, and no deployment is
+    // entitled to overrule it.
     [Fact]
     public void Plan_OmitsADetachedModuleTheDeploymentPlaced() {
       var notes = Module("Notes", "notes",
@@ -152,10 +136,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Empty(plan);
     }
 
-    /// <summary>
-    /// Both answers have to agree before a row works. The server's says whether the account may use
-    /// the destination; this client's says whether an administrator withheld the whole module.
-    /// </summary>
+    // Both answers have to agree before a row works: the server's says whether the account may use
+    // the destination, this client's whether an administrator withheld the whole module.
     [Fact]
     public void Plan_DisablesAWithheldModuleEvenWhenTheDeploymentEnabledIt() {
       var notes = Module("Notes", "notes",
@@ -172,10 +154,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.False(Assert.Single(plan).IsEnabled);
     }
 
-    /// <summary>
-    /// The footer avatar is not in the menu, so nothing about it is the deployment's to arrange. An
-    /// item with no id was never offered for arrangement and keeps the placement the client gave it.
-    /// </summary>
+    // The footer avatar is not in the menu, so nothing about it is the deployment's to arrange. An
+    // item with no id was never offered for arrangement and keeps the placement the client gave it.
     [Fact]
     public void Plan_KeepsAFooterItemTheDeploymentNeverPlaced() {
       var auth = Module("Auth", "account", isRequired: true,
@@ -190,11 +170,9 @@ namespace Kakehashi.App.Tests.UI {
       Assert.True(entry.IsEnabled);
     }
 
-    /// <summary>
-    /// Once the deployment has answered, it is the authority on which destinations are offered — it
-    /// applied the same permission check server-side, with the grants it resolved itself. A second,
-    /// client-side check could only disagree with it.
-    /// </summary>
+    // Once the deployment has answered it is the authority on which destinations are offered: it
+    // applied the same permission check server-side, with the grants it resolved itself. A second,
+    // client-side check could only disagree with it.
     [Fact]
     public void Plan_DoesNotSecondGuessTheDeploymentWithItsOwnPermissionCheck() {
       _permissions.Allows(Arg.Any<string>()).Returns(false);
@@ -206,8 +184,6 @@ namespace Kakehashi.App.Tests.UI {
 
       Assert.Single(plan);
     }
-
-    // --- The fallback: before the deployment has answered, or when it cannot be reached. ---
 
     [Fact]
     public void PlanWithoutALayout_UsesTheHeadingsAndOrderThisBuildDeclares() {
@@ -232,10 +208,8 @@ namespace Kakehashi.App.Tests.UI {
           ["Utilities", "Utilities", "Administration"], plan.Select(entry => entry.Item.Group));
     }
 
-    /// <summary>
-    /// Absent, not disabled. This is the path taken when nothing is known, and a locked
-    /// administrative row offered to everybody is worse than a missing one.
-    /// </summary>
+    // Absent, not disabled: this is the path taken when nothing is known, and a locked
+    // administrative row offered to everybody is worse than a missing one.
     [Fact]
     public void PlanWithoutALayout_OmitsADestinationWhosePermissionTheAccountLacks() {
       _registry.All.Returns([]);
@@ -274,10 +248,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Empty(CreatePlanner().Plan(NavigationLayout.None));
     }
 
-    /// <summary>
-    /// The sign-in module's page is how somebody signs out and manages their own account. An account
-    /// that cannot reach it is stuck, so withholding does not apply to it.
-    /// </summary>
+    // The sign-in module's page is how somebody signs out and manages their own account. An account
+    // that cannot reach it is stuck, so withholding does not apply to it.
     [Fact]
     public void PlanWithoutALayout_KeepsARequiredModuleReachableEvenWhenWithheld() {
       var auth = Module("Auth", "account", isRequired: true,
@@ -291,14 +263,9 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal("Account", entry.Item.Title);
       Assert.True(entry.IsEnabled);
     }
-    /// <summary>
-    /// No two destinations this build ships may claim the same id.
-    /// </summary>
-    /// <remarks>
-    /// The planner keys on the id, so a collision means one of the two pages never appears. It
-    /// resolves the clash deterministically rather than crashing, which makes this test the thing
-    /// that actually catches it — at build time, where a composition mistake belongs.
-    /// </remarks>
+    // The planner keys on the id, so a collision means one of the two pages never appears. It
+    // resolves the clash deterministically rather than crashing, which makes this test the thing
+    // that actually catches it — at build time, where a composition mistake belongs.
     [Fact]
     public void TheShippedDestinationIdsAreUnique() {
       var seen = new HashSet<string>(StringComparer.Ordinal);
@@ -310,13 +277,8 @@ namespace Kakehashi.App.Tests.UI {
       }
     }
 
-    /// <summary>
-    /// The deployment may place a destination with no heading, and those are drawn above every group.
-    /// </summary>
-    /// <remarks>
-    /// The whole ungrouped branch was dead to this suite: the Layout helper hard-coded an empty
-    /// list, so nothing here ever exercised the path the server has its own test for producing.
-    /// </remarks>
+    // The whole ungrouped branch was dead to this suite: the Layout helper hard-codes an empty
+    // list, so nothing else here exercises the path the server has its own test for producing.
     [Fact]
     public void Plan_DrawsUngroupedDestinationsBeforeEveryHeading() {
       var notes = Module("Notes", "notes",
@@ -335,7 +297,6 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal("Utilities", plan[1].Item.Group);
     }
 
-    /// <summary>A known icon name resolves to the glyph this build draws it with.</summary>
     [Fact]
     public void Plan_UsesTheGlyphThisBuildKnowsForAName() {
       var notes = Module("Notes", "notes",
@@ -348,13 +309,8 @@ namespace Kakehashi.App.Tests.UI {
       Assert.NotEqual("compiled-glyph", Assert.Single(plan).Item.IconGlyph);
     }
 
-    /// <summary>
-    /// A module the user detached stays gone even once an administrator withholds it.
-    /// </summary>
-    /// <remarks>
-    /// Two different questions, and the old order conflated them: attachment was consulted only for
-    /// a module that was NOT withheld, so withholding a detached module put it back in the pane.
-    /// </remarks>
+    // Two different questions, and the old order conflated them: attachment was consulted only for
+    // a module that was NOT withheld, so withholding a detached module put it back in the pane.
     [Fact]
     public void PlanWithoutALayout_KeepsADetachedModuleGoneWhenItIsAlsoWithheld() {
       var notes = Module("Notes", "notes",

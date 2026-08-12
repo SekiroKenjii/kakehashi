@@ -13,13 +13,8 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.Services {
-  /// <summary>
-  /// Unit tests for <see cref="AppActivityLog"/>: the directly-recordable feed (insert order, cap,
-  /// persistence, read-back) and the <see cref="AppActivityLog.Initialize"/>-driven events
-  /// (theme change, app update, sign-in transition). The log registers on the static
-  /// <c>WeakReferenceMessenger</c> during initialization, so each initialized instance is
-  /// unregistered on teardown to keep the shared bus clean.
-  /// </summary>
+  // Initialize registers the log on the static WeakReferenceMessenger, so every initialized
+  // instance is unregistered on teardown to keep the shared bus clean.
   public sealed class AppActivityLogTests : IDisposable {
     private const string _entriesKey = "App.ActivityLog";
     private const string _lastVersionKey = "App.LastRunVersion";
@@ -32,12 +27,9 @@ namespace Kakehashi.App.Tests.Services {
       }
     }
 
-    /// <summary>
-    /// Recording announces, because two of these facts are ones no server can observe for itself and
-    /// a feature module forwards them. The log keeps its own string kinds — that is the shape already
-    /// persisted in settings — and announces the shared enum, so neither side depends on a literal
-    /// the other might edit.
-    /// </summary>
+    // Two of these facts are ones no server can observe for itself, and a feature module forwards
+    // them. The log keeps its own string kinds — the shape already persisted in settings — and
+    // announces the shared enum, so neither side depends on a literal the other might edit.
     [Theory]
     [InlineData(AppActivityLog.SignedInKind, AppActivityKind.SignedIn)]
     [InlineData(AppActivityLog.SignedOutKind, AppActivityKind.SignedOut)]
@@ -59,7 +51,7 @@ namespace Kakehashi.App.Tests.Services {
       Assert.Equal([expected], announced);
     }
 
-    /// <summary>A kind nobody shares stays local rather than being announced as something else.</summary>
+    // A kind nobody shares stays local rather than being announced as some other kind.
     [Fact]
     public void Record_DoesNotAnnounceAKindNothingElseKnows() {
       var log = new AppActivityLog(new InMemoryLocalSettings());
@@ -99,8 +91,8 @@ namespace Kakehashi.App.Tests.Services {
 
       var recent = log.GetRecent();
       Assert.Equal(50, recent.Count);
-      Assert.Equal("e54", recent[0].Title);   // newest kept
-      Assert.Equal("e5", recent[49].Title);   // e0..e4 dropped
+      Assert.Equal("e54", recent[0].Title);
+      Assert.Equal("e5", recent[49].Title);
     }
 
     [Fact]
@@ -199,7 +191,7 @@ namespace Kakehashi.App.Tests.Services {
     }
 
     private static IAuthSessionAccessor SignedOutAccessor() {
-      // Current returns null by default — no signed-in session.
+      // An unconfigured substitute returns null from Current, which is what signed out means.
       return Substitute.For<IAuthSessionAccessor>();
     }
 
@@ -208,7 +200,6 @@ namespace Kakehashi.App.Tests.Services {
       return version is null ? "v1.0.0" : $"v{version.ToString(3)}";
     }
 
-    /// <summary>Resolves only the two services <see cref="AppActivityLog.Initialize"/> requires.</summary>
     private sealed class StubProvider(IThemeService theme, IAuthSessionAccessor accessor)
         : IServiceProvider {
       public object? GetService(Type serviceType) {

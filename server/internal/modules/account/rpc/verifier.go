@@ -12,15 +12,11 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// verifier turns a bearer token into a platform Subject. It is the account module's
-// implementation of auth.Verifier, published on the kernel so the mux — which may not import this
-// module — can pick it up from the registry.
-//
 // Verification is entirely local: signature against the provider's own key, issuer, expiry. No
-// database is consulted, which is what keeps it off the hot path's critical resources — and is
-// also its known trade-off: a revoked session's access token stays valid until it expires. That is
-// why the access-token lifetime is minutes, not hours; revocation takes effect at the next
-// refresh, where the database is consulted.
+// database is consulted, which keeps it off the hot path — and is also its known trade-off: a
+// revoked session's access token stays valid until it expires. That is why the access-token
+// lifetime is minutes, not hours; revocation takes effect at the next refresh, where the database
+// is consulted.
 type verifier struct {
 	inner *op.AccessTokenVerifier
 }
@@ -40,16 +36,16 @@ func (v *verifier) Verify(ctx context.Context, token string) (auth.Subject, erro
 	// VerifyAccessToken checks the issuer, the signature and the expiry, and nothing about what KIND
 	// of token this is. That is not enough here, because this process issues two kinds: sign-in
 	// hands the client an ID token beside the access token, and an ID token from this issuer passes
-	// every check above. It authenticated every endpoint, for its full hour, and — because nothing
+	// every check above. It authenticated every endpoint for its full hour and — because nothing
 	// about it is a session — it kept working after sign-out, after the session was revoked, and
-	// after the account was deactivated. A credential that outlives the act of revoking it is worse
-	// than a long-lived one.
+	// after the account was deactivated. A credential that outlives the act of revoking it is
+	// worse than a long-lived one.
 	//
-	// The session id is what tells them apart, and it is worth saying why it and not something
-	// more obvious: both tokens this provider mints carry client_id and the same aud, so neither
-	// distinguishes them. sid is set by GetPrivateClaimsFromRequest, which runs only for an access
-	// token, and sessionIDOf covers both grants that produce one — the authorization code and the
-	// refresh. An access token from this provider always has it; an ID token never does.
+	// The session id is what tells them apart, and not something more obvious because both tokens
+	// carry client_id and the same aud. sid is set by GetPrivateClaimsFromRequest, which runs only
+	// for an access token, and sessionIDOf covers both grants that produce one — the authorization
+	// code and the refresh. An access token from this provider always has it; an ID token never
+	// does.
 	//
 	// It is also the claim that makes the token revocable at all: the session it names is what
 	// sign-out deletes.
@@ -77,10 +73,8 @@ func (v *verifier) Verify(ctx context.Context, token string) (auth.Subject, erro
 
 var _ auth.Verifier = (*verifier)(nil)
 
-// staticKeySet verifies signatures against the provider's one signing key.
-//
-// oidc.KeySet is usually a remote JWKS that refreshes itself; this process *is* the issuer, so
-// the key is simply in hand. When rotation arrives, this type grows a list.
+// oidc.KeySet is usually a remote JWKS that refreshes itself; this process is the issuer, so the
+// key is simply in hand. When rotation arrives, this type grows a list.
 type staticKeySet struct {
 	key *publicKey
 }

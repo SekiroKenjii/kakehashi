@@ -2,13 +2,8 @@ package activityapi
 
 import "testing"
 
-// Every kind this module declares has to land in a category, because a chip that filters by category
-// is the only way the feed is read — a kind that fell through would be invisible behind every chip
-// while still being counted in the total.
-//
-// The list is written out rather than derived. Go cannot enumerate a group of constants, so the cost
-// of adding a kind without categorising it is one line in this table, which is the cheapest reminder
-// available.
+// A kind that fell through would be invisible behind every chip while still being counted in the
+// total. The list is written out rather than derived because Go cannot enumerate constants.
 func TestEveryKindHasACategory(t *testing.T) {
 	cases := []struct {
 		kind string
@@ -34,7 +29,7 @@ func TestEveryKindHasACategory(t *testing.T) {
 	}
 }
 
-// A kind from a newer server, or a wrong one, is worth a person's attention rather than a bucket
+// A kind from a newer build, or a wrong one, is worth a person's attention rather than a bucket
 // nobody filters by.
 func TestAnUnrecognisedKindIsShownRatherThanHidden(t *testing.T) {
 	if got := CategoryOf("SomethingALaterBuildAdded"); got != CategorySecurity {
@@ -45,9 +40,8 @@ func TestAnUnrecognisedKindIsShownRatherThanHidden(t *testing.T) {
 	}
 }
 
-// The allow-list is a security boundary, so what it does *not* contain is the assertion worth having.
-// A kind added to the list without this test failing is a kind somebody widened the write path with
-// by accident.
+// The allow-list is a security boundary, so what it does *not* contain is the assertion worth
+// having: a kind added without this test failing is a write path somebody widened by accident.
 func TestOnlyTheTwoClientFactsMayBeReported(t *testing.T) {
 	want := []string{KindAppUpdated, KindThemeChanged}
 
@@ -61,7 +55,7 @@ func TestOnlyTheTwoClientFactsMayBeReported(t *testing.T) {
 		}
 	}
 
-	// Every other kind this module knows is the server's to write, not the client's.
+	// Every other kind is the server's to write, not the client's.
 	for kind := range categories {
 		reportable := kind == KindAppUpdated || kind == KindThemeChanged
 		if CanReport(kind) != reportable {

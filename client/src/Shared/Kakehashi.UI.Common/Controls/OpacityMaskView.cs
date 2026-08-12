@@ -3,11 +3,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 namespace Kakehashi.UI.Common.Controls {
-  /// <summary>
-  /// Hosts content with an optional opacity mask. This is a minimal seam: it exposes an
-  /// <see cref="OpacityMaskBrush"/> and presents its content. Extend with the Composition APIs
-  /// (e.g. a <c>CompositionMaskBrush</c>) for true per-pixel alpha masking.
-  /// </summary>
+  // A seam only: the brush is exposed but nothing applies it yet. True per-pixel alpha masking
+  // needs the Composition APIs (CompositionMaskBrush).
   public sealed partial class OpacityMaskView : ContentControl {
     public static readonly DependencyProperty OpacityMaskBrushProperty =
         DependencyProperty.Register(

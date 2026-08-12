@@ -31,8 +31,6 @@ func newValidAccount(t *testing.T) Account {
 func TestNewAccountNormalizesEmailAndName(t *testing.T) {
 	user := newValidAccount(t)
 
-	// Lower-cased and trimmed: the address is the account's identity, and nobody remembers which
-	// case they typed when they signed up.
 	if user.Email != "ada@example.com" {
 		t.Errorf("Email = %q, want %q", user.Email, "ada@example.com")
 	}
@@ -121,7 +119,6 @@ func TestChangePassword(t *testing.T) {
 		if err == nil {
 			t.Fatal("ChangePassword succeeded with the wrong current password")
 		}
-		// A rejected change must not half-apply.
 		if user.PasswordHash != before {
 			t.Error("the hash changed despite the failure")
 		}
@@ -155,8 +152,6 @@ func TestUpdateProfileLeavesNilFieldsAlone(t *testing.T) {
 	if user.DisplayName != "Ada King" {
 		t.Errorf("DisplayName = %q, want %q", user.DisplayName, "Ada King")
 	}
-	// nil means "not part of this edit", which is what lets the client send a partial update
-	// without reading the record first.
 	if user.Phone != "" {
 		t.Errorf("Phone = %q, want it untouched", user.Phone)
 	}

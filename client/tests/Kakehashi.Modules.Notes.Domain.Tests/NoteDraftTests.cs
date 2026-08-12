@@ -3,11 +3,8 @@ using Kakehashi.Modules.Notes.Domain.Notes;
 using Xunit;
 
 namespace Kakehashi.Modules.Notes.Domain.Tests {
-  /// <summary>
-  /// The client's copy of the server's note rules. They are duplicated on purpose — this one is
-  /// for immediate feedback, the server's is the one that decides — so these tests exist to keep
-  /// the copy faithful.
-  /// </summary>
+  // The client's copy of the server's note rules, duplicated on purpose: this one is for immediate
+  // feedback, the server's is the one that decides. These tests keep the copy faithful.
   public sealed class NoteDraftTests {
     [Fact]
     public void Create_TrimsTheTitle() {
@@ -32,8 +29,7 @@ namespace Kakehashi.Modules.Notes.Domain.Tests {
 
     [Fact]
     public void Create_TreatsANullBodyAsEmpty() {
-      // A note is a title with optional contents. Requiring a body would make "call the bank"
-      // impossible to write.
+      // A note is a title with optional contents.
       var result = NoteDraft.Create("Title", body: null);
 
       Assert.True(result.IsSuccess);
@@ -57,13 +53,13 @@ namespace Kakehashi.Modules.Notes.Domain.Tests {
 
     [Fact]
     public void Create_CountsTextElementsNotCharacters() {
-      // "e" followed by U+0301 COMBINING ACUTE ACCENT: one letter on screen, two UTF-16 chars in
-      // memory. Counting chars would reject a title of 120 such letters that the server accepts —
-      // the kind of bug that only ever shows up in one language.
+      // "e" followed by U+0301 COMBINING ACUTE ACCENT: one letter on screen, two UTF-16 chars.
+      // Counting chars would reject 120 such letters that the server accepts — a bug that only
+      // ever shows up in one language.
       const string composed = "é";
       var title = string.Concat(Enumerable.Repeat(composed, NoteDraft.MaxTitleLength));
 
-      // The premise of the test. If this ever stops holding, the assertion below proves nothing.
+      // The premise of the test: if this stops holding, the assertion below proves nothing.
       Assert.Equal(NoteDraft.MaxTitleLength * 2, title.Length);
 
       var result = NoteDraft.Create(title, string.Empty);

@@ -1,6 +1,4 @@
 namespace Kakehashi.UI.Contracts {
-  /// <summary>
-  /// Registers the implementing service as a singleton when the container scans the assembly.
-  /// </summary>
+  // Marker: the assembly scan registers implementations as singletons.
   public interface ISingletonDependency;
 }

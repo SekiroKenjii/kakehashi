@@ -20,7 +20,7 @@ type fakeStore struct {
 	groups     map[string]domain.Group
 	placements map[string]domain.Placement
 
-	// order preserves insertion order for Groups, which the real store returns sorted.
+	// Insertion order, which Groups then sorts the way the real store does.
 	groupOrder []string
 }
 
@@ -31,11 +31,9 @@ func newFakeStore() *fakeStore {
 	}
 }
 
-// ApplyLayout applies a whole plan, in the order the real store's transaction does.
-//
-// The order is copied deliberately: headings created before items move into them, headings deleted
-// last so nothing is stranded. A fake that applied a plan in a convenient order would pass a test the
-// real store would fail.
+// The order is copied from the real store's transaction deliberately: headings created before items
+// move into them, headings deleted last so nothing is stranded. A fake that applied a plan in a
+// convenient order would pass a test the real store would fail.
 func (f *fakeStore) ApplyLayout(
 	ctx context.Context, plan domain.LayoutPlan, at time.Time,
 ) error {
@@ -75,7 +73,7 @@ func (f *fakeStore) ApplyLayout(
 	return nil
 }
 
-// DeleteItem removes a stored row. The fake refuses nothing: which rows may go is the service's rule.
+// The fake refuses nothing: which rows may go is the service's rule.
 func (f *fakeStore) DeleteItem(_ context.Context, id string) error {
 	if _, ok := f.placements[id]; !ok {
 		return errs.NotFoundf("No navigation item with id %s.", id)
@@ -84,8 +82,6 @@ func (f *fakeStore) DeleteItem(_ context.Context, id string) error {
 	return nil
 }
 
-// Layout is the one-snapshot read. The fake has no concurrency to protect against; it exists so the
-// service's real call has something to call.
 func (f *fakeStore) Layout(ctx context.Context) ([]domain.Group, []domain.Placement, error) {
 	groups, err := f.Groups(ctx)
 	if err != nil {
@@ -98,9 +94,9 @@ func (f *fakeStore) Layout(ctx context.Context) ([]domain.Group, []domain.Placem
 	return groups, placements, nil
 }
 
-// Groups returns them ordered the way the real store's ORDER BY does — by position, then title.
-// Insertion order was close enough to look right and wrong enough that a heading's SortOrder could
-// have been ignored entirely without a test noticing.
+// Ordered the way the real store's ORDER BY is — by position, then title. Insertion order was close
+// enough to look right and wrong enough that a heading's SortOrder could have been ignored entirely
+// without a test noticing.
 func (f *fakeStore) Groups(_ context.Context) ([]domain.Group, error) {
 	out := make([]domain.Group, 0, len(f.groups))
 	for _, id := range f.groupOrder {
@@ -128,7 +124,7 @@ func (f *fakeStore) InsertGroup(_ context.Context, g domain.Group, _ time.Time) 
 		return errs.Conflictf("The identifier %s is already taken by another heading.", g.ID)
 	}
 	// AK_NavGroup_Title: the real schema refuses two headings with the same name, and the fake used
-	// to accept them — so the conflict path was unreachable from either side of the boundary.
+	// to accept them — so the conflict path was unreachable from either side.
 	if f.titleTaken(g.Title, g.ID) {
 		return errs.Conflictf("A navigation heading called %s already exists.", g.Title)
 	}
@@ -214,7 +210,7 @@ func (f *fakeStore) Move(_ context.Context, id, groupID string, order int, _ tim
 	if !ok {
 		return errs.NotFoundf("No navigation item with id %s.", id)
 	}
-	// FK_NavItem_NavGroup. The fake used to accept any heading id, so the real store's foreign-key
+	// FK_NavItem_NavGroup: the fake used to accept any heading id, so the real store's foreign-key
 	// failure was unreachable by any test and a test could reach a state the schema forbids.
 	if groupID != "" {
 		if _, exists := f.groups[groupID]; !exists {
@@ -285,8 +281,8 @@ func TestReconcileSeedsADestinationIntoItsDeclaredPlace(t *testing.T) {
 }
 
 // The rule the whole design rests on: a row an administrator has touched is never rewritten by a
-// boot. A version of Reconcile that refreshed the defaults would undo every rearrangement on every
-// restart — silently, and only in production, where restarts happen unattended.
+// boot. A Reconcile that refreshed the defaults would undo every rearrangement on every restart —
+// silently, and only in production, where restarts happen unattended.
 func TestReconcileLeavesAnAdministratorsArrangementAlone(t *testing.T) {
 	store := newFakeStore()
 	svc := service.New(store, nil, notes)
@@ -586,8 +582,6 @@ func ids(items []service.Item) []string {
 	}
 	return out
 }
-
-// --- What the audit found nothing covering. ---
 
 // Every write path invalidates the cache. Only one of the five was covered, so removing
 // s.invalidate() from the other four left the whole suite green while the pane went stale.

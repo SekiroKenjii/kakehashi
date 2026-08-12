@@ -1,8 +1,8 @@
 // Package text holds the string measurements the domains share.
 //
-// It is here rather than in one module because the rule it encodes is the database's, not any one
-// module's: three domains cap fields against nvarchar columns, and archlint rightly stops
-// notes/domain from importing account/domain to reach a helper.
+// Here rather than in one module because the rule it encodes is the database's: three domains cap
+// fields against nvarchar columns, and archlint rightly stops notes/domain from importing
+// account/domain to reach a helper.
 package text
 
 import "unicode/utf16"

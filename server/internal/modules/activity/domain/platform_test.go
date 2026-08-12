@@ -2,9 +2,8 @@ package domain
 
 import "testing"
 
-// The order of the tests inside PlatformOf is the whole implementation, so this table is mostly
-// about the strings that would be misread by a naive one: an iPhone claims "like Mac OS X" and an
-// Android claims "Linux".
+// The order of the cases inside PlatformOf is the whole implementation, so this table is mostly the
+// strings a naive one misreads: an iPhone claims "like Mac OS X" and an Android claims "Linux".
 func TestPlatformOfReadsTheFamilyOutOfAUserAgent(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -48,8 +47,8 @@ func TestPlatformOfReadsTheFamilyOutOfAUserAgent(t *testing.T) {
 			"Windows",
 		},
 		{
-			// Empty rather than a guess. The reader is deciding whether to change their password;
-			// a made-up specific answer reads as a fact.
+			// Empty rather than a guess: the reader is deciding whether to change their password,
+			// and a made-up specific answer reads as a fact.
 			"nothing recognisable",
 			"some-internal-tool/3",
 			"",

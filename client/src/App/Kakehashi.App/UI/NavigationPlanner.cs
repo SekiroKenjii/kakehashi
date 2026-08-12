@@ -6,14 +6,11 @@ using Kakehashi.UI.Common.Controls;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.App.UI {
-  // One pane entry, and whether the account may use it.
   public sealed record NavigationEntry(NavigationItem Item, bool IsEnabled);
 
-  // Decides what goes in the navigation pane, in what order, and what is reachable.
-  //
   // Its own class rather than a method on the shell, because these are rules worth being able to
-  // test — and a Page cannot be constructed off the UI thread, so a rule that lives on one is
-  // a rule nothing checks. The shell keeps what is genuinely its own: turning entries into controls.
+  // test — and a Page cannot be constructed off the UI thread, so a rule that lives on one is a
+  // rule nothing checks. The shell keeps what is genuinely its own: turning entries into controls.
   //
   // Two halves meet here. The client knows which destinations it has — a destination is a
   // compiled page, and no server can conjure one. The deployment knows where they go —
@@ -28,7 +25,7 @@ namespace Kakehashi.App.UI {
         : this(registry, permissions, HostNavigation.Items) {
     }
 
-    // Overload taking the host's items, so a test can supply its own.
+    // Takes the host's items so a test can supply its own.
     public NavigationPlanner(
         IModuleRegistry registry,
         IPermissionService permissions,
@@ -41,9 +38,6 @@ namespace Kakehashi.App.UI {
       _hostItems = hostItems;
     }
 
-    // The pane's entries: the deployment's menu first, then the destinations the client places
-    // itself.
-    //
     // The deployment decides the menu — the order of the headings, the order within them, the
     // labels, and which destinations an account is offered at all. This client contributes three
     // things it is the only one able to know:
@@ -84,8 +78,6 @@ namespace Kakehashi.App.UI {
       return entries;
     }
 
-    // The pane as this build alone would draw it, used until the deployment's answer arrives.
-    //
     // Three rules, and they are the client-side approximation of what the server does properly:
     //
     //   - a destination whose permission the account lacks is absent. It is the cautious direction
@@ -110,12 +102,12 @@ namespace Kakehashi.App.UI {
       return entries;
     }
 
-    // The compiled navigation item a stored row refers to, or null when this build has no such page.
+    // Null when this build has no such page.
     //
     // Exposed for the layout screen, which reports a screen's route and where it is declared. Those
-    // come from the page type this build compiled, not from the server — the server has no notion of a
-    // route, and no way to know which file declares a page. Reusing this join is what keeps the screen
-    // from re-deriving a mapping the planner already owns.
+    // come from the page type this build compiled, not from the server — the server has no notion
+    // of a route, and no way to know which file declares a page. Reusing this join is what keeps
+    // the screen from re-deriving a mapping the planner already owns.
     public NavigationItem? Find(string id) {
       if (id.Length == 0) {
         return null;
@@ -123,18 +115,16 @@ namespace Kakehashi.App.UI {
       return Available().TryGetValue(id, out var entry) ? entry.Item : null;
     }
 
-    // Every destination this client has and the user has not detached, keyed by its id.
-    //
-    // Insertion-ordered, because PlanLocally draws them in this order and the
-    // composition root's module order is the sensible fallback. The footer items have no id, so they
-    // are keyed by their page type to keep them from colliding.
+    // Insertion-ordered, because PlanLocally draws them in this order and the composition root's
+    // module order is the sensible fallback. The footer items have no id, so they are keyed by
+    // their page type to keep them from colliding.
     private Dictionary<string, NavigationEntry> Available() {
       var available = new Dictionary<string, NavigationEntry>(StringComparer.Ordinal);
 
       foreach (var module in _registry.All) {
         // Withheld is keyed by the server's module id, which is what an administrator governs;
-        // attachment is keyed by the client's module name. They differ (Auth vs account), so the two
-        // questions are asked with the identifier each one is actually filed under.
+        // attachment is keyed by the client's module name. They differ (Auth vs account), so the
+        // two questions are asked with the identifier each one is actually filed under.
         var withheld = !module.Descriptor.IsRequired
             && _registry.IsWithheld(module.Descriptor.AssignmentId ?? module.Name);
 
@@ -164,8 +154,6 @@ namespace Kakehashi.App.UI {
       return available;
     }
 
-    // Adds the destination a placement names, if this build has it.
-    //
     // The label and icon come from the deployment, so renaming a heading or a screen is somebody's
     // afternoon rather than a release. The glyph does not: the deployment sends a semantic name and
     // this client decides what it looks like, because which code point draws a note is a fact about
@@ -180,8 +168,9 @@ namespace Kakehashi.App.UI {
         NavigationPlacement placement,
         string group) {
       if (!available.TryGetValue(placement.Id, out var local)) {
-        // The deployment arranged something this build does not have — a module removed since, or a
-        // server one version ahead. Skipping it is the only honest option: there is no page to open.
+        // The deployment arranged something this build does not have — a module removed since, or
+        // a server one version ahead. Skipping it is the only honest option: there is no page to
+        // open.
         return;
       }
 

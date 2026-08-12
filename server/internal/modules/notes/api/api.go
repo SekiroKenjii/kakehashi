@@ -1,7 +1,6 @@
-// Package notesapi is the notes module's public contract.
-//
-// Other modules import this package and nothing else under internal/modules/notes/. Keep it free of
-// implementation: interfaces, plain data, events. No SQL, no protobuf, no other module.
+// Package notesapi is the notes module's public contract: other modules import this package and
+// nothing else under internal/modules/notes/. Interfaces, plain data and events only — no SQL, no
+// protobuf, no other module.
 package notesapi
 
 import (
@@ -9,12 +8,9 @@ import (
 	"time"
 )
 
-// Note is a note as the rest of the application sees it.
-//
-// It is a data transfer object, deliberately separate from the domain entity in
-// internal/modules/notes/domain. The two look almost identical today, and that is fine: the point
-// is that the domain type is free to grow invariants, unexported fields and behaviour without any
-// of it leaking across the module boundary.
+// Note is deliberately separate from the domain entity in internal/modules/notes/domain. The two
+// look almost identical today; the point is that the domain type is free to grow invariants,
+// unexported fields and behaviour without any of it leaking across the module boundary.
 type Note struct {
 	ID        int64
 	Title     string
@@ -23,41 +19,34 @@ type Note struct {
 	UpdatedAt time.Time
 }
 
-// Service is the notes use-case surface.
 type Service interface {
 	// List returns every note, most recently updated first.
 	List(ctx context.Context) ([]Note, error)
 
-	// Get returns one note. It fails with an errs.NotFound error when id does not exist.
+	// Get fails with an errs.NotFound error when id does not exist.
 	Get(ctx context.Context, id int64) (Note, error)
 
-	// Create stores a new note. An empty or whitespace-only title fails with an errs.Invalid error
-	// whose message is safe to show a user.
+	// Create fails with an errs.Invalid error, whose message is safe to show a user, when the
+	// title is empty or whitespace-only.
 	Create(ctx context.Context, title, body string) (Note, error)
 
-	// Update rewrites a note's title and body.
 	Update(ctx context.Context, id int64, title, body string) (Note, error)
 
-	// Delete removes a note. Deleting one that is already gone succeeds: the caller wanted it
-	// gone, and it is.
+	// Delete of a note that is already gone succeeds: the caller wanted it gone, and it is.
 	Delete(ctx context.Context, id int64) error
 }
 
-// Created is published after a note is stored.
 type Created struct {
 	Note Note
 }
 
-// Updated is published after a note's contents change.
 type Updated struct {
 	Note Note
 }
 
-// Deleted is published after a note is removed.
-//
-// It carries the title as well as the ID because by the time a subscriber runs, the note is gone,
-// and "Deleted 'Shopping list'" is a message you can only write if the event brought the name with
-// it.
+// Deleted carries the title as well as the ID because by the time a subscriber runs the note is
+// gone, and "Deleted 'Shopping list'" is a message you can only write if the event brought the name
+// with it.
 type Deleted struct {
 	ID    int64
 	Title string

@@ -14,8 +14,8 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// recorded is one call to the service, kept so a test can assert what the wire layer decided rather
-// than what the caller asked for.
+// One call to the service, kept so a test can assert what the wire layer decided rather than what
+// the caller asked for.
 type recorded struct {
 	userID    string
 	kind      string
@@ -50,7 +50,7 @@ func signedIn(id string) context.Context {
 	})
 }
 
-// The whole reason a write path is safe to have. A client that could name any kind could write the
+// The whole reason a write path is safe to have: a client that could name any kind could write the
 // row a reader trusts most into somebody's security feed.
 func TestOnlyTheAllowedKindsAreAccepted(t *testing.T) {
 	for _, kind := range activityapi.ClientReportableKinds() {
@@ -115,8 +115,8 @@ func TestTheRefusalNamesNoKinds(t *testing.T) {
 	}
 }
 
-// Whose feed comes from the token. There is no account id in the request at all, so this asserts the
-// only thing left to get wrong: that the subject is the one used.
+// Whose feed comes from the token. There is no account id in the request at all, so the only thing
+// left to get wrong is which subject is used.
 func TestTheEntryIsFiledUnderTheVerifiedCaller(t *testing.T) {
 	feed := &fakeFeed{}
 	handler := &handler{svc: feed}
@@ -147,8 +147,8 @@ func TestAnUnverifiedCallerRecordsNothing(t *testing.T) {
 	}
 }
 
-// An app update happened to an installation rather than to a sign-in, and the server's clock is the
-// one that decides when. Both are omissions a caller cannot override, so both are worth pinning.
+// An app update happened to an installation rather than to a sign-in, and the server's clock
+// decides when. Both are omissions a caller cannot override.
 func TestTheClientDecidesNeitherTheSessionNorTheTime(t *testing.T) {
 	feed := &fakeFeed{}
 	handler := &handler{svc: feed}
@@ -163,7 +163,7 @@ func TestTheClientDecidesNeitherTheSessionNorTheTime(t *testing.T) {
 
 	got := feed.calls[0]
 	if got.sessionID != "" {
-		// The context carries one, so this is not vacuous: it asserts the handler did not reach for it.
+		// The context carries one, so this is not vacuous: the handler did not reach for it.
 		t.Errorf("sessionID = %q, want empty", got.sessionID)
 	}
 	if got.at.Before(before) {
@@ -171,8 +171,8 @@ func TestTheClientDecidesNeitherTheSessionNorTheTime(t *testing.T) {
 	}
 }
 
-// The device is a claim off the connection, never from the body — there is nowhere in the request to
-// put one, and this is what proves the handler reads the header instead.
+// The device is a claim off the connection, never from the body — there is nowhere in the request
+// to put one, and this is what proves the handler reads the header instead.
 func TestTheDeviceAndAddressComeOffTheConnection(t *testing.T) {
 	feed := &fakeFeed{}
 	handler := &handler{svc: feed}

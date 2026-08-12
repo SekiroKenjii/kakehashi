@@ -1,10 +1,8 @@
 namespace Kakehashi.Application.Abstractions.Messaging {
-  /// <summary>A request (command or query) handled by exactly one handler.</summary>
-  /// <typeparam name="TResponse">The type returned by the handler.</typeparam>
+  // Exactly one handler per request; more than one is a registration error.
   public interface IRequest<out TResponse> {
   }
 
-  /// <summary>A request that produces no value.</summary>
   public interface IRequest : IRequest<Unit> {
   }
 }

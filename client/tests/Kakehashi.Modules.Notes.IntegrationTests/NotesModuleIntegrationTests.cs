@@ -14,11 +14,9 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Kakehashi.Modules.Notes.IntegrationTests {
-  /// <summary>
-  /// Exercises the Notes module the way the host does: the real mediator, real handler discovery,
-  /// real validation — with the network replaced by an in-memory stand-in. The mediator is never
-  /// mocked; if handler registration breaks, these fail.
-  /// </summary>
+  // Exercises the module the way the host does: real mediator, real handler discovery, real
+  // validation, with the network replaced by an in-memory stand-in. The mediator is never mocked;
+  // if handler registration breaks, these fail.
   public sealed class NotesModuleIntegrationTests {
     private static ServiceProvider BuildProvider(INotesGateway gateway) {
       var services = new ServiceCollection();
@@ -84,8 +82,8 @@ namespace Kakehashi.Modules.Notes.IntegrationTests {
       Assert.True((await sender.Send(new DeleteNoteCommand(created.Value.Id))).IsSuccess);
       Assert.Empty((await sender.Send(new GetNotesQuery())).Value);
 
-      // The contract says a delete of something already gone succeeds, so a retry after a dropped
-      // connection is safe.
+      // A delete of something already gone succeeds, which is what makes a retry after a dropped
+      // connection safe.
       Assert.True((await sender.Send(new DeleteNoteCommand(created.Value.Id))).IsSuccess);
     }
 

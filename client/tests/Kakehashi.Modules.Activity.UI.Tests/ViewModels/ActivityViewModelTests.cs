@@ -15,11 +15,6 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
-  /// <summary>
-  /// Unit tests for <see cref="ActivityViewModel"/>: the grouping and collapsing it decides for
-  /// itself, the counts it must take from the server rather than compute, and the two failures that
-  /// have to clear what is on screen.
-  /// </summary>
   public sealed class ActivityViewModelTests {
     private static readonly DateTimeOffset _noon =
         new(2026, 8, 11, 12, 0, 0, DateTimeOffset.Now.Offset);
@@ -35,13 +30,11 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       return new ActivityViewModel(_sender, _files, _clipboard, _notifications, _accountScreen);
     }
 
-    /// <summary>Answers every request with the same page.</summary>
     private void Returns(Result<ActivityPageDto> result) {
       _sender.Send(Arg.Is<GetActivityQuery>(query => query != null), Arg.Any<CancellationToken>())
           .Returns(Task.FromResult(result));
     }
 
-    /// <summary>Answers the first request with one page and every later one with another.</summary>
     private void Returns(ActivityPageDto first, ActivityPageDto rest) {
       _sender.Send(Arg.Is<GetActivityQuery>(query => query != null), Arg.Any<CancellationToken>())
           .Returns(call => Task.FromResult(Result.Success(
@@ -87,10 +80,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.False(viewModel.IsEmpty);
     }
 
-    /// <summary>
-    /// Nine sign-outs from one session are one thing that happened. Collapsing only a consecutive run
-    /// is what stops the grouping from reordering the feed.
-    /// </summary>
+    // Nine sign-outs from one session are one thing that happened. Collapsing only a consecutive
+    // run is what stops the grouping from reordering the feed.
     [Fact]
     public async Task Load_CollapsesAConsecutiveRunFromOneSession() {
       Returns(Result.Success(Page([
@@ -126,10 +117,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.All(viewModel.Days[0].Items, row => Assert.False(row.IsBurst));
     }
 
-    /// <summary>
-    /// A fact with no session is never collapsed even when it repeats: two password changes are two
-    /// decisions, not one event reported twice.
-    /// </summary>
+    // A fact with no session is never collapsed even when it repeats: two password changes are two
+    // decisions, not one event reported twice.
     [Fact]
     public async Task Load_NeverCollapsesFactsThatHaveNoSession() {
       Returns(Result.Success(Page([
@@ -143,9 +132,7 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.Equal(2, viewModel.Days[0].Items.Count);
     }
 
-    /// <summary>
-    /// The chips show what the server counted over the whole range, not what happens to be loaded.
-    /// </summary>
+    // The chips show what the server counted over the whole range, not what happens to be loaded.
     [Fact]
     public async Task Load_TakesTheChipCountsFromTheServer() {
       Returns(Result.Success(Page(
@@ -167,9 +154,7 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.Contains("kept for 90 days", viewModel.CountSummary, StringComparison.Ordinal);
     }
 
-    /// <summary>
-    /// The server sends the counts only with the first page, so a later page must not blank them.
-    /// </summary>
+    // The server sends the counts only with the first page, so a later page must not blank them.
     [Fact]
     public async Task LoadMore_KeepsTheCountsTheFirstPageBrought() {
       Returns(
@@ -201,10 +186,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
           Arg.Is<GetActivityQuery>(query => query != null), Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// Search runs on the server, so it applies when submitted. Emptying the box applies at once:
-    /// nobody expects to press Enter to stop filtering.
-    /// </summary>
+    // Search runs on the server, so it applies when submitted. Emptying the box applies at once:
+    // nobody expects to press Enter to stop filtering.
     [Fact]
     public async Task Search_AppliesOnSubmitAndClearsImmediately() {
       Returns(Result.Success(Page([Entry(ActivityKinds.SignedIn, _noon)])));
@@ -242,10 +225,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
           Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// A page left open across a sign-out keeps refreshing, and a feed that held its rows would go on
-    /// showing the previous account's devices and addresses to whoever signs in next.
-    /// </summary>
+    // A page left open across a sign-out keeps refreshing, and a feed that held its rows would go
+    // on showing the previous account's devices and addresses to whoever signs in next.
     [Fact]
     public async Task Load_WhenTheSessionIsGone_ClearsWhatIsOnScreen() {
       Returns(Result.Success(Page([Entry(ActivityKinds.SignedIn, _noon)])));
@@ -259,7 +240,7 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.True(viewModel.HasError);
     }
 
-    /// <summary>An unreadable page position means what is on screen cannot be continued from.</summary>
+    // An unreadable page position means what is on screen cannot be continued from.
     [Fact]
     public async Task LoadMore_WhenThePositionIsLost_ClearsAndStopsOfferingMore() {
       Returns(
@@ -275,10 +256,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.False(viewModel.HasMore);
     }
 
-    /// <summary>
-    /// A network blip is different: the rows are still true, and throwing them away would make a
-    /// flaky connection look like an empty history.
-    /// </summary>
+    // A network blip is different: the rows are still true, and throwing them away would make a
+    // flaky connection look like an empty history.
     [Fact]
     public async Task Load_WhenTheNetworkFails_KeepsTheRowsItAlreadyHas() {
       Returns(Result.Success(Page([Entry(ActivityKinds.SignedIn, _noon)])));
@@ -303,10 +282,7 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
       Assert.False(viewModel.HasError);
     }
 
-    /// <summary>
-    /// The refused-sign-in card states a number the server counted. Deriving it from the Security
-    /// total would be wrong, because that total also holds password changes.
-    /// </summary>
+    // Deriving this from the Security total would be wrong: that total also holds password changes.
     [Fact]
     public async Task Load_ReportsRefusedSignInsFromTheServersOwnCount() {
       Returns(Result.Success(Page(
@@ -337,10 +313,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests.ViewModels {
           Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
     }
 
-    /// <summary>
-    /// The Account page belongs to another module, so the only join available is its navigation key.
-    /// When that fails, saying where to go beats a link that silently does nothing.
-    /// </summary>
+    // The Account page belongs to another module, so the only join available is its navigation key.
+    // When that fails, saying where to go beats a link that silently does nothing.
     [Fact]
     public void SecureAccount_WhenThatPageIsNotMounted_SaysWhereToGo() {
       _accountScreen.Open().Returns(false);

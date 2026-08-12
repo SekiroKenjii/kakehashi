@@ -1,10 +1,7 @@
 namespace Kakehashi.App.Services {
-  // The permission keys this client checks, spelled once.
-  //
-  // These are the same strings the server's modules declare in their catalogues. There is no way
-  // to make a compiler check that — the two halves are different languages joined by a wire — so
-  // they are collected here rather than typed at each call site, which at least reduces it to one
-  // place to get wrong.
+  // The same strings the server's modules declare in their catalogues, with nothing able to check
+  // that — the two halves are different languages joined by a wire — so they are collected here
+  // rather than typed at each call site.
   //
   // Checking them is presentation. Every route is checked server-side against the same table, so
   // a client that skipped every check here is refused identically.

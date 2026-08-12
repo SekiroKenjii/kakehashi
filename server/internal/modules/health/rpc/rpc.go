@@ -1,11 +1,7 @@
-// Package rpc is the health module's wire layer.
-//
-// It is the only package in the module allowed to import the generated protobuf code, and
-// tools/archlint enforces that. The reason is the same one that keeps api.Status separate from a
-// domain entity: generated types are the wire's shape, not the module's, and once a service starts
-// returning them, a change to the schema becomes a change to the service.
-//
-// Everything here is mapping. No decisions, no rules — those live in service/.
+// Package rpc is the only package in the module allowed to import the generated protobuf code, and
+// tools/archlint enforces that: generated types are the wire's shape, not the module's, and once a
+// service returns them a schema change becomes a service change. Mapping only — rules live in
+// service/.
 package rpc
 
 import (
@@ -20,21 +16,15 @@ import (
 	healthapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/health/api"
 )
 
-// NewRoute builds the Connect handler for HealthService.
-//
-// It returns the pattern and handler exactly as Connect produces them, which is the pair
-// app.Route holds, so the module wires it up without touching anything generated.
 func NewRoute(
 	svc healthapi.Service, opts []connect.HandlerOption,
 ) (string, http.Handler) {
 	return healthv1connect.NewHealthServiceHandler(&handler{svc: svc}, opts...)
 }
 
-// NewLiveness builds the plain-HTTP liveness probe.
-//
-// It exists alongside the RPC because the things that check liveness — a container runtime, a load
-// balancer, a uptime monitor — speak HTTP and nothing else. Asking them to frame a Connect request
-// is not a fight worth having over a two-hundred-byte answer.
+// NewLiveness exists alongside the RPC because the things that check liveness — a container
+// runtime, a load balancer, an uptime monitor — speak plain HTTP and cannot frame a Connect
+// request.
 func NewLiveness() http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
@@ -43,7 +33,6 @@ func NewLiveness() http.Handler {
 	})
 }
 
-// handler adapts healthapi.Service to the generated interface.
 type handler struct {
 	svc healthapi.Service
 }
@@ -53,9 +42,8 @@ func (h *handler) Ping(
 ) (*connect.Response[healthv1.PingResponse], error) {
 	status, err := h.svc.Ping(ctx, req.Msg.GetMessage())
 	if err != nil {
-		// Returned bare. The interceptor in platform/rpc decides the status code and what the
-		// caller is allowed to read; doing it here would mean doing it differently in every
-		// handler.
+		// Bare: the interceptor in platform/rpc decides the status code and what the caller is
+		// allowed to read.
 		return nil, err
 	}
 

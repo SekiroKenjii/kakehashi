@@ -22,8 +22,8 @@ type fakeStore struct {
 	lastTake   int
 	lastFilter domain.Filter
 
-	// Every filter the counting queries were given, so a test can assert what they were narrowed by
-	// and - more to the point - what they were not.
+	// Every filter the counting queries were given, so a test can assert what they were narrowed
+	// by and - more to the point - what they were not.
 	countFilters []domain.Filter
 
 	total  int
@@ -133,7 +133,7 @@ func TestListClampsThePageSize(t *testing.T) {
 			if err != nil {
 				t.Fatalf("List returned an error: %v", err)
 			}
-			// One past the page, which is how the service knows whether there is a next one.
+			// One past the page is how the service knows whether there is a next one.
 			if store.lastTake != c.want+1 {
 				t.Errorf("store asked for %d rows, want %d (the page plus one probe row)",
 					store.lastTake, c.want+1)
@@ -163,18 +163,17 @@ func TestListReturnsWhatTheFeedDrawsAndKeepsTheAccountIdBack(t *testing.T) {
 		t.Fatalf("got %d entries, want 1", len(page.Entries))
 	}
 
-	// The row id crosses now: the reader of a row is the account that owns it, and a screen offering
-	// "copy this event" needs something to copy. The account id still does not, and activityapi.Entry
-	// has no field for it — that half is a compile-time fact rather than one a test can observe, so
-	// what this asserts is that the rest of the mapping stays complete.
+	// The row id crosses; the account id does not, and activityapi.Entry has no field for it — that
+	// half is a compile-time fact rather than one a test can observe, so what this asserts is that
+	// the rest of the mapping stays complete.
 	got := page.Entries[0]
 	if got.ID != "id-1" || got.Kind != "SignedIn" || got.SessionID != "session-1" ||
 		got.IPAddress != "10.0.0.1" || !got.OccurredAt.Equal(occurred) {
 		t.Errorf("entry = %+v, want the stored fact", got)
 	}
 
-	// Category and Platform are derived on the way out rather than stored, so a mapping that forgot
-	// to derive them would still return a plausible-looking row. Assert they arrived.
+	// Derived on the way out rather than stored, so a mapping that forgot them would still return a
+	// plausible-looking row.
 	if got.Category != activityapi.CategorySignIn {
 		t.Errorf("category = %q, want %q", got.Category, activityapi.CategorySignIn)
 	}
@@ -213,9 +212,9 @@ func entriesAt(count int) []domain.Entry {
 	return out
 }
 
-// A page that comes back exactly full is indistinguishable from the last page, which is why the read
-// asks for one row past it. The probe row must not be shown, and the token must point at the last row
-// that was.
+// A page that comes back exactly full is indistinguishable from the last page, which is why the
+// read asks for one row past it. The probe row must not be shown, and the token must point at the
+// last row that was.
 func TestAFullPageOffersTheNextOneWithoutShowingTheProbeRow(t *testing.T) {
 	store := &fakeStore{feed: entriesAt(3)}
 
@@ -257,8 +256,8 @@ func TestAShortPageIsTheLastOne(t *testing.T) {
 }
 
 // Round-tripped rather than inspected: the token's shape is deliberately the server's business, so
-// what a test can honestly assert is that a token the service issued gets the caller back to the
-// position it named.
+// what a test can honestly assert is that one the service issued gets the caller to the position it
+// named.
 func TestATokenTheServiceIssuedReachesTheStoreAsAPosition(t *testing.T) {
 	first := &fakeStore{feed: entriesAt(3)}
 	svc := newService(first)
@@ -285,8 +284,8 @@ func TestATokenTheServiceIssuedReachesTheStoreAsAPosition(t *testing.T) {
 	}
 }
 
-// Refused rather than ignored. Starting over from the newest entry would draw page one again beneath
-// a "load more" button, and a reader would conclude the feed loops.
+// Refused rather than ignored. Starting over from the newest entry would draw page one again
+// beneath a "load more" button, and a reader would conclude the feed loops.
 func TestATokenThisServerDidNotWriteIsRefused(t *testing.T) {
 	cases := []struct {
 		name  string
@@ -316,8 +315,8 @@ func TestATokenThisServerDidNotWriteIsRefused(t *testing.T) {
 }
 
 // The counts are what every chip shows while one of them is active, so they must be taken over the
-// whole set rather than over the filtered view. The range and the search still apply - they are what
-// the reader chose to look at; the category is not.
+// whole set rather than the filtered view. The range and the search still apply - they are what the
+// reader chose to look at; the category is not.
 func TestTheChipCountsIgnoreTheChipThatIsActive(t *testing.T) {
 	store := &fakeStore{byKind: map[string]int{
 		"SignedIn":        9,
@@ -344,8 +343,8 @@ func TestTheChipCountsIgnoreTheChipThatIsActive(t *testing.T) {
 		t.Errorf("Security count = %d, want 3", page.Counts[activityapi.CategorySecurity])
 	}
 
-	// The per-kind numbers come from the same aggregation rather than a second one: a card that says
-	// "one sign-in was refused" cannot read that off a Security total containing password changes.
+	// The per-kind numbers come from the same aggregation: a card that says "one sign-in was
+	// refused" cannot read that off a Security total containing password changes.
 	if page.KindCounts["FailedSignIn"] != 1 {
 		t.Errorf("FailedSignIn count = %d, want 1", page.KindCounts["FailedSignIn"])
 	}
@@ -353,7 +352,6 @@ func TestTheChipCountsIgnoreTheChipThatIsActive(t *testing.T) {
 		t.Errorf("ran %d counting queries, want 2 (one total, one grouped)", len(store.countFilters))
 	}
 
-	// The counting query kept the reader's range and text, and dropped only the chip.
 	var counted domain.Filter
 	for _, f := range store.countFilters {
 		if f.Kinds == nil {
@@ -364,14 +362,13 @@ func TestTheChipCountsIgnoreTheChipThatIsActive(t *testing.T) {
 		t.Errorf("counted with %+v, want the reader's range and search kept", counted)
 	}
 
-	// And the page itself was narrowed by the chip.
 	if len(store.lastFilter.Kinds) == 0 {
 		t.Error("the page was not narrowed by the active chip")
 	}
 }
 
-// Paging cannot change the counts and the client already has them, so a later page does not pay for
-// an aggregation to send them again.
+// Paging cannot change the counts and the client already has them, so a later page does not pay an
+// aggregation to send them again.
 func TestALaterPageDoesNotRecountTheChips(t *testing.T) {
 	store := &fakeStore{feed: entriesAt(1), byKind: map[string]int{"SignedIn": 1}}
 
@@ -405,8 +402,8 @@ func TestThePageReportsTheTotalAndHowFarBackTheFeedGoes(t *testing.T) {
 	}
 }
 
-// An unknown category means "do not narrow" rather than "match nothing": a client one release ahead
-// should see the whole feed, not an empty one.
+// An unknown category means "do not narrow" rather than "match nothing": a client one release
+// ahead should see the whole feed, not an empty one.
 func TestAnUnknownCategoryDoesNotEmptyTheFeed(t *testing.T) {
 	store := &fakeStore{feed: entriesAt(2)}
 
@@ -426,8 +423,8 @@ func TestAnUnknownCategoryDoesNotEmptyTheFeed(t *testing.T) {
 	}
 }
 
-// "8 of 214" means 214 match, not 214 are left below where you are. Now that the store counts
-// exactly what it is handed, dropping the cursor is a decision this layer makes and a test can see.
+// "8 of 214" means 214 match, not 214 are left below where you are. The store counts exactly what
+// it is handed, so dropping the cursor is this layer's decision.
 func TestTheTotalCountsWhatMatchesRatherThanWhatIsLeft(t *testing.T) {
 	store := &fakeStore{feed: entriesAt(1), total: 214}
 

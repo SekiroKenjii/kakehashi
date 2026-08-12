@@ -10,19 +10,10 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// What every handler in this package needs and none of them owns.
-//
-// These live on a seam rather than beside a handler because they operate on no unit of their own:
-// they are the JSON envelope, the caller check and the error mapping, used from account_http.go,
-// signin_inapp.go and signin_browser.go alike. The rule is the one CLAUDE.md states — a helper
-// with callers in more than one file lives with the unit it operates on, and one that operates on
-// no unit lives on the seam.
-//
 // The error shape is pinned by the client: {"error","message"} is what AccountGateway parses, so
 // it is a contract rather than a convention. See docs/CONTRACTS.md.
 
-// requireSubject fetches the verified caller, answering 401 when there is none. Every handler in
-// this file starts here: these endpoints have no anonymous mode.
+// Every handler starts here: these endpoints have no anonymous mode.
 func requireSubject(w http.ResponseWriter, r *http.Request) (auth.Subject, bool) {
 	subject, ok := auth.SubjectFrom(r.Context())
 	if !ok {
@@ -58,9 +49,9 @@ func writeStatus(w http.ResponseWriter, status int, payload any) {
 	_ = json.NewEncoder(w).Encode(payload)
 }
 
-// writeError maps a service error onto the {"error","message"} shape the client's
-// AccountGateway.ReadErrorAsync parses. The same kind-to-status thinking as the Connect
-// interceptor, restated for plain HTTP because these endpoints do not go through Connect.
+// Maps a service error onto the shape AccountGateway.ReadErrorAsync parses. The same
+// kind-to-status thinking as the Connect interceptor, restated for plain HTTP because these
+// endpoints do not go through Connect.
 func writeError(w http.ResponseWriter, err error) {
 	kind := errs.KindOf(err)
 
@@ -86,9 +77,9 @@ func writeError(w http.ResponseWriter, err error) {
 	})
 }
 
-// callerFacts extracts what the audit trail records about a request: a device hint and an
-// address. Both are claims, not facts — the user agent lies freely and the address may be a
-// proxy — which is why they are only ever displayed, never used for decisions.
+// What the audit trail records about a request. Both are claims, not facts — the user agent lies
+// freely and the address may be a proxy — which is why they are only ever displayed, never used
+// for decisions.
 func callerFacts(r *http.Request) (device, ip string) {
 	device = strings.TrimSpace(r.UserAgent())
 	if len(device) > 256 {

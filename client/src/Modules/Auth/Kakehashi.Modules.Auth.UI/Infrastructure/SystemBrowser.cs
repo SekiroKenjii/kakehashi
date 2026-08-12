@@ -7,9 +7,8 @@ using System.Threading.Tasks;
 using Duende.IdentityModel.OidcClient.Browser;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // An IBrowser implementing the RFC 8252 native-app pattern: it opens the user's
-  // default system browser at the authorize URL and captures the redirect on a local loopback
-  // HttpListener. An embedded WebView is deliberately not used.
+  // RFC 8252 native-app pattern: the default system browser plus a loopback HttpListener for the
+  // redirect. An embedded WebView is deliberately not used.
   public sealed class SystemBrowser : IBrowser {
     private readonly string _redirectUri;
     private volatile string? _currentStartUrl;
@@ -65,8 +64,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       }
     }
 
-    // Re-launches the system browser at the authorize URL of the flow currently in progress, for
-    // when the user closed the browser tab. Returns false when no flow is in progress.
+    // For when the user closed the browser tab while the flow was still waiting on the callback.
     public bool TryReopen() {
       if (_currentStartUrl is not { } url) {
         return false;
@@ -77,7 +75,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
     }
 
     private static void LaunchSystemBrowser(string url) {
-      // UseShellExecute hands the URL to the OS default browser (never an embedded WebView).
+      // UseShellExecute is what hands the URL to the OS default browser.
       var startInfo = new ProcessStartInfo { FileName = url, UseShellExecute = true };
       using var process = Process.Start(startInfo);
     }

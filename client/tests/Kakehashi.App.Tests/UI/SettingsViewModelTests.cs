@@ -5,10 +5,6 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.UI {
-  /// <summary>
-  /// Unit tests for <see cref="SettingsViewModel"/>: the theme ↔ 0/1/2 index mapping read on
-  /// construction and applied through <see cref="IThemeService"/> when the index changes.
-  /// </summary>
   public sealed class SettingsViewModelTests {
     private readonly IThemeService _theme = Substitute.For<IThemeService>();
 
@@ -26,7 +22,7 @@ namespace Kakehashi.App.Tests.UI {
 
     [Fact]
     public void ThemeIndexChange_AppliesMappedTheme() {
-      // Starts at index 0 (theme defaults to ElementTheme.Default).
+      // The substitute's theme is ElementTheme.Default, so the index starts at 0.
       var viewModel = new SettingsViewModel(_theme);
 
       viewModel.ThemeIndex = 2;

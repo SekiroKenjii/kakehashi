@@ -22,18 +22,12 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
-  /// <summary>
-  /// Unit tests for <see cref="AccountViewModel"/>: the signed-in / signed-out states, the mapping
-  /// and client-side paging of sessions and security activity, the session-action flows, and the
-  /// edit-profile / change-password dialog logic. Every gateway call goes through a substituted
-  /// <see cref="ISender"/> returning <see cref="Result"/>s.
-  /// </summary>
   public sealed class AccountViewModelTests {
     private readonly ISender _sender = Substitute.For<ISender>();
     private SessionDto _session = SignedOut();
 
     public AccountViewModelTests() {
-      // Sensible success defaults so any path under test has non-null awaitables; tests override.
+      // Success defaults so every path has a non-null awaitable; individual tests override.
       _sender.Send(Arg.Is<GetCurrentSessionQuery>(request => request != null)).Returns(_ => Task.FromResult(_session));
       _sender.Send(Arg.Is<GetRemoteSessionsQuery>(request => request != null))
           .Returns(Task.FromResult(Result.Success<IReadOnlyList<RemoteSessionDto>>([])));
@@ -298,13 +292,8 @@ namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
           roles ?? []);
     }
 
-    /// <summary>
-    /// A dialog service that says yes.
-    /// </summary>
-    /// <remarks>
-    /// Sign-out-everywhere now confirms first, and a substitute returning the default would answer
-    /// "cancel" — so every test of that path would pass by never running it.
-    /// </remarks>
+    // Says yes. Sign-out-everywhere confirms first, and a substitute returning the default would
+    // answer "cancel" — so every test of that path would pass by never running it.
     private static IDialogService Dialogs() {
       var dialogs = Substitute.For<IDialogService>();
       dialogs.ShowConfirmAsync(

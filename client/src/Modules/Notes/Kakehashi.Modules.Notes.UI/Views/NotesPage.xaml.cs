@@ -4,8 +4,6 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.Modules.Notes.UI.Views {
-  // The notes page: the note list served by the backend, with create, edit and delete through
-  // dialogs.
   public sealed partial class NotesPage : Page {
     public NotesPage(NotesViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
@@ -41,8 +39,8 @@ namespace Kakehashi.Modules.Notes.UI.Views {
       }
     }
 
-    // Cancelling the close keeps the dialog open so the validation error stays visible — and so a
-    // rejected title does not cost the user the body they just typed.
+    // Cancelling the close keeps the dialog open so the validation error stays visible and the
+    // body the user typed survives.
     private async void OnSaveNote(ContentDialog sender, ContentDialogButtonClickEventArgs args) {
       var deferral = args.GetDeferral();
       try {

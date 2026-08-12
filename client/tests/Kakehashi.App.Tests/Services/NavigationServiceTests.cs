@@ -6,12 +6,8 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.Services {
-  /// <summary>
-  /// Unit tests for the headless-reachable logic of <see cref="NavigationService"/> — the page-key
-  /// derivation that the shell, the registry guard and every navigation call rely on. The
-  /// navigation itself (and the detached-module guard) drives a XAML <c>Frame</c> and resolves
-  /// <c>Page</c> instances, so it is exercised by UI/integration tests, not here.
-  /// </summary>
+  // Only the headless-reachable half: page-key derivation. Navigating (and the detached-module
+  // guard) drives a XAML Frame and resolves Page instances, so UI/integration tests cover it.
   public sealed class NavigationServiceTests {
     private readonly IServiceProvider _services = Substitute.For<IServiceProvider>();
     private readonly IModuleRegistry _moduleRegistry = Substitute.For<IModuleRegistry>();

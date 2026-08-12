@@ -6,7 +6,6 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Commands.SignIn {
-  // Runs the sign-in flow, then stores the session and persists the refresh token.
   public sealed class SignInCommandHandler : IRequestHandler<SignInCommand, Result> {
     private readonly IInteractiveAuthenticator _authenticator;
     private readonly IAuthSessionAccessor _session;

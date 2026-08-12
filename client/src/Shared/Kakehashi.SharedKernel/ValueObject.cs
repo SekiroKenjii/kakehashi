@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.Linq;
 
 namespace Kakehashi.SharedKernel {
-  /// <summary>Base class for value objects, compared by the equality of their components.</summary>
   public abstract class ValueObject : IEquatable<ValueObject> {
     public static bool operator ==(ValueObject? left, ValueObject? right) {
       return Equals(left, right);
@@ -36,7 +35,6 @@ namespace Kakehashi.SharedKernel {
       return hash.ToHashCode();
     }
 
-    /// <summary>Returns the components that define equality for this value object.</summary>
     protected abstract IEnumerable<object?> GetEqualityComponents();
   }
 }

@@ -1,8 +1,6 @@
 // The administrator's surface, over Connect rather than the plain JSON the /account/* endpoints
-// use. The two are different audiences: those seven serve a caller acting on their own record and
-// answer the client's AccountGateway, this one serves somebody acting on everybody else's and
-// answers a screen. Different audience, different contract, and — the part that matters — a
-// separate route, which is the unit the server puts a permission check on.
+// use. Different audience — somebody acting on everybody else's record rather than their own — and,
+// the part that matters, a separate route, which is the unit the server puts a permission check on.
 
 package rpc
 
@@ -22,7 +20,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// NewAdminRoute builds the Connect handler for AccountAdminService.
 func NewAdminRoute(svc *service.Service, opts []connect.HandlerOption) (string, http.Handler) {
 	return accountv1connect.NewAccountAdminServiceHandler(&adminHandler{svc: svc}, opts...)
 }
@@ -158,8 +155,8 @@ func (h *adminHandler) DeleteAccount(
 	return connect.NewResponse(&accountv1.DeleteAccountResponse{}), nil
 }
 
-// optionalTime leaves the field unset for the zero time, which is how "never signed in" crosses
-// the wire. A zero timestamp would arrive as 1970 and be rendered as one.
+// The zero time leaves the field unset, which is how "never signed in" crosses the wire. A zero
+// timestamp would arrive as 1970 and be rendered as one.
 func optionalTime(t time.Time) *timestamppb.Timestamp {
 	if t.IsZero() {
 		return nil

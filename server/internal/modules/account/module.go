@@ -1,16 +1,6 @@
 // Package account makes the server its own OpenID Connect provider, and serves the account
 // management around it.
 //
-// The module's layers:
-//
-//	api/      the contract: the account DTOs, the Service surface, the security-event kinds.
-//	domain/   Account and its invariants; password hashing lives behind it.
-//	store/    persistence, in the account schema. Owns the provider's state too.
-//	service/  the use cases: authenticate, sessions, profile, audit trail.
-//	rpc/      the wire: the OIDC provider, the sign-in pages, the /account endpoints,
-//	          and the auth.Verifier the rest of the server authenticates with.
-//	module.go the wiring below.
-//
 // It is the one place in the repository allowed to import an OpenID Connect library, and
 // tools/archlint enforces that.
 package account
@@ -33,7 +23,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Module is the account feature: identity, sessions, and the OpenID Connect provider.
 type Module struct {
 	store *store.SQLServer
 	svc   *service.Service
@@ -42,9 +31,9 @@ type Module struct {
 
 func New() *Module { return &Module{} }
 
-// ID namespaces the module's schema (account.*) and its configuration keys (KAKEHASHI_ACCOUNT_*).
-// It is "account" rather than "identity" because the ID doubles as the SQL schema name, and
-// IDENTITY is a reserved word in T-SQL.
+// The ID doubles as the SQL schema name (account.*) and the configuration prefix
+// (KAKEHASHI_ACCOUNT_*). It is "account" rather than "identity" because IDENTITY is a reserved
+// word in T-SQL.
 func (m *Module) ID() string { return "account" }
 
 func (m *Module) Migrations() []app.Migration {
@@ -57,7 +46,6 @@ func (m *Module) Migrations() []app.Migration {
 	return out
 }
 
-// Register builds the service and publishes the module's contracts.
 func (m *Module) Register(k *app.Kernel) error {
 	m.store = store.New(k.SQL)
 	m.svc = service.New(m.store, k.Bus, nil, nil)
@@ -66,8 +54,7 @@ func (m *Module) Register(k *app.Kernel) error {
 	return nil
 }
 
-// Start assembles the OpenID Connect provider — which needs the database, so it cannot happen at
-// Register — publishes the verifier, and seeds the development account when asked to.
+// The OpenID Connect provider needs the database, so it cannot be assembled at Register.
 func (m *Module) Start(ctx context.Context, k *app.Kernel) error {
 	section := k.Cfg.Module(m.ID())
 	options := rpc.Options{
@@ -101,8 +88,8 @@ func (m *Module) Start(ctx context.Context, k *app.Kernel) error {
 	}
 	m.wire = wire
 
-	// Publishing under the platform contract is what lets the mux authenticate requests without
-	// importing this module — the whole reason auth.Verifier lives in the platform.
+	// Publishing under the platform contract lets the mux authenticate requests without importing
+	// this module — the reason auth.Verifier lives in the platform.
 	app.Provide[auth.Verifier](k, wire.Verifier)
 
 	if seedEmail != "" && seedPassword != "" {
@@ -115,13 +102,9 @@ func (m *Module) Start(ctx context.Context, k *app.Kernel) error {
 	return nil
 }
 
-// Routes contributes the provider, the sign-in pages, the account endpoints, and the
-// administrative surface.
-//
-// The first three are open to whoever the endpoint itself decides: OpenID Connect has to answer an
-// anonymous browser, and /account/* is about the caller's own record. The fourth is wrapped once,
-// here, so every procedure added to it later inherits the check rather than needing somebody to
-// remember it.
+// The provider, the sign-in pages and /account/* are open to whoever the endpoint itself decides:
+// OpenID Connect has to answer an anonymous browser, and /account/* is about the caller's own
+// record.
 func (m *Module) Routes(k *app.Kernel) []app.Route {
 	pattern, handler := rpc.NewAdminRoute(m.svc, k.RPC)
 
@@ -130,11 +113,10 @@ func (m *Module) Routes(k *app.Kernel) []app.Route {
 	out := make([]app.Route, 0, len(m.wire.Routes)+1)
 	out = append(out, m.wire.Routes...)
 
-	// The administrative surface, and the reason the policy lives on the route rather than in a
-	// wrapper here. This used to be auth.RequirePermission(...) written by hand around the handler,
-	// which meant deleting one call — or adding a second admin route and forgetting it — opened the
-	// whole user directory to any signed-in caller, with nothing to catch it. Stated as a policy,
-	// the mux applies it and the kernel refuses to boot a route that states nothing.
+	// The policy is stated on the route rather than hand-wrapped around the handler: deleting one
+	// auth.RequirePermission call — or adding a second admin route and forgetting it — used to open
+	// the whole user directory to any signed-in caller. The kernel refuses to boot a route that
+	// states no policy.
 	return append(out, app.Route{
 		Pattern: pattern,
 		Handler: handler,
@@ -142,13 +124,11 @@ func (m *Module) Routes(k *app.Kernel) []app.Route {
 	})
 }
 
-// seed creates the development account when it does not exist yet. Idempotent: booting twice with
-// the same configuration is a no-op, and a changed password in the environment does not overwrite
-// the stored one — the account exists, so nothing happens.
+// Idempotent: a changed SEED_PASSWORD does not overwrite the stored one, because the account
+// already exists.
 //
-// It grants nothing. Which roles this account holds is the authorization module's to decide, and a
-// seed here that also wrote roles would be the second source of truth this refactor exists to
-// remove.
+// It grants no roles. Which roles the account holds is the authorization module's to decide; a seed
+// that also wrote roles would be a second source of truth.
 func (m *Module) seed(ctx context.Context, email, name, password string) error {
 	if _, err := m.store.AccountByEmail(ctx, email); err == nil {
 		return nil

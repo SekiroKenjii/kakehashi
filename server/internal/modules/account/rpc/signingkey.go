@@ -18,11 +18,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// The provider's token-signing key: minted on first boot, parsed on every boot after, and
-// presented in the two shapes op asks for. One unit, because a key that cannot be presented is
-// not a key — which is why the adapters and the bootstrap were never really two things.
-
-// signingKey is the provider's private key, loaded from the store.
 type signingKey struct {
 	id  string
 	key *rsa.PrivateKey
@@ -34,7 +29,7 @@ func (s *signingKey) ID() string                                  { return s.id 
 
 var _ op.SigningKey = (*signingKey)(nil)
 
-// publicKey is the same key's public half, as the JWKS endpoint publishes it.
+// The same key's public half, as the JWKS endpoint publishes it.
 type publicKey struct {
 	id  string
 	key *rsa.PublicKey
@@ -47,11 +42,8 @@ func (p *publicKey) Key() any                           { return p.key }
 
 var _ op.Key = (*publicKey)(nil)
 
-// loadOrCreateSigningKey returns the provider's key, generating and persisting one on first boot.
-//
-// The key lives in the database rather than a file so that every replica of the server signs with
-// the same key, and so a redeploy does not invalidate every token in the field. Rotation is a
-// matter of inserting a newer row: SigningKey reads the latest, KeySet could serve the history.
+// The key goes to the database rather than a file so every replica signs with the same key, and so
+// a redeploy does not invalidate every token in the field.
 func loadOrCreateSigningKey(ctx context.Context, st *store.SQLServer) (*signingKey, error) {
 	existing, err := st.SigningKey(ctx)
 	if err == nil {

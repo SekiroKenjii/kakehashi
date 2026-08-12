@@ -1,7 +1,7 @@
 using System;
 
 namespace Kakehashi.Application.Abstractions {
-  /// <summary>Abstraction over the system clock so handlers stay deterministic and testable.</summary>
+  // Injected so handlers never read DateTimeOffset.UtcNow directly and stay deterministic in tests.
   public interface IClock {
     DateTimeOffset UtcNow { get; }
   }

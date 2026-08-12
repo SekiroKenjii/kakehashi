@@ -1,9 +1,9 @@
 // Package rpc is the authorization module's wire layer.
 //
-// It is the only package in the module allowed to import the generated protobuf code, and
-// tools/archlint enforces that. Everything here is mapping. The one thing it does beyond mapping is
-// read the caller off the context — who is asking is not a field a client may send, and this is the
-// layer where the request still exists to be asked.
+// The only package in the module allowed to import the generated protobuf code, and tools/archlint
+// enforces that. Everything here is mapping, except reading the caller off the context — who is
+// asking is not a field a client may send, and this is the layer where the request still exists to
+// be asked.
 package rpc
 
 import (
@@ -19,27 +19,23 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// NewRoute builds the Connect handler for AuthzService — the caller's own view of their access.
 func NewRoute(opts []connect.HandlerOption) (string, http.Handler) {
 	return authzv1connect.NewAuthzServiceHandler(&handler{}, opts...)
 }
 
-// handler answers about the caller and nothing else. It holds no service: the grants were resolved
-// by the middleware and are on the context already.
+// Holds no service: the grants were resolved by the middleware and are on the context already.
 type handler struct{}
 
-// ListMyGrants returns what the caller may do.
-//
-// It reads the resolved grants rather than querying, which means this endpoint and the gate that
-// refuses a request are looking at the identical answer. Two code paths that could disagree about
-// what a caller may do is how a client ends up drawing an unlocked door onto a locked room.
+// Reads the resolved grants rather than querying, so this endpoint and the gate that refuses a
+// request look at the identical answer. Two code paths that could disagree about what a caller may
+// do is how a client ends up drawing an unlocked door onto a locked room.
 func (h *handler) ListMyGrants(
 	ctx context.Context, _ *connect.Request[authzv1.ListMyGrantsRequest],
 ) (*connect.Response[authzv1.ListMyGrantsResponse], error) {
 	if _, ok := auth.SubjectFrom(ctx); !ok {
-		// Unauthenticated rather than an empty list. An account that may do nothing and an expired
-		// token draw the same screen and mean opposite things; only one of them is fixed by
-		// signing in again.
+		// Unauthenticated rather than an empty list: an account that may do nothing and an expired
+		// token draw the same screen and mean opposite things, and only one is fixed by signing in
+		// again.
 		return nil, errs.Unauthenticatedf("Sign in to see your permissions.")
 	}
 
@@ -51,8 +47,8 @@ func (h *handler) ListMyGrants(
 	return connect.NewResponse(&authzv1.ListMyGrantsResponse{Grants: out}), nil
 }
 
-// toProtoScope maps a stored scope onto the enum. An unrecognised one becomes UNSPECIFIED, which
-// the client reads as "no reach" — narrowing, the same direction platform/auth widens from.
+// An unrecognised scope becomes UNSPECIFIED, which the client reads as "no reach" — narrowing, the
+// same direction platform/auth widens from.
 func toProtoScope(scope string) authzv1.Scope {
 	switch scope {
 	case domain.ScopeOwn:
@@ -66,8 +62,8 @@ func toProtoScope(scope string) authzv1.Scope {
 	}
 }
 
-// fromProtoScope maps the enum back. UNSPECIFIED becomes the empty string, which domain.IsScope
-// rejects — a client that forgot to set the scope is told so rather than silently given "own".
+// UNSPECIFIED becomes the empty string, which domain.IsScope rejects — a client that forgot to set
+// the scope is told so rather than silently given "own".
 func fromProtoScope(scope authzv1.Scope) string {
 	switch scope {
 	case authzv1.Scope_SCOPE_OWN:

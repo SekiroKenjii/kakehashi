@@ -18,7 +18,6 @@ func TestSecurityEventsClampsTheTake(t *testing.T) {
 		t.Fatalf("SecurityEvents returned an error: %v", err)
 	}
 
-	// A nonsense take comes off a query string; it clamps to the default rather than erroring.
 	if len(events) != 5 {
 		t.Errorf("got %d events, want the 5 recorded", len(events))
 	}

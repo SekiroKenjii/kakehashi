@@ -9,52 +9,40 @@ using AccountV1 = Kakehashi.Account.V1;
 using AuthzV1 = Kakehashi.Authz.V1;
 
 namespace Kakehashi.App.Services {
-  // A role, with the counts the list screen shows.
-  //
-  // PermissionTotal: how many permissions exist in the whole catalogue — the denominator of
+  // PermissionTotal is how many permissions exist in the whole catalogue — the denominator of
   // "22/34 perms" and the role card's progress bar. Optional because the create/update replies do
   // not carry it and their callers reload immediately anyway.
   public sealed record RoleRow(
       string Id, string Name, string Description, bool IsSystem,
       int PermissionCount, int AccountCount, int PermissionTotal = 0);
 
-  // One entry in the catalogue a role is granted from.
-  //
   // IsScoped: whether the module enforcing this permission actually narrows its queries on the
   // grant's scope. The own/team/all picker is offered only where it does — everywhere else the
   // choice would be a row-level control with no consequence.
   public sealed record PermissionRow(
       string Key, string Name, string Description, string Category, bool IsHighRisk, bool IsScoped);
 
-  // One permission on one role, and how far it reaches.
   public sealed record GrantRow(string PermissionKey, string Scope);
 
-  // What a save actually changed, so the screen can say so.
   public sealed record SaveOutcome(int Granted, int Revoked, int Rescoped) {
     public int Total => Granted + Revoked + Rescoped;
   }
 
-  // One recorded change to who may do what.
   public sealed record AuditRow(
       DateTimeOffset OccurredAt, string ActorName, string Action, string RoleName,
       string PermissionKey, string Detail);
 
-  // One live sign-in of the selected user, as the detail panel lists them.
   public sealed record SessionRow(
       string Id, string Client, string Device, string IpAddress,
       DateTimeOffset CreatedAt, DateTimeOffset LastSeenAt, bool IsCurrent);
 
-  // One person, as the users screen lists them.
   public sealed record UserRow(
       string Id, string Email, string DisplayName, string Phone, string TeamId, bool IsActive,
       DateTimeOffset? LastSignInAt, DateTimeOffset CreatedAt, int ActiveSessionCount,
       IReadOnlyList<string> RoleNames);
 
-  // The administrative operations behind the two access screens, as a port.
-  //
-  // An interface so the view models can be tested without a server: the generated gRPC client
-  // returns AsyncUnaryCall, which no substitute constructs cleanly. Same reason every
-  // module's gateway is a port.
+  // A port so the view models can be tested without a server: the generated gRPC client returns
+  // AsyncUnaryCall, which no substitute constructs cleanly.
   //
   // One port over two services, because one screen reads from both and a caller that had to know
   // which server module owns which half would be a caller encoding the server's decomposition.
@@ -111,15 +99,13 @@ namespace Kakehashi.App.Services {
         string accountId, string sessionId, CancellationToken cancellationToken);
   }
 
-  // The administrator's client for the authorization and account admin services.
-  //
   // Every call here needs a permission and the server checks it — roles.manage for the
-  // authorization half, users.manage for the accounts. The client's own check is a
-  // courtesy that keeps a button off the screen; it is not what stops anybody.
+  // authorization half, users.manage for the accounts. The client's own check is a courtesy that
+  // keeps a button off the screen; it is not what stops anybody.
   //
-  // Failures arrive as Result rather than exceptions because every one of them is
-  // something a user did — a name already taken, a system role, an address with no account — and
-  // the message the server wrote is the one worth showing.
+  // Failures arrive as Result rather than exceptions because every one of them is something a user
+  // did — a name already taken, a system role, an address with no account — and the message the
+  // server wrote is the one worth showing.
   public sealed class AccessAdminService : IAccessAdminService {
     private readonly AuthzV1.AuthzAdminService.AuthzAdminServiceClient _authz;
     private readonly AccountV1.AccountAdminService.AccountAdminServiceClient _accounts;
@@ -254,8 +240,6 @@ namespace Kakehashi.App.Services {
       });
     }
 
-    // Lists the accounts and their roles, and joins the two.
-    //
     // Two calls because two server modules own the two halves: the account module owns people and
     // the authorization module owns what they may do. Joining here costs one extra round trip and
     // buys the thing that matters — neither module holds a copy of the other's fact, so the two
@@ -371,7 +355,6 @@ namespace Kakehashi.App.Services {
           cancellationToken: ct).ResponseAsync);
     }
 
-    // Runs a call and turns an RPC failure into the message the server wrote.
     private static async Task<Result<T>> CallAsync<T>(Func<Task<T>> call) {
       try {
         return Result.Success(await call().ConfigureAwait(false));
@@ -380,7 +363,6 @@ namespace Kakehashi.App.Services {
       }
     }
 
-    // The same, for a call whose reply carries nothing worth returning.
     private static async Task<Result> CallVoidAsync<T>(Func<Task<T>> call) {
       try {
         await call().ConfigureAwait(false);
@@ -390,11 +372,9 @@ namespace Kakehashi.App.Services {
       }
     }
 
-    // Turns a status into an error carrying the server's own sentence.
-    //
-    // The server writes these to be read by a person — "Admin ships with the product and cannot be
-    // deleted" — so restating them here would only make them worse. The code is kept as the error
-    // identifier so a caller that wants to branch still can.
+    // The server writes its details to be read by a person — "Admin ships with the product and
+    // cannot be deleted" — so restating them here would only make them worse. The status code is
+    // kept as the error identifier so a caller that wants to branch still can.
     private static Error ToError(RpcException exception) {
       var detail = exception.Status.Detail ?? string.Empty;
 

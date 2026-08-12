@@ -11,33 +11,30 @@ import (
 // The layout surface. Every write invalidates the cache, and none of them can touch a permission —
 // there is no argument anywhere below that reaches what the code declares.
 
-// ItemConfig is a destination as an administrator manages it: the stored row, plus what the build
-// says about the same destination so a screen can tell the two apart.
+// ItemConfig is the stored row plus what the build says about the same destination, so a screen can
+// tell the two apart.
 type ItemConfig struct {
 	domain.Placement
 
 	DefaultTitle string
 	DefaultIcon  string
 
-	// Where the code puts this destination when nothing has moved it.
-	//
-	// Reported so a screen can offer "reset to what the product shipped". Until this was carried, the
-	// answer existed only in the running build: Reconcile writes DefaultGroup and DefaultOrder once,
-	// as seeds, and deliberately never re-applies them — so a destination somebody had moved could not
-	// be put back through any API.
+	// Where the code puts this destination when nothing has moved it, reported so a screen can
+	// offer "reset to what the product shipped". Reconcile writes these once, as seeds, and
+	// deliberately never re-applies them — so without carrying them, a destination somebody had
+	// moved could not be put back through any API.
 	DefaultGroup string
 	DefaultOrder int
 
 	// Orphan marks a row whose destination this build no longer has.
 	Orphan bool
 
-	// What the code enforces. Sent so a screen can explain why something is invisible to somebody,
-	// and read-only in the strongest sense available: nothing here writes them.
+	// What the code enforces, sent so a screen can explain why something is invisible to somebody.
+	// Read-only in the strongest sense available: nothing here writes them.
 	RequiredPermission string
 	HideWhenDenied     bool
 }
 
-// Groups returns every heading, for the administration screen.
 func (s *Service) Groups(ctx context.Context) ([]domain.Group, error) {
 	stored, err := s.layoutOf(ctx)
 	if err != nil {
@@ -46,8 +43,6 @@ func (s *Service) Groups(ctx context.Context) ([]domain.Group, error) {
 	return stored.groups, nil
 }
 
-// Items returns every stored placement, orphans included, joined to what the build declares.
-//
 // Orphans are in the list on purpose: the screen that manages the layout is the only place anybody
 // can see that a row is left over from a module this build no longer has, and the only place they
 // can do something about it.
@@ -87,8 +82,7 @@ func (s *Service) Items(ctx context.Context) ([]ItemConfig, error) {
 
 	// Sorted, because the loop above ranges a map and Go randomises that. Unsorted, the leftover
 	// rows at the bottom of the layout screen swapped places between one refresh and the next with
-	// nothing having changed — the same self-reshuffling list this module's schema comment names as
-	// the thing to avoid.
+	// nothing having changed.
 	sort.Slice(orphans, func(i, j int) bool {
 		if orphans[i].Order != orphans[j].Order {
 			return orphans[i].Order < orphans[j].Order
@@ -99,7 +93,6 @@ func (s *Service) Items(ctx context.Context) ([]ItemConfig, error) {
 	return append(out, orphans...), nil
 }
 
-// CreateGroup adds a heading.
 func (s *Service) CreateGroup(ctx context.Context, id, title string, order int) (domain.Group, error) {
 	group, err := domain.NewGroup(id, title, order, false)
 	if err != nil {
@@ -113,8 +106,7 @@ func (s *Service) CreateGroup(ctx context.Context, id, title string, order int) 
 	return group, nil
 }
 
-// UpdateGroup renames a heading and re-orders it. A system heading may be renamed like any other —
-// what it may not be is deleted.
+// A system heading may be renamed like any other — what it may not be is deleted.
 func (s *Service) UpdateGroup(ctx context.Context, id, title string, order int) (domain.Group, error) {
 	existing, err := s.store.Group(ctx, id)
 	if err != nil {
@@ -133,11 +125,10 @@ func (s *Service) UpdateGroup(ctx context.Context, id, title string, order int) 
 	return group, nil
 }
 
-// DeleteGroup removes a heading an administrator made. The destinations under it fall to ungrouped.
-//
-// System headings are refused, with the reason rather than a bare no: a deployment that deleted the
-// heading its administrative screens live under would have nowhere left to put them, and the person
-// clicking the button cannot know that from a 400.
+// The destinations under a deleted heading fall to ungrouped. System headings are refused, with the
+// reason rather than a bare no: a deployment that deleted the heading its administrative screens
+// live under would have nowhere left to put them, and the person clicking the button cannot know
+// that from a 400.
 func (s *Service) DeleteGroup(ctx context.Context, id string) error {
 	group, err := s.store.Group(ctx, id)
 	if err != nil {
@@ -157,11 +148,10 @@ func (s *Service) DeleteGroup(ctx context.Context, id string) error {
 	return nil
 }
 
-// MoveItem changes which heading a destination sits under, and where in it.
 func (s *Service) MoveItem(
 	ctx context.Context, id, groupID string, order int,
 ) (ItemConfig, error) {
-	// Validated before the write, because the database is more forgiving than the pane. SQL Server
+	// Validated before the write, because the database is more forgiving than the pane: SQL Server
 	// compares case-insensitively, so the foreign key accepts "Administration" for the heading
 	// whose id is "administration" — and then Build, which matches in Go, finds no heading with
 	// that spelling and drops the destination out of every pane it was supposed to appear in.
@@ -179,17 +169,15 @@ func (s *Service) MoveItem(
 	return s.itemOf(ctx, id)
 }
 
-// UpdateItem overrides how a destination reads, and whether it is offered at all.
-//
 // An empty title or icon clears the override and returns the destination to what the code calls it.
 // There has to be a way back, or renaming a page once is permanent.
 func (s *Service) UpdateItem(
 	ctx context.Context, id, title, icon string, isVisible bool,
 ) (ItemConfig, error) {
-	// The one hide that cannot be undone. Build skips an invisible destination before it checks
+	// The one hide that cannot be undone: Build skips an invisible destination before it checks
 	// anything, so hiding the screen that manages the layout removes the only surface that could
-	// unhide it — from every client at once, recoverable only by somebody hand-writing an RPC call
-	// or an UPDATE. Refused with the reason, the way a system heading refuses deletion.
+	// unhide it — from every client at once, recoverable only by hand-writing an RPC call or an
+	// UPDATE.
 	if !isVisible {
 		if d, declared := s.byID[id]; declared && d.HideWhenDenied {
 			return ItemConfig{}, errs.Invalidf(
@@ -217,15 +205,15 @@ func (s *Service) UpdateItem(
 	return s.itemOf(ctx, id)
 }
 
-// itemOf re-reads one placement and joins it to its declaration, so a write returns exactly what a
-// subsequent list would show rather than what the caller asked for.
+// itemOf re-reads, so a write returns exactly what a subsequent list would show rather than what
+// the caller asked for.
 func (s *Service) itemOf(ctx context.Context, id string) (ItemConfig, error) {
 	placement, err := s.store.Placement(ctx, id)
 	if err != nil {
 		return ItemConfig{}, err
 	}
 
-	// Keyed by what the STORE returned rather than by what the caller passed. SQL Server compares
+	// Keyed by what the STORE returned rather than by what the caller passed: SQL Server compares
 	// case-insensitively, so a write naming "Notes" updates the row whose id is "notes" — and
 	// looking the declaration up under the caller's spelling reported a real row as an orphan with
 	// no title, no icon and no permission.
@@ -244,11 +232,9 @@ func (s *Service) itemOf(ctx context.Context, id string) (ItemConfig, error) {
 	}, nil
 }
 
-// DeleteItem removes a stored row left over from a module this build no longer has.
-//
-// Only those. A row whose destination the build still declares would be written straight back by the
-// next Reconcile, so deleting it is at best a no-op and at worst one that looks like it worked until
-// the server restarts. The refusal says which it is, and points at the thing that does work.
+// Leftover rows only. A row whose destination the build still declares would be written straight
+// back by the next Reconcile, so deleting it is at best a no-op and at worst one that looks like it
+// worked until the server restarts. The refusal says which it is, and points at what does work.
 func (s *Service) DeleteItem(ctx context.Context, id string) error {
 	stored, err := s.layoutOf(ctx)
 	if err != nil {

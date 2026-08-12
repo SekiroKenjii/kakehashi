@@ -7,10 +7,8 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.Extensions.Logging;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // Reacts to UserSignedOutNotification by forcing the modal re-sign-in flow, so
-  // every sign-out path (account flyout, account page, future callers) behaves the same. The flow
-  // is enqueued to the UI thread and not awaited: blocking the publisher would keep the SignOut
-  // use case running until the user completes the next sign-in.
+  // The flow is enqueued to the UI thread and not awaited: blocking the publisher would keep the
+  // SignOut use case running until the user completes the next sign-in.
   public sealed partial class SignedOutReauthenticationHandler
       : INotificationHandler<UserSignedOutNotification> {
     private readonly ReauthenticationService _reauthentication;

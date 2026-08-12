@@ -6,8 +6,8 @@ using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Media;
 
 namespace Kakehashi.App.Services.Platform {
-  // Inserts a blocking, in-app acrylic layer over the main window's content root (including the
-  // custom title bar) so the app behind a modal interaction is blurred and inert.
+  // The layer goes over the content root, so it covers the custom title bar too and leaves the app
+  // behind a modal interaction inert as well as blurred.
   public sealed class ShellOverlayService : IShellOverlay {
     private readonly StartupContext _context;
 

@@ -1,11 +1,9 @@
 package domain
 
-// LayoutPlan is a whole rearrangement, worked out and ready to write.
-//
-// It exists so that deciding and writing are two steps. The service compares what an administrator
-// asked for against what is stored and reduces it to this; the store executes it in one transaction
-// and decides nothing. Without the split, "which headings should be deleted" would be a question the
-// store answered by reading — inside its own transaction, from data the service had already read.
+// LayoutPlan exists so that deciding and writing are two steps. The service reduces what an
+// administrator asked for to this; the store executes it in one transaction and decides nothing.
+// Without the split, "which headings should be deleted" would be a question the store answered by
+// reading — inside its own transaction, from data the service had already read.
 //
 // It lives in domain for the same reason Filter does: both the service that builds one and the store
 // that executes one have to name it, and neither of those may depend on the other.
@@ -24,10 +22,8 @@ type LayoutPlan struct {
 	Items []Placement
 }
 
-// IsEmpty reports whether this plan would change nothing.
-//
-// Worth asking before opening a transaction: a screen posts its whole arrangement, and most of the
-// time every part of it is already true.
+// IsEmpty is worth asking before opening a transaction: a screen posts its whole arrangement, and
+// most of the time every part of it is already true.
 func (p LayoutPlan) IsEmpty() bool {
 	return len(p.CreateGroups) == 0 &&
 		len(p.UpdateGroups) == 0 &&

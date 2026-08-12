@@ -8,12 +8,10 @@ import (
 	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
 )
 
-// accountHandler serves the JSON endpoints behind the desktop client's account page.
-//
 // The shapes are pinned by the client's AccountGateway, which shipped first: camelCase JSON,
 // errors as {"error","message"}, and exactly these seven routes. Changing any of them is a
-// breaking change to a client that is already in the field, so they are documented in
-// docs/CONTRACTS.md next to the proto rules.
+// breaking change to a client already in the field, so they are documented in docs/CONTRACTS.md
+// next to the proto rules.
 type accountHandler struct {
 	svc accountapi.Service
 }

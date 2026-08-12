@@ -5,9 +5,6 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Microsoft.Extensions.Logging;
 
 namespace Kakehashi.Mediator.Behaviors {
-  /// <summary>Logs the start, success and failure of every request flowing through the pipeline.</summary>
-  /// <typeparam name="TRequest">The request type.</typeparam>
-  /// <typeparam name="TResponse">The response type.</typeparam>
   public sealed class LoggingBehavior<TRequest, TResponse>
       : IPipelineBehavior<TRequest, TResponse>
       where TRequest : IRequest<TResponse> {

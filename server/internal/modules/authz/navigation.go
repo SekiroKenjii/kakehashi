@@ -5,11 +5,8 @@ import (
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 )
 
-// NavigationDestinations declares the Role permissions screen.
-//
-// Its own permission, for the same reason the module's routes are not gated on authz.access: a
-// module that answers "what may I do" cannot require permission to answer, so nobody holds that key
-// and a destination falling back to it would be locked for everybody.
+// Its own permission, for the same reason the module's routes are not gated on authz.access:
+// nobody holds that key, so a destination falling back to it would be locked for everybody.
 func (m *Module) NavigationDestinations() []navigationapi.Destination {
 	return []navigationapi.Destination{
 		{

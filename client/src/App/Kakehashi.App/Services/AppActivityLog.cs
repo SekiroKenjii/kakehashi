@@ -11,14 +11,12 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.Services {
-  // One entry in the local app activity feed.
   public sealed record AppActivityEntry(
       string Kind, string Title, string Detail, DateTimeOffset OccurredAt);
 
-  // Records notable app-level events — sign-ins and sign-outs, app updates, theme changes — into a
-  // small feed persisted via ILocalSettingsService (newest first, capped). Awakened at
-  // startup so events that happen before any page exists (the startup sign-in, an app update) are
-  // captured. All recording is marshalled to the UI thread, which keeps the settings store
+  // Entries are kept newest-first in a capped feed persisted via ILocalSettingsService. Awake at
+  // startup so events that happen before any page exists — the startup sign-in, an app update —
+  // are still recorded. Recording is marshalled to the UI thread, which keeps the settings store
   // single-threaded.
   public sealed class AppActivityLog : IAwakeOnStartup {
     public const string SignedInKind = "SignedIn";
@@ -51,14 +49,11 @@ namespace Kakehashi.App.Services {
       ArgumentNullException.ThrowIfNull(serviceProvider);
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-      // Deferred by one turn of the message loop, deliberately. Startup creates every awake service
-      // in registration order, so anything that registers for the announcement after this one runs
-      // would miss an app update — and that is the single run on which the update is worth
-      // announcing at all. Recording it a moment later costs nothing; announcing it to an empty room
-      // loses it for good.
-      // The null check is not defensive padding: there is no dispatcher on a thread that is not a UI
-      // thread, which is every thread a unit test runs on. The rest of this class guards it the same
-      // way for the same reason.
+      // Deferred by one turn of the message loop, deliberately: startup creates every awake service
+      // in registration order, so anything registering for the announcement after this one would
+      // miss an app update — the single run on which the update is worth announcing at all.
+      // There is no dispatcher on a thread that is not a UI thread, which is every thread a unit
+      // test runs on; the rest of this class guards it the same way for the same reason.
       if (_dispatcherQueue is null || !_dispatcherQueue.TryEnqueue(RecordAppUpdateIfAny)) {
         RecordAppUpdateIfAny();
       }
@@ -74,7 +69,6 @@ namespace Kakehashi.App.Services {
           this, static (log, message) => log.HandleAuthSessionChanged());
     }
 
-    // Returns a newest-first snapshot of the feed.
     public IReadOnlyList<AppActivityEntry> GetRecent() {
       return [.. _entries];
     }
@@ -87,10 +81,10 @@ namespace Kakehashi.App.Services {
 
       _localSettings.Save(_entriesKey, _entries);
 
-      // Announced as well as stored, because two of these are facts no server can observe for
-      // itself and the activity module forwards them. This log keeps its own string kinds — they
-      // are the shape of what is already persisted in settings — and the announcement carries the
-      // shared enum instead, so the two assemblies cannot drift apart on a literal.
+      // Announced as well as stored: two of these are facts no server can observe for itself, and
+      // the activity module forwards them. The string kinds stay here because they are the shape of
+      // what is already persisted in settings; the announcement carries the shared enum instead, so
+      // the two assemblies cannot drift apart on a literal.
       if (Announceable(kind) is { } announced) {
         WeakReferenceMessenger.Default.Send(new AppActivityRecordedMessage(announced));
       }

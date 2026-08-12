@@ -13,24 +13,18 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// inAppSignInHandler issues tokens from credentials posted by the app itself, with no browser involved.
-//
-// # Why this exists alongside the browser flow
+// Tokens from credentials posted by the app itself, with no browser involved.
 //
 // Authorization Code + PKCE through the system browser is the right answer when the identity
-// provider is someone else's — Entra, Okta, Google — because the whole point is that the password
-// is typed into *their* page and this application never sees it, and because that is where SSO,
-// MFA and conditional access live.
+// provider is someone else's — Entra, Okta, Google — because the password is typed into their page
+// and this application never sees it, and because that is where SSO, MFA and conditional access
+// live. None of that applies when the provider is this very process: the password crosses the same
+// trust boundary either way, and the user pays for it with a window that steals focus and a
+// loopback listener that corporate firewalls dislike.
 //
-// None of that applies when the provider is this very process. A first-party desktop client
-// talking to its own backend gains nothing from bouncing through a browser: the password crosses
-// the same trust boundary either way, and the user pays for it with a window that steals focus and
-// a loopback listener that corporate firewalls dislike. So the default is this endpoint, and the
-// browser flow stays mounted for the day the issuer becomes someone else's.
-//
-// The line to remember: **the moment Auth:Authority points at a real IdP, the client must switch
-// back to browser mode.** Entra and friends refuse password grants for most configurations
-// precisely because it defeats MFA — and they are right to.
+// The moment Auth:Authority points at a real IdP, the client must switch back to browser mode.
+// Entra and friends refuse password grants for most configurations precisely because it defeats
+// MFA.
 type inAppSignInHandler struct {
 	svc      *service.Service
 	store    *store.SQLServer
@@ -45,8 +39,8 @@ type inAppSignInRequest struct {
 	Password string `json:"password"`
 }
 
-// inAppSignInResponse is deliberately the shape of an OAuth token response, so a client can hold one
-// type for both modes and the refresh path below is the standard endpoint either way.
+// Deliberately the shape of an OAuth token response, so a client can hold one type for both modes
+// and the refresh path is the standard endpoint either way.
 type inAppSignInResponse struct {
 	AccessToken  string `json:"access_token"`
 	TokenType    string `json:"token_type"`
@@ -56,7 +50,7 @@ type inAppSignInResponse struct {
 	Scope        string `json:"scope,omitempty"`
 }
 
-// signIn authenticates and returns tokens indistinguishable from the browser flow's.
+// The tokens are indistinguishable from the browser flow's.
 func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	var body inAppSignInRequest
 	if !readJSON(w, r, &body) {
@@ -83,10 +77,9 @@ func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		"openid", "profile", "email", "offline_access", scopeRoles,
 	}
 
-	// A synthetic authorization, already authenticated. op's token builder wants an
-	// op.IDTokenRequest, and everything it asks for is known here — which is the whole reason this
-	// endpoint is short: the token minting, signing and claim assembly are the provider's, not
-	// ours, so the two sign-in modes cannot drift into issuing different tokens.
+	// A synthetic authorization, already authenticated. The token minting, signing and claim
+	// assembly stay the provider's rather than ours, so the two sign-in modes cannot drift into
+	// issuing different tokens.
 	//
 	// ResponseType is "code" and it is not decoration. op decides whether an exchange earns a
 	// refresh token by asking three questions of the request — offline_access in the scopes, a
@@ -131,8 +124,8 @@ func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// signOut ends the calling session. The browser flow has /end_session for this; an app that never
-// opened a browser has no cookie to clear, so it just needs its session gone.
+// The browser flow has /end_session for this; an app that never opened a browser has no cookie to
+// clear, so it just needs its session gone.
 func (h *inAppSignInHandler) signOut(w http.ResponseWriter, r *http.Request) {
 	subject, ok := requireSubject(w, r)
 	if !ok {

@@ -19,7 +19,6 @@ var (
 	edited  = time.Date(2026, time.August, 5, 14, 30, 0, 0, time.UTC)
 )
 
-// fakeStore records what the service asked it to do and answers with whatever the test set up.
 type fakeStore struct {
 	notes map[int64]domain.Note
 
@@ -95,8 +94,6 @@ func (f *fakeStore) Delete(_ context.Context, id int64) error {
 	return nil
 }
 
-// recorder collects everything published on a bus, so a test can assert on announcements without
-// standing up a subscriber per event type.
 type recorder struct {
 	created []notesapi.Created
 	updated []notesapi.Updated
@@ -162,7 +159,6 @@ func TestCreateRejectsABlankTitleWithoutTouchingTheStore(t *testing.T) {
 	if len(store.inserted) != 0 {
 		t.Errorf("store saw %d inserts, want none", len(store.inserted))
 	}
-	// The rule that matters: nothing happened, so nothing is announced.
 	if len(rec.created) != 0 {
 		t.Errorf("published %d Created events for a create that failed", len(rec.created))
 	}
@@ -255,8 +251,8 @@ func TestDeleteCarriesTheTitleIntoTheEvent(t *testing.T) {
 	if len(rec.deleted) != 1 {
 		t.Fatalf("published %d Deleted events, want 1", len(rec.deleted))
 	}
-	// The whole reason Delete reads before it writes: a subscriber cannot look up a note that is
-	// already gone, so the event has to bring the name with it.
+	// Why Delete reads before it writes: a subscriber cannot look up a note that is already gone,
+	// so the event has to bring the name with it.
 	if rec.deleted[0].Title != "Shopping list" {
 		t.Errorf("Deleted.Title = %q, want %q", rec.deleted[0].Title, "Shopping list")
 	}
@@ -269,7 +265,6 @@ func TestDeleteIsIdempotent(t *testing.T) {
 	store := newFakeStore()
 	bus, rec := newBus(t)
 
-	// The note is not there. The caller wants it not to be there. Nothing to report.
 	err := New(store, bus, nil).Delete(context.Background(), 404)
 
 	if err != nil {
@@ -284,7 +279,7 @@ func TestDeleteIsIdempotent(t *testing.T) {
 }
 
 func TestDeleteReportsAStoreFailure(t *testing.T) {
-	// Idempotence covers "not found". It must not swallow a database that is actually broken.
+	// Idempotence covers "not found"; it must not swallow a database that is actually broken.
 	store := newFakeStore()
 	existing := store.seed(domain.Note{Title: "Doomed", CreatedAt: created, UpdatedAt: created})
 	store.deleteErr = errors.New("connection reset")

@@ -1,9 +1,7 @@
-// Package rpc is the notes module's wire layer.
-//
-// It is the only package in the module allowed to import the generated protobuf code, and
-// tools/archlint enforces that. Everything here is mapping: no rules, no decisions, no error
-// shaping. Errors are returned as the service produced them, and the interceptor in platform/rpc
-// turns them into status codes.
+// Package rpc is the only package in the module allowed to import the generated protobuf code, and
+// tools/archlint enforces that. Mapping only: no rules, no decisions, no error shaping. Errors go
+// back as the service produced them, and the interceptor in platform/rpc turns them into status
+// codes.
 package rpc
 
 import (
@@ -18,12 +16,10 @@ import (
 	notesapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/api"
 )
 
-// NewRoute builds the Connect handler for NotesService.
 func NewRoute(svc notesapi.Service, opts []connect.HandlerOption) (string, http.Handler) {
 	return notesv1connect.NewNotesServiceHandler(&handler{svc: svc}, opts...)
 }
 
-// handler adapts notesapi.Service to the generated interface.
 type handler struct {
 	svc notesapi.Service
 }

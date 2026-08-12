@@ -7,22 +7,12 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// What boot does: make the catalogue match what the modules declared, and make sure the roles the
-// product ships exist.
+// The roles the product ships. Named here rather than seeded by SQL because a migration that
+// inserted them could not be re-run after somebody renamed one.
 //
-// Both are reconciliations rather than migrations. A migration states a change and runs once; these
-// state what should be true and run every boot, which is what lets a module be added, removed or
-// renamed without anyone hand-writing SQL to match.
-
-// SystemRoles are the roles the product ships.
-//
-// Named here rather than seeded by SQL because a migration that inserted them could not be re-run
-// after somebody renamed one, and because this list is the answer to "what does a fresh deployment
-// look like" — a question worth being able to read in one place.
-//
-// Only Administrator carries grants at boot, and it carries all of them. The rest ship empty on
-// purpose: a starter role that already grants things is a role nobody reviews, and the whole point
-// of the administration screen is that somebody decides.
+// Only Admin carries grants at boot, and it carries all of them. The rest ship empty on purpose: a
+// starter role that already grants things is a role nobody reviews, and the whole point of the
+// administration screen is that somebody decides.
 var SystemRoles = []struct {
 	Name        string
 	Description string
@@ -34,17 +24,17 @@ var SystemRoles = []struct {
 	{"Guest", "Minimal access · temporary users"},
 }
 
-// AdminRoleName is the role that starts with every permission, and the one an administrator must
-// hold to reach the administration screens.
+// The role that starts with every permission, and the one an administrator must hold to reach the
+// administration screens.
 const AdminRoleName = "Admin"
 
-// Reconcile makes the stored catalogue match what the modules declared, then ensures the system
-// roles exist and that Admin holds everything.
+// A reconciliation rather than a migration: it states what should be true and runs every boot,
+// which is what lets a module be added, removed or renamed without anyone hand-writing SQL.
 //
-// Admin is re-granted every boot rather than only when created. That is deliberate: adding a module
-// adds permissions, and an Admin role that did not gain them would leave a deployment with no
-// account able to grant them to anybody — a lockout with no way back that would only show up the
-// first time somebody needed the new module.
+// Admin is re-granted every boot rather than only when created. Adding a module adds permissions,
+// and an Admin role that did not gain them would leave a deployment with no account able to grant
+// them to anybody — a lockout that would only show up the first time somebody needed the new
+// module.
 func (s *Service) Reconcile(ctx context.Context, declared []domain.Permission) error {
 	if err := s.store.ReconcilePermissions(ctx, declared); err != nil {
 		return err
@@ -62,7 +52,7 @@ func (s *Service) Reconcile(ctx context.Context, declared []domain.Permission) e
 func (s *Service) ensureRole(ctx context.Context, name, description string) error {
 	_, err := s.store.RoleByName(ctx, name)
 	if err == nil {
-		// Left alone once it exists. An administrator who renamed the description meant it, and a
+		// Left alone once it exists: an administrator who rewrote the description meant it, and a
 		// boot that overwrote their edit every restart would be its own kind of bug.
 		return nil
 	}
@@ -85,9 +75,7 @@ func (s *Service) grantEverythingToAdmin(ctx context.Context, declared []domain.
 
 	admin.Grants = make(map[string]string, len(declared))
 	for _, p := range declared {
-		// At the widest scope, because the row-level half of a permission is meaningless for the
-		// role whose job is to see everything — and an Admin who could only see their own rows
-		// could not audit anybody.
+		// Widest, because an Admin who could only see their own rows could not audit anybody.
 		if err := admin.Grant(p.Key, domain.ScopeAll); err != nil {
 			return err
 		}

@@ -5,7 +5,6 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Mediator.Tests {
-  /// <summary>Collects the ordered side effects produced by the test handlers and behaviors.</summary>
   public sealed class CallRecorder {
     public List<string> Calls { get; } = new();
   }

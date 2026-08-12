@@ -29,7 +29,6 @@ func TestNewRoleTrimsAndRejectsWhatCannotBeShown(t *testing.T) {
 }
 
 func TestGrantReplacesRatherThanAccumulates(t *testing.T) {
-	// A role holding one permission at two scopes has no answer to "how far does this reach".
 	role, _ := NewRole("role-1", "Admin", "", false)
 
 	if err := role.Grant("notes.read", "own"); err != nil {
@@ -48,8 +47,6 @@ func TestGrantReplacesRatherThanAccumulates(t *testing.T) {
 }
 
 func TestGrantRejectsAScopeThisBuildDoesNotUnderstand(t *testing.T) {
-	// Validated at the door: an unrecognised scope in the database is a grant whose reach nobody
-	// can state, read long after whoever typed it has gone.
 	role, _ := NewRole("role-1", "Admin", "", false)
 
 	err := role.Grant("notes.read", "galaxy")
@@ -134,9 +131,8 @@ func TestRename_OrdinaryRoleMayChangeBoth(t *testing.T) {
 }
 
 func TestGrant_RevokingManageRolesIsAnOrdinaryDomainOperation(t *testing.T) {
-	// The domain has no opinion about self-lockout: whether removing roles.manage is allowed
-	// depends on who is asking, which is a service question. This pins that the aggregate itself
-	// stays neutral, so the guard is not accidentally duplicated in two places.
+	// Whether removing roles.manage is allowed depends on who is asking, which is a service
+	// question. This pins the aggregate as neutral, so the guard is not duplicated in two places.
 	role, _ := NewRole("id-1", "Admin", "", true)
 	if err := role.Grant("roles.manage", ScopeAll); err != nil {
 		t.Fatalf("Grant: %v", err)

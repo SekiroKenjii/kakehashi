@@ -7,12 +7,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Kakehashi.App.Tests.Services {
-  /// <summary>
-  /// Unit tests for <see cref="ModuleRegistry"/>: attach/detach, required-module protection,
-  /// default-attached semantics, persistence of the detached set, and the change broadcast.
-  /// Uses a hand-rolled in-memory <see cref="ILocalSettingsService"/> so persistence round-trips
-  /// are observable, and fake modules so no WinUI types are constructed.
-  /// </summary>
   public sealed class ModuleRegistryTests {
     private const string _detachedKey = "Modules.Detached";
 
@@ -114,7 +108,6 @@ namespace Kakehashi.App.Tests.Services {
     public void DetachedSet_IsReadBackByANewRegistry() {
       CreateRegistry().Detach("Notes");
 
-      // A fresh registry over the same store reflects the persisted detachment.
       var reloaded = CreateRegistry();
 
       Assert.False(reloaded.IsAttached("Notes"));
@@ -122,7 +115,7 @@ namespace Kakehashi.App.Tests.Services {
 
     [Fact]
     public void RequiredModule_StaysAttached_EvenIfStoreListsIt() {
-      // A stale/tampered settings file marks the required module detached; the registry ignores it.
+      // The settings file is not trusted: stale or tampered, it cannot detach a required module.
       _settings.Save(_detachedKey, new List<string> { "Auth" });
 
       var registry = CreateRegistry();
@@ -163,10 +156,6 @@ namespace Kakehashi.App.Tests.Services {
 
       Assert.Equal(0, received);
     }
-
-    /// <summary>A minimal <see cref="IModule"/> that constructs no WinUI types.</summary>
-
-    /* --- Assignments: what the server says, as opposed to what the user prefers --- */
 
     [Fact]
     public void BeforeAnyFetch_EverythingBehavesAsThoughAssignmentsDidNotExist() {
@@ -265,7 +254,7 @@ namespace Kakehashi.App.Tests.Services {
       Assert.Null(_settings.Read<List<string>>(_detachedKey));
     }
 
-    /// <summary>A minimal IModule that constructs no WinUI types.</summary>
+    // A minimal IModule, so no WinUI type is constructed.
     private sealed class FakeModule : IModule {
       public FakeModule(string name, bool isRequired, string? assignmentId = null) {
         Name = name;

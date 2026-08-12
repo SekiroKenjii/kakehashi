@@ -5,7 +5,6 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.Services.Platform {
-  // Shows modal ContentDialogs anchored to the main window's XAML root.
   public sealed class DialogService : IDialogService {
     public async Task ShowMessageAsync(string title, string message, string closeText = "OK") {
       var dialog = new ContentDialog {

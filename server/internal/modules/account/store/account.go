@@ -16,7 +16,6 @@ import (
 const accountColumns = `a.Id, a.Email, a.DisplayName, a.Phone, a.PasswordHash, a.TeamId,
             a.LastSignInAt, a.IsActive, a.CreatedAt, a.UpdatedAt`
 
-// AccountByID returns the account, or an errs.NotFound error.
 func (s *SQLServer) AccountByID(ctx context.Context, id string) (domain.Account, error) {
 	const q = `
         SELECT ` + accountColumns + `
@@ -25,7 +24,6 @@ func (s *SQLServer) AccountByID(ctx context.Context, id string) (domain.Account,
 	return s.scanAccount(s.db.QueryRowContext(ctx, q, id), "id "+id)
 }
 
-// AccountByEmail returns the account for an address, or an errs.NotFound error.
 func (s *SQLServer) AccountByEmail(ctx context.Context, email string) (domain.Account, error) {
 	const q = `
         SELECT ` + accountColumns + `
@@ -34,7 +32,7 @@ func (s *SQLServer) AccountByEmail(ctx context.Context, email string) (domain.Ac
 	return s.scanAccount(s.db.QueryRowContext(ctx, q, strings.ToLower(email)), "email "+email)
 }
 
-// InsertAccount stores a new account. A duplicate address is a Conflict, not an Internal error.
+// A duplicate address is a Conflict, not an Internal error.
 func (s *SQLServer) InsertAccount(ctx context.Context, u domain.Account) error {
 	const q = `
         INSERT INTO account.Account
@@ -53,15 +51,14 @@ func (s *SQLServer) InsertAccount(ctx context.Context, u domain.Account) error {
 	return nil
 }
 
-// UpdateAccount rewrites the parts of an account its owner edits.
+// LastSignInAt and IsActive are deliberately not in the SET list. Both are written by other code
+// paths — signing in stamps one, an administrator deactivating an account flips the other — so
+// including them here meant an ordinary profile save wrote back whatever this copy happened to be
+// loaded with: somebody editing their display name while an administrator disabled them silently
+// switched themselves back on.
 //
-// LastSignInAt and IsActive are deliberately NOT in the SET list, and that omission is the whole
-// point of this comment. Both are written by other code paths — signing in stamps one, an
-// administrator deactivating an account flips the other — so including them here meant an ordinary
-// profile save wrote back whatever this copy happened to be loaded with. Somebody editing their
-// display name while an administrator disabled them silently switched themselves back on.
-//
-// Each column belongs to exactly one statement: TouchSignIn owns the stamp, SetActive owns the flag.
+// Each column belongs to exactly one statement: TouchSignIn owns the stamp, SetActive owns the
+// flag.
 func (s *SQLServer) UpdateAccount(ctx context.Context, u domain.Account) error {
 	const q = `
         UPDATE account.Account
@@ -77,11 +74,9 @@ func (s *SQLServer) UpdateAccount(ctx context.Context, u domain.Account) error {
 	return requireOneRow(res, "No account with ID %s.", u.ID)
 }
 
-// visibleAccounts turns the caller's row scope into a predicate.
-//
-// Written as a separate WHERE per scope rather than one clause with ORs, because an OR chain over
-// three mutually exclusive cases is not sargable: SQL Server cannot use the index on TeamId when
-// the predicate also has to consider that the scope might have been "all".
+// A separate WHERE per scope rather than one clause with ORs, because an OR chain over three
+// mutually exclusive cases is not sargable: SQL Server cannot use the index on TeamId when the
+// predicate also has to consider that the scope might have been "all".
 func (s *SQLServer) visibleAccounts(ctx context.Context) (string, []any) {
 	subject, signedIn := auth.SubjectFrom(ctx)
 	if !signedIn {
@@ -131,19 +126,16 @@ func (s *SQLServer) scanAccount(row scanner, what string) (domain.Account, error
 	return u, nil
 }
 
-// Accounts lists every account, newest first.
+// Lists the accounts the CALLER may see, newest first, which is not always all of them.
 //
-// Unpaged, and that is a decision with a limit worth naming: it serves an administration screen
-// whose own design is a filterable table over the whole set. A deployment large enough for that to
-// hurt needs paging in the contract, not a TOP the client cannot see.
-// Accounts lists the accounts the CALLER may see, which is not always all of them.
+// Unpaged, a known limit: it serves an administration screen whose own design is a filterable table
+// over the whole set. A deployment large enough for that to hurt needs paging in the contract, not
+// a TOP the client cannot see.
 //
-// This is where row scope stops being a column and starts being a rule. A grant of users.manage
-// carries own, team or all, and the narrowing belongs here rather than in the route gate for the
-// reason the platform's ScopeOf comment gives: a gate that rewrote everyone's SQL would have to
-// understand everyone's schema, while a store narrowing its own query only has to understand its
-// own. This one understands that TeamId is what "team" means — which the schema has said since it
-// was written, and nothing read until now.
+// A grant of users.manage carries own, team or all, and the narrowing belongs here rather than in
+// the route gate for the reason the platform's ScopeOf comment gives: a gate that rewrote
+// everyone's SQL would have to understand everyone's schema, while a store narrowing its own query
+// only has to understand its own. This one understands that TeamId is what "team" means.
 //
 // An unrecognised or absent scope narrows to nothing rather than widening to everything. The route
 // gate has already established that the caller holds the permission; if this cannot tell how far it
@@ -177,8 +169,6 @@ func (s *SQLServer) Accounts(ctx context.Context) ([]domain.Account, error) {
 	return out, nil
 }
 
-// TouchSignIn records that the account just signed in.
-//
 // One narrow UPDATE rather than a read-modify-write through UpdateAccount: a sign-in landing at
 // the same moment as a profile edit must not have either overwrite the other's columns.
 func (s *SQLServer) TouchSignIn(ctx context.Context, id string, at time.Time) error {
@@ -190,7 +180,6 @@ func (s *SQLServer) TouchSignIn(ctx context.Context, id string, at time.Time) er
 	return nil
 }
 
-// SetActive switches an account on or off.
 func (s *SQLServer) SetActive(ctx context.Context, id string, active bool) error {
 	const q = `UPDATE account.Account SET IsActive = @p1 WHERE Id = @p2;`
 
@@ -201,8 +190,6 @@ func (s *SQLServer) SetActive(ctx context.Context, id string, active bool) error
 	return requireOneRow(res, "No account with ID %s.", id)
 }
 
-// DeleteAccount removes the account row and its security events, in one transaction.
-//
 // Sessions and issued tokens go by cascade; SecurityEvent has no foreign key — the trail outlives
 // sessions on purpose — so it is swept here explicitly. Half a deletion is the one outcome worse
 // than either whole one, hence the transaction.
@@ -218,12 +205,11 @@ func (s *SQLServer) DeleteAccount(ctx context.Context, id string) error {
 		return errs.Internalf(err, "delete account events")
 	}
 
-	// The authorization module's rows, deleted here, in this transaction, and not by publishing an
-	// event for it to react to. That is a deliberate exception to how the two modules otherwise
-	// talk: a role membership pointing at an account that no longer exists is over-reported in
-	// every "how many people hold this role" count, forever, and an event delivered after the
-	// commit can fail while the delete stands. One transaction is the only shape where the account
-	// and its memberships go together.
+	// The authorization module's rows, deleted here rather than by publishing an event for it to
+	// react to — a deliberate exception to how the two modules otherwise talk. A role membership
+	// pointing at an account that no longer exists is over-reported in every "how many people hold
+	// this role" count, forever, and an event delivered after the commit can fail while the delete
+	// stands.
 	//
 	// It is a cross-schema DELETE rather than a foreign key because authz.AccountRole must not
 	// depend on account.Account existing — the authorization module is meant to survive the account
@@ -246,7 +232,7 @@ func (s *SQLServer) DeleteAccount(ctx context.Context, id string) error {
 	return nil
 }
 
-// nullableTime maps the zero time onto NULL, which is how "never signed in" is stored.
+// The zero time maps onto NULL, which is how "never signed in" is stored.
 func nullableTime(t time.Time) any {
 	if t.IsZero() {
 		return nil

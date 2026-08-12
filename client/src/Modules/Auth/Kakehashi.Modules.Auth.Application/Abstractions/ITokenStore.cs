@@ -2,8 +2,7 @@ using System.Threading;
 using System.Threading.Tasks;
 
 namespace Kakehashi.Modules.Auth.Application.Abstractions {
-  // Securely persists the refresh token between runs so the user stays signed in across restarts.
-  // The concrete adapter (in the UI layer) encrypts the value at rest.
+  // The adapter must encrypt the refresh token at rest; it outlives the process.
   public interface ITokenStore {
     Task<string?> LoadRefreshTokenAsync(CancellationToken cancellationToken);
 

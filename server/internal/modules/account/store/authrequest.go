@@ -15,7 +15,6 @@ const authRequestColumns = `r.Id, r.ClientId, r.Subject, r.Scopes, r.RedirectUri
             r.ResponseType, r.Nonce, r.AuthState, r.CodeChallenge, r.CodeChallengeMethod,
             r.AuthCode, r.SessionId, r.IsDone, r.AuthTime, r.CreatedAt`
 
-// InsertAuthRequest stores a new in-flight authorization.
 func (s *SQLServer) InsertAuthRequest(ctx context.Context, r domain.AuthRequest) error {
 	const q = `
         INSERT INTO account.AuthRequest
@@ -32,7 +31,6 @@ func (s *SQLServer) InsertAuthRequest(ctx context.Context, r domain.AuthRequest)
 	return nil
 }
 
-// AuthRequestByID returns an in-flight authorization.
 func (s *SQLServer) AuthRequestByID(ctx context.Context, id string) (domain.AuthRequest, error) {
 	const q = `
         SELECT ` + authRequestColumns + `
@@ -41,7 +39,6 @@ func (s *SQLServer) AuthRequestByID(ctx context.Context, id string) (domain.Auth
 	return s.scanAuthRequest(s.db.QueryRowContext(ctx, q, id))
 }
 
-// AuthRequestByCode returns the authorization an authorization code belongs to.
 func (s *SQLServer) AuthRequestByCode(ctx context.Context, code string) (domain.AuthRequest, error) {
 	const q = `
         SELECT ` + authRequestColumns + `
@@ -50,7 +47,6 @@ func (s *SQLServer) AuthRequestByCode(ctx context.Context, code string) (domain.
 	return s.scanAuthRequest(s.db.QueryRowContext(ctx, q, code))
 }
 
-// SaveAuthCode attaches an authorization code to a request.
 func (s *SQLServer) SaveAuthCode(ctx context.Context, id, code string) error {
 	const q = `
         UPDATE account.AuthRequest
@@ -64,8 +60,8 @@ func (s *SQLServer) SaveAuthCode(ctx context.Context, id, code string) error {
 	return requireOneRow(res, "No authorization request with ID %s.", id)
 }
 
-// CompleteAuthRequest marks a request authenticated for a user, and records which session the
-// login created so the token exchange can attach its tokens to it.
+// The session id is recorded so the token exchange can attach its tokens to the session the
+// sign-in created.
 func (s *SQLServer) CompleteAuthRequest(
 	ctx context.Context, id, subject, sessionID string, at time.Time,
 ) error {
@@ -81,7 +77,6 @@ func (s *SQLServer) CompleteAuthRequest(
 	return requireOneRow(res, "No authorization request with ID %s.", id)
 }
 
-// DeleteAuthRequest removes a request, whether it completed or not.
 func (s *SQLServer) DeleteAuthRequest(ctx context.Context, id string) error {
 	const q = `DELETE FROM account.AuthRequest WHERE Id = @p1;`
 

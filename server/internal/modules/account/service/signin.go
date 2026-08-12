@@ -13,11 +13,9 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
 )
 
-// Authenticate checks an email and password, recording the attempt either way.
-//
-// The error is the same whether the address is unknown or the password is wrong. Distinguishing
-// them turns the sign-in form into an account-enumeration oracle, which is how a leaked password
-// list gets matched against your user base.
+// Records the attempt either way. The error is the same whether the address is unknown or the
+// password is wrong: distinguishing them turns the sign-in form into an account-enumeration
+// oracle, which is how a leaked password list gets matched against your user base.
 func (s *Service) Authenticate(
 	ctx context.Context, email, password, device, ip string,
 ) (domain.Account, error) {
@@ -60,7 +58,6 @@ func (s *Service) Authenticate(
 	return user, nil
 }
 
-// StartSession records a sign-in and announces it.
 func (s *Service) StartSession(
 	ctx context.Context, user domain.Account, clientID, device, ip string,
 ) (domain.UserSession, error) {
@@ -108,14 +105,11 @@ func (s *Service) StartSession(
 	return sess, nil
 }
 
-// CompleteAuthRequest marks an in-flight authorization as authenticated: this user, via this
-// session, at this moment. Browser sign-in calls it after Authenticate and StartSession succeed.
+// Browser sign-in calls this after Authenticate and StartSession succeed.
 func (s *Service) CompleteAuthRequest(ctx context.Context, requestID, subject, sessionID string) error {
 	return s.store.CompleteAuthRequest(ctx, requestID, subject, sessionID, s.now())
 }
 
-// failed records a rejected attempt and announces it.
-//
 // Both refusals go through here so the audit row and the announcement cannot drift apart — the
 // account page grew its row first, and the feed had no way to know an attempt had happened at all.
 func (s *Service) failed(ctx context.Context, userID, device, ip string) {

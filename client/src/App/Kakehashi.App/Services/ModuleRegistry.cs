@@ -7,11 +7,9 @@ using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 
 namespace Kakehashi.App.Services {
-  // Default IModuleRegistry: the composed modules plus a locally persisted set of
-  // detached names. Default-attached semantics — a module absent from the persisted set is
-  // attached, so a newly compiled-in module appears automatically. Attach/detach are UI-thread
-  // operations (like the rest of the settings store); each change broadcasts a
-  // ModuleSetChangedMessage.
+  // Default-attached: a module absent from the persisted detached set counts as attached, so a
+  // newly compiled-in module appears without anyone editing settings. Attach and detach are
+  // UI-thread operations, like the rest of the settings store.
   public sealed class ModuleRegistry : IModuleRegistry {
     private const string _detachedKey = "Modules.Detached";
 
@@ -28,11 +26,10 @@ namespace Kakehashi.App.Services {
     private readonly IReadOnlyList<IModule> _all;
     private readonly HashSet<string> _detached;
 
-    // What the server says about this account, by SERVER module id — which is not IModule.Name.
-    // Both start empty and stay empty until the fetch after sign-in returns, which is what makes
-    // a failed or slow fetch leave the app exactly as a build without assignments would behave.
-    // Failing open here is safe precisely because it is not the enforcement: the server refuses an
-    // unassigned module's requests whatever this object believes.
+    // Keyed by SERVER module id, which is not IModule.Name. Both stay empty until the fetch after
+    // sign-in returns, so a failed or slow fetch leaves the app behaving as a build with no
+    // assignments would. Failing open is safe because this is not the enforcement: the server
+    // refuses an unassigned module's requests whatever this object believes.
     private HashSet<string> _withheld = new(StringComparer.Ordinal);
     private HashSet<string> _granted = new(StringComparer.Ordinal);
 

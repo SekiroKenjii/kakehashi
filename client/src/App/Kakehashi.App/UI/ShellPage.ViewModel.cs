@@ -4,8 +4,6 @@ using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 
 namespace Kakehashi.App.UI {
-  // Backs the shell chrome: the selected navigation item, the status-bar text, and whether back
-  // navigation is available. It tracks navigation through INavigationService.OnNavigated.
   public sealed partial class ShellViewModel : ViewModel {
     private readonly INavigationService _navigationService;
     private readonly IDisposable _navigationSubscription;

@@ -1,8 +1,7 @@
 // Package passwords hashes and verifies user passwords with Argon2id.
 //
-// Argon2id rather than bcrypt: it is the current recommendation, it resists GPU and side-channel
-// attacks better, and it lets the cost be tuned along two axes instead of one. The parameters
-// below follow OWASP's baseline.
+// Argon2id rather than bcrypt: it resists GPU and side-channel attacks better, and it lets the cost
+// be tuned along two axes instead of one. The parameters below follow OWASP's baseline.
 //
 // The encoded form carries its own parameters, so raising the cost later does not invalidate
 // existing hashes — old ones keep verifying with the parameters they were made with, and get
@@ -20,29 +19,26 @@ import (
 	"golang.org/x/crypto/argon2"
 )
 
-// Parameters of the Argon2id computation. They are written into every hash, so changing them here
-// affects new passwords only.
+// Written into every hash, so changing them here affects new passwords only.
 const (
-	// memoryKiB is the single most important cost knob: it is what makes parallel cracking
-	// expensive. 64 MiB is OWASP's floor.
+	// The single most important cost knob: it is what makes parallel cracking expensive. 64 MiB is
+	// OWASP's floor.
 	memoryKiB = 64 * 1024
 
-	// iterations, with memory this high, can stay low.
+	// With memory this high, iterations can stay low.
 	iterations = 3
 
-	// parallelism should not exceed the cores a server can spare per sign-in.
+	// Should not exceed the cores a server can spare per sign-in.
 	parallelism = 2
 
 	saltLength = 16
 	keyLength  = 32
 )
 
-// ErrInvalidHash is returned when a stored hash cannot be parsed. It means the column was
-// corrupted or written by something else — never that the password was wrong.
+// ErrInvalidHash means the stored column was corrupted or written by something else — never that
+// the password was wrong.
 var ErrInvalidHash = errors.New("password hash is malformed")
 
-// Hash returns the encoded Argon2id hash of plain.
-//
 // The result looks like $argon2id$v=19$m=65536,t=3,p=2$<salt>$<key> and is safe to store as-is:
 // the salt is unique per password and the parameters travel with it.
 func Hash(plain string) (string, error) {
@@ -61,10 +57,8 @@ func Hash(plain string) (string, error) {
 	), nil
 }
 
-// Verify reports whether plain produced encoded.
-//
-// A malformed hash returns false with an error, and both have to be treated as "not authenticated"
-// by the caller. What it must never do is distinguish the two to the user: "that account is
+// A malformed hash returns false with an error, and the caller has to treat both as "not
+// authenticated". What it must never do is distinguish the two to the user: "that account is
 // broken" and "wrong password" are the same answer from outside.
 func Verify(encoded, plain string) (bool, error) {
 	memory, time, threads, salt, want, err := decode(encoded)
@@ -80,7 +74,6 @@ func Verify(encoded, plain string) (bool, error) {
 }
 
 // NeedsRehash reports whether encoded was produced with weaker parameters than the current ones.
-//
 // Call it after a successful verification: that is the only moment the plaintext is in hand, and
 // therefore the only moment the hash can be upgraded without asking the user for anything.
 func NeedsRehash(encoded string) bool {

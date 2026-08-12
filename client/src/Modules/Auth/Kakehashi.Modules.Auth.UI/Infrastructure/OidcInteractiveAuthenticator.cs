@@ -13,9 +13,8 @@ using Microsoft.Extensions.Options;
 using SharedKernelResult = Kakehashi.SharedKernel.Result;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // Drives the OpenID Connect Authorization Code + PKCE flow via OidcClient and the
-  // system browser. PKCE, state/nonce and id_token validation are handled by the library; this
-  // adapter only maps results to the domain and never throws for expected failures.
+  // PKCE, state/nonce and id_token validation are OidcClient's; this adapter only maps results to
+  // the domain.
   public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthenticator {
     private readonly AuthOptions _options;
     private readonly SystemBrowser _browser;
@@ -34,9 +33,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _logger = logger;
     }
 
-    // Signs in through the system browser. credentials is ignored: the whole
-    // point of this flow is that the password is typed into the authorization server's page and
-    // never reaches this process.
+    // credentials is ignored: the point of this flow is that the password is typed into the
+    // authorization server's page and never reaches this process.
     public async Task<Result<AuthSession>> LoginAsync(
         SignInCredentials? credentials, CancellationToken cancellationToken) {
       if (!_options.IsConfigured) {
@@ -51,7 +49,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
             .ConfigureAwait(false);
         if (login.IsError) {
           LogFlowError("login", login.Error);
-          // The browser adapter reports failures as BrowserResultType names.
+          // The browser adapter reports failures as BrowserResultType names, hence the strings.
           return SharedKernelResult.Failure<AuthSession>(login.Error switch {
             "UserCancel" => AuthErrors.LoginCancelled,
             "Timeout" => AuthErrors.LoginTimedOut,
@@ -113,9 +111,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
 
       using var activity = AuthTelemetry.Source.StartActivity("Auth.Logout");
       try {
-        // Drive the OIDC end-session endpoint in the system browser so the authorization server
-        // clears its own session cookie. Without this, only local tokens are dropped and the next
-        // sign-in completes silently via the still-valid server SSO session (no credentials prompt).
+        // Drives the end-session endpoint in the system browser so the authorization server clears
+        // its own session cookie. Without this, only local tokens are dropped and the next sign-in
+        // completes silently via the still-valid server SSO session, with no credentials prompt.
         await GetClient()
             .LogoutAsync(new LogoutRequest { IdTokenHint = session?.IdToken }, cancellationToken)
             .ConfigureAwait(false);
@@ -139,13 +137,12 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       });
     }
 
-    // Resolves the user's identity from the userinfo endpoint. Refresh responses carry no identity
-    // claims, so without this a silently restored session would have no display name or email.
-    // Best-effort: the session works without identity.
+    // Refresh responses carry no identity claims, so without this a silently restored session
+    // would have no display name or email. Best-effort: the session works without identity.
     //
-    // Internal because InAppAuthenticator needs the same answer after its own
-    // sign-in, and getting it from here means one implementation of discovery, one of the userinfo
-    // call, and no second opinion about which claim holds the display name.
+    // Internal because InAppAuthenticator needs the same answer after its own sign-in, and taking
+    // it from here means one implementation of discovery, one of the userinfo call, and no second
+    // opinion about which claim holds the display name.
     internal async Task<(string? DisplayName, string? Email, IReadOnlyList<string> Roles)>
         FetchIdentityAsync(string accessToken, CancellationToken cancellationToken) {
       try {
@@ -170,11 +167,10 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       return claims.FirstOrDefault(claim => claim.Type == type)?.Value;
     }
 
-    // Collects role claims under both spellings. There is no standard one: Duende and legacy
-    // IdentityServer emit role, Entra and this product's own backend emit roles, and
-    // which authorization server sits behind Auth:Authority is a deployment choice. Reading
-    // both costs a predicate and removes a class of "why is the user missing every permission"
-    // that is invisible from the client side.
+    // Both spellings, because there is no standard one: Duende and legacy IdentityServer emit
+    // role, Entra and this product's own backend emit roles, and which authorization server sits
+    // behind Auth:Authority is a deployment choice. Reading one spelling silently costs the user
+    // every permission.
     private static IReadOnlyList<string> ResolveRoles(IEnumerable<Claim>? claims) {
       return claims is null
           ? []

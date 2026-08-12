@@ -11,13 +11,9 @@ using Microsoft.Extensions.Logging;
 using NotesV1 = Kakehashi.Notes.V1;
 
 namespace Kakehashi.Modules.Notes.UI.Infrastructure {
-  // The gRPC adapter behind INotesGateway. It is the only class in the module that
-  // knows the wire exists: it maps between the generated messages and the application's DTOs, and
-  // turns transport failures into Result failures.
-  //
-  // The alias is NotesV1 rather than Notes because inside a Kakehashi.*
-  // namespace the identifier Notes binds to the enclosing Kakehashi.Modules.Notes
-  // namespace before a using alias is ever considered.
+  // The alias is NotesV1 rather than Notes because inside a Kakehashi.* namespace the identifier
+  // Notes binds to the enclosing Kakehashi.Modules.Notes namespace before a using alias is ever
+  // considered.
   public sealed partial class GrpcNotesGateway : INotesGateway {
     private readonly NotesV1.NotesService.NotesServiceClient _client;
     private readonly ILogger<GrpcNotesGateway> _logger;
@@ -105,14 +101,11 @@ namespace Kakehashi.Modules.Notes.UI.Infrastructure {
           note.UpdatedAt.ToDateTimeOffset());
     }
 
-    // Turns a gRPC status into an error the user can be shown.
     private Error Translate(RpcException exception, string operation) {
       switch (exception.StatusCode) {
         case StatusCode.InvalidArgument:
-          // The server's validation message is written for a user and is the authoritative one —
-          // it is what the domain returned. Passing it through rather than substituting a generic
-          // string is the difference between "Titles are limited to 120 characters" and
-          // "Something went wrong".
+          // The server's validation message is written for a user and is the authoritative one, so
+          // it is passed through rather than replaced with a generic string.
           LogRejected(operation, exception.Status.Detail);
           return new Error(NotesErrors.TitleRequired.Code, exception.Status.Detail);
 
@@ -120,14 +113,14 @@ namespace Kakehashi.Modules.Notes.UI.Infrastructure {
           return NotesErrors.NotFound;
 
         case StatusCode.PermissionDenied:
-          // The server gates whole modules, so this is never about one note: an administrator has
-          // not assigned this account the Notes module. Kept out of the catch-all below because it
-          // is the one failure here a user can actually do something about.
+          // The server gates whole modules, so this is never about one note: the account is not
+          // assigned Notes. Kept out of the catch-all below because it is the one failure here a
+          // user can act on.
           return NotesErrors.NotAssigned;
 
         default:
-          // Everything else is the network, the server, or a bug — none of which the user can act
-          // on beyond trying again. The detail goes to the log, not the screen.
+          // Network, server, or bug — nothing the user can act on beyond trying again. The detail
+          // goes to the log, not the screen.
           LogFailed(operation, exception.StatusCode, exception);
           return NotesErrors.RequestFailed;
       }

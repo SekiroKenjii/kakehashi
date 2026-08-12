@@ -44,17 +44,16 @@ func TestNewNoteRejectsATitleThatIsOnlySpace(t *testing.T) {
 }
 
 func TestNewNoteAllowsAnEmptyBody(t *testing.T) {
-	// A note is a title with optional contents, not the other way round. Requiring a body would
-	// make "remember to call the bank" impossible to write.
+	// A note is a title with optional contents: requiring a body would make "remember to call the
+	// bank" impossible to write.
 	if _, err := NewNote("Title", "", created); err != nil {
 		t.Fatalf("NewNote with an empty body returned an error: %v", err)
 	}
 }
 
 func TestTitleLengthIsCountedInRunesNotBytes(t *testing.T) {
-	// Every one of these is 3 bytes in UTF-8. Counting bytes would reject a Vietnamese title at 40
-	// characters while letting an English one run to 120 — a rule that only looks correct in the
-	// language it was written in.
+	// Every one of these is 3 bytes in UTF-8: counting bytes would reject a Vietnamese title at 40
+	// characters while letting an English one run to 120.
 	atLimit := strings.Repeat("ế", MaxTitleLength)
 	overLimit := strings.Repeat("ế", MaxTitleLength+1)
 
@@ -93,7 +92,7 @@ func TestRenameKeepsCreatedAtAndMovesUpdatedAt(t *testing.T) {
 }
 
 func TestRenameLeavesTheNoteUntouchedWhenItFails(t *testing.T) {
-	// A rejected change must not half-apply. Setting the title before validating it is the classic
+	// A rejected change must not half-apply: setting the title before validating it is the classic
 	// way to end up with an entity that violates its own invariant.
 	n, err := NewNote("Original", "body", created)
 	if err != nil {

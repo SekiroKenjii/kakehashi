@@ -1,15 +1,11 @@
 using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.UI.Contracts.Services.Platform {
-  /// <summary>
-  /// Shows transient, in-app notifications through the shell's <see cref="InfoBar"/>. A seam is left
-  /// for OS-level (toast) notifications, which require a packaged app.
-  /// </summary>
+  // In-app only. OS-level toasts are still a seam here because they require a packaged app.
   public interface INotificationService : IUiContractService, ISingletonDependency {
-    /// <summary>Binds the service to the shell's notification bar. Call once, on load.</summary>
+    // Call once, when the shell's notification bar loads.
     void Initialize(InfoBar infoBar);
 
-    /// <summary>Shows a notification with the given severity.</summary>
     void Show(
         string message,
         InfoBarSeverity severity = InfoBarSeverity.Informational,

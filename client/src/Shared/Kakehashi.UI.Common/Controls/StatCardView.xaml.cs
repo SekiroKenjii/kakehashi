@@ -4,15 +4,11 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.UI.Common.Controls {
-  /// <summary>One count along the top of a screen: a coloured icon square, a label, a number.</summary>
-  /// <remarks>
-  /// A control rather than a <c>DataTemplate</c> in a shared dictionary, for the same reason
-  /// <see cref="PageHeader"/> is one: a feature module's page is compiled into its own assembly, and
-  /// the pattern this codebase already trusts for shared chrome is a <c>UserControl</c> in
-  /// <c>Kakehashi.UI.Common</c>. Each screen keeps a three-line item template that wraps this.
-  /// </remarks>
+  // A control rather than a DataTemplate in a shared dictionary, for the same reason PageHeader is
+  // one: a feature module's page is compiled into its own assembly, and the pattern this codebase
+  // trusts for shared chrome is a UserControl in Kakehashi.UI.Common.
   public sealed partial class StatCardView : UserControl {
-    /// <summary>The card to draw. Null draws an empty card rather than throwing.</summary>
+    // Null draws an empty card rather than throwing.
     public static readonly DependencyProperty CardProperty = DependencyProperty.Register(
         nameof(Card), typeof(StatCard), typeof(StatCardView), new PropertyMetadata(null));
 
@@ -25,14 +21,9 @@ namespace Kakehashi.UI.Common.Controls {
       set => SetValue(CardProperty, value);
     }
 
-    /// <summary>
-    /// The icon square's colour, per card kind.
-    /// </summary>
-    /// <remarks>
-    /// Four fixed colours carry meaning — green reads as healthy, grey as dormant, amber as worth a
-    /// look, red as wrong — so they are the mockups' rather than the theme's. Accent means nothing in
-    /// particular, so it takes the app accent and matches whatever else on the screen is accented.
-    /// </remarks>
+    // The four fixed colours carry meaning - green healthy, grey dormant, amber worth a look, red
+    // wrong - so they are the mockups' rather than the theme's. Accent means nothing in particular,
+    // so it takes the app accent and matches whatever else on the screen is accented.
     public static Brush BrushFor(StatCard? card) {
       return card?.Kind switch {
         StatKind.Positive => _positive,

@@ -8,7 +8,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Kakehashi.Mediator {
-  /// <summary>Registers the mediator and scans assemblies for message handlers.</summary>
   public static class MediatorServiceCollectionExtensions {
     private static readonly Type[] _handlerInterfaces = {
       typeof(IRequestHandler<,>),
@@ -16,10 +15,6 @@ namespace Kakehashi.Mediator {
       typeof(IDomainEventHandler<>),
     };
 
-    /// <summary>
-    /// Registers the mediator core services and every request, notification and domain-event
-    /// handler discovered in <paramref name="handlerAssemblies"/>.
-    /// </summary>
     public static IServiceCollection AddMediator(
         this IServiceCollection services,
         Assembly firstHandlerAssembly,

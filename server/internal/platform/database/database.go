@@ -4,19 +4,14 @@
 // notes.Note, identity.User. Migrate creates that schema before a module's first migration runs, so
 // a module writing outside it has to say so in the SQL, in a statement a reviewer can see.
 //
-// # Style
+// SQL follows ktaranov/sqlserver-kit: PascalCase singular object names, no square brackets, /* */
+// comments rather than --, lower-case data types, spaces not tabs, explicit column lists, table
+// aliases, and a semicolon on every statement.
 //
-// SQL in this project follows the conventions in ktaranov/sqlserver-kit: PascalCase singular object
-// names, no square brackets, /* */ comments rather than --, lower-case data types, spaces not tabs,
-// explicit column lists, table aliases, and a semicolon on every statement.
-//
-// # Two things SQL Server does differently
-//
-// Parameters are @p1, @p2, not ?. The driver will not rewrite them for you.
-//
-// There is no LastInsertId. The driver does not implement it, and asking returns an error rather
-// than a wrong answer. Use an OUTPUT clause instead, which is safe under triggers and concurrent
-// inserts in a way that SCOPE_IDENTITY() is only mostly safe:
+// Two things SQL Server does differently. Parameters are @p1, @p2, not ?, and the driver will not
+// rewrite them for you. And there is no LastInsertId — the driver does not implement it, and asking
+// returns an error rather than a wrong answer. Use an OUTPUT clause, which is safe under triggers
+// and concurrent inserts in a way that SCOPE_IDENTITY() is only mostly safe:
 //
 //	INSERT INTO notes.Note (Title, Body) OUTPUT INSERTED.Id VALUES (@p1, @p2);
 package database
@@ -30,12 +25,10 @@ import (
 	_ "github.com/microsoft/go-mssqldb" // registers the "sqlserver" driver
 )
 
-// DB is the server's SQL Server handle.
 type DB struct {
 	*sql.DB
 }
 
-// Options configures the pool.
 type Options struct {
 	DSN          string
 	MaxOpenConns int
@@ -47,15 +40,13 @@ type Migration struct {
 	// primary key the server uses to decide what has already been applied.
 	Name string
 
-	// SQL is one or more statements, run as a single T-SQL batch.
-	//
-	// A few statements (CREATE VIEW, CREATE PROCEDURE, CREATE TRIGGER) must be alone in their
-	// batch. Give those a migration of their own rather than fighting the rule. CREATE SCHEMA is
-	// in that list too, which is why Migrate does it for you before the batch runs.
+	// SQL runs as a single T-SQL batch. A few statements (CREATE VIEW, CREATE PROCEDURE, CREATE
+	// TRIGGER) must be alone in their batch, so give those a migration of their own rather than
+	// fighting the rule. CREATE SCHEMA is in that list too, which is why Migrate does it for you
+	// before the batch runs.
 	SQL string
 }
 
-// Open connects to SQL Server and prepares the migration bookkeeping.
 func Open(ctx context.Context, opts Options) (*DB, error) {
 	sqlDB, err := sql.Open("sqlserver", opts.DSN)
 	if err != nil {
@@ -64,13 +55,13 @@ func Open(ctx context.Context, opts Options) (*DB, error) {
 
 	if opts.MaxOpenConns > 0 {
 		sqlDB.SetMaxOpenConns(opts.MaxOpenConns)
-		// Idle capacity matched to the ceiling. Leaving it at Go's default of 2 means a server
-		// under steady load spends its time dialling TLS handshakes it is about to throw away.
+		// Idle capacity matched to the ceiling. Go's default of 2 means a server under steady load
+		// spends its time dialling TLS handshakes it is about to throw away.
 		sqlDB.SetMaxIdleConns(opts.MaxOpenConns)
 	}
-	// Recycle connections well inside the window where a load balancer or SQL Server itself might
-	// drop an idle one. A connection killed under us surfaces as a failed query on a healthy
-	// server, which is a confusing way to learn about a timeout.
+	// Recycle well inside the window where a load balancer or SQL Server itself might drop an idle
+	// connection. One killed under us surfaces as a failed query on a healthy server, which is a
+	// confusing way to learn about a timeout.
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
@@ -88,13 +79,7 @@ func Open(ctx context.Context, opts Options) (*DB, error) {
 }
 
 func (db *DB) initMigrationTable(ctx context.Context) error {
-	/*
-		T-SQL has no CREATE TABLE IF NOT EXISTS, so the existence check is explicit.
-
-		Naming and style throughout the project follow ktaranov/sqlserver-kit: PascalCase singular
-		objects, no square brackets, block comments, lower-case data types, spaces. See
-		docs/ARCHITECTURE.md.
-	*/
+	/* T-SQL has no CREATE TABLE IF NOT EXISTS, so the existence check is explicit. */
 	const stmt = `
         IF OBJECT_ID(N'dbo.SchemaMigration', N'U') IS NULL
         BEGIN
@@ -113,13 +98,10 @@ func (db *DB) initMigrationTable(ctx context.Context) error {
 	return nil
 }
 
-// ensureSchema creates the schema a module owns, if it is not there yet.
-//
-// One schema per module, named after the module ID, is how table namespacing is expressed. It
-// replaces the prefix convention the desktop original used, and it is better in three ways: it is
-// what SQL Server provides for the purpose, it survives a table being renamed, and it can carry
-// permissions — a module's credentials can be granted rights on its own schema and nothing else,
-// which turns a review rule into something the database enforces.
+// One schema per module, named after the module ID, replaces the prefix convention the desktop
+// original used: it is what SQL Server provides for the purpose, it survives a table being renamed,
+// and it can carry permissions — a module's credentials can be granted rights on its own schema and
+// nothing else, which turns a review rule into something the database enforces.
 //
 // CREATE SCHEMA has to be the only statement in its batch, which is why it is executed on its own
 // rather than folded into the migration.
@@ -143,9 +125,8 @@ func (db *DB) ensureSchema(ctx context.Context, name string) error {
 
 // Migrate applies the migrations a module has not run yet, in order.
 //
-// Each migration commits in its own transaction. That is deliberate: if the third of five fails,
-// the first two stay applied and recorded, and the next boot resumes at the third instead of
-// replaying work that already succeeded.
+// Each migration commits in its own transaction, so if the third of five fails the first two stay
+// applied and the next boot resumes at the third instead of replaying work that succeeded.
 //
 // Migrations are keyed by (module, name), so two modules are free to use the same migration name,
 // and renaming a shipped migration makes it run a second time. That is why Migration.Name says not
@@ -156,10 +137,9 @@ func (db *DB) Migrate(ctx context.Context, module string, migrations []Migration
 	}
 
 	// One migrator at a time, across processes. The applied set is read and then acted on, so two
-	// instances starting together both saw the same gap and both tried to create the same object —
-	// one of them failing on a duplicate rather than skipping work already done. An application
-	// lock is the portable way to serialise that: it is held on this connection until released, and
-	// released automatically if the process dies holding it.
+	// instances starting together both saw the same gap and both tried to create the same object,
+	// one failing on a duplicate rather than skipping work already done. The application lock is
+	// held on this connection until released, and released if the process dies holding it.
 	conn, err := db.Conn(ctx)
 	if err != nil {
 		return fmt.Errorf("migrate %s: %w", module, err)
@@ -231,8 +211,6 @@ func (db *DB) appliedMigrations(ctx context.Context, module string) (map[string]
 	return applied, rows.Err()
 }
 
-// acquireMigrationLock serialises migration across processes, returning the release.
-//
 // Scoped per module, so two modules migrate concurrently and only the same module's migrations
 // queue. The timeout is generous because the thing being waited for is another instance's schema
 // change, and the failure it prevents — two servers applying the same DDL — costs more than a slow
@@ -259,8 +237,8 @@ func acquireMigrationLock(
 	}
 
 	return func() {
-		// Best effort, on a context detached from the caller's: a cancelled boot must still let go
-		// of the lock, and the session ending releases it anyway.
+		// Detached from the caller's context: a cancelled boot must still let go of the lock. Best
+		// effort, since the session ending releases it anyway.
 		releaseCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), 5*time.Second)
 		defer cancel()
 

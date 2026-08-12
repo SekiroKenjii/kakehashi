@@ -1,5 +1,3 @@
-// The device list on the account page.
-//
 // Sessions are created in signin.go, not here. A session begins as part of signing in and ends as
 // part of account management, and those are different callers — which is also why RevokeSession
 // lives here even though the in-app sign-out handler calls it.
@@ -13,7 +11,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
 )
 
-// Sessions lists the account's live sessions, marking the caller's own.
 func (s *Service) Sessions(
 	ctx context.Context, userID, currentID string,
 ) ([]accountapi.Session, error) {
@@ -37,11 +34,9 @@ func (s *Service) Sessions(
 	return out, nil
 }
 
-// SignOut ends the caller's own session because they asked to leave.
-//
 // The same delete as RevokeSession, announced differently. Only the caller knows which of the two
-// this is, so only the caller can say — and a week later "you signed out" and "a session was
-// revoked" are the difference between a reassuring line and one worth acting on.
+// this is, and a week later "you signed out" and "a session was revoked" are the difference
+// between a reassuring line and one worth acting on.
 func (s *Service) SignOut(ctx context.Context, userID, sessionID string) error {
 	ended, err := s.store.DeleteSession(ctx, userID, sessionID)
 	if err != nil {
@@ -58,10 +53,8 @@ func (s *Service) SignOut(ctx context.Context, userID, sessionID string) error {
 	return nil
 }
 
-// RevokeSession ends one session the owner picked off their device list. Revoking one that is
-// already gone succeeds, for the same reason deleting an absent note does — but it announces
-// nothing, because a feed that said "a session was revoked" twice for one revocation would be
-// describing an event that did not happen.
+// Revoking a session that is already gone succeeds, but announces nothing: a feed that said "a
+// session was revoked" twice for one revocation would be describing an event that did not happen.
 func (s *Service) RevokeSession(ctx context.Context, userID, sessionID string) error {
 	ended, err := s.store.DeleteSession(ctx, userID, sessionID)
 	if err != nil {
@@ -78,7 +71,7 @@ func (s *Service) RevokeSession(ctx context.Context, userID, sessionID string) e
 	return nil
 }
 
-// RevokeAllSessions ends every session for the account, including the caller's.
+// Including the caller's own.
 func (s *Service) RevokeAllSessions(ctx context.Context, userID string) error {
 	ended, err := s.store.DeleteSessionsForUser(ctx, userID)
 	if err != nil {

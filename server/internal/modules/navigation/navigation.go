@@ -4,11 +4,8 @@ import (
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 )
 
-// The screen this module owns, declared the same way every other module declares its own. Nothing
-// here is special-cased: the module that collects the declarations is also one of the modules that
-// makes one.
-
-// NavigationDestinations declares the Navigation layout screen.
+// Declared the same way every other module declares its own: the module that collects the
+// declarations is not special-cased.
 func (m *Module) NavigationDestinations() []navigationapi.Destination {
 	return []navigationapi.Destination{
 		{

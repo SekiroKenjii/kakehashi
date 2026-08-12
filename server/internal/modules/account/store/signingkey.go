@@ -9,7 +9,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// SigningKey returns the provider's key, or an errs.NotFound error when none has been created.
 func (s *SQLServer) SigningKey(ctx context.Context) (domain.SigningKey, error) {
 	const q = `
         SELECT TOP (1) sk.Id, sk.Algorithm, sk.PrivateKey, sk.CreatedAt
@@ -29,7 +28,6 @@ func (s *SQLServer) SigningKey(ctx context.Context) (domain.SigningKey, error) {
 	return k, nil
 }
 
-// InsertSigningKey stores a newly generated key.
 func (s *SQLServer) InsertSigningKey(ctx context.Context, k domain.SigningKey) error {
 	const q = `
         INSERT INTO account.SigningKey (Id, Algorithm, PrivateKey, CreatedAt)

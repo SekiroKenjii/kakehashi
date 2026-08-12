@@ -1,5 +1,3 @@
-// Both halves of the audit trail.
-//
 // record has callers in all three of the other files but lives beside the read it feeds, because
 // which kinds get written and which come back out is one question, not two.
 
@@ -12,7 +10,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
 )
 
-// SecurityEvents returns the most recent audit entries.
 func (s *Service) SecurityEvents(
 	ctx context.Context, userID string, take int,
 ) ([]accountapi.SecurityEvent, error) {
@@ -39,9 +36,9 @@ func (s *Service) SecurityEvents(
 	return out, nil
 }
 
-// record appends to the audit trail. It deliberately swallows its error: failing to write an audit
-// row must not fail the sign-in that caused it, and the alternative — refusing to authenticate
-// anyone because a log table is full — is worse than a gap in the trail.
+// Deliberately swallows its error: failing to write an audit row must not fail the sign-in that
+// caused it, and refusing to authenticate anyone because a log table is full is worse than a gap
+// in the trail.
 func (s *Service) record(ctx context.Context, userID, kind, device, ip string) {
 	_ = s.store.InsertSecurityEvent(ctx, domain.SecurityEvent{
 		ID:         s.newID(),

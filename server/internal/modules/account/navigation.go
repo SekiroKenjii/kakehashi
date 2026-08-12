@@ -5,16 +5,11 @@ import (
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 )
 
-// The screen this module owns.
+// Only the administrative user directory. The caller's own Account page is deliberately absent: it
+// is a footer item the client places itself, so nothing about it is a deployment's to arrange.
 //
-// One, and not the one you might expect: the caller's own Account page is a footer item the client
-// places itself, so nothing about it is a deployment's to arrange. What is here is the
-// administrative user directory.
-
-// NavigationDestinations declares the Users screen.
-//
-// It names its own permission because this module's routes are not gated on account.access —
-// signing in cannot require a permission you can only have after signing in — so a destination
+// The destination names its own permission because this module's routes are not gated on
+// account.access — signing in cannot require a permission you can only have after signing in — so
 // falling back to that key would draw a row disabled for everybody, forever.
 //
 // HideWhenDenied, because the existence of a user directory is itself administrative: a locked row

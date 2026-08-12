@@ -4,7 +4,7 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
 )
 
-// Migrations is the module's append-only schema history. Never edit one that has shipped.
+// Append-only schema history. Never edit a migration that has shipped.
 func Migrations() []database.Migration {
 	return []database.Migration{
 		{

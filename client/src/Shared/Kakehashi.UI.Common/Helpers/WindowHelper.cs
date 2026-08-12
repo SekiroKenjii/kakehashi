@@ -5,14 +5,8 @@ using Microsoft.UI.Xaml;
 using Windows.Graphics;
 
 namespace Kakehashi.UI.Common.Helpers {
-  /// <summary>
-  /// A helper class for managing app's windows.
-  /// </summary>
   public static class WindowHelper {
-    /// <summary>
-    /// Sets the window's icon from <c>Assets\app.ico</c> (taskbar, Alt+Tab, title bar). Safe to call
-    /// for the unpackaged app; a missing icon file is ignored so startup never fails on a rebrand.
-    /// </summary>
+    // A missing icon file is ignored rather than thrown, so startup never fails on a rebrand.
     public static void TrySetAppIcon(Window window) {
       ArgumentNullException.ThrowIfNull(window);
 
@@ -22,12 +16,8 @@ namespace Kakehashi.UI.Common.Helpers {
       }
     }
 
-    /// <summary>
-    /// Shows <paramref name="window"/> as a modal over <paramref name="owner"/>: owned (kept above
-    /// the owner in z-order), centered over it, with all input to the owner - including its caption
-    /// buttons - disabled. Dispose the returned handle once the modal closes to re-enable and
-    /// re-activate the owner.
-    /// </summary>
+    // All input to the owner, its caption buttons included, stays disabled until the returned
+    // handle is disposed; drop it on the floor and the owner is stuck.
     public static IDisposable ShowModalOver(Window window, Window owner) {
       ArgumentNullException.ThrowIfNull(window);
       ArgumentNullException.ThrowIfNull(owner);

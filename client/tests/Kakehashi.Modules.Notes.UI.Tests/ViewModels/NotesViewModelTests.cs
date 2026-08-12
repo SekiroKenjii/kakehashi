@@ -15,11 +15,7 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Notes.UI.Tests.ViewModels {
-  /// <summary>
-  /// Unit tests for <see cref="NotesViewModel"/>: loading, client-side paging, the edit dialog's
-  /// keep-open-on-error contract, and delete. The mediator is substituted; no XAML is constructed,
-  /// so nothing here needs a UI thread.
-  /// </summary>
+  // The mediator is substituted and no XAML is constructed, so nothing here needs a UI thread.
   public sealed class NotesViewModelTests {
     private readonly ISender _sender = Substitute.For<ISender>();
 
@@ -30,7 +26,7 @@ namespace Kakehashi.Modules.Notes.UI.Tests.ViewModels {
 
     // Every setup below matches "not null" rather than Arg.Any. ISender.Send is generic, so all of
     // these configure the same method and are told apart only by the argument matcher — and
-    // Arg.Any<T>() also matches the null that a Received/DidNotReceive verification passes in. The
+    // Arg.Any<T>() also matches the null a Received/DidNotReceive verification passes in. The
     // symptom is a request of one type being answered with another type's Task, cast-failing deep
     // inside the proxy.
     private void GivenNotes(params NoteDto[] notes) {
@@ -183,7 +179,7 @@ namespace Kakehashi.Modules.Notes.UI.Tests.ViewModels {
       var saved = await viewModel.SaveAsync();
 
       // False keeps the ContentDialog open, so a rejected title does not cost the user the body
-      // they just typed.
+      // they typed.
       Assert.False(saved);
       Assert.True(viewModel.HasDialogError);
       Assert.Equal(NotesErrors.TitleRequired.Message, viewModel.DialogError);

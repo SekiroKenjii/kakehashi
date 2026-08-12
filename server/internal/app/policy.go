@@ -9,36 +9,25 @@ import "github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
 type PolicyKind uint8
 
 const (
-	// PolicyUnset is the zero value: a Route whose Policy was never assigned.
 	PolicyUnset PolicyKind = iota
-
-	// PolicyPublic serves anyone, verified or anonymous.
 	PolicyPublic
-
-	// PolicySignedIn serves any caller the verifier authenticated, and checks no permission.
 	PolicySignedIn
-
-	// PolicyModuleAccess requires the contributing module's <id>.access.
 	PolicyModuleAccess
-
-	// PolicyPermission requires one named permission.
 	PolicyPermission
 )
 
 // RoutePolicy is what a caller must be before a route's handler runs.
 //
-// It is mandatory. Every route states its policy beside its pattern, and boot refuses the ones that
-// do not — which is the whole point. The set this replaces was a list of MODULES exempt from the
-// gate, so exempting a module exempted every route it served: all thirteen of the account module's
-// routes skipped the check, and its administrative service was protected only because somebody had
-// hand-written a wrapper around that one handler. Deleting that line was caught by nothing.
+// The set this replaces was a list of MODULES exempt from the gate, so exempting a module exempted
+// every route it served: all thirteen of the account module's routes skipped the check, and its
+// administrative service was protected only because somebody had hand-written a wrapper around that
+// one handler. Deleting that line was caught by nothing.
 //
 // The fields are unexported and there is no exported literal form, so the only non-zero values come
 // from the four constructors below. That stops an accidental half-built policy, not a deliberate
-// one: PolicyPublic still costs one exported call inside a module's own file, and the documented way
-// to add a module is to copy an existing one. So the composition root still names the modules
-// permitted to make that call — see Kernel.AllowUnprotectedRoutes. Granularity moved to the route;
-// review salience stayed at the root.
+// one: Public() still costs one exported call inside a module's own file, and the documented way to
+// add a module is to copy an existing one. So the composition root still names the modules
+// permitted to make that call — see Kernel.AllowUnprotectedRoutes.
 //
 // A policy covers everything its handler can reach. Two shapes here are whole routers — the OpenID
 // Connect provider mounted at "/", and each Connect service, which is one route and N procedures
@@ -49,18 +38,13 @@ type RoutePolicy struct {
 	key  string
 }
 
-// Public serves anyone, signed in or not.
-//
-// Reserve it for what must answer before anybody can sign in: the liveness probe, the OpenID Connect
-// surface, the sign-in endpoints themselves.
+// Reserve Public for what must answer before anybody can sign in: the liveness probe, the OpenID
+// Connect surface, the sign-in endpoints themselves.
 func Public() RoutePolicy { return RoutePolicy{kind: PolicyPublic} }
 
-// SignedIn requires a verified caller and checks no permission.
-//
-// For the endpoints that are about the caller's own account or the caller's own view — reading your
-// own profile, asking what you may do, asking what your navigation pane looks like. A permission
-// guarding your own profile would be a permission somebody could take away, leaving an account that
-// can sign in and then do nothing.
+// SignedIn requires a verified caller and checks no permission — for endpoints about the caller's
+// own account or own view. A permission guarding your own profile would be a permission somebody
+// could take away, leaving an account that can sign in and then do nothing.
 func SignedIn() RoutePolicy { return RoutePolicy{kind: PolicySignedIn} }
 
 // ModuleAccess requires the contributing module's <id>.access. The ordinary case for a feature.
@@ -71,21 +55,18 @@ func Permission(key string) RoutePolicy {
 	return RoutePolicy{kind: PolicyPermission, key: key}
 }
 
-// Kind reports which policy this is. PolicyUnset means the route never declared one.
 func (p RoutePolicy) Kind() PolicyKind { return p.kind }
 
-// Unprotected reports whether this policy lets a caller through without holding any permission.
-//
-// Public and SignedIn both qualify: neither consults the grants. It is the question the composition
-// root's exemption list is asked about every route.
+// Public and SignedIn both qualify as unprotected: neither consults the grants. It is the question
+// the composition root's exemption list is asked about every route.
 func (p RoutePolicy) Unprotected() bool {
 	return p.kind == PolicyPublic || p.kind == PolicySignedIn
 }
 
-// PermissionFor returns the permission key this policy requires, or "" when it requires none.
+// PermissionFor returns "" when the policy requires no permission.
 //
-// moduleID is the contributing module, which the kernel stamps rather than the module naming itself.
-// That matters here: this is the value that decides whose permission applies.
+// moduleID is the contributing module, which the kernel stamps rather than the module naming
+// itself. That matters here: this is the value that decides whose permission applies.
 func (p RoutePolicy) PermissionFor(moduleID string) string {
 	switch p.kind {
 	case PolicyModuleAccess:
@@ -97,7 +78,6 @@ func (p RoutePolicy) PermissionFor(moduleID string) string {
 	}
 }
 
-// String names the policy, for the boot log and for the panic message.
 func (p RoutePolicy) String() string {
 	switch p.kind {
 	case PolicyPublic:

@@ -1,5 +1,3 @@
-// What a signed-in user does to their own record.
-//
 // ChangePassword is here rather than beside the sessions it deletes: ending them is a consequence
 // of replacing the credential, never something a caller asks for on its own.
 
@@ -13,8 +11,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
 )
 
-// FindByEmail resolves an address to an account.
-//
 // Unlike everything else in this file it is not about the caller's own record: the assignments
 // module uses it to turn the address an administrator typed into the id a grant is filed under.
 // The normalization is the store's, so an address that differs only in case still resolves.
@@ -26,7 +22,6 @@ func (s *Service) FindByEmail(ctx context.Context, email string) (accountapi.Acc
 	return toAPI(account), nil
 }
 
-// Profile returns the account.
 func (s *Service) Profile(ctx context.Context, userID string) (accountapi.Account, error) {
 	user, err := s.store.AccountByID(ctx, userID)
 	if err != nil {
@@ -35,7 +30,6 @@ func (s *Service) Profile(ctx context.Context, userID string) (accountapi.Accoun
 	return toAPI(user), nil
 }
 
-// UpdateProfile changes the display name and phone.
 func (s *Service) UpdateProfile(
 	ctx context.Context, userID string, displayName, phone *string,
 ) error {
@@ -49,7 +43,6 @@ func (s *Service) UpdateProfile(
 	return s.store.UpdateAccount(ctx, user)
 }
 
-// ChangePassword replaces the password and ends every session.
 func (s *Service) ChangePassword(ctx context.Context, userID, current, next string) error {
 	user, err := s.store.AccountByID(ctx, userID)
 	if err != nil {

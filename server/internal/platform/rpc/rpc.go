@@ -1,9 +1,6 @@
-// Package rpc holds the server's Connect wiring: the options every module's handler is built with,
-// and the interceptor that turns domain errors into wire errors.
-//
-// It exists so that translation happens in exactly one place. Without it, every handler would end
-// up deciding for itself whether a missing row is a 404 or a 500, and they would not all decide
-// the same way.
+// Package rpc holds the server's Connect wiring, so that translating a domain error into a wire
+// error happens in exactly one place. Without it, every handler would decide for itself whether a
+// missing row is a 404 or a 500, and they would not all decide the same way.
 package rpc
 
 import (
@@ -17,20 +14,15 @@ import (
 )
 
 // HandlerOptions are the options every Connect handler in this server is built with.
-//
-//	path, handler := healthv1connect.NewHealthServiceHandler(svc, k.RPC...)
 func HandlerOptions(log *slog.Logger) []connect.HandlerOption {
 	return []connect.HandlerOption{
 		connect.WithInterceptors(errorInterceptor(log)),
 	}
 }
 
-// errorInterceptor maps an errs.Kind onto a Connect status code, logs the ones nobody expected,
-// and replaces the message with something safe to send.
-//
-// Handlers therefore return plain errors from their service layer and never construct a
-// *connect.Error themselves. That is the point: a service is not supposed to know it is being
-// called over a network, and the moment it starts choosing status codes, it does.
+// Handlers return plain errors from their service layer and never construct a *connect.Error
+// themselves: a service is not supposed to know it is being called over a network, and the moment
+// it starts choosing status codes, it does.
 func errorInterceptor(log *slog.Logger) connect.Interceptor {
 	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
 		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {

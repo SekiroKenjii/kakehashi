@@ -4,15 +4,10 @@
 // that. Mongo has no migrations, only indexes, so what this package declares through Indexes() is
 // the whole of its schema management.
 //
-// One file, because there is one collection. The decomposition rule makes store/'s unit the table
-// or collection; an axis with one value has nothing to split, and a store.go beside an entry.go
-// would be a rename rather than a seam. The name is entry.go and not mongo.go for the reason
-// CLAUDE.md gives: a file named after its technology is a file whose contents refused a name.
-//
-// For a reader arriving from notes/store: there is deliberately no `storable` truncation helper
-// here. The driver truncates to milliseconds on encode and decodes back as UTC, and nothing in
-// this module observes it, because the subscriber discards the entry after writing. The day an
-// Insert returns the stored entry to a caller that compares it, the helper comes back.
+// There is deliberately no `storable` truncation helper, unlike notes/store: the driver truncates
+// to milliseconds on encode and decodes back as UTC, and nothing here observes it, because the
+// subscriber discards the entry after writing. The day an Insert returns the stored entry to a
+// caller that compares it, the helper comes back.
 package store
 
 import (
@@ -33,29 +28,26 @@ import (
 // otherwise, which is the one namespacing rule in this project a machine can actually check.
 const collection = "activity_entry"
 
-// Indexes is the module's entire schema management.
 func Indexes() []mongodb.Index {
 	return []mongodb.Index{
 		{
-			// Named after its keys rather than its query, on purpose. EnsureIndexes creates by
-			// name with CreateOne and Mongo cannot alter an existing index, so a name kept while
-			// its keys change fails the boot of every database that already has the old one — and
-			// there is no migration to fix it with. Change the name with the keys.
+			// Named after its keys rather than its query. EnsureIndexes creates by name with
+			// CreateOne and Mongo cannot alter an existing index, so a name kept while its keys
+			// change fails the boot of every database that already has the old one, with no
+			// migration to fix it. Change the name with the keys.
 			Name:       "IX_Entry_UserId_OccurredAt_Id",
 			Collection: collection,
 			Keys: []mongodb.Key{
 				// The equality field leads, so one traversal satisfies both the match and the sort
 				// and the sort is never done in memory. An index led by occurred_at would serve
 				// "everyone's activity, newest first" — a query this module must never answer,
-				// because it has no basis on which to authorize a cross-account read.
+				// having no basis on which to authorize a cross-account read.
 				{Field: "user_id"},
 				{Field: "occurred_at", Descending: true},
 
 				// The tiebreaker. BSON dates are millisecond-precision, so same-millisecond
 				// collisions are real, and a list that reshuffles between refreshes looks broken
-				// even when the data is right. It is also exactly the key a keyset cursor needs,
-				// and it is not retrofittable — an index is rebuilt, but the ordering guarantee
-				// people already relied on is not.
+				// even when the data is right. It is also exactly the key a keyset cursor needs.
 				{Field: "_id", Descending: true},
 			},
 		},
@@ -64,37 +56,33 @@ func Indexes() []mongodb.Index {
 			// because Mongo honours a TTL only over a single date field, so it cannot be a flag on
 			// the compound index above.
 			//
-			// Deleting is Mongo's job rather than a job this server schedules: a background sweep
-			// here would be a second thing to deploy, to monitor and to get wrong, and it would have
-			// to be careful not to run on every replica at once. The trade is that expiry is
-			// approximate — the TTL monitor wakes about once a minute — which is exactly the
-			// precision "kept for ninety days" deserves.
+			// Deleting is Mongo's job rather than one this server schedules: a background sweep
+			// would be a second thing to deploy, to monitor and to keep from running on every
+			// replica at once. The trade is that expiry is approximate — the TTL monitor wakes
+			// about once a minute — which is the precision "kept for ninety days" deserves.
 			Name:        "IX_Entry_OccurredAt_TTL",
 			Collection:  collection,
 			Keys:        []mongodb.Key{{Field: "occurred_at"}},
 			ExpireAfter: domain.Retention,
 		},
 	}
-	// `kind` is still not indexed, and the counts are why that is now a decision rather than an
-	// oversight. CountByKind groups by it, but only after a match on user_id and a date range that
-	// the compound index above serves completely — so the group runs over one account's window,
-	// which is small, rather than over the collection. An index on `kind` would earn its write cost
+	// `kind` is deliberately not indexed. CountByKind groups by it, but only after a match on
+	// user_id and a date range the compound index above serves completely, so the group runs over
+	// one account's window rather than the collection. An index on `kind` would earn its write cost
 	// only if something matched on `kind` first, and nothing does: every read here starts from
 	// "whose feed is this".
 }
 
-// Mongo is the activity module's document store.
 type Mongo struct {
 	entries *mongo.Collection
 }
 
-// New binds the store to its collection.
 func New(db *mongodb.DB) *Mongo {
 	return &Mongo{entries: db.Collection(collection)}
 }
 
-// Insert appends one entry. There is no update and no delete: the feed is append-only, and the
-// absence of those methods is what says so.
+// There is no update and no delete: the feed is append-only, and the absence of those methods is
+// what says so.
 func (s *Mongo) Insert(ctx context.Context, e domain.Entry) error {
 	if _, err := s.entries.InsertOne(ctx, toDocument(e)); err != nil {
 		return errs.Internalf(err, "insert activity entry")
@@ -102,7 +90,6 @@ func (s *Mongo) Insert(ctx context.Context, e domain.Entry) error {
 	return nil
 }
 
-// List returns one account's entries matching the filter, newest first.
 func (s *Mongo) List(
 	ctx context.Context, userID string, filter domain.Filter, take int,
 ) ([]domain.Entry, error) {
@@ -127,11 +114,9 @@ func (s *Mongo) List(
 	return out, nil
 }
 
-// Count is how many entries match, which is the "of 214" a footer reports.
-//
-// It counts exactly the filter it is given, cursor included. Whether a total should ignore the page
+// Counts exactly the filter it is given, cursor included. Whether a total should ignore the page
 // somebody is on is the caller's decision, and a store method that quietly dropped a field it was
-// handed would be a surprise for the next caller who needed that field honoured.
+// handed would surprise the next caller who needed that field honoured.
 func (s *Mongo) Count(
 	ctx context.Context, userID string, filter domain.Filter,
 ) (int, error) {
@@ -142,8 +127,6 @@ func (s *Mongo) Count(
 	return int(total), nil
 }
 
-// CountByKind is how many entries there are of each kind, for the counts beside a chip.
-//
 // Keyed by kind rather than by category for the reason Filter.Kinds is: the grouping belongs to the
 // api package, and the caller folds these into it.
 func (s *Mongo) CountByKind(
@@ -177,9 +160,9 @@ func (s *Mongo) CountByKind(
 	return out, nil
 }
 
-// query builds the match. Clauses go into an explicit $and rather than one flat document, because a
-// range and a keyset cursor both constrain occurred_at and a BSON document with the same key twice
-// is not a document — one of the two silently wins.
+// Clauses go into an explicit $and rather than one flat document, because a range and a keyset
+// cursor both constrain occurred_at, and a BSON document with the same key twice is not a
+// document — one of the two silently wins.
 func queryFor(userID string, f domain.Filter) bson.D {
 	clauses := []bson.D{{{Key: "user_id", Value: userID}}}
 
@@ -201,12 +184,12 @@ func queryFor(userID string, f domain.Filter) bson.D {
 	if f.Query != "" {
 		// Escaped, because the caller's text reaches a regular-expression engine: an unescaped "("
 		// is a syntax error the driver reports as a failed read, and an unescaped ".*" is a scan
-		// somebody did not mean to ask for.
+		// nobody asked for.
 		//
-		// A regex rather than a text index. A text index would tokenise on word boundaries, and the
-		// three fields it would cover are an event kind, a user-agent string and an IP address —
-		// none of which is prose, and all of which people search by fragment ("203.0", "iPhone").
-		// It runs over one account's window, after the index has done the narrowing.
+		// A regex rather than a text index, which would tokenise on word boundaries: the three
+		// fields covered are an event kind, a user-agent string and an IP address — none of them
+		// prose, and all searched by fragment ("203.0", "iPhone"). It runs over one account's
+		// window, after the index has done the narrowing.
 		needle := bson.Regex{Pattern: regexp.QuoteMeta(f.Query), Options: "i"}
 		clauses = append(clauses, bson.D{{Key: "$or", Value: []bson.D{
 			{{Key: "kind", Value: needle}},
@@ -217,7 +200,7 @@ func queryFor(userID string, f domain.Filter) bson.D {
 	if f.After != nil {
 		// Keyset, matching the sort and the index exactly: strictly older, or the same instant with
 		// a smaller id. Never skip-and-limit — new rows land at the head of this collection between
-		// any two reads, which is the case offset paging gets wrong.
+		// any two reads, which is what offset paging gets wrong.
 		clauses = append(clauses, bson.D{{Key: "$or", Value: []bson.D{
 			{{Key: "occurred_at", Value: bson.D{{Key: "$lt", Value: f.After.OccurredAt}}}},
 			{
@@ -233,26 +216,22 @@ func queryFor(userID string, f domain.Filter) bson.D {
 	return bson.D{{Key: "$and", Value: clauses}}
 }
 
-// document is the stored shape.
-//
-// The bson tags live here rather than on domain.Entry, and the reason is that archlint would never
-// object if they did — a struct tag imports nothing. Mongo field names are load-bearing forever,
-// baked into every stored document and every index in a store with no migrations, while
-// domain.Entry's field names are refactorable at will. Tying them together turns a Go rename into
-// a data migration.
+// The bson tags live here rather than on domain.Entry, where archlint would never object to
+// them — a struct tag imports nothing. Mongo field names are load-bearing forever in a store with
+// no migrations, while domain.Entry's are refactorable at will; tying them together turns a Go
+// rename into a data migration.
 //
 // The id is a UUID string rather than a bson.ObjectID for the same class of reason: ObjectID is a
-// driver type, and putting one on domain.Entry would be a Mongo type in the innermost layer.
-// Rule 5 fences platform/mongodb and would not catch it, so this is a line a review holds rather
-// than a linter. Every other identifier in this server is a v4 UUID string.
+// driver type, and putting one on domain.Entry would be a Mongo type in the innermost layer. Rule 5
+// fences platform/mongodb and would not catch it, so this is a line a review holds rather than a
+// linter.
 type document struct {
 	ID     string `bson:"_id"`
 	UserID string `bson:"user_id"`
 	Kind   string `bson:"kind"`
 
 	// Added after rows already existed, and needing no backfill: a document written before this
-	// field decodes it as empty, which is exactly what "this fact had no session" means. That is
-	// the whole of schema evolution in a store whose absent fields have a truthful zero value.
+	// field decodes it as empty, which is exactly what "this fact had no session" means.
 	SessionID string `bson:"session_id"`
 
 	Device     string    `bson:"device"`

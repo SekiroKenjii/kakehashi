@@ -43,7 +43,7 @@ func TestHashIsSaltedPerPassword(t *testing.T) {
 	}
 
 	// Equal hashes would mean an unsalted scheme, where one rainbow table breaks every account
-	// that shares a password.
+	// sharing a password.
 	if first == second {
 		t.Error("hashing the same password twice produced the same encoding; the salt is not random")
 	}
@@ -67,8 +67,8 @@ func TestVerifyRejectsTheWrongPassword(t *testing.T) {
 }
 
 func TestVerifyReportsAMalformedHash(t *testing.T) {
-	// A corrupt column must be an error, not a silent false: the two need different responses, and
-	// only one of them is the user's fault.
+	// A corrupt column must be an error, not a silent false: only one of the two is the user's
+	// fault.
 	malformed := []string{
 		"",
 		"not-a-hash",

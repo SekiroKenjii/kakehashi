@@ -5,9 +5,8 @@ using System.Text.Json;
 using Kakehashi.UI.Contracts.Services.Platform;
 
 namespace Kakehashi.App.Services {
-  // Persists small settings as JSON under the user's local app-data folder. This works for the
-  // unpackaged app (which cannot use Windows.Storage.ApplicationData); a packaged app could
-  // swap in an ApplicationData-backed implementation without touching callers.
+  // JSON under the user's local app-data folder, because the unpackaged app cannot use
+  // Windows.Storage.ApplicationData.
   public sealed class LocalSettingsService : ILocalSettingsService {
     private readonly string _path;
     private readonly Dictionary<string, JsonElement> _cache;

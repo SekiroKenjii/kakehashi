@@ -2,17 +2,10 @@ using Kakehashi.UI.Common.Controls;
 using Xunit;
 
 namespace Kakehashi.App.Tests.UI {
-  /// <summary>
-  /// Unit tests for <see cref="NavigationIcons"/>: the vocabulary an icon picker offers, and the
-  /// fallback that keeps an unknown name harmless.
-  /// </summary>
-  /// <remarks>
-  /// The vocabulary and the lookup are built from one array so a picker cannot offer a name that
-  /// <see cref="NavigationIcons.Resolve"/> would then refuse. Touching <c>Names</c> at all is what
-  /// proves that array has no duplicate name: two entries with the same name would throw while the
-  /// dictionary is being built, and a static initialiser that throws surfaces as an unrelated-looking
-  /// failure the first time any screen draws a pane.
-  /// </remarks>
+  // The vocabulary and the lookup are built from one array so a picker cannot offer a name Resolve
+  // would then refuse. Touching Names at all is what proves that array has no duplicate name: two
+  // entries with the same name throw while the dictionary is being built, and a static initialiser
+  // that throws surfaces as an unrelated-looking failure the first time any screen draws a pane.
   public sealed class NavigationIconsTests {
     private const string _fallback = "the-page-s-own-glyph";
 
@@ -28,9 +21,6 @@ namespace Kakehashi.App.Tests.UI {
       }
     }
 
-    /// <summary>
-    /// A name this build has never heard of costs nothing: the row keeps the glyph it always drew.
-    /// </summary>
     [Fact]
     public void AnUnknownNameKeepsTheGlyphTheCallerAlreadyHad() {
       Assert.Equal(_fallback, NavigationIcons.Resolve("a-name-from-a-later-build", _fallback));
@@ -42,26 +32,18 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Equal(_fallback, NavigationIcons.Resolve(string.Empty, _fallback));
     }
 
-    /// <summary>
-    /// Names are matched exactly — the vocabulary here is lower case by convention, and the font's
-    /// own catalogue behind it is PascalCase.
-    /// </summary>
-    /// <remarks>
-    /// This used to probe with "Home", which stopped proving anything once the full Segoe catalogue
-    /// was chained on: "Home" is a real icon in it, so knowing it is correct. "Activity" is not,
-    /// which is what makes it a probe rather than a coincidence.
-    /// </remarks>
+    // The vocabulary here is lower case by convention; the font's own catalogue behind it is
+    // PascalCase. This used to probe with "Home", which stopped proving anything once the full
+    // Segoe catalogue was chained on — "Home" is a real icon in it, so knowing it is correct.
+    // "Activity" is not, which is what makes it a probe rather than a coincidence.
     [Fact]
     public void MatchingIsOrdinalRatherThanForgiving() {
       Assert.False(NavigationIcons.Knows("Activity"));
       Assert.True(NavigationIcons.Knows("activity"));
     }
 
-    /// <summary>The whole font is reachable by name, past the short vocabulary above.</summary>
-    /// <remarks>
-    /// A name from the catalogue is still a name rather than a code point, so it crosses the wire
-    /// and degrades exactly as the curated ones do.
-    /// </remarks>
+    // A name from the catalogue is still a name rather than a code point, so it crosses the wire
+    // and degrades exactly as the curated ones do.
     [Fact]
     public void TheFontsOwnCatalogueIsReachableToo() {
       Assert.True(NavigationIcons.Knows("GlobalNavButton"));

@@ -6,15 +6,12 @@ using Kakehashi.Modules.Activity.Application;
 using Xunit;
 
 namespace Kakehashi.ArchitectureTests {
-  /// <summary>
-  /// Activity-module counterparts to <see cref="LayeringTests"/>. Per-module coverage lives with
-  /// its module so that adding or removing one never means editing the shared file.
-  /// </summary>
-  /// <remarks>
-  /// There is no Domain assembly here, and no test asserting one exists. The module is read-only —
-  /// the server is the only thing that appends to the feed — so there are no invariants to enforce
-  /// before a write, and an empty Domain project would be a layer added to satisfy a diagram.
-  /// </remarks>
+  // Per-module coverage lives with its module so adding or removing one never means editing the
+  // shared LayeringTests.
+  //
+  // There is no Domain assembly here, and no test asserting one exists. The module is read-only —
+  // the server is the only thing that appends to the feed — so there are no invariants to enforce
+  // before a write, and an empty Domain project would be a layer added to satisfy a diagram.
   public sealed class ActivityLayeringTests {
     private static readonly Assembly _activityApplication =
         typeof(ActivityApplicationServiceCollectionExtensions).Assembly;
@@ -36,10 +33,9 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void ActivityLayer_DoesNotDependOnAnotherFeatureModule() {
-      // The feed is assembled from other modules' facts, but that assembly happens on the server,
-      // where the activity module imports their api packages under archlint's eye. Nothing of it
-      // reaches the client: here the module knows only its own contract, which is why this test
-      // must keep passing even as the feed grows to cover more of the product.
+      // The feed is assembled from other modules' facts, but that happens on the server, where the
+      // activity module imports their api packages under archlint's eye. On the client the module
+      // knows only its own contract, and must keep doing so as the feed covers more of the product.
       foreach (var name in ReferencedAssemblyNames(_activityApplication)) {
         if (name.StartsWith("Kakehashi.Modules.", StringComparison.Ordinal)) {
           Assert.StartsWith("Kakehashi.Modules.Activity.", name);
@@ -49,9 +45,8 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void Application_DoesNotDependOnTheGeneratedContract() {
-      // Generated protobuf types are the wire's shape, not the module's. Letting them past the UI
-      // layer would make a change to the schema a change to a use case, which is exactly the
-      // coupling the gateway port exists to prevent.
+      // Generated protobuf types are the wire's shape, not the module's: letting them past the UI
+      // layer makes a schema change a use-case change, the coupling the gateway port prevents.
       var references = ReferencedAssemblyNames(_activityApplication);
 
       Assert.DoesNotContain(

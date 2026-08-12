@@ -45,10 +45,8 @@ func TestEveryUnprotectedRouteModuleIsMounted(t *testing.T) {
 }
 
 func TestThePrerequisitesOfTheCheckAreExempt(t *testing.T) {
-	// These four are not a policy choice, they are what the check depends on. health must answer a
-	// probe with no account; account must let someone sign in before they can have permissions;
-	// authz must be able to say what those permissions are; navigation must be able to say what a
-	// pane looks like before a client can draw a lock on it.
+	// These four are not a policy choice, they are what the check itself depends on — see
+	// unprotectedRouteModules for what each one would break.
 	for _, id := range []string{"health", "account", "authz", "navigation"} {
 		if !slices.Contains(unprotectedRouteModules, id) {
 			t.Errorf("%q must be able to serve an unprotected route", id)
@@ -57,9 +55,9 @@ func TestThePrerequisitesOfTheCheckAreExempt(t *testing.T) {
 }
 
 func TestTheFeatureModulesAreNotExempt(t *testing.T) {
-	// The other direction, and the one that matters for the feature: a module added to the mount
-	// list cannot serve an unprotected route unless somebody deliberately exempts it here. This is
-	// what turns "we forgot" into a failing boot rather than an open door.
+	// The direction that matters: a module added to the mount list cannot serve an unprotected
+	// route unless somebody deliberately exempts it. This is what turns "we forgot" into a failing
+	// boot rather than an open door.
 	for _, id := range []string{"notes", "activity"} {
 		if slices.Contains(unprotectedRouteModules, id) {
 			t.Errorf("%q may serve an unprotected route; it should not be able to", id)

@@ -10,13 +10,11 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Roles, and the grants inside them. One file because they are one aggregate: the grants have no
-// life without the role, and saving them is a single act.
+// RolePermission has no file of its own: the grants are entities inside the Role aggregate and are
+// written with it.
 
-// Roles returns every role, without their grants.
-//
-// The list screen shows a name, a description and two counts; loading every grant to render that
-// would be five queries to answer a question none of them asks.
+// Every role, without their grants. The list screen shows a name, a description and two counts;
+// loading every grant to render that would be five queries to answer a question none of them asks.
 func (s *SQLServer) Roles(ctx context.Context) ([]domain.Role, error) {
 	const q = `
         SELECT r.Id, r.Name, r.Description, r.IsSystem
@@ -26,7 +24,7 @@ func (s *SQLServer) Roles(ctx context.Context) ([]domain.Role, error) {
 	return collect(ctx, s.db, "list roles", q, nil, scanRole)
 }
 
-// Role returns one role with its grants loaded.
+// One role, with its grants loaded — unlike Roles and RoleByName.
 func (s *SQLServer) Role(ctx context.Context, id string) (domain.Role, error) {
 	const q = `
         SELECT r.Id, r.Name, r.Description, r.IsSystem
@@ -48,7 +46,7 @@ func (s *SQLServer) Role(ctx context.Context, id string) (domain.Role, error) {
 	return role, nil
 }
 
-// RoleByName returns one role by its display name, which is what the seed matches on.
+// By display name, which is what the boot seed matches on.
 func (s *SQLServer) RoleByName(ctx context.Context, name string) (domain.Role, error) {
 	const q = `
         SELECT r.Id, r.Name, r.Description, r.IsSystem
@@ -62,7 +60,6 @@ func (s *SQLServer) RoleByName(ctx context.Context, name string) (domain.Role, e
 	return role, err
 }
 
-// InsertRole stores a new role and its grants.
 func (s *SQLServer) InsertRole(ctx context.Context, r domain.Role, at time.Time) error {
 	return s.inTransaction(ctx, func(tx *sql.Tx) error {
 		const q = `
@@ -77,11 +74,9 @@ func (s *SQLServer) InsertRole(ctx context.Context, r domain.Role, at time.Time)
 	})
 }
 
-// UpdateRole rewrites a role's name and description.
-//
-// The name-collision check lives in the service, beside CreateRole's, so this only executes. A
-// race that slips past it still hits AK_Role_Name and surfaces as an internal error — rare enough
-// to accept, honest enough not to hide.
+// The name-collision check lives in the service, beside CreateRole's, so this only executes. A race
+// that slips past it still hits AK_Role_Name and surfaces as an internal error — rare enough to
+// accept, honest enough not to hide.
 func (s *SQLServer) UpdateRole(ctx context.Context, r domain.Role) error {
 	const q = `UPDATE authz.Role SET Name = @p1, Description = @p2 WHERE Id = @p3;`
 
@@ -95,12 +90,9 @@ func (s *SQLServer) UpdateRole(ctx context.Context, r domain.Role) error {
 	return nil
 }
 
-// SaveGrants replaces a role's entire grant set, in one transaction.
-//
-// Delete-then-insert rather than a diff, and the whole set rather than the changed rows, because
-// what the administration screen sends IS the whole set: they staged eight toggles and pressed
-// Save once. A partial apply is a state nobody asked for and nobody can see, which is exactly what
-// the transaction is here to prevent.
+// Delete-then-insert rather than a diff, because what the administration screen sends is the whole
+// set: they staged eight toggles and pressed Save once. A partial apply is a state nobody asked for
+// and nobody can see, which is what the transaction is here to prevent.
 func (s *SQLServer) SaveGrants(
 	ctx context.Context, r domain.Role, actorID string, at time.Time,
 ) error {
@@ -119,7 +111,7 @@ func (s *SQLServer) SaveGrants(
 	})
 }
 
-// DeleteRole removes a role. Its grants and its assignments go with it, by cascade.
+// Its grants and its assignments go with it, by cascade.
 func (s *SQLServer) DeleteRole(ctx context.Context, id string) error {
 	const q = `DELETE FROM authz.Role WHERE Id = @p1;`
 
@@ -129,20 +121,15 @@ func (s *SQLServer) DeleteRole(ctx context.Context, id string) error {
 	return nil
 }
 
-// GrantsOfAccount is the query the request gate runs, and the only one on the hot path.
-//
-// One join rather than two round trips, and the widening happens here in SQL because the answer is
-// one row per permission either way — pulling every role's every grant back to merge in Go would
-// move the same data and then do the work twice.
+// The query the request gate runs, and the only one on the hot path. One join rather than two round
+// trips, and the widening happens in SQL because the answer is one row per permission either way —
+// merging in Go would move the same data and then do the work twice.
 //
 // The widening is done on an explicit rank rather than on the scope string, because the string
-// sorts the WRONG WAY: alphabetically 'all' < 'own' < 'team', so MAX over the text picked 'team'
-// over 'all' and an account holding two roles resolved to the NARROWER of them. A comment here
-// once claimed the two orders coincided; they never did, and nothing tested the claim because the
-// test that looked like it did was asserting auth.Widest, which ranks correctly in Go.
-//
-// CASE keeps the rank in one statement rather than pulling every role's every grant back to merge,
-// which would move the same data and then do the work twice.
+// sorts the wrong way: alphabetically 'all' < 'own' < 'team', so MAX over the text picked 'team'
+// over 'all' and an account holding two roles resolved to the narrower of them. Nothing tested the
+// old claim that the two orders coincided, because the test that looked like it did was asserting
+// auth.Widest, which ranks correctly in Go.
 func (s *SQLServer) GrantsOfAccount(
 	ctx context.Context, accountID string,
 ) (map[string]string, error) {
@@ -176,9 +163,9 @@ func (s *SQLServer) GrantsOfAccount(
 			return nil, errs.Internalf(err, "scan grant")
 		}
 
-		// A rank of 0 means every row for this permission carried a scope this build does not
-		// know. Skipped rather than defaulted: a grant nothing here understands must not silently
-		// become the widest one.
+		// Rank 0 means every row for this permission carried a scope this build does not know.
+		// Skipped rather than defaulted: a grant nothing here understands must not silently become
+		// the widest one.
 		if scope := scopeOfRank(rank); scope != "" {
 			grants[key] = scope
 		}
@@ -189,7 +176,6 @@ func (s *SQLServer) GrantsOfAccount(
 	return grants, nil
 }
 
-// scopeOfRank maps the rank the query folded on back to the vocabulary everything else speaks.
 func scopeOfRank(rank int) string {
 	switch rank {
 	case 3:
@@ -203,7 +189,7 @@ func scopeOfRank(rank int) string {
 	}
 }
 
-// CountsByRole returns how many permissions and how many accounts each role has, for the list.
+// Per role: permission count first, account count second.
 func (s *SQLServer) CountsByRole(ctx context.Context) (map[string][2]int, error) {
 	const q = `
         SELECT r.Id,
@@ -244,9 +230,9 @@ func (s *SQLServer) grantsOf(ctx context.Context, roleID string) (map[string]str
 	}
 	defer rows.Close()
 
-	// One role's own grants, read as stored. No folding and no rank: there is nothing to widen
-	// across, because these are the rows of a single role — which is exactly why this scan differs
-	// from GrantsOfAccount's, and why a change made to that one must not be made here.
+	// Read as stored. No folding and no rank: there is nothing to widen across within a single
+	// role, which is why this differs from GrantsOfAccount and why a change there must not be
+	// copied here.
 	grants := map[string]string{}
 	for rows.Next() {
 		var key, scope string
@@ -278,7 +264,7 @@ func scanRole(sc scanner) (domain.Role, error) {
 	var r domain.Role
 	if err := sc.Scan(&r.ID, &r.Name, &r.Description, &r.IsSystem); err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
-			// Handed back untouched: only the caller knows which role was being looked for.
+			// Handed back untouched: only the caller knows which role was looked for.
 			return domain.Role{}, err
 		}
 		return domain.Role{}, errs.Internalf(err, "scan role")

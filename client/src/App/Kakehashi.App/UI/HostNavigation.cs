@@ -3,8 +3,6 @@ using Kakehashi.App.Services;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.App.UI {
-  // The destinations the host owns, in the same shape a module contributes.
-  //
   // The administration screens are not a feature module — they govern every module, and a module
   // that governed the others would reach across the boundary the architecture tests hold. But
   // they are still pane items, and hard-coding them into the shell's XAML meant they could not be
@@ -13,9 +11,9 @@ namespace Kakehashi.App.UI {
   public static class HostNavigation {
     // Home is not here: it is the one fixed destination, and the shell owns it.
     //
-    // Each names the destination the deployment files it under, so where these screens sit — and
-    // what they are called — is decided once, on the server, for every client. Group is only
-    // the fallback for a client that has not been able to ask.
+    // Id is what the deployment files the destination under, so where these screens sit — and what
+    // they are called — is decided once, on the server, for every client. Group is only the
+    // fallback for a client that has not been able to ask.
     public static IReadOnlyList<NavigationItem> Items { get; } = [
       new NavigationItem("Users", "", typeof(UsersPage)) {
         Id = "account.users",

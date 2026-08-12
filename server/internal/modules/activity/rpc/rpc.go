@@ -3,14 +3,13 @@
 // It is the only package in the module allowed to import the generated protobuf code, and
 // tools/archlint enforces that. Everything here is mapping, plus the one thing that is genuinely
 // the wire's business: the caller's identity arrives on the request context, put there by the
-// middleware in internal/app/server, so this is where it is read and where its absence is
-// answered. The service below is handed a user id and never learns it was on a network.
+// middleware in internal/app/server, so this is where it is read and where its absence is answered.
+// The service below is handed a user id and never learns it was on a network.
 //
-// One runtime dependency worth saying out loud rather than leaving to be discovered: the mux
-// resolves the verifier with TryUse, so this module depends at runtime on some module publishing
-// an auth.Verifier — in practice, account — but never at compile time. If account is ever
-// unmounted, ListActivity answers UNAUTHENTICATED to everyone instead of failing the build. That
-// is correct for a per-account feed in a server with no notion of accounts.
+// The mux resolves the verifier with TryUse, so this module depends at runtime on some module
+// publishing an auth.Verifier — in practice, account — but never at compile time. If account is
+// ever unmounted, ListActivity answers UNAUTHENTICATED to everyone instead of failing the build,
+// which is correct for a per-account feed in a server with no notion of accounts.
 package rpc
 
 import (
@@ -31,8 +30,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// feed is what this wire layer needs of the service.
-//
 // Declared here rather than taken from activityapi, which is deliberately read-only: another module
 // must not be able to append to somebody's history, but the module's own wire layer is not another
 // module. Widening activityapi.Service to make this compile would hand the write to every module in
@@ -44,21 +41,17 @@ type feed interface {
 	) error
 }
 
-// NewRoute builds the Connect handler for ActivityService.
 func NewRoute(svc feed, opts []connect.HandlerOption) (string, http.Handler) {
 	return activityv1connect.NewActivityServiceHandler(&handler{svc: svc}, opts...)
 }
 
-// handler adapts activityapi.Service to the generated interface.
 type handler struct {
 	svc feed
 }
 
-// RecordClientEvent stores one fact the client knows about itself.
-//
 // Four things the request does not get to decide, which together are what make the write safe:
 // whose feed (the token), when (the server's clock), where from (the connection), and what kind of
-// fact (a closed list). All that is left for the caller to choose is which of two things happened.
+// fact (a closed list). All that is left for the caller is which of two things happened.
 func (h *handler) RecordClientEvent(
 	ctx context.Context, req *connect.Request[activityv1.RecordClientEventRequest],
 ) (*connect.Response[activityv1.RecordClientEventResponse], error) {
@@ -69,36 +62,34 @@ func (h *handler) RecordClientEvent(
 
 	kind := req.Msg.GetKind()
 	if !activityapi.CanReport(kind) {
-		// The message names no kinds. A refusal that listed what is allowed would be a refusal that
-		// taught a caller what else to try, and the client already knows: it sends one of two
-		// constants it was compiled with.
+		// The message names no kinds: a refusal that listed what is allowed would teach a caller
+		// what else to try, and the client already knows — it sends one of two constants it was
+		// compiled with.
 		return nil, errs.Invalidf("That is not something a client may record.")
 	}
 
 	device, ip := callerFacts(req)
 
 	// No session id. These facts belong to an installation rather than to a sign-in — the app was
-	// already updated before anybody authenticated — and naming the session that happened to be open
-	// would imply the two were connected.
+	// updated before anybody authenticated — and naming whichever session happened to be open would
+	// imply the two were connected.
 	//
-	// The time is the server's. A client with a wrong clock would otherwise scatter rows through the
-	// history, and a client with a bad intention could slot one between two security events and
-	// change what the sequence appears to say.
+	// The time is the server's. A client with a wrong clock would scatter rows through the history,
+	// and one with a bad intention could slot a row between two security events and change what the
+	// sequence appears to say.
 	if err := h.svc.Record(ctx, subject.ID, kind, "", device, ip, time.Now()); err != nil {
 		return nil, err
 	}
 	return connect.NewResponse(&activityv1.RecordClientEventResponse{}), nil
 }
 
-// callerFacts reads the two claims worth storing off the connection.
-//
-// Both are claims rather than facts — a user agent lies freely and an address may be a proxy — which
-// is why they are only ever displayed and never used for a decision.
+// Both are claims rather than facts — a user agent lies freely and an address may be a proxy —
+// which is why they are only ever displayed and never used for a decision.
 //
 // It duplicates the account module's edge helper of the same name, and that is the module boundary
-// working rather than failing: that one reads a *http.Request from a REST handler, this one reads a
-// Connect request, and neither module may import the other. If a second Connect handler ever needs
-// this, it belongs in platform/rpc — one caller is not yet a reason to put it there.
+// working rather than failing: that one reads a *http.Request, this one a Connect request, and
+// neither module may import the other. If a second Connect handler ever needs this, it belongs in
+// platform/rpc — one caller is not yet a reason to put it there.
 func callerFacts(req connect.AnyRequest) (device, ip string) {
 	device = strings.TrimSpace(req.Header().Get("User-Agent"))
 	if len(device) > 256 {
@@ -119,11 +110,11 @@ func callerFacts(req connect.AnyRequest) (device, ip string) {
 func (h *handler) ListActivity(
 	ctx context.Context, req *connect.Request[activityv1.ListActivityRequest],
 ) (*connect.Response[activityv1.ListActivityResponse], error) {
-	// Whose feed this is comes from the verified token and nowhere else. A Subject on the context
-	// was verified — the context key is unforgeable and the middleware is its only writer — so
-	// there is no user id in the request and no way to ask for somebody else's. It is the account
-	// id and not the session id: scoping by session would break the one thing this module exists
-	// to prove, which is that the other machine's sign-in shows up here.
+	// Whose feed this is comes from the verified token and nowhere else — the context key is
+	// unforgeable and the middleware is its only writer — so there is no user id in the request and
+	// no way to ask for somebody else's. The account id and not the session id: scoping by session
+	// would break the one thing this module exists to prove, that the other machine's sign-in shows
+	// up here.
 	subject, ok := auth.SubjectFrom(ctx)
 	if !ok {
 		// Not an empty list. An empty feed and an expired token are the same picture on screen and
@@ -162,8 +153,8 @@ func (h *handler) ListActivity(
 	}), nil
 }
 
-// asTime reads an optional timestamp. An unset one is the zero time, which every layer below reads
-// as "unbounded on that side" — so a client sending only `from` needs no sentinel value.
+// An unset timestamp becomes the zero time, which every layer below reads as "unbounded on that
+// side" — so a client sending only `from` needs no sentinel value.
 func asTime(ts *timestamppb.Timestamp) time.Time {
 	if ts == nil {
 		return time.Time{}
@@ -171,7 +162,7 @@ func asTime(ts *timestamppb.Timestamp) time.Time {
 	return ts.AsTime()
 }
 
-// toKindCounts puts the per-kind numbers in a defined order, for the same reason toCounts does.
+// Ordered for the same reason toCounts is.
 func toKindCounts(counts map[string]int) []*activityv1.KindCount {
 	if len(counts) == 0 {
 		return nil
@@ -190,11 +181,9 @@ func toKindCounts(counts map[string]int) []*activityv1.KindCount {
 	return out
 }
 
-// toCounts puts the chips in a defined order.
-//
-// The service answers with a map, because a count per category is what it is; the wire needs an
-// order, because a chip row that reshuffles between refreshes looks broken. Sorting by name is
-// arbitrary but stable, which is the whole requirement.
+// The service answers with a map; the wire needs an order, because a chip row that reshuffles
+// between refreshes looks broken. Sorting by name is arbitrary but stable, which is the whole
+// requirement.
 func toCounts(counts map[string]int) []*activityv1.CategoryCount {
 	if len(counts) == 0 {
 		return nil

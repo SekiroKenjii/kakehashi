@@ -11,13 +11,9 @@ using Microsoft.Extensions.Logging;
 using ActivityV1 = Kakehashi.Activity.V1;
 
 namespace Kakehashi.Modules.Activity.UI.Infrastructure {
-  // The gRPC adapter behind IActivityGateway. It is the only class in the module
-  // that knows the wire exists: it maps the generated messages onto the application's DTOs and
-  // turns transport failures into Result failures.
-  //
-  // The alias is ActivityV1 rather than Activity because inside a
-  // Kakehashi.* namespace the identifier Activity binds to the enclosing
-  // Kakehashi.Modules.Activity namespace before a using alias is ever considered.
+  // The alias is ActivityV1 rather than Activity because inside a Kakehashi.* namespace the
+  // identifier Activity binds to the enclosing Kakehashi.Modules.Activity namespace before a using
+  // alias is ever considered.
   public sealed partial class GrpcActivityGateway : IActivityGateway {
     private readonly ActivityV1.ActivityService.ActivityServiceClient _client;
     private readonly ILogger<GrpcActivityGateway> _logger;
@@ -43,8 +39,7 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
       };
 
       // Left unset rather than sent as a zero timestamp: the server reads an absent bound as
-      // unbounded, and the epoch is a real instant that would quietly exclude nothing on one side
-      // while looking deliberate.
+      // unbounded, and the epoch is a real instant that would look like a deliberate bound.
       if (filter.From is { } from) {
         request.From = Timestamp.FromDateTimeOffset(from);
       }
@@ -78,9 +73,9 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
             entries, reply.NextPageToken, reply.TotalCount, counts, kindCounts,
             reply.RetentionDays));
       } catch (RpcException exception) {
-        // InvalidArgument here is an unreadable page token, which means this client and the server
-        // disagree about where the reader is. Reported as its own failure so the view model can start
-        // the list again rather than sit under a "load more" button that will never work.
+        // InvalidArgument here is an unreadable page token: this client and the server disagree
+        // about where the reader is. Its own failure so the view model can start the list again
+        // rather than sit under a "load more" button that will never work.
         if (exception.StatusCode == StatusCode.InvalidArgument) {
           LogFailed(exception.StatusCode, exception);
           return Result.Failure<ActivityPageDto>(ActivityErrors.PageLost);
@@ -101,9 +96,8 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
         return Result.Success();
       } catch (RpcException exception) {
         // Mapped here rather than in Translate because InvalidArgument means something different on
-        // each call: on a list it is an unreadable page token, and on this one it is the server
-        // refusing a kind — which can only happen if this client is newer than the server it is
-        // talking to.
+        // each call: on a list it is an unreadable page token, and here it is the server refusing a
+        // kind, which can only happen if this client is newer than the server.
         if (exception.StatusCode == StatusCode.InvalidArgument) {
           LogFailed(exception.StatusCode, exception);
           return Result.Failure(ActivityErrors.ReportRefused);
@@ -112,12 +106,9 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
       }
     }
 
-    // The name the server knows this fact by.
-    //
-    // A switch with no default arm, on purpose: adding a value to
-    // ClientActivityKind without deciding what to call it on the wire should not
-    // compile. The alternative — a default that sends the enum's own name — would send a string the
-    // server has never heard of and turn a missed edit into a runtime refusal.
+    // No default arm, on purpose: adding a value to ClientActivityKind without deciding what to
+    // call it on the wire should not compile. A default that sent the enum's own name would send a
+    // string the server has never heard of, turning a missed edit into a runtime refusal.
     private static string WireName(ClientActivityKind kind) {
       return kind switch {
         ClientActivityKind.AppUpdated => "AppUpdated",
@@ -139,22 +130,21 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
     }
 
     private Error Translate(RpcException exception) {
-      // Unauthenticated is kept distinct from everything else rather than collapsed into it,
-      // because it is the one failure whose correct handling is to stop showing what is on screen.
-      // A page left open across a sign-out keeps polling, and without this it would keep the
-      // previous account's devices and addresses visible indefinitely.
+      // Kept distinct rather than collapsed into the rest, because it is the one failure whose
+      // correct handling is to stop showing what is on screen: a page left open across a sign-out
+      // would otherwise keep the previous account's devices and addresses visible.
       if (exception.StatusCode == StatusCode.Unauthenticated) {
         return ActivityErrors.NotSignedIn;
       }
 
       // The server gates whole modules, so this means an administrator has not assigned this
-      // account the Activity module — a thing the user can act on, unlike everything below.
+      // account the Activity module — the one failure here the user can act on.
       if (exception.StatusCode == StatusCode.PermissionDenied) {
         return ActivityErrors.NotAssigned;
       }
 
-      // Everything else is the network, the server, or a bug — none of which the user can act on
-      // beyond trying again. The detail goes to the log, not the screen.
+      // Everything else is the network, the server, or a bug — none of it actionable beyond trying
+      // again, so the detail goes to the log rather than the screen.
       LogFailed(exception.StatusCode, exception);
       return ActivityErrors.RequestFailed;
     }

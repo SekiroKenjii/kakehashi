@@ -8,7 +8,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// InsertSession records a new sign-in.
 func (s *SQLServer) InsertSession(ctx context.Context, sess domain.UserSession) error {
 	const q = `
         INSERT INTO account.UserSession
@@ -23,7 +22,6 @@ func (s *SQLServer) InsertSession(ctx context.Context, sess domain.UserSession) 
 	return nil
 }
 
-// SessionsForUser lists an account's live sessions, most recently seen first.
 func (s *SQLServer) SessionsForUser(
 	ctx context.Context, accountID string,
 ) ([]domain.UserSession, error) {
@@ -57,8 +55,7 @@ func (s *SQLServer) SessionsForUser(
 	return sessions, nil
 }
 
-// TouchSession records that a session was used, which is what keeps "last seen" honest across
-// silent token refreshes.
+// Keeps "last seen" honest across silent token refreshes.
 func (s *SQLServer) TouchSession(ctx context.Context, id string, at time.Time) error {
 	const q = `
         UPDATE account.UserSession
@@ -71,11 +68,11 @@ func (s *SQLServer) TouchSession(ctx context.Context, id string, at time.Time) e
 	return nil
 }
 
-// DeleteSession ends one session, reporting whether there was one to end. The account id is part of
-// the predicate so a stolen session id cannot be used to end someone else's.
+// The account id is part of the predicate so a stolen session id cannot be used to end someone
+// else's.
 //
-// The count is returned rather than swallowed because a caller announces this delete, and an
-// announcement about a row that was not there is a false entry in somebody's security feed.
+// Whether a row went is returned rather than swallowed because a caller announces this delete, and
+// an announcement about a row that was not there is a false entry in somebody's security feed.
 func (s *SQLServer) DeleteSession(ctx context.Context, accountID, id string) (bool, error) {
 	const q = `DELETE FROM account.UserSession WHERE AccountId = @p1 AND Id = @p2;`
 
@@ -91,7 +88,6 @@ func (s *SQLServer) DeleteSession(ctx context.Context, accountID, id string) (bo
 	return affected > 0, nil
 }
 
-// DeleteSessionsForUser ends every session an account has, reporting how many went.
 func (s *SQLServer) DeleteSessionsForUser(ctx context.Context, accountID string) (int64, error) {
 	const q = `DELETE FROM account.UserSession WHERE AccountId = @p1;`
 
@@ -107,8 +103,6 @@ func (s *SQLServer) DeleteSessionsForUser(ctx context.Context, accountID string)
 	return affected, nil
 }
 
-// DeleteSessionsForUserClient ends the sessions an account holds with one client, which is what an
-// end-session request asks for.
 func (s *SQLServer) DeleteSessionsForUserClient(
 	ctx context.Context, accountID, clientID string,
 ) error {
@@ -120,8 +114,6 @@ func (s *SQLServer) DeleteSessionsForUserClient(
 	return nil
 }
 
-// SessionCountsByAccount returns how many sessions each account has open.
-//
 // One query for the whole list screen rather than one per row. Accounts with no open session are
 // absent from the map rather than present as zero, because that is what a GROUP BY returns and
 // inventing the missing keys here would mean reading the account table from the session store.

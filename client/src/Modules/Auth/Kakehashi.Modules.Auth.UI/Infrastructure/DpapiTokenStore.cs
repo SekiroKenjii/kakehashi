@@ -7,8 +7,7 @@ using System.Threading.Tasks;
 using Kakehashi.Modules.Auth.Application.Abstractions;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // Persists the refresh token encrypted at rest with Windows DPAPI (per current user). Access and
-  // id tokens are never written to disk; only the refresh token is, keeping the stored blob small.
+  // Access and id tokens are deliberately never written to disk; only the refresh token is.
   public sealed class DpapiTokenStore : ITokenStore {
     private static readonly byte[] _entropy =
         Encoding.UTF8.GetBytes("Kakehashi.Auth.RefreshToken.v1");

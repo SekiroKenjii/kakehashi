@@ -12,11 +12,9 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
 )
 
-// NewAdminRoute builds the Connect handler for NavigationAdminService.
-//
-// No permission check anywhere in this file, and that is not an omission: the module wraps this whole
-// route in one, so every procedure added here later inherits it without anyone remembering to. A
-// hand-written check per handler is a check somebody eventually forgets.
+// No permission check anywhere in this file, and that is not an omission: the module wraps this
+// whole route in one, so every procedure added here later inherits it without anyone remembering
+// to. A hand-written check per handler is a check somebody eventually forgets.
 func NewAdminRoute(svc *service.Service, opts []connect.HandlerOption) (string, http.Handler) {
 	return navigationv1connect.NewNavigationAdminServiceHandler(&adminHandler{svc: svc}, opts...)
 }
@@ -136,7 +134,6 @@ func toItemConfig(item service.ItemConfig) *navigationv1.ItemConfig {
 	}
 }
 
-// ApplyLayout writes a whole arrangement, or writes none of it.
 func (h *adminHandler) ApplyLayout(
 	ctx context.Context, req *connect.Request[navigationv1.ApplyLayoutRequest],
 ) (*connect.Response[navigationv1.ApplyLayoutResponse], error) {
@@ -174,7 +171,6 @@ func (h *adminHandler) ApplyLayout(
 	}), nil
 }
 
-// DeleteItem removes a row left over from a module this build no longer has.
 func (h *adminHandler) DeleteItem(
 	ctx context.Context, req *connect.Request[navigationv1.DeleteItemRequest],
 ) (*connect.Response[navigationv1.DeleteItemResponse], error) {
@@ -184,7 +180,6 @@ func (h *adminHandler) DeleteItem(
 	return connect.NewResponse(&navigationv1.DeleteItemResponse{}), nil
 }
 
-// PreviewLayout draws the pane as a role would see it.
 func (h *adminHandler) PreviewLayout(
 	ctx context.Context, req *connect.Request[navigationv1.PreviewLayoutRequest],
 ) (*connect.Response[navigationv1.PreviewLayoutResponse], error) {

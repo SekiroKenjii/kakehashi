@@ -3,10 +3,6 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.App.Tests {
-  /// <summary>
-  /// An in-memory <see cref="ILocalSettingsService"/> that stores values as-is, so tests can both
-  /// pre-seed state and observe what production code persists.
-  /// </summary>
   internal sealed class InMemoryLocalSettings : ILocalSettingsService {
     private readonly Dictionary<string, object?> _values = new();
 
@@ -19,7 +15,6 @@ namespace Kakehashi.App.Tests {
     }
   }
 
-  /// <summary>A trivial <see cref="IOptions{TOptions}"/> wrapper for a known value.</summary>
   internal sealed class StubOptions<T>(T value) : IOptions<T> where T : class {
     public T Value { get; } = value;
   }

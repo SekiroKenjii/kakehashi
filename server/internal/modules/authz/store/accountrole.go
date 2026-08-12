@@ -8,9 +8,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Who holds which role.
-
-// RolesOf lists the roles one account holds.
 func (s *SQLServer) RolesOf(ctx context.Context, accountID string) ([]domain.Role, error) {
 	const q = `
         SELECT r.Id, r.Name, r.Description, r.IsSystem
@@ -23,14 +20,13 @@ func (s *SQLServer) RolesOf(ctx context.Context, accountID string) ([]domain.Rol
 	return collect(ctx, s.db, "list account roles", q, []any{accountID}, scanRole)
 }
 
-// RolesOfAccounts answers for many accounts at once, so the user list does not run one query per
-// row. Keyed by account id; an account with no roles is absent rather than present and empty.
+// Many accounts at once, so the user list does not run one query per row. An account with no roles
+// is absent from the map rather than present and empty.
 func (s *SQLServer) RolesOfAccounts(
 	ctx context.Context, accountIDs []string,
 ) (map[string][]domain.Role, error) {
-	// An empty list asks about everybody. It is the caller the users screen makes — it is already
-	// listing every account — and answering it with an empty map would be answering a different
-	// question from the one asked.
+	// An empty list asks about everybody. That is the call the users screen makes — it is already
+	// listing every account — so answering with an empty map would answer a different question.
 	where := ""
 	args := make([]any, len(accountIDs))
 	for i, id := range accountIDs {
@@ -70,12 +66,9 @@ func (s *SQLServer) RolesOfAccounts(
 	return byAccount, nil
 }
 
-// HoldsPermissionWithoutRole reports whether the account would still hold permission if the named
-// role stopped granting it.
-//
-// It exists for one question, asked before every destructive change on this module's own surface:
-// "is the administrator about to lock themselves out?" Answering it in SQL rather than by pulling
-// every role back keeps it to one round trip on a path that is already about to write.
+// Whether the account would still hold the permission if the named role stopped granting it —
+// asked before every destructive change on this module's own surface, to catch an administrator
+// about to lock themselves out.
 //
 // UPDLOCK and HOLDLOCK because the answer is acted on. Without them this is an ordinary read: two
 // administrators each removing their own last grant both see the other's still there, both are told
@@ -104,8 +97,8 @@ func (s *SQLServer) HoldsPermissionWithoutRole(
 	return holds, nil
 }
 
-// AssignRole gives an account a role. Assigning one it already holds succeeds and leaves the
-// original row, including who assigned it first — which is the answer an access review wants.
+// Re-assigning a role the account already holds leaves the original row, including who assigned it
+// first — which is the answer an access review wants.
 func (s *SQLServer) AssignRole(
 	ctx context.Context, accountID, roleID, by string, at time.Time,
 ) error {
@@ -126,7 +119,6 @@ func (s *SQLServer) AssignRole(
 	return nil
 }
 
-// UnassignRole takes a role away. Taking one they do not hold succeeds.
 func (s *SQLServer) UnassignRole(ctx context.Context, accountID, roleID string) error {
 	const q = `
         DELETE FROM authz.AccountRole

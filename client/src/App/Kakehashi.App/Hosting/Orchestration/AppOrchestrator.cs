@@ -8,9 +8,6 @@ using Kakehashi.UI.Contracts.Services;
 using Microsoft.Extensions.Logging;
 
 namespace Kakehashi.App.Hosting.Orchestration {
-  // Coordinates application startup by running the registered IStartupOrchestrators in
-  // order. Keeping this out of App.xaml.cs keeps the composition root lean and makes the
-  // startup sequence easy to extend (add an orchestrator) and to reason about.
   public sealed partial class AppOrchestrator {
     private readonly IReadOnlyList<IStartupOrchestrator> _orchestrators;
     private readonly StartupContext _context;

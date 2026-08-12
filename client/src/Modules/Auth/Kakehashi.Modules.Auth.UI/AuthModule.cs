@@ -20,10 +20,6 @@ using Microsoft.UI.Xaml.Controls.Primitives;
 using Microsoft.UI.Xaml.Media;
 
 namespace Kakehashi.Modules.Auth.UI {
-  // Composition entry point for the Auth module: binds options, registers the application layer and
-  // the concrete OIDC adapters, replaces the host's access-token provider with the session-backed
-  // one, contributes the startup login gate and the forced re-sign-in on sign-out, and exposes the
-  // Account page through an avatar item in the shell's footer.
   public sealed class AuthModule : IModule {
     public string Name => "Auth";
 
@@ -32,9 +28,9 @@ namespace Kakehashi.Modules.Auth.UI {
         "Account",
         "Identity, security activity and session management — sign out here or everywhere.",
         IsRequired: true,
-        // The server calls this module "account", not "auth": IDENTITY is a reserved T-SQL
-        // word, so the module ID had to be something else. Written down rather than derived,
-        // because a permission key that drifts is a permission that stops applying.
+        // The server calls this module "account", not "auth": IDENTITY is a reserved T-SQL word, so
+        // the module ID had to be something else. Written down rather than derived, because a
+        // permission key that drifts is a permission that stops applying.
         AssignmentId: "account");
 
     public void RegisterServices(IServiceCollection services) {
@@ -43,15 +39,14 @@ namespace Kakehashi.Modules.Auth.UI {
       services.AddOptions<AuthOptions>().BindConfiguration(AuthOptions.SectionName);
       services.AddAuthApplication();
 
-      // Concrete adapters for the application ports (adapters live in the UI layer).
       services.TryAddSingleton<ITokenStore, DpapiTokenStore>();
-      // Shared between the authenticator (drives the flow) and the login view model (reopen browser).
+      // One instance: the authenticator drives the flow, the login view model reopens the browser
+      // at the URL that flow is waiting on.
       services.TryAddSingleton(provider => new SystemBrowser(
           provider.GetRequiredService<IOptions<AuthOptions>>().Value.RedirectUri));
-      // Which adapter answers IInteractiveAuthenticator is decided when it is first resolved, not
-      // here: RegisterServices runs before configuration is bound, so Auth:Mode is not readable yet.
-      // The in-app adapter needs the OIDC one for the refresh grant, so both are always registered
-      // and only the port's answer changes.
+      // Which adapter answers IInteractiveAuthenticator is decided on first resolve, not here:
+      // RegisterServices runs before configuration is bound, so Auth:Mode is not readable yet. The
+      // in-app adapter needs the OIDC one for the refresh grant, so both are always registered.
       services.TryAddSingleton<OidcInteractiveAuthenticator>();
       services.TryAddSingleton<InAppAuthenticator>();
       services.TryAddSingleton<IInteractiveAuthenticator>(provider =>
@@ -63,15 +58,12 @@ namespace Kakehashi.Modules.Auth.UI {
       services.TryAddSingleton<IAuthSessionAccessor>(
           provider => provider.GetRequiredService<AuthSessionAccessor>());
 
-      // Seam 1: replace the host's no-op access-token provider with the session-backed one.
       services.RemoveAll<IAccessTokenProvider>();
       services.AddSingleton<IAccessTokenProvider>(
           provider => provider.GetRequiredService<AuthSessionAccessor>());
 
-      // Seam 2: contribute the startup login gate.
       services.AddSingleton<IAuthenticationGate, AuthenticationGate>();
 
-      // Seam 3: after any sign-out, force a modal re-sign-in over the blurred main window.
       services.AddSingleton<ReauthenticationService>();
       services.AddTransient<
           INotificationHandler<UserSignedOutNotification>, SignedOutReauthenticationHandler>();
@@ -85,8 +77,8 @@ namespace Kakehashi.Modules.Auth.UI {
     }
 
     public IReadOnlyList<NavigationItem> GetNavigationItems() {
-      // The avatar is shared between the item content and the flyout so the initials refresh
-      // whenever the flyout opens (e.g. after re-signing in as a different user).
+      // Captured so the item content and the flyout share one avatar: the initials refresh when
+      // the flyout opens, e.g. after re-signing in as a different user.
       PersonPicture? avatar = null;
       return [
         new NavigationItem("Account", "", typeof(AccountPage), NavigationItemPlacement.Footer) {
@@ -105,12 +97,11 @@ namespace Kakehashi.Modules.Auth.UI {
       ];
     }
 
-    // Lays the avatar and label out over the default item template's geometry so they line up
-    // with icon items (e.g. Settings) in every pane state. The shell gives the item a blank
-    // Icon, so the presenter's 40px icon column - with its icon box centered at x=20 - is
-    // present in both expanded and compact modes, and content starts 4px after it.
-    // The -44 margin re-bases this grid at the icon column's origin, the avatar is centered on
-    // the icon box, and the 44px first column puts the label back at the standard position.
+    // Aligns with icon items (e.g. Settings) in every pane state. The shell gives the item a blank
+    // Icon, so the presenter's 40px icon column - icon box centered at x=20 - exists in both
+    // expanded and compact modes, and content starts 4px after it. The -44 margin re-bases this
+    // grid at the icon column's origin, the avatar is centered on the icon box, and the 44px first
+    // column puts the label back at the standard position.
     private static Grid CreateAccountItemContent(PersonPicture avatar) {
       var panel = new Grid { Margin = new Thickness(-44, 0, 0, 0) };
       panel.ColumnDefinitions.Add(new ColumnDefinition { Width = new GridLength(44) });
@@ -126,8 +117,8 @@ namespace Kakehashi.Modules.Auth.UI {
       };
       Grid.SetColumn(label, 1);
 
-      // Keep the label and avatar in sync with sign-in / sign-out for the app's lifetime. The
-      // messenger holds weak references, so the shell item can still be collected.
+      // Registered for the app's lifetime; the messenger holds weak references, so the shell item
+      // can still be collected.
       WeakReferenceMessenger.Default.Register<TextBlock, AuthSessionChangedMessage>(
           label, static (recipient, _) => recipient.DispatcherQueue.TryEnqueue(
               () => recipient.Text = ResolveAccountLabel()));
@@ -140,7 +131,6 @@ namespace Kakehashi.Modules.Auth.UI {
       return panel;
     }
 
-    // The shell item label: full name, falling back to email, then to "Account".
     private static string ResolveAccountLabel() {
       var session = ContractServices.Provider.GetRequiredService<IAuthSessionAccessor>().Current;
       if (!string.IsNullOrWhiteSpace(session?.DisplayName)) {

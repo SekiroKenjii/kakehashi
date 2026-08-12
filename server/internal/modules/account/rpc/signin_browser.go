@@ -8,22 +8,18 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/service"
 )
 
-// browserSignInHandler serves the form the /authorize endpoint redirects to, and completes the
-// authorization when the credentials check out.
+// The form /authorize redirects to.
 type browserSignInHandler struct {
 	svc      *service.Service
 	clientID string
 
-	// callbackURL builds the address to send the browser back to once the request is done —
-	// op's authorize callback, which mints the code and redirects to the client's loopback.
+	// Where to send the browser once the request is done — op's authorize callback, which mints
+	// the code and redirects to the client's loopback.
 	callbackURL func(context.Context, string) string
 }
 
-// browserSignInPage is deliberately server-rendered, dependency-free HTML.
-//
-// This form is the security boundary of the whole system: it is where passwords cross the wire.
-// A framework bundle here would mean auditing a build pipeline to trust a login page. Sixty lines
-// of template need no audit.
+// Deliberately server-rendered, dependency-free HTML. This form is where passwords cross the wire,
+// and a framework bundle here would mean auditing a build pipeline to trust a login page.
 var browserSignInPage = template.Must(template.New("login").Parse(`<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -99,8 +95,8 @@ func (h *browserSignInHandler) submit(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
 	if requestID == "" {
-		// No request id means the browser did not arrive here via /authorize. There is nothing to
-		// complete, so there is nothing to show but the truth.
+		// No request id means the browser did not arrive here via /authorize, so there is nothing
+		// to complete.
 		http.Error(w, "this page is only reachable from a sign-in request", http.StatusBadRequest)
 		return
 	}

@@ -1,10 +1,8 @@
 using System;
 
 namespace Kakehashi.SharedKernel {
-  /// <summary>
-  /// The outcome of an operation that can fail for an expected, domain-level reason. Prefer
-  /// returning a <see cref="Result"/> over throwing for rule violations the caller can anticipate.
-  /// </summary>
+  // Return this for rule violations the caller can anticipate; reserve throwing for programmer
+  // errors.
   public class Result {
     protected Result(bool isSuccess, Error error) {
       if (isSuccess && error != Error.None) {

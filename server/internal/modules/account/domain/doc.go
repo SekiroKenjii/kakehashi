@@ -4,27 +4,15 @@
 // OpenID Connect, no other module — which is what lets the rules in here be tested without
 // standing up a database or a provider.
 //
-// # The aggregates
+// Account, UserSession, AuthRequest and SigningKey are the aggregate roots. SecurityEvent is not
+// one: it is append-only, written once and never changed, and deliberately outlives the account it
+// describes.
 //
-// Four roots, each in its own file, each with its own lifecycle and its own consistency boundary:
+// IssuedToken is an entity inside UserSession rather than a root of its own: a token means nothing
+// without the session it was issued under, and ending the session must end it. That is why the
+// store's foreign key cascades — the database enforces the invariant even when a delete arrives
+// from somewhere the service never sees.
 //
-//	Account       account.go        who someone is: credentials, profile, roles.
-//	UserSession   session.go        one sign-in — and the IssuedToken entities inside it.
-//	AuthRequest   authrequest.go    one in-flight browser authorization, /authorize to /token.
-//	SigningKey    signingkey.go     the provider's token-signing key.
-//
-// SecurityEvent (securityevent.go) is not an aggregate. It is an append-only record: written
-// once, never changed, and deliberately outliving the account it describes.
-//
-// # Why IssuedToken is not a root
-//
-// A token has no life of its own. It is issued under a session, it means nothing without one, and
-// ending the session must end it — which is a consistency rule, not a cleanup preference. That
-// makes the session the boundary and the token an entity inside it, and it is why the store's
-// foreign key cascades: the database enforces the invariant even when a delete arrives from
-// somewhere the service never sees.
-//
-// The practical test, when adding the next type here: can it be deleted on its own without
-// leaving something else in a state its own rules forbid? If not, it belongs inside an existing
-// root rather than beside it.
+// The test, when adding the next type here: can it be deleted on its own without leaving something
+// else in a state its own rules forbid? If not, it belongs inside an existing root.
 package domain

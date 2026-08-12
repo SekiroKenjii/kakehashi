@@ -10,22 +10,17 @@ using Xunit;
 using NotesV1 = Kakehashi.Notes.V1;
 
 namespace Kakehashi.Modules.Notes.UI.Tests.Infrastructure {
-  /// <summary>
-  /// Drives the real <see cref="GrpcNotesGateway"/> against a running server, over real gRPC, into
-  /// real SQL Server. Everything else in this suite substitutes something; this is the one that
-  /// would notice a schema change, a broken migration, or a status code the client maps wrongly.
-  /// </summary>
-  /// <remarks>
-  /// Skipped unless <c>KAKEHASHI_TEST_BACKEND</c> names a server, so a plain <c>dotnet test</c> on
-  /// a laptop with nothing running still passes. Start the stack and point it at the server:
-  /// <code>
-  /// docker compose up -d
-  /// $env:KAKEHASHI_TEST_BACKEND = "http://localhost:8080"
-  /// dotnet test tests/Kakehashi.Modules.Notes.UI.Tests
-  /// </code>
-  /// The alternative — failing when no backend is present — would train everyone to ignore a red
-  /// suite, which costs more than the coverage is worth.
-  /// </remarks>
+  // Drives the real GrpcNotesGateway against a running server, over real gRPC, into real SQL
+  // Server. Everything else in this suite substitutes something; this is the one that would notice
+  // a schema change, a broken migration, or a status code the client maps wrongly.
+  //
+  // Skipped unless KAKEHASHI_TEST_BACKEND names a server, so a plain dotnet test on a laptop with
+  // nothing running still passes. Failing instead would train everyone to ignore a red suite,
+  // which costs more than the coverage is worth. To run it:
+  //
+  //   docker compose up -d
+  //   $env:KAKEHASHI_TEST_BACKEND = "http://localhost:8080"
+  //   dotnet test tests/Kakehashi.Modules.Notes.UI.Tests
   public sealed class LiveNotesGatewayTests {
     private const string _addressVariable = "KAKEHASHI_TEST_BACKEND";
 
@@ -34,8 +29,8 @@ namespace Kakehashi.Modules.Notes.UI.Tests.Infrastructure {
       return string.IsNullOrWhiteSpace(address) ? null : address;
     }
 
-    // Plain HTTP/2 with no TLS: Grpc.Net.Client supports it directly on .NET 5 and later, which is
-    // what lets the development stack run without certificates.
+    // Plain HTTP/2 with no TLS: Grpc.Net.Client supports it directly on .NET 5 and later, which
+    // lets the development stack run without certificates.
     private static GrpcNotesGateway CreateGateway(string address) {
       return new GrpcNotesGateway(
           new NotesV1.NotesService.NotesServiceClient(GrpcChannel.ForAddress(address)),
@@ -68,7 +63,7 @@ namespace Kakehashi.Modules.Notes.UI.Tests.Infrastructure {
             created.Value.Id, NoteDraft.Create($"{title} (edited)", "rewritten").Value, ct);
         Assert.True(updated.IsSuccess, $"update failed: {updated.Error.Message}");
         Assert.Equal("rewritten", updated.Value.Body);
-        // The server preserves CreatedAt across a rewrite, and stores timestamps at the column's
+        // The server preserves CreatedAt across a rewrite and stores timestamps at the column's
         // millisecond precision, so what comes back is exactly what is on disk.
         Assert.Equal(created.Value.CreatedAt, updated.Value.CreatedAt);
         Assert.True(updated.Value.UpdatedAt >= created.Value.UpdatedAt);
@@ -102,7 +97,7 @@ namespace Kakehashi.Modules.Notes.UI.Tests.Infrastructure {
 
       // The generated client directly, not the gateway: NoteDraft makes an invalid title
       // unrepresentable, so this is the only way to ask what the server does when one arrives
-      // anyway — which is the case that matters, because a future client might not be this one.
+      // anyway — the case that matters, because a future client might not be this one.
       var client = new NotesV1.NotesService.NotesServiceClient(GrpcChannel.ForAddress(address!));
 
       var failure = await Assert.ThrowsAsync<RpcException>(async () =>

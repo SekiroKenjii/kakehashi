@@ -5,7 +5,7 @@ halves are modular monoliths. Read `docs/ARCHITECTURE.md` before making a struct
 
 ## How to work — agent behavior
 
-> These four rules address the most common LLM coding mistakes.
+> These five rules address the most common LLM coding mistakes.
 > They override any instinct to be thorough, helpful, or proactive beyond the request.
 
 **Tradeoff:** These bias toward caution over speed. Use judgment for trivial one-line fixes.
@@ -49,7 +49,33 @@ Touch only what the request requires.
 **Your orphans are your responsibility:** remove imports, variables, handlers and registrations that
 *your* change made unused. Leave pre-existing dead code alone unless asked.
 
-### 4. Verifiable execution
+### 4. Comments — the code says what, a comment says why
+
+**Never write a comment that repeats the signature.** `// Resolves a UI service.` above
+`GetService<T>()` earns nothing; the reader already has the name and the type.
+
+Write a comment only when it carries something the code cannot:
+
+- a platform trap (a row read from `Tag` because `ItemsRepeater` sets no `DataContext`; a
+  `Storyboard` held in a field so `Completed` survives collection; h2c defeating
+  `http.Server.Shutdown`);
+- a decision and the alternative it rejected;
+- an ordering or timing requirement;
+- a security or correctness rationale;
+- a deliberate absence — an index left off, a method that will not exist, a value not read;
+- the bug that motivated the code, where losing the note invites it back.
+
+**The test before writing one:** *without this, could somebody reintroduce a bug, or make the same
+wrong choice again?* If not, delete it. When torn, keep it and make it shorter.
+
+**No `///` XML doc comments anywhere in `client/`.** `GenerateDocumentationFile` is `false`, so no
+documentation file is ever produced and the tags render for nobody. `//` only. In `server/`, a Go doc
+comment on an exported identifier is still just a comment: it earns its place by the same test, not
+by convention.
+
+Long design arguments belong in `docs/`, not stacked above a type.
+
+### 5. Verifiable execution
 
 Define success before writing code. For multi-step tasks, state the plan first:
 

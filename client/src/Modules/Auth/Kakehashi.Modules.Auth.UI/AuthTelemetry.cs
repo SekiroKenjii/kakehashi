@@ -1,8 +1,7 @@
 using System.Diagnostics;
 
 namespace Kakehashi.Modules.Auth.UI {
-  // The Auth module's tracing source. Register it for export in AddObservability with
-  // .AddSource("Kakehashi.Modules.Auth").
+  // Nothing is exported unless AddObservability calls .AddSource(SourceName).
   public static class AuthTelemetry {
     public const string SourceName = "Kakehashi.Modules.Auth";
 

@@ -15,14 +15,9 @@ using Microsoft.Extensions.Options;
 using SharedKernelResult = Kakehashi.SharedKernel.Result;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // Signs in by posting credentials straight to the authorization server, with no browser and no
-  // loopback listener. Registered when AuthOptions.Mode is
-  // AuthMode.InApp.
-  //
-  // Only the two interactive halves are ours. Refreshing delegates to
-  // OidcInteractiveAuthenticator on purpose: the server issues both modes' tokens
-  // through one provider and rotates them on one standard endpoint, so a session that began here
-  // and a session that began in a browser have the same lifecycle from the second request onward.
+  // Refreshing delegates to OidcInteractiveAuthenticator on purpose: the server issues both modes'
+  // tokens through one provider and rotates them on one standard endpoint, so a session that began
+  // here and one that began in a browser have the same lifecycle from the second request onward.
   // Reimplementing the refresh grant would be a second chance to get it wrong for no gain.
   public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDisposable {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
@@ -43,19 +38,15 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _options = options.Value;
       _logger = logger;
 
-      // Added without validation on purpose. A machine name is user-controlled — someone can put
-      // almost anything in it — and a header the parser dislikes must degrade to a blank device on
-      // the Account page, never to a sign-in that throws before it reaches the network.
+      // Without validation on purpose: a machine name is user-controlled, and a header the parser
+      // dislikes must degrade to a blank device on the Account page, never to a sign-in that
+      // throws before it reaches the network.
       _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", DeviceLabel());
     }
 
-    // What the server will record as this session's device.
-    //
-    // It exists because HttpClient sends no User-Agent by default, and the server
-    // reads that header to fill the device column the Account page shows — so without one, every
-    // in-app session is a blank row and the session list stops answering "which of these is the
-    // laptop I left at the office". The browser flow never had the problem because the browser
-    // sends its own.
+    // HttpClient sends no User-Agent by default, and the server reads that header to fill the
+    // device column the Account page shows — without one, every in-app session is a blank row. The
+    // browser flow never had the problem because the browser sends its own.
     public static string DeviceLabel() {
       var version = Assembly.GetEntryAssembly()?.GetName().Version;
       var number = version is null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
@@ -68,8 +59,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
         return SharedKernelResult.Failure<AuthSession>(AuthErrors.NotConfigured);
       }
       if (credentials is null) {
-        // Nothing to send. This is a wiring mistake, not a user one, so it does not get a
-        // user-facing message of its own.
+        // A wiring mistake, not a user one, so it gets no user-facing message of its own.
         return SharedKernelResult.Failure<AuthSession>(AuthErrors.LoginFailed);
       }
 
@@ -83,9 +73,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
 
         if (!response.IsSuccessStatusCode) {
           LogSignInFailed((int)response.StatusCode);
-          // The server answers a wrong password and an unknown address identically, on purpose, so
-          // the form cannot be used to discover which addresses have accounts. Passing its message
-          // through keeps that property instead of inventing a more specific one here.
+          // The server answers a wrong password and an unknown address identically so the form
+          // cannot be used to discover which addresses have accounts. Passing its message through
+          // keeps that property; inventing a more specific one here would break it.
           return SharedKernelResult.Failure<AuthSession>(
               await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false));
         }
@@ -122,9 +112,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       return _oidc.RefreshAsync(refreshToken, cancellationToken);
     }
 
-    // Ends the session server-side. There is no browser cookie to clear here — that is what
-    // /end_session exists for — so this only needs the session row gone, which is what
-    // stops its refresh token working.
+    // No browser cookie to clear here — that is what /end_session exists for — so this only needs
+    // the session row gone, which is what stops its refresh token working.
     public async Task LogoutAsync(AuthSession? session, CancellationToken cancellationToken) {
       if (!_options.IsConfigured || session is null) {
         return;
@@ -134,9 +123,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       try {
         using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint("account/sign-out"));
         // The session's own token, not one asked of IAccessTokenProvider: that provider refreshes
-        // near expiry, and minting a token in order to revoke the session it belongs to is a race
-        // with itself. A token already too old to pass costs a 401 and a log line, and the local
-        // session is cleared either way.
+        // near expiry, and minting a token in order to revoke the session it belongs to races with
+        // itself. A token already too old costs a 401 and a log line; the local session is cleared
+        // either way.
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", session.AccessToken);
 
@@ -146,8 +135,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
           LogSignOutFailed((int)response.StatusCode);
         }
       } catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) {
-        // Best-effort, exactly as in the browser flow: the sign-out use case drops the local
-        // session and the stored refresh token whether or not the server heard about it.
+        // Best-effort: the sign-out use case drops the local session and the stored refresh token
+        // whether or not the server heard about it.
         LogSignOutException(ex);
       }
     }
@@ -175,7 +164,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
 
     private sealed record ServerError(string? Error, string? Message);
 
-    // The OAuth token response shape the sign-in endpoint deliberately mirrors.
+    // The sign-in endpoint mirrors the OAuth token response shape on purpose.
     private sealed record TokenResponse(
         [property: JsonPropertyName("access_token")] string AccessToken,
         [property: JsonPropertyName("refresh_token")] string? RefreshToken,

@@ -7,7 +7,6 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Mediator {
-  /// <summary>Dispatches domain events to every registered <see cref="IDomainEventHandler{T}"/>.</summary>
   public sealed class DomainEventDispatcher : IDomainEventDispatcher {
     private static readonly ConcurrentDictionary<Type, DomainEventHandlerWrapper> _wrappers = new();
 

@@ -10,12 +10,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// The catalogue. Reconciled at boot from what the modules declare rather than typed in by hand: a
-// permission no module claims is a permission nothing enforces, and a table is very good at keeping
-// one of those alive for years.
-
-// Permissions returns the whole catalogue, ordered for the administration screen.
-//
 // Unpaged, because the count is bounded by how many permissions are compiled into a build — a
 // number a person maintains by hand.
 func (s *SQLServer) Permissions(ctx context.Context) ([]domain.Permission, error) {
@@ -27,12 +21,9 @@ func (s *SQLServer) Permissions(ctx context.Context) ([]domain.Permission, error
 	return collect(ctx, s.db, "list permissions", q, nil, scanPermission)
 }
 
-// ReconcilePermissions makes the table match what the modules declared.
-//
-// Upsert the declared ones, delete the rest. Deleting is the half that matters: a permission left
-// behind by a module somebody removed still appears on the administration screen, still looks
-// grantable, and grants nothing — which is worse than not being there, because someone will grant
-// it and believe they did something.
+// Deleting is the half that matters: a permission left behind by a module somebody removed still
+// appears on the administration screen, still looks grantable, and grants nothing — worse than not
+// being there, because someone will grant it and believe they did something.
 //
 // Grants are deliberately not touched. They have no foreign key to this table, so a grant naming a
 // permission that has gone quiet stays inert and comes back to life if the module returns.
@@ -59,7 +50,7 @@ func (s *SQLServer) ReconcilePermissions(ctx context.Context, declared []domain.
 			keys = append(keys, p.Key)
 		}
 
-		// Nothing declared means no module is mounted, which is a boot so broken that emptying the
+		// Nothing declared means no module is mounted — a boot so broken that emptying the
 		// catalogue would be the least of it. Leave the table alone and let the caller notice.
 		if len(keys) == 0 {
 			return nil
@@ -82,8 +73,8 @@ func scanPermission(sc scanner) (domain.Permission, error) {
 	return p, nil
 }
 
-// placeholders builds "@p1, @p2, ..." for an IN list. go-mssqldb has no array binding, and building
-// the list is safe because only the COUNT comes from the caller — every value still binds.
+// go-mssqldb has no array binding. Building the IN list is safe because only the count comes from
+// the caller — every value still binds.
 func placeholders(n int) string {
 	parts := make([]string, n)
 	for i := range parts {

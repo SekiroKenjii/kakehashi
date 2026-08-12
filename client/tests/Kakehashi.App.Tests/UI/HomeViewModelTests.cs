@@ -19,12 +19,8 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.App.Tests.UI {
-  /// <summary>
-  /// Unit tests for <see cref="HomeViewModel"/>: the session-aware greeting, the getting-started
-  /// checklist, the backend probe states, the paged activity feed, and the module tiles with
-  /// attach/detach. Dependencies are substituted; the activity log is a real instance over an
-  /// in-memory store so feed paging is exercised end to end.
-  /// </summary>
+  // The activity log is a real instance over an in-memory store, not a substitute, so feed paging
+  // is exercised end to end.
   public sealed class HomeViewModelTests {
     private const string _activityEntriesKey = "App.ActivityLog";
 
@@ -287,10 +283,6 @@ namespace Kakehashi.App.Tests.UI {
       return new FakeModule(name, isRequired, navItem);
     }
 
-    /// <summary>A minimal <see cref="IModule"/> that constructs no WinUI types.</summary>
-
-    /* --- The assignment lock --- */
-
     [Fact]
     public async Task Load_AWithheldModule_GetsALockedTileRatherThanVanishing() {
       // The whole point of the client half of P4: a module that disappears tells the user nothing
@@ -376,6 +368,7 @@ namespace Kakehashi.App.Tests.UI {
       Assert.Contains("administrator", row.Description, StringComparison.OrdinalIgnoreCase);
     }
 
+    // A minimal IModule, so no WinUI type is constructed.
     private sealed class FakeModule : IModule {
       private readonly NavigationItem? _navItem;
 

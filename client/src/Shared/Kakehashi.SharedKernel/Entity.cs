@@ -2,8 +2,6 @@ using System;
 using System.Collections.Generic;
 
 namespace Kakehashi.SharedKernel {
-  /// <summary>Base class for entities, compared by identity rather than by value.</summary>
-  /// <typeparam name="TId">The type of the entity identifier.</typeparam>
   public abstract class Entity<TId> : IEquatable<Entity<TId>>
       where TId : notnull {
     private readonly List<IDomainEvent> _domainEvents = new();
@@ -14,7 +12,7 @@ namespace Kakehashi.SharedKernel {
 
     public TId Id { get; }
 
-    /// <summary>Domain events raised by this entity that have not yet been dispatched.</summary>
+    // Pending only, not a history: the dispatcher clears them once handled.
     public IReadOnlyCollection<IDomainEvent> DomainEvents => _domainEvents.AsReadOnly();
 
     public static bool operator ==(Entity<TId>? left, Entity<TId>? right) {

@@ -13,8 +13,6 @@ using Microsoft.Extensions.DependencyInjection.Extensions;
 using ActivityV1 = Kakehashi.Activity.V1;
 
 namespace Kakehashi.Modules.Activity.UI {
-  // Composition entry point for the Activity module: registers the application layer, the gRPC
-  // client for its own contract, the adapter behind the gateway port, and the page.
   public sealed class ActivityModule : IModule {
     public string Name => "Activity";
 
@@ -30,8 +28,8 @@ namespace Kakehashi.Modules.Activity.UI {
       services.AddActivityApplication();
 
       // The host's helper rather than a hand-rolled channel, so the access token is attached the
-      // same way it is everywhere else. This module needs it more than most: without a token the
-      // server has no account to scope the feed to, and answers UNAUTHENTICATED.
+      // same way as everywhere else. Without a token the server has no account to scope the feed
+      // to, and answers UNAUTHENTICATED.
       services.AddBackendGrpcClient<ActivityV1.ActivityService.ActivityServiceClient>();
 
       services.TryAddSingleton<IActivityGateway, GrpcActivityGateway>();
@@ -39,9 +37,9 @@ namespace Kakehashi.Modules.Activity.UI {
       services.AddTransient<ActivityViewModel>();
       services.AddTransient<ActivityPage>();
 
-      // Registered as an awake-on-startup service, because what it listens for is announced during
-      // startup: an app update is noticed on the first run of a new build, and a listener created
-      // later would miss the one moment worth reporting.
+      // Awake on startup, because what it listens for is announced during startup: an app update is
+      // noticed on the first run of a new build, and a listener created later would miss the one
+      // moment worth reporting.
       services.AddSingleton<IAwakeOnStartup, ActivityReporter>();
     }
 

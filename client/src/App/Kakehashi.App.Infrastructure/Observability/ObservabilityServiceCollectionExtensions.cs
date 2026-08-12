@@ -10,11 +10,6 @@ using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
 
 namespace Kakehashi.App.Infrastructure.Observability {
-  // Registers OpenTelemetry tracing, metrics and logging. Tracing follows the app's
-  // Telemetry.ActivitySource plus outbound HTTP and gRPC client calls; metrics include
-  // process/runtime and HTTP-client instruments; logs flow through the OpenTelemetry logging provider.
-  // Each signal and exporter is gated by ObservabilityOptions so it stays quiet until
-  // configured.
   public static class ObservabilityServiceCollectionExtensions {
     public static IServiceCollection AddObservability(
         this IServiceCollection services, IConfiguration configuration) {
@@ -42,7 +37,7 @@ namespace Kakehashi.App.Infrastructure.Observability {
           // (gRPC-semantic attributes) is prerelease-only today; add it when it ships stable.
           tracing
               .AddSource(Telemetry.ServiceName)
-              // The Auth module's ActivitySource; harmless when the module is absent (no spans emitted).
+              // Harmless when the Auth module is absent — no spans are emitted.
               .AddSource("Kakehashi.Modules.Auth")
               .AddHttpClientInstrumentation();
 

@@ -1,7 +1,6 @@
 namespace Kakehashi.Modules.Auth.UI {
-  // Broadcast via the CommunityToolkit WeakReferenceMessenger whenever the current
-  // Domain.AuthSession is set or cleared, so auth-aware UI (the Account page, the
-  // shell's account item) can refresh without polling.
+  // Broadcast on WeakReferenceMessenger.Default whenever the current AuthSession is set or
+  // cleared, so auth-aware UI refreshes without polling.
   public sealed class AuthSessionChangedMessage {
   }
 }

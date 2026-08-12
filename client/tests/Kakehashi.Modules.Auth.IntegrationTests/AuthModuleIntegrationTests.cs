@@ -15,10 +15,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Xunit;
 
 namespace Kakehashi.Modules.Auth.IntegrationTests {
-  /// <summary>
-  /// Exercises the Auth module the way the host does: the real mediator pipeline and handlers, wired
-  /// over in-memory test doubles for the OIDC authenticator, token store and session accessor.
-  /// </summary>
+  // The real mediator pipeline, never a mocked one: only the ports get test doubles.
   public sealed class AuthModuleIntegrationTests {
     private static ServiceProvider BuildProvider(
         IInteractiveAuthenticator authenticator, ITokenStore tokenStore) {

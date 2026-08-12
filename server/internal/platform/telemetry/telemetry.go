@@ -1,10 +1,9 @@
 // Package telemetry wires OpenTelemetry traces and metrics to an OTLP collector.
 //
 // Everything except the service name is configured through the standard OTEL_* environment
-// variables, which the exporters read themselves: endpoint, protocol, headers, timeouts, TLS. That
-// is not laziness. Those variables are a specification several tools already implement, and an
-// operator who knows OTEL_EXPORTER_OTLP_HEADERS should not have to discover that this particular
-// server invented its own name for it.
+// variables, which the exporters read themselves: endpoint, protocol, headers, timeouts, TLS. Those
+// variables are a specification several tools already implement, and an operator who knows
+// OTEL_EXPORTER_OTLP_HEADERS should not have to discover that this server invented its own name.
 package telemetry
 
 import (
@@ -22,24 +21,17 @@ import (
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
 )
 
-// Options configures the export pipeline.
 type Options struct {
-	// ServiceName labels every span and metric this process emits.
 	ServiceName string
 
-	// Enabled reports whether an OTLP endpoint was configured. When false, Setup installs nothing
-	// and returns a shutdown that does nothing, so the server runs identically with no collector
-	// in front of it. A boilerplate that will not start without an observability stack is a
-	// boilerplate nobody tries.
+	// When false, Setup installs nothing and returns a shutdown that does nothing, so the server
+	// runs identically with no collector in front of it.
 	Enabled bool
 }
 
-// Setup installs the global tracer and meter providers and returns their shutdown.
-//
-// The returned function must be called before the process exits, and given a context with a
+// The returned shutdown must be called before the process exits, and given a context with a
 // deadline. Spans are batched, so whatever is still in the buffer at exit is lost unless something
-// flushes it, and the traces lost this way are exactly the ones from the requests that were in
-// flight when things went wrong.
+// flushes it — exactly the traces from the requests in flight when things went wrong.
 func Setup(ctx context.Context, opts Options) (func(context.Context) error, error) {
 	noop := func(context.Context) error { return nil }
 	if !opts.Enabled {
@@ -65,8 +57,8 @@ func Setup(ctx context.Context, opts Options) (func(context.Context) error, erro
 
 	metricExporter, err := otlpmetricgrpc.New(ctx)
 	if err != nil {
-		// The tracer provider is already live at this point; shut it down rather than leaking its
-		// batching goroutine for the lifetime of a process that is about to fail to start anyway.
+		// The tracer provider is already live; shut it down rather than leaking its batching
+		// goroutine.
 		_ = tracerProvider.Shutdown(ctx)
 		return noop, fmt.Errorf("create otlp metric exporter: %w", err)
 	}
@@ -79,8 +71,7 @@ func Setup(ctx context.Context, opts Options) (func(context.Context) error, erro
 	otel.SetMeterProvider(meterProvider)
 
 	// Without a propagator, incoming traceparent headers are ignored and every request starts a
-	// new trace. The spans still arrive; they just do not join up with the client's, which is the
-	// half of the picture worth having.
+	// new trace: the spans still arrive, they just do not join up with the client's.
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},

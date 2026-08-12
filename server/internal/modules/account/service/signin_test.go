@@ -34,8 +34,8 @@ func TestAuthenticateGivesOneAnswerForBothFailures(t *testing.T) {
 	_, unknownAddress := svc.Authenticate(
 		context.Background(), "nobody@example.com", password, "", "")
 
-	// The two messages must be identical, or the sign-in form becomes an oracle that confirms
-	// which addresses have accounts.
+	// Identical messages, or the sign-in form becomes an oracle confirming which addresses have
+	// accounts.
 	if wrongPassword == nil || unknownAddress == nil {
 		t.Fatal("expected both attempts to fail")
 	}
@@ -87,7 +87,6 @@ func TestStartSessionRecordsAndAnnounces(t *testing.T) {
 		t.Errorf("announced %+v, want one SignedIn carrying session %s", announced, session.ID)
 	}
 
-	// First sign-in from a device nobody has used: that is the event kind people actually read.
 	kinds := store.kinds()
 	if len(kinds) != 1 || kinds[0] != accountapi.EventNewDeviceSignedIn {
 		t.Errorf("recorded %v, want exactly one %s", kinds, accountapi.EventNewDeviceSignedIn)

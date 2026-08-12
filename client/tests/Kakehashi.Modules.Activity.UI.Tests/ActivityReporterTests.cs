@@ -12,15 +12,9 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Activity.UI.Tests {
-  /// <summary>
-  /// Unit tests for <see cref="ActivityReporter"/>: which announced facts reach the server, and — the
-  /// part worth a test — which do not.
-  /// </summary>
-  /// <remarks>
-  /// The reporter registers with the static <c>WeakReferenceMessenger</c>, so the instance is held in
-  /// a field for the life of each test (a weakly-held recipient can be collected mid-test) and
-  /// unregistered on teardown to leave the shared bus clean for the next one.
-  /// </remarks>
+  // The reporter registers with the static WeakReferenceMessenger, so the instance is held in a
+  // field for the life of each test (a weakly-held recipient can be collected mid-test) and
+  // unregistered on teardown to leave the shared bus clean for the next one.
   public sealed class ActivityReporterTests : IDisposable {
     private readonly ISender _sender = Substitute.For<ISender>();
     private readonly ActivityReporter _reporter;
@@ -51,10 +45,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests {
           Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// The server writes sign-ins and sign-outs from its own events, so forwarding the host's copy
-    /// would put two rows in the feed for one thing that happened.
-    /// </summary>
+    // The server writes sign-ins and sign-outs from its own events, so forwarding the host's copy
+    // would put two rows in the feed for one thing that happened.
     [Theory]
     [InlineData(AppActivityKind.SignedIn)]
     [InlineData(AppActivityKind.SignedOut)]
@@ -66,10 +58,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests {
           Arg.Any<CancellationToken>());
     }
 
-    /// <summary>
-    /// A refusal is a log line, not an exception: nobody asked for the report and nobody is waiting
-    /// on it, and an exception escaping an unawaited task would end the process.
-    /// </summary>
+    // A refusal is a log line, not an exception: nobody asked for the report and nobody is waiting
+    // on it, and an exception escaping an unawaited task would end the process.
     [Fact]
     public void AFailedReportIsSwallowed() {
       _sender.Send(
@@ -92,8 +82,8 @@ namespace Kakehashi.Modules.Activity.UI.Tests {
               Arg.Any<CancellationToken>())
           .Returns<Task<Result>>(_ => throw new InvalidOperationException("the mediator threw"));
 
-      // The announcer is whichever thread noticed the fact — the UI thread, at startup. An exception
-      // that got back to it would take down the app over a theme change.
+      // The announcer is whichever thread noticed the fact — the UI thread, at startup. An
+      // exception that got back to it would take down the app over a theme change.
       WeakReferenceMessenger.Default.Send(
           new AppActivityRecordedMessage(AppActivityKind.ThemeChanged));
     }

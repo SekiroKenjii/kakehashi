@@ -1,7 +1,3 @@
-// The fake store and the harness every test in this package builds on. No tests of its own —
-// hence the name: a service_test.go with nothing to run in it reads as one somebody forgot to
-// delete.
-
 package service
 
 import (

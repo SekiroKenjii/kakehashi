@@ -84,7 +84,6 @@ func TestLeavingAndBeingEndedAreAnnouncedApart(t *testing.T) {
 	if len(ended) != 1 || ended[0].SessionID != theirs.ID {
 		t.Errorf("SessionRevoked = %+v, want one naming %s", ended, theirs.ID)
 	}
-	// The owner did both of these, so neither is somebody else acting on the account.
 	if len(ended) == 1 && ended[0].ByAdmin {
 		t.Error("the owner revoking their own session was announced as an administrator's doing")
 	}
@@ -119,12 +118,9 @@ func TestAnAdministratorEndingASessionIsAnnouncedAsSomebodyElse(t *testing.T) {
 	}
 }
 
-// Ending a session that is not there succeeds and announces nothing.
-//
 // Live verification found this: the delete was idempotent, which is right, but the announcement was
-// unconditional, which made every one of these paths able to state something that had not happened.
-// The administrator case is the one that mattered — any session id at all put "somebody else ended
-// your session" into an account's feed, which is the single line on that screen a person acts on.
+// unconditional, so every one of these paths could state something that had not happened. Any
+// session id at all put "somebody else ended your session" into an account's feed.
 func TestEndingASessionThatIsNotThereAnnouncesNothing(t *testing.T) {
 	for _, tc := range []struct {
 		name string
@@ -156,14 +152,12 @@ func TestEndingASessionThatIsNotThereAnnouncesNothing(t *testing.T) {
 				announced++
 			})
 
-			// Still success: a caller ending something already gone got what they asked for.
 			if err := tc.act(svc, account.ID); err != nil {
 				t.Fatalf("returned an error: %v", err)
 			}
 			if announced != 0 {
 				t.Errorf("announced %d events for a session that was never there, want 0", announced)
 			}
-			// Nor is it in the account's own audit trail, which the Account page reads.
 			events, err := store.SecurityEventsForUser(context.Background(), account.ID, 10)
 			if err != nil {
 				t.Fatalf("SecurityEventsForUser returned an error: %v", err)

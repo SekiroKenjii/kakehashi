@@ -10,17 +10,13 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// InsertToken records an issued token.
 func (s *SQLServer) InsertToken(ctx context.Context, t domain.IssuedToken) error {
 	return s.RotateToken(ctx, "", t)
 }
 
-// RotateToken retires a refresh token and issues its replacement, as one act.
-//
-// The two halves used to be independent statements, and the window between them was the whole
-// problem: a failure after the DELETE and before the INSERT destroyed the user's only refresh
-// token, which is the credential they cannot re-obtain without signing in again. Rotation that can
-// lose the thing it is rotating is worse than no rotation.
+// Retiring the old refresh token and issuing its replacement is one transaction. As two independent
+// statements, a failure after the DELETE and before the INSERT destroyed the user's only refresh
+// token — the credential they cannot re-obtain without signing in again.
 //
 // An empty retire means "this is the first token of a session", so one method serves both and there
 // is no second insert path to keep in step.
@@ -57,7 +53,6 @@ func (s *SQLServer) RotateToken(ctx context.Context, retire string, t domain.Iss
 	return nil
 }
 
-// TokenByRefresh returns the token record a refresh token belongs to.
 func (s *SQLServer) TokenByRefresh(ctx context.Context, refreshToken string) (domain.IssuedToken, error) {
 	const q = `
         SELECT t.Id, t.SessionId, t.AccountId, t.ClientId, t.RefreshToken, t.Scopes, t.Audience,
@@ -90,8 +85,6 @@ func (s *SQLServer) TokenByRefresh(ctx context.Context, refreshToken string) (do
 	return t, nil
 }
 
-// TokenByID returns one issued token, or an errs.NotFound error. The userinfo endpoint uses it to
-// learn which scopes a verified access token was issued with.
 func (s *SQLServer) TokenByID(ctx context.Context, id string) (domain.IssuedToken, error) {
 	const q = `
         SELECT t.Id, t.SessionId, t.AccountId, t.ClientId, t.RefreshToken, t.Scopes, t.Audience,
@@ -124,7 +117,6 @@ func (s *SQLServer) TokenByID(ctx context.Context, id string) (domain.IssuedToke
 	return t, nil
 }
 
-// DeleteToken removes one issued token by its id.
 func (s *SQLServer) DeleteToken(ctx context.Context, id string) error {
 	const q = `DELETE FROM account.IssuedToken WHERE Id = @p1;`
 
@@ -134,8 +126,7 @@ func (s *SQLServer) DeleteToken(ctx context.Context, id string) error {
 	return nil
 }
 
-// DeleteTokenByRefresh removes the token a refresh token belongs to. Used on rotation, so the
-// previous refresh token cannot be replayed.
+// Used on rotation, so the previous refresh token cannot be replayed.
 func (s *SQLServer) DeleteTokenByRefresh(ctx context.Context, refreshToken string) error {
 	const q = `DELETE FROM account.IssuedToken WHERE RefreshToken = @p1;`
 

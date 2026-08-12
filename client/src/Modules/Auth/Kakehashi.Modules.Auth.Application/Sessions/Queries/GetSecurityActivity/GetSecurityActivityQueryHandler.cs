@@ -7,7 +7,6 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Sessions.Queries.GetSecurityActivity {
-  // Fetches the security activity feed through the account gateway.
   public sealed class GetSecurityActivityQueryHandler
       : IRequestHandler<GetSecurityActivityQuery, Result<IReadOnlyList<SecurityEventDto>>> {
     private readonly IAccountGateway _account;

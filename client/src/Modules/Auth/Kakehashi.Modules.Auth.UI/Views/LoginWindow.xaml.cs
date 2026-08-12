@@ -8,7 +8,6 @@ using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
 
 namespace Kakehashi.Modules.Auth.UI.Views {
-  // A small sign-in window shown by the startup gate when interactive login is required.
   public sealed partial class LoginWindow : WindowEx {
     private readonly TaskCompletionSource<bool> _outcome = new();
     private bool _allowClose;
@@ -31,8 +30,8 @@ namespace Kakehashi.Modules.Auth.UI.Views {
 
     public LoginViewModel ViewModel { get; }
 
-    // Completes with true when the user signs in and false when they confirm quitting
-    // at the sign-in prompt. The startup gate awaits this to decide whether to continue or exit.
+    // True when the user signed in, false when they confirmed quitting. The startup gate awaits
+    // this to decide whether to continue or exit.
     public Task<bool> Outcome => _outcome.Task;
 
     private void OnSignInSucceeded(object? sender, EventArgs e) {
@@ -46,8 +45,8 @@ namespace Kakehashi.Modules.Auth.UI.Views {
         return;
       }
 
-      // The user is closing the sign-in window without authenticating. Confirm before quitting the
-      // app instead of letting an unhandled cancellation surface as the error window.
+      // Closing without authenticating quits the app, so confirm first rather than let an
+      // unhandled cancellation surface as the error window.
       args.Cancel = true;
 
       // A second close request while the dialog is open would make ShowAsync throw.

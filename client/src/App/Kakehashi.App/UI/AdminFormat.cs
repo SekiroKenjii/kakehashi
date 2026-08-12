@@ -5,16 +5,12 @@ using Microsoft.UI.Xaml.Media;
 using Windows.UI;
 
 namespace Kakehashi.App.UI {
-  // The formatting the two administration screens share: initials for avatars, relative times,
-  // and the badge palette.
-  //
-  // Static functions rather than converters because x:Bind compile-checks a function call
-  // and cannot check a converter. Brushes are cached: these are called once per row per render,
-  // and a fresh brush per call is garbage for no benefit.
+  // Static functions rather than converters: x:Bind compile-checks a function call and cannot
+  // check a converter. Brushes are cached because these run once per row per render, and a fresh
+  // brush per call is garbage for no benefit.
   public static class AdminFormat {
     private static readonly Dictionary<string, SolidColorBrush> _brushes = [];
 
-    // "System Administrator" → "SA". One letter for one-word names.
     public static string Initials(string name) {
       var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
       if (parts.Length == 0) {
@@ -26,8 +22,8 @@ namespace Kakehashi.App.UI {
       return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
-    // "2 min ago", "Yesterday", "2026-06-01". Null — never — is the caller's to phrase, because
-    // the list says "—" where the status column says "Never signed in".
+    // Null — never — is the caller's to phrase: the list says "—" where the status column says
+    // "Never signed in".
     public static string Relative(DateTimeOffset at) {
       var age = DateTimeOffset.Now - at;
       if (age < TimeSpan.FromMinutes(2)) {
@@ -51,13 +47,11 @@ namespace Kakehashi.App.UI {
       return at.ToString("yyyy-MM-dd");
     }
 
-    // The foreground for a role's badge. Known roles get the mockup's palette.
     public static SolidColorBrush RoleForeground(string roleName) {
       return Cached("fg:" + roleName, () => RoleColor(roleName));
     }
 
-    // The tinted background behind it — the same hue at low alpha, so it works on both
-    // themes without a second palette.
+    // The same hue at low alpha, so it works on both themes without a second palette.
     public static SolidColorBrush RoleBackground(string roleName) {
       return Cached("bg:" + roleName, () => WithAlpha(RoleColor(roleName), 0x26));
     }

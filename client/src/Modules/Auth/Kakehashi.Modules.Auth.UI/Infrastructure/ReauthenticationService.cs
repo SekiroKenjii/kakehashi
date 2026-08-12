@@ -7,10 +7,8 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 
 namespace Kakehashi.Modules.Auth.UI.Infrastructure {
-  // Forces an interactive re-sign-in after the user signs out: the main window is blurred and its
-  // input disabled while the LoginWindow is shown as a modal centered over it. The
-  // user can only sign in again or quit - declining closes the application, so it never keeps
-  // running unauthenticated once authentication is configured.
+  // Declining the forced re-sign-in exits the application: once authentication is configured it
+  // never keeps running unauthenticated.
   public sealed class ReauthenticationService {
     private readonly IServiceProvider _services;
     private readonly IShellOverlay _overlay;
@@ -34,7 +32,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _options = options.Value;
     }
 
-    // Runs the modal re-sign-in flow. Must be called on the UI thread.
+    // Must be called on the UI thread.
     public async Task RequireSignInAsync() {
       if (!_options.IsConfigured || _inProgress) {
         return;
@@ -49,10 +47,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
         using var overlay = _overlay.Show();
         using var modal = WindowHelper.ShowModalOver(window, owner);
 
-        // The shell goes away entirely, rather than sitting blurred behind the sign-in window.
-        // Once somebody has signed out there is no account behind that glass: what it shows is the
-        // previous user's screen, with their name in the rail and their data on the page. Blurring
-        // it is not enough — the correct amount of the last session to leave visible is none.
+        // The shell goes away entirely rather than sitting blurred behind the sign-in window: what
+        // the glass would show is the previous user's screen, their name in the rail and their
+        // data on the page. The correct amount of the last session to leave visible is none.
         //
         // Hidden after the modal is established, so the ownership and centring above still have a
         // visible owner to work from.

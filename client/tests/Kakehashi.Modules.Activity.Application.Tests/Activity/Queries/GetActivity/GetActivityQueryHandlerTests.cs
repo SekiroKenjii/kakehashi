@@ -10,10 +10,8 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Activity.Application.Tests.Activity.Queries.GetActivity {
-  /// <summary>
-  /// Unit tests for <see cref="GetActivityQueryHandler"/>: a pass-through, and the point of the tests
-  /// is that it stays one — everything the reader chose has to reach the gateway unaltered.
-  /// </summary>
+  // The point of these is that the handler stays a pass-through: everything the reader chose has to
+  // reach the gateway unaltered.
   public sealed class GetActivityQueryHandlerTests {
     private readonly IActivityGateway _activity = Substitute.For<IActivityGateway>();
 
@@ -34,10 +32,8 @@ namespace Kakehashi.Modules.Activity.Application.Tests.Activity.Queries.GetActiv
           DateTimeOffset.UtcNow);
     }
 
-    /// <summary>
-    /// Every part of the filter reaches the gateway. A range or a search dropped here would produce a
-    /// page that looked plausible and answered a different question than the one asked.
-    /// </summary>
+    // A range or a search dropped here would produce a page that looked plausible and answered a
+    // different question than the one asked.
     [Fact]
     public async Task Handle_PassesTheWholeFilterThrough() {
       var filter = new ActivityFeedFilter {

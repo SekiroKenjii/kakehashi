@@ -8,10 +8,6 @@ using NSubstitute;
 using Xunit;
 
 namespace Kakehashi.Modules.Activity.Application.Tests.Activity.Commands.RecordClientEvent {
-  /// <summary>
-  /// Unit tests for <see cref="RecordClientEventCommandHandler"/>: the module's only write, and a
-  /// pass-through like its read counterpart.
-  /// </summary>
   public sealed class RecordClientEventCommandHandlerTests {
     private readonly IActivityGateway _activity = Substitute.For<IActivityGateway>();
 

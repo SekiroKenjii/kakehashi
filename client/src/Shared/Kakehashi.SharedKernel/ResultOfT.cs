@@ -1,8 +1,6 @@
 using System;
 
 namespace Kakehashi.SharedKernel {
-  /// <summary>The outcome of an operation that returns a <typeparamref name="TValue"/> on success.</summary>
-  /// <typeparam name="TValue">The type produced when the operation succeeds.</typeparam>
   public sealed class Result<TValue> : Result {
     private readonly TValue? _value;
 
