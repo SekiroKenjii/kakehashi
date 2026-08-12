@@ -124,12 +124,6 @@ namespace Kakehashi.App.UI {
     /// <summary>Every staged change, for the diff.</summary>
     public ObservableCollection<NavChange> Diff { get; } = [];
 
-    /// <summary>Whether the pane preview drawer is showing.</summary>
-    /// <remarks>
-    /// Closed to begin with. The preview answers a question somebody asks now and then - "what will
-    /// this look like to them" - so it costs the two editing columns nothing until it is asked.
-    /// </remarks>
-    /// <summary>What is typed into the icon search.</summary>
     [ObservableProperty]
     public partial string IconQuery { get; set; }
 

@@ -133,10 +133,11 @@ func (s *SQLServer) scanAccount(row scanner, what string) (domain.Account, error
 
 // Accounts lists every account, newest first.
 //
-// Unpaged, and that is a decision with a limit worth naming: it serves an administration screen
-// whose own design is a filterable table over the whole set. A deployment large enough for that to
-// hurt needs paging in the contract, not a TOP the client cannot see.
 // Accounts lists the accounts the CALLER may see, which is not always all of them.
+//
+// Unpaged: it serves an administration screen whose design is a filterable table over the whole
+// set. A deployment large enough for that to hurt needs paging in the contract, not a TOP the
+// client cannot see.
 //
 // This is where row scope stops being a column and starts being a rule. A grant of users.manage
 // carries own, team or all, and the narrowing belongs here rather than in the route gate for the
