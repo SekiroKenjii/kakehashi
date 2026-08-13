@@ -57,9 +57,8 @@ namespace Kakehashi.Modules.Notes.Domain.Tests {
 
     [Fact]
     public void Create_CountsTextElementsNotCharacters() {
-      // "e" followed by U+0301 COMBINING ACUTE ACCENT: one letter on screen, two UTF-16 chars in
-      // memory. Counting chars would reject a title of 120 such letters that the server accepts —
-      // the kind of bug that only ever shows up in one language.
+      // "e" plus U+0301 COMBINING ACUTE ACCENT: one letter on screen, two UTF-16 chars in memory,
+      // so counting chars would reject 120 of them where the server accepts them.
       const string composed = "é";
       var title = string.Concat(Enumerable.Repeat(composed, NoteDraft.MaxTitleLength));
 

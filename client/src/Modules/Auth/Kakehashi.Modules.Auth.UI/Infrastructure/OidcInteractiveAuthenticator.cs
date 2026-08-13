@@ -117,9 +117,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
 
       using var activity = AuthTelemetry.Source.StartActivity("Auth.Logout");
       try {
-        // Drive the OIDC end-session endpoint in the system browser so the authorization server
-        // clears its own session cookie. Without this, only local tokens are dropped and the next
-        // sign-in completes silently via the still-valid server SSO session (no credentials prompt).
+        // The end-session endpoint in the system browser, so the server clears its own cookie:
+        // otherwise the next sign-in completes silently through the still-valid SSO session.
         await GetClient()
             .LogoutAsync(new LogoutRequest { IdTokenHint = session?.IdToken }, cancellationToken)
             .ConfigureAwait(false);

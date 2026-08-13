@@ -30,9 +30,8 @@ namespace Kakehashi.Modules.Notes.UI {
 
       services.AddNotesApplication();
 
-      // The host's helper rather than a hand-rolled channel, so the access token is attached the
-      // same way it is everywhere else. A module that wired its own client would work right up
-      // until the server started checking.
+      // The host's helper, not a hand-rolled channel, so the token is attached as it is everywhere
+      // else: a module wiring its own client works right up until the server starts checking.
       services.AddBackendGrpcClient<NotesV1.NotesService.NotesServiceClient>();
 
       services.TryAddSingleton<INotesGateway, GrpcNotesGateway>();

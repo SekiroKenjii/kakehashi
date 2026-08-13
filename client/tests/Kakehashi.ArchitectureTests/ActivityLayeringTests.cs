@@ -47,9 +47,8 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void Application_DoesNotDependOnTheGeneratedContract() {
-      // Generated protobuf types are the wire's shape, not the module's. Letting them past the UI
-      // layer would make a change to the schema a change to a use case, which is exactly the
-      // coupling the gateway port exists to prevent.
+      // Generated protobuf types are the wire's shape, not the module's: past the UI layer a
+      // schema change becomes a use-case change, the coupling the gateway port exists to prevent.
       var references = ReferencedAssemblyNames(_activityApplication);
 
       Assert.DoesNotContain(

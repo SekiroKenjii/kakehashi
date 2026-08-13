@@ -35,9 +35,8 @@ namespace Kakehashi.UI.Common.Controls {
       ("navigation", "\uE700"),
       ("settings", "\uE713"),
 
-      // What a module somebody else writes is likely to be about. Named for the subject rather than
-      // for what the glyph draws: the name is what a deployment stores and what another client - one
-      // shipping a different icon font - has to make sense of.
+      // What somebody else's module is likely to be about. Named for the subject, not the glyph:
+      // the name is what a deployment stores and what a client with another font must resolve.
       ("dashboard", "\uF246"),
       ("report", "\uE9D2"),
       ("folder", "\uE8B7"),

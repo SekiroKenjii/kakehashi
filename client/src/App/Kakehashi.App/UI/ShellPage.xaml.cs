@@ -52,9 +52,8 @@ namespace Kakehashi.App.UI {
 
       InitializeComponent();
 
-      // Rebuilt when the deployment's arrangement arrives, which is normally once at startup — but
-      // also every time an administrator saves the layout screen, and after signing in as somebody
-      // else. The pane is drawn from whatever is current, so the handler needs no argument.
+      // Rebuilt whenever the arrangement arrives: at startup, on every save of the layout screen,
+      // and after signing in as somebody else. The pane draws from what is current, so no argument.
       _layout.Changed += OnLayoutChanged;
 
       WeakReferenceMessenger.Default.Register<ShellPage, ModuleSetChangedMessage>(

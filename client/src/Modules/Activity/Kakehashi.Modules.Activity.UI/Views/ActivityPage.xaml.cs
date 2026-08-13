@@ -21,9 +21,8 @@ namespace Kakehashi.Modules.Activity.UI.Views {
 
       InitializeComponent();
 
-      // Grouping is wired here rather than in XAML because a CollectionViewSource lives in a resource
-      // dictionary, and x:Bind cannot reach into one. The source is the view model's own observable
-      // collection, so re-grouping a page of results updates the list without touching this again.
+      // Wired here, not in XAML: a CollectionViewSource lives in a resource dictionary and x:Bind
+      // cannot reach one. The source is the view model's own collection, so regrouping is enough.
       FeedList.ItemsSource = new CollectionViewSource {
         IsSourceGrouped = true,
         ItemsPath = new PropertyPath("Items"),

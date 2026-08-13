@@ -102,9 +102,8 @@ namespace Kakehashi.Modules.Notes.UI.Tests.Infrastructure {
       var address = Address();
       Assert.SkipWhen(address is null, $"{_addressVariable} is not set.");
 
-      // The generated client directly, not the gateway: NoteDraft makes an invalid title
-      // unrepresentable, so this is the only way to ask what the server does when one arrives
-      // anyway — which is the case that matters, because a future client might not be this one.
+      // The generated client, not the gateway: NoteDraft makes an invalid title unrepresentable,
+      // and what the server does when one arrives anyway is the case a future client depends on.
       var client = new NotesV1.NotesService.NotesServiceClient(GrpcChannel.ForAddress(address!));
 
       var failure = await Assert.ThrowsAsync<RpcException>(async () =>

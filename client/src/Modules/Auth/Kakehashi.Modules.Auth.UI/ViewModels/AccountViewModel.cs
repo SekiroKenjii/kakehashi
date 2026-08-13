@@ -325,9 +325,8 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       if (activity.IsSuccess) {
         _allActivity = [.. activity.Value.Select(ToActivityItem)];
       } else {
-        // The error is surfaced rather than swallowed: an empty activity card reads as "nothing
-        // has ever happened to this account", which would misreport a failed fetch as a clean
-        // history.
+        // Surfaced, not swallowed: an empty activity card reads as "nothing ever happened to this
+        // account", misreporting a failed fetch as a clean history.
         _allActivity = [];
         ErrorMessage = activity.Error.Message;
       }

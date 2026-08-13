@@ -292,9 +292,8 @@ namespace Kakehashi.App.UI {
             + $"{outcome.Revoked} revoked.",
             InfoBarSeverity.Success);
 
-        // Reloaded rather than assumed. The counts on the role list moved, and somebody else may
-        // have saved between this screen reading and writing — the server's answer is the one
-        // worth drawing.
+        // Reloaded, not assumed: the role list counts moved, and somebody else may have saved
+        // between this screen reading and writing.
         await LoadAsync(cancellationToken);
       } finally {
         IsBusy = false;

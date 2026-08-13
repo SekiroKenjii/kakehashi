@@ -37,9 +37,8 @@ namespace Kakehashi.Modules.Auth.UI {
         "Account",
         "Identity, security activity and session management — sign out here or everywhere.",
         IsRequired: true,
-        // The server calls this module "account", not "auth": IDENTITY is a reserved T-SQL
-        // word, so the module ID had to be something else. Written down rather than derived,
-        // because a permission key that drifts is a permission that stops applying.
+        // The server calls this module "account", not "auth", because IDENTITY is reserved in
+        // T-SQL. Written down, not derived: a permission key that drifts stops applying.
         AssignmentId: "account");
 
     public void RegisterServices(IServiceCollection services) {

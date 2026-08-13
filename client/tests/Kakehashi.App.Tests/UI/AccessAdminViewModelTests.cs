@@ -201,9 +201,8 @@ namespace Kakehashi.App.Tests.UI {
 
       Assert.False(sut.IsPermitted);
 
-      // Awaited, and the "does not load" half asserted. Fire-and-forget meant the command had not
-      // finished when the assertion ran, so this passed with the permission guard deleted: an empty
-      // collection proves nothing if nothing has had a chance to fill it.
+      // Awaited: fire-and-forget left the command unfinished at the assertion, so this passed with
+      // the permission guard deleted — an empty collection proves nothing nothing has filled.
       await sut.LoadCommand.ExecuteAsync(parameter: null);
 
       Assert.Empty(sut.Roles);
@@ -215,9 +214,8 @@ namespace Kakehashi.App.Tests.UI {
       var now = DateTimeOffset.Now;
       _admins.ListUsersAsync(Arg.Any<CancellationToken>())
           .Returns(Result.Success<IReadOnlyList<UserRow>>([
-            // Active and never signed in: the case that made the card report a detail bigger than
-            // the number it sat under. The counts test below cannot catch it — its only
-            // never-signed-in account is also its only inactive one.
+            // Active and never signed in: the case that made the detail exceed the number above it.
+            // The counts test below cannot catch it — its one such account is also its one inactive.
             new UserRow("1", "new@x.test", "New", "", "", true, null, now, 0, []),
             new UserRow("2", "gone@x.test", "Gone", "", "", false, null, now, 0, []),
           ]));
