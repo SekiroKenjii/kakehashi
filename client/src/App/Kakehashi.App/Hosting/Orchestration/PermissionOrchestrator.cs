@@ -11,9 +11,8 @@ namespace Kakehashi.App.Hosting.Orchestration {
   /// between signing in and building the shell.
   /// </summary>
   /// <remarks>
-  /// Runs at order 17 — after authentication (15) because both calls need a token, before the
-  /// shell (20) because the pane is built from both answers — and re-reads both on every session
-  /// change: docs/adr/0010-startup-orchestrator-ordering.md
+  /// Order 17: after authentication (15), before the shell (20). Re-reads on every session change.
+  /// docs/adr/0010-startup-orchestrator-ordering.md
   /// </remarks>
   public sealed class PermissionOrchestrator : IStartupOrchestrator {
     private readonly PermissionService _permissions;

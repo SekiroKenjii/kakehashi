@@ -57,7 +57,10 @@ namespace Kakehashi.Modules.Auth.UI.Views {
       await ChangePasswordDialog.ShowAsync();
     }
 
-    // Cancelling the close keeps the dialog open so the validation error stays visible.
+    /// <summary>
+    /// Saves the profile. Cancelling the close keeps the dialog open so a validation error stays
+    /// visible.
+    /// </summary>
     private async void OnEditProfileSave(
         ContentDialog sender, ContentDialogButtonClickEventArgs args) {
       var deferral = args.GetDeferral();

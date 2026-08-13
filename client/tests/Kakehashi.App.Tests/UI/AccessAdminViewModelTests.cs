@@ -27,8 +27,10 @@ namespace Kakehashi.App.Tests.UI {
     private static readonly RoleRow _admin = new("role-1", "Admin", "Everything", true, 2, 1);
     private static readonly RoleRow _viewer = new("role-2", "Viewer", "Read only", true, 1, 4);
 
-    // The one permission whose row scope a store actually honours, so the only one whose grant
-    // offers own/team/all.
+    /// <summary>
+    /// The one permission whose row scope a store actually honours, so the only one whose grant
+    /// offers own/team/all.
+    /// </summary>
     private static readonly PermissionRow _manageUsers =
         new("users.manage", "Manage Users", "…", "Administration", true, IsScoped: true);
     private static readonly PermissionRow _viewAudit =

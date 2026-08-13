@@ -11,16 +11,7 @@ namespace Kakehashi.App.UI {
   /// <summary>
   /// The Users screen.
   /// </summary>
-  /// <remarks>
-  /// Loads on <see cref="FrameworkElement.Loaded"/>, not <c>OnNavigatedTo</c>, which never fires
-  /// in this app: docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md
-  /// <para>
-  /// The static helpers exist because <c>x:Bind</c> calls functions but does not format strings or
-  /// negate booleans. They live on the page rather than in converters for the reason the rest of
-  /// this codebase prefers: a function is compile-checked against its arguments, a converter is
-  /// not.
-  /// </para>
-  /// </remarks>
+  /// <remarks>client/docs/architecture.md, "Static helpers on the page, not converters".</remarks>
   public sealed partial class UsersPage : Page {
     public UsersPage(UsersViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);
@@ -42,7 +33,7 @@ namespace Kakehashi.App.UI {
       return roleNames.Count == 0 ? string.Empty : roleNames[0];
     }
 
-    // x:Bind cannot nest function calls, so the badge's two brushes get flat helpers.
+    /// <summary>The badge's foreground. Flat because x:Bind cannot nest function calls.</summary>
     public static SolidColorBrush FirstRoleForeground(IReadOnlyList<string> roleNames) {
       return AdminFormat.RoleForeground(FirstRole(roleNames));
     }

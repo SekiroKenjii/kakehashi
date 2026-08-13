@@ -28,8 +28,10 @@ namespace Kakehashi.App.Services {
     public const string ThemeChangedKind = "ThemeChanged";
     private const string _entriesKey = "App.ActivityLog";
     private const string _lastVersionKey = "App.LastRunVersion";
-    // Mirrors the private key ThemeService persists under, so the first "Theme changed" entry can
-    // show the correct old theme (the theme service itself has not initialized yet when we awake).
+    /// <summary>
+    /// Mirrors the private key ThemeService persists under, so the first "Theme changed" entry can
+    /// name the prior theme — the theme service has not initialized when this service awakes.
+    /// </summary>
     private const string _themeSettingKey = "AppTheme";
     private const int _maxEntries = 50;
 

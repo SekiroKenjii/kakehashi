@@ -28,11 +28,14 @@ namespace Kakehashi.Modules.Notes.UI.Tests.ViewModels {
       return new NoteDto(id, title, body, moment, moment);
     }
 
-    // Every setup below matches "not null" rather than Arg.Any. ISender.Send is generic, so all of
-    // these configure the same method and are told apart only by the argument matcher — and
-    // Arg.Any<T>() also matches the null that a Received/DidNotReceive verification passes in. The
-    // symptom is a request of one type being answered with another type's Task, cast-failing deep
-    // inside the proxy.
+    /// <summary>Stubs the notes query.</summary>
+    /// <remarks>
+    /// Matches "not null" rather than Arg.Any. ISender.Send is generic, so every setup here
+    /// configures the same method and they are told apart only by the argument matcher — and
+    /// Arg.Any&lt;T&gt;() also matches the null a Received/DidNotReceive verification passes in.
+    /// The symptom is a request of one type answered with another type's Task, cast-failing deep
+    /// inside the proxy.
+    /// </remarks>
     private void GivenNotes(params NoteDto[] notes) {
       _sender.Send(Arg.Is<GetNotesQuery>(query => query != null))
           .Returns(_ => Task.FromResult(

@@ -76,8 +76,10 @@ namespace Kakehashi.App.UI {
       await AttachModuleDialog.ShowAsync();
     }
 
-    // The dialog stays open so several modules can be re-attached in one visit; the attach
-    // command refreshes the list, so the row disappears and the empty text appears when done.
+    /// <summary>
+    /// Attaches a module without closing the dialog, so several can be re-attached in one visit.
+    /// The attach command refreshes the list, so the row leaves and the empty text appears.
+    /// </summary>
     private void OnAttachModuleClick(object sender, RoutedEventArgs e) {
       if ((sender as FrameworkElement)?.Tag is DetachedModuleListItem module) {
         ViewModel.AttachModuleCommand.Execute(module);

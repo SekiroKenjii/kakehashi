@@ -1552,10 +1552,13 @@ namespace Kakehashi.UI.Common.Controls {
       ("EthernetVPN", "\uF8CC"),
     ];
 
-    // Ordinal, not case-insensitive: resolving a name is exact everywhere, so one stored name always
-    // means one glyph. Searching is the forgiving half - you type "mail" and are offered "Mail".
-    // Without that split, the curated "home" and this catalogue's "Home" become two spellings of one
-    // thing, and a deployment could not tell which vocabulary a name came from.
+    /// <summary>Every name in the font, keyed ordinally.</summary>
+    /// <remarks>
+    /// Ordinal, never case-insensitive: resolving a name is exact everywhere, so one stored name
+    /// always means one glyph. Search is the forgiving half. Without that split the curated "home"
+    /// and this catalogue's "Home" are two spellings of one thing, and a deployment cannot tell
+    /// which vocabulary a name came from.
+    /// </remarks>
     private static readonly Dictionary<string, string> _glyphs =
         _catalogue.ToDictionary(entry => entry.Name, entry => entry.Glyph, StringComparer.Ordinal);
 

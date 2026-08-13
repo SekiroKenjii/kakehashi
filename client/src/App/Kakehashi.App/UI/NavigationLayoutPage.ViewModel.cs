@@ -16,18 +16,10 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.UI {
   /// <summary>
-  /// The Navigation screen: where each of this product's destinations sits in the pane.
+  /// The Navigation screen: where each destination sits in the pane. Which destinations exist is
+  /// compiled in and not editable here; the arrangement is.
   /// </summary>
-  /// <remarks>
-  /// Which destinations there ARE is compiled into the clients and cannot be edited here — every row
-  /// shows the permission that protects it precisely because nothing on this screen can change it.
-  /// What can be edited is the arrangement: headings, order, labels, icons, and whether a destination
-  /// is offered at all.
-  /// <para>
-  /// Edits are staged in this view model and applied in one atomic call:
-  /// docs/adr/0004-staged-edits-atomic-apply.md
-  /// </para>
-  /// </remarks>
+  /// <remarks>docs/adr/0004-staged-edits-atomic-apply.md</remarks>
   public sealed partial class NavigationLayoutViewModel : ViewModel {
     private readonly INavigationAdminService _admin;
     private readonly INavigationLayoutService _layout;

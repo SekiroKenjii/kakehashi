@@ -85,7 +85,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     [ObservableProperty]
     public partial string ActivityPageLabel { get; set; }
 
-    // Edit-profile / change-password dialog state.
+    /// <summary>Edit-profile and change-password dialog state.</summary>
     [ObservableProperty]
     public partial string EditDisplayName { get; set; }
 

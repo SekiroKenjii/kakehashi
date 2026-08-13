@@ -29,7 +29,10 @@ namespace Kakehashi.Modules.Auth.UI {
   public sealed class AuthModule : IModule {
     public string Name => "Auth";
 
-    // Required: the startup sign-in gate and the forced re-sign-in depend on this module.
+    /// <summary>
+    /// Marked required: the startup sign-in gate and the forced re-sign-in depend on this module,
+    /// so it cannot be detached.
+    /// </summary>
     public ModuleDescriptor Descriptor { get; } = new(
         "Account",
         "Identity, security activity and session management — sign out here or everywhere.",

@@ -100,24 +100,9 @@ func modules() []app.Module {
 }
 
 // unprotectedRouteModules are the modules permitted to serve a route whose policy checks no
-// permission. The kernel refuses at boot any route declaring Public or SignedIn from a module that
-// is not named here, giving both the module and the pattern.
+// permission. Boot refuses Public or SignedIn from any other module.
 //
-// Four, and each for a reason that would break the server without it:
-//
-//	health       a liveness probe that needs an account is not a liveness probe.
-//	account      signing in cannot require a permission you can only have after signing in, and
-//	             OpenID Connect has to answer an anonymous browser.
-//	authz        a module that answers "what may I do" cannot require permission to answer.
-//	navigation   a client cannot draw a locked door until it knows the door is there, so an account
-//	             with no grants must still be able to ask what its pane looks like.
-//
-// Each of the four also serves an administrative surface, and each of those names its own
-// permission on its own route. Being on this list buys a module permission to ASK for an
-// unprotected route, not blanket exemption.
-//
-// The list lives here, at the composition root, because exemption is a security decision a module
-// must not make about itself: docs/adr/0001-per-route-permission-policy.md.
-//
-// It grows per security exemption. It does not grow when a module is added.
+// It lives at the composition root because exemption is a security decision a module must not make
+// about itself, and it grows per exemption, never per added module. What earns a place, and why
+// each of the four has one: docs/adr/0001-per-route-permission-policy.md.
 var unprotectedRouteModules = []string{"health", "account", "authz", "navigation"}

@@ -28,6 +28,11 @@ breaking it, or a technical reason that cannot be read off the code. Nothing els
    wearing a comment costume. Move it to `docs/` or `docs/adr/NNNN-<slug>.md`
    (Context → Decision → Consequences, 10–20 lines) and leave one sentence plus the link.
 
+   **A comment that carries a link says what the thing is, then links. Nothing more.** Restating
+   the document's argument above the link is the document twice, and the copy is the one that goes
+   stale. If a fact is only true at this line — a trap, an invariant the reader is about to break —
+   it stays, at that line, not stacked on the type.
+
 5. **Docs are the source of truth, not comments.** A file in `docs/` never cites "the comment
    above X" as authority; the dependency points the other way.
 
@@ -37,9 +42,11 @@ breaking it, or a technical reason that cannot be read off the code. Nothing els
 constraint. Exported identifiers: godoc form, starting with the identifier's name, 1–2 sentences.
 `api/` packages may run longer; they still state facts.
 
-**C#.** `<summary>` is one sentence. `<remarks>` only for a real invariant or contract, at most
-~4 lines. XML docs are required (CS1591) only in the contract assemblies; elsewhere they are
-earned, not default.
+**C#.** A comment on a **declaration** — namespace, type, record, property, const, field, method —
+is `///`, never `//`. `//` is for the logic inside a body; a `//` above a declaration is a doc
+comment that forgot to be one, and no tooling will ever surface it. `<summary>` is one sentence.
+`<remarks>` only for a real invariant or contract, at most ~4 lines. XML docs are required (CS1591)
+only in the contract assemblies; elsewhere they are earned, not default.
 
 **Inline comments** (both halves): 1–3 lines, leading with the fact.
 
@@ -95,6 +102,10 @@ Right — a wire contract, said once:
 - History-marker check in the `architecture` CI job: the rule-2 words fail the build in
   `server/internal/modules` and `client/src`, excluding `gen`, `obj` and `bin` — generated gRPC
   stubs carry proto comments this rule does not govern.
+- `tools/check-doc-comments.sh`, in the same job: fails on a `//` comment directly above a C#
+  declaration. Only a compiler knows what a declaration is, so it approximates by looking for an
+  attribute or a declaration keyword after a run of `//` lines; a local inside a body does not
+  match.
 - CS1591 + `GenerateDocumentationFile` on the contract assemblies only:
   `Kakehashi.UI.Contracts` and `Kakehashi.Application.Abstractions`. Not `Kakehashi.Contracts`,
   which holds generated code.

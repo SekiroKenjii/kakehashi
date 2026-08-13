@@ -34,8 +34,10 @@ namespace Kakehashi.Modules.Notes.UI.Tests.Infrastructure {
       return string.IsNullOrWhiteSpace(address) ? null : address;
     }
 
-    // Plain HTTP/2 with no TLS: Grpc.Net.Client supports it directly on .NET 5 and later, which is
-    // what lets the development stack run without certificates.
+    /// <summary>
+    /// Builds a gateway over plain HTTP/2 with no TLS. Grpc.Net.Client supports it directly on
+    /// .NET 5 and later, which is what lets the development stack run without certificates.
+    /// </summary>
     private static GrpcNotesGateway CreateGateway(string address) {
       return new GrpcNotesGateway(
           new NotesV1.NotesService.NotesServiceClient(GrpcChannel.ForAddress(address)),

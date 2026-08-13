@@ -251,9 +251,14 @@ namespace Kakehashi.App.UI {
       SyncSelection(container);
     }
 
-    // Drives the pane selection (and, via its binding, the header) without re-triggering navigation.
-    // NavigationView suppresses selection (even programmatic) for SelectsOnInvoked=false items, so
-    // flyout items get the suppression lifted just long enough to show the selection indicator.
+    /// <summary>
+    /// Drives the pane selection, and through its binding the header, without re-triggering
+    /// navigation.
+    /// </summary>
+    /// <remarks>
+    /// NavigationView suppresses selection — even programmatic — for SelectsOnInvoked=false items,
+    /// so the suppression is lifted just long enough to show the selection indicator.
+    /// </remarks>
     private void SyncSelection(NavigationViewItem container) {
       _isSyncingSelection = true;
       bool restoreSuppression = !container.SelectsOnInvoked;
