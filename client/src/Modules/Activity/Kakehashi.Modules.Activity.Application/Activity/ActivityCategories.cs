@@ -3,14 +3,10 @@ namespace Kakehashi.Modules.Activity.Application.Activity {
   /// The categories the feed can be filtered by, as the server names them.
   /// </summary>
   /// <remarks>
-  /// Named here as well as on the server, and the duplication is the module boundary rather than a
-  /// failure of it — the same trade the kind strings already make. What it buys is that this client
-  /// can add a chip, re-order them or re-label them without a server release, and that a category the
-  /// server invents later still arrives, still counts, and simply has no chip until somebody adds one.
-  /// <para>
-  /// <see cref="All"/> is this client's own idea. The server has no such category; an empty category
-  /// means "do not narrow", and the chip that says so needs a value to hold.
-  /// </para>
+  /// These strings cross the wire as the feed filter's category and must match the server's
+  /// spelling exactly. A category the server adds later still arrives and still counts — it simply
+  /// has no chip until one is added here. <see cref="All"/> is client-only: the wire carries an
+  /// empty string, meaning "do not narrow".
   /// </remarks>
   public static class ActivityCategories {
     /// <summary>Every category. Not a server value — the wire carries an empty string for this.</summary>

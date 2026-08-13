@@ -27,7 +27,6 @@ namespace Kakehashi.App.Services {
     /// <summary>The answer to use when the server has not been asked, or could not be reached.</summary>
     public static NavigationLayout None { get; } = new([], []);
 
-    /// <summary>Whether this layout says anything at all.</summary>
     public bool IsEmpty => Ungrouped.Count == 0 && Groups.Count == 0;
   }
 
@@ -54,14 +53,10 @@ namespace Kakehashi.App.Services {
 
   /// <summary>Asks the server how this deployment's navigation pane is arranged.</summary>
   /// <remarks>
-  /// Separate from <see cref="IPermissionService"/> because they answer different questions of
-  /// different things. Permissions are about the account and change when a role does; the layout is
-  /// about the deployment and is the same for everyone. They are fetched at the same moment only
-  /// because the pane needs both.
-  /// <para>
-  /// Nothing here is a security boundary. The server refuses a route on its own, whatever this client
-  /// was told to draw — the disabled row is a courtesy, not a lock.
-  /// </para>
+  /// Separate from <see cref="IPermissionService"/>: permissions are about the account and change
+  /// when a role does; the layout is about the deployment and is the same for everyone. Nothing here
+  /// is a security boundary — the server refuses a route on its own, whatever this client was told
+  /// to draw; the disabled row is a courtesy, not a lock.
   /// </remarks>
   public sealed partial class NavigationLayoutService : INavigationLayoutService {
     private readonly NavigationV1.NavigationService.NavigationServiceClient _client;
@@ -85,8 +80,7 @@ namespace Kakehashi.App.Services {
     /// Failure leaves the previous answer standing, and leaves <see cref="NavigationLayout.None"/>
     /// standing on a first attempt that fails. Both are deliberate: the shell falls back to the
     /// arrangement compiled into this build, so an unreachable server costs the deployment's
-    /// customisations rather than the whole navigation pane. An app that will not draw a menu because
-    /// a call timed out is worse than one drawing last week's menu.
+    /// customisations rather than the whole navigation pane.
     /// </remarks>
     public async Task RefreshAsync(CancellationToken cancellationToken) {
       try {

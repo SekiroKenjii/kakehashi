@@ -254,10 +254,10 @@ func (s *storage) SetIntrospectionFromToken(
 func (s *storage) GetPrivateClaimsFromScopes(
 	ctx context.Context, userID, clientID string, scopes []string,
 ) (map[string]any, error) {
-	// Nothing to add today. Roles left this module when authorization became its own: a token that
-	// carried them would be a second source of truth with a ten-minute lag, and the gate resolves
-	// the real answer per request. Kept as a hook because op asks for it either way, and the next
-	// private claim will want somewhere to go.
+	// Empty: roles are deliberately not token claims — a token that carried them would be a second
+	// source of truth with a ten-minute lag, and the gate resolves the real answer per request.
+	// Kept as a hook because op asks for it either way, and the next private claim will want
+	// somewhere to go.
 	return map[string]any{}, nil
 }
 
@@ -299,8 +299,8 @@ func (s *storage) Health(ctx context.Context) error {
 	return s.store.Health(ctx)
 }
 
-// insertToken writes one issued-token row for whichever request shape op handed us.
-// insertToken writes a token, retiring the refresh token it replaces in the same transaction.
+// insertToken writes one issued-token row, retiring the refresh token it replaces in the same
+// transaction.
 //
 // retire is empty on the first exchange of a session. On a refresh it is the token being spent: a
 // refresh token that has been used ceases to exist, so a replay of it fails loudly instead of

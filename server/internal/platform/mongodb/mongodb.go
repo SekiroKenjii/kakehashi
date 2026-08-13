@@ -1,14 +1,9 @@
-// Package mongodb wraps the server's document store.
-//
-// It is for what SQL Server is bad at: append-only streams that are read newest-first and never
-// updated. Activity feeds and audit trails are the cases in this project. Anything with invariants
-// worth defending — anything where two writes must not both succeed — belongs in SQL Server, where
-// a transaction and a unique constraint can say so.
-//
-// Mongo has no migrations, because it has no schema to migrate. What it does have is indexes, and
-// a collection without one degrades from "fast" to "reads every document" quietly, at whatever
-// size that starts to matter. So modules declare their indexes the same way they declare their
-// migrations, and the kernel applies them at boot.
+// Package mongodb wraps the server's document store, used for append-only streams read
+// newest-first and never updated (activity feeds, audit trails); anything where two writes must
+// not both succeed belongs in SQL Server. There are no migrations, but an unindexed collection
+// quietly degrades to reading every document, so modules declare indexes the way they declare
+// migrations and the kernel applies them at boot. Inside a module, only store/ may import this
+// package (tools/archlint).
 package mongodb
 
 import (

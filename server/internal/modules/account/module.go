@@ -1,18 +1,6 @@
 // Package account makes the server its own OpenID Connect provider, and serves the account
-// management around it.
-//
-// The module's layers:
-//
-//	api/      the contract: the account DTOs, the Service surface, the security-event kinds.
-//	domain/   Account and its invariants; password hashing lives behind it.
-//	store/    persistence, in the account schema. Owns the provider's state too.
-//	service/  the use cases: authenticate, sessions, profile, audit trail.
-//	rpc/      the wire: the OIDC provider, the sign-in pages, the /account endpoints,
-//	          and the auth.Verifier the rest of the server authenticates with.
-//	module.go the wiring below.
-//
-// It is the one place in the repository allowed to import an OpenID Connect library, and
-// tools/archlint enforces that.
+// management around it. It is the one place in the repository allowed to import an OpenID Connect
+// library, and tools/archlint enforces that.
 package account
 
 import (

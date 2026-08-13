@@ -2,9 +2,9 @@
 //
 // The files here are grouped by the caller that drives them, not by the aggregate they touch,
 // because most of these use cases touch several. signin.go holds the three calls the sign-in
-// handlers make in sequence — and, not by coincidence, the exact three that accountapi.Service
-// withholds from other modules. profile.go, sessions.go and securityevent.go hold the seven
-// behind the /account endpoints.
+// handlers make in sequence — the exact three that accountapi.Service withholds from other
+// modules. profile.go, sessions.go and securityevent.go hold the seven behind the /account
+// endpoints.
 //
 // This file is the seam: the port, the injected dependencies, the type and its constructor. No
 // use case belongs here.

@@ -40,7 +40,7 @@ namespace Kakehashi.Modules.Activity.UI.Views {
 
     public ActivityViewModel ViewModel { get; }
 
-    /// <summary>The icon square's colour: red only where the answer to "was that me?" could be no.</summary>
+    /// <summary>The icon square's colour: red only for alert rows.</summary>
     public static Brush IconBackground(bool isAlert) {
       return Resource(isAlert
           ? "SystemFillColorCriticalBackgroundBrush"
@@ -91,9 +91,8 @@ namespace Kakehashi.Modules.Activity.UI.Views {
 
     /// <summary>Applies the search box.</summary>
     /// <remarks>
-    /// On submit, not on every keystroke: the search runs on the server, and a request per character
-    /// is a request per character. Emptying the box is handled by the view model, which reloads
-    /// immediately — nobody expects to press Enter to stop filtering.
+    /// On submit, not on every keystroke: the search runs on the server. Emptying the box is
+    /// handled by the view model, which reloads immediately.
     /// </remarks>
     private async void OnSearchSubmitted(
         AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) {

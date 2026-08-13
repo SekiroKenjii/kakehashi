@@ -1,8 +1,5 @@
-// Package server turns the mounted modules into something that answers requests.
-//
-// It is where the desktop original had internal/app/shell. The job is the same — collect what
-// every module contributed and present it as one surface — and so is the constraint: it knows that
-// modules contribute routes, and nothing about what any of them do.
+// Package server turns the mounted modules into one HTTP surface. It knows that modules
+// contribute routes, and nothing about what any of them do.
 package server
 
 import (
@@ -25,21 +22,17 @@ import (
 
 // New builds the server's handler from the kernel's routes.
 //
-// Two shapes share the mux, which is the reason this project uses Connect rather than grpc-go.
-// A module's RPC service arrives as a path prefix and a handler; the OpenID Connect endpoints
-// arrive as ordinary URLs a browser navigates to. net/http resolves between them by specificity,
-// so a catch-all at "/" and a service at "/kakehashi.notes.v1.NotesService/" coexist without
-// either having to know about the other.
+// Connect services and OIDC endpoints share one net/http mux; net/http resolves between them by
+// path specificity, so a catch-all at "/" and a service at "/kakehashi.notes.v1.NotesService/"
+// coexist.
 //
-// Every route carries its own policy and this enforces it. There is no way to be exempt by
-// omission: the kernel refuses at boot to collect a route with no policy, and refuses one that
-// checks no permission unless the composition root named its module.
+// Every route carries its own policy and this enforces it: the kernel refuses at boot a route
+// with no policy, and one that checks no permission unless the composition root named its module.
 // Why per route, not per module: docs/adr/0001-per-route-permission-policy.md.
 func New(k *app.Kernel) *Server {
-	// ReadIdleTimeout and IdleTimeout have to be set HERE rather than on the http.Server, and that
-	// is the whole reason this value is kept. An h2c connection is hijacked out of net/http's
-	// tracking on its first byte, so http.Server's own timeouts never reach it — every real request
-	// this server takes arrives on a connection the outer timeouts do not bound.
+	// ReadIdleTimeout and IdleTimeout must be set on the http2.Server, not the http.Server: an h2c
+	// connection is hijacked out of net/http's tracking on its first byte, so http.Server's own
+	// timeouts never reach it.
 	srv := &Server{
 		kernel: k,
 		h2s: &http2.Server{
@@ -54,9 +47,8 @@ func New(k *app.Kernel) *Server {
 
 	mux := http.NewServeMux()
 
-	// Resolved once, from the registry rather than by importing a module — the same move
-	// authenticate makes below. With nothing registered every module is reachable, which is
-	// exactly the behaviour of a server that has no access-control module mounted.
+	// Resolved from the registry rather than by importing a module. With nothing registered every
+	// module is reachable — a server with no access-control module mounted.
 	permissions, gating := app.TryUse[auth.Permissions](k)
 	if !gating {
 		k.Log.Warn("no authorization module is mounted; every module is open to any caller")
@@ -70,9 +62,8 @@ func New(k *app.Kernel) *Server {
 			handler = requireSignedIn(handler)
 		}
 
-		// Duplicate patterns panic here, and should. Two modules claiming the same path is a
-		// design mistake, and finding out at boot beats finding out from whichever one happened
-		// to register second.
+		// Duplicate patterns panic here: two modules claiming the same path is a design mistake,
+		// surfaced at boot.
 		mux.Handle(route.Pattern, handler)
 		k.Log.Debug("route mounted",
 			"pattern", route.Pattern, "module", route.Module, "policy", route.Policy.String())
@@ -81,25 +72,19 @@ func New(k *app.Kernel) *Server {
 	// Wrapped innermost-first, so the chain reads outside-in as:
 	//   recoverPanics -> otelhttp -> logRequests -> mux
 	//
-	// The order of the middle two is the one that matters. otelhttp puts the span on the request
-	// context, so logging has to sit inside it: from there r.Context() carries the trace, and a log
-	// line can be matched to the trace it came from. Outside it, the two are separate piles of
-	// evidence about the same request.
+	// otelhttp puts the span on the request context, so logging has to sit inside it: from there
+	// r.Context() carries the trace, and a log line can be matched to the trace it came from.
 	var handler http.Handler = mux
-	// Authentication sits between the mux and the log so log lines can carry the caller once
-	// anyone wants them to. It resolves the verifier from the registry rather than importing a
-	// module — with none registered, every request is anonymous and each endpoint decides what
-	// that means for it.
+	// Authentication sits between the mux and the log so log lines can carry the caller. The
+	// verifier comes from the registry rather than an import — with none registered, every request
+	// is anonymous and each endpoint decides what that means for it.
 	//
-	// Resolution sits between authentication and the mux, and applies to EVERY route rather than
-	// only the gated ones. The ungated modules are the reason: authz and account are exempt from
-	// the module gate by necessity, and they are also the two that serve administrative endpoints
-	// needing roles.manage and users.manage. Resolving only inside the gate would leave exactly
-	// those handlers with nothing to check against.
+	// Resolution sits between authentication and the mux, and applies to EVERY route, not only
+	// the gated ones: authz and account are exempt from the module gate by necessity, yet serve
+	// administrative endpoints needing roles.manage and users.manage — resolving only inside the
+	// gate would leave exactly those handlers with nothing to check against.
 	//
-	// One query per authenticated request, which is a primary-key lookup on a small table. Making
-	// it lazy would save it on the routes that never ask, at the cost of a memoising resolver on
-	// the context and an error nobody has a good place to handle.
+	// Cost: one query per authenticated request, a primary-key lookup on a small table.
 	if gating {
 		handler = resolvePermissions(k.Log, permissions, handler)
 	}
@@ -120,17 +105,11 @@ func New(k *app.Kernel) *Server {
 	// the ones that 404 or panic. Shutdown waits on this before anything closes a database pool.
 	handler = srv.track(handler)
 
-	// h2c serves HTTP/2 without TLS.
-	//
-	// gRPC requires HTTP/2, and Go's net/http only negotiates it over TLS. In production this
-	// server sits behind a proxy that terminates TLS and speaks cleartext HTTP/2 to it; in
-	// development there is no proxy and no certificate. Without h2c, both cases fail with an
-	// error about the protocol rather than about the missing TLS, which is a confusing way to
-	// spend an afternoon.
-	//
-	// It is not a security decision: the transport is trusted or it is not, and that is settled
-	// by what runs in front of this process, not here.
+	// gRPC requires HTTP/2 and net/http only negotiates HTTP/2 over TLS; behind the
+	// TLS-terminating proxy (and in development) this server speaks cleartext, so it serves h2c.
+	// Not a security decision: transport trust is settled by what runs in front of this process.
 	srv.handler = h2c.NewHandler(handler, srv.h2s)
+
 	return srv
 }
 
@@ -151,12 +130,10 @@ func (s *Server) Handler() http.Handler { return s.handler }
 
 // Run serves until ctx is cancelled, then stops taking requests and waits for the ones in flight.
 //
-// The waiting is the part that is easy to leave out and expensive to leave out. h2c hijacks every
-// HTTP/2 connection out of net/http's tracking, so http.Server.Shutdown has nothing to drain and
-// returns in milliseconds — without the drain, the caller would go straight on to closing the SQL
-// and Mongo pools underneath handlers still running. A sign-in would read the account, lose its
-// database mid-flight, and answer a reset stream. ConfigureServer installs the HTTP/2 graceful
-// shutdown hook so peers get a GOAWAY; the WaitGroup is what actually makes the caller wait.
+// h2c hijacks every HTTP/2 connection out of net/http's tracking, so http.Server.Shutdown has
+// nothing to drain and returns in milliseconds; without the WaitGroup drain, the caller would
+// close the SQL and Mongo pools underneath handlers still running. ConfigureServer installs the
+// HTTP/2 graceful shutdown hook so peers get a GOAWAY.
 func (s *Server) Run(ctx context.Context) error {
 	httpServer := &http.Server{
 		Addr:    s.kernel.Cfg.Addr,
@@ -169,8 +146,8 @@ func (s *Server) Run(ctx context.Context) error {
 		IdleTimeout:       120 * time.Second,
 	}
 
-	// Registers the HTTP/2 graceful-shutdown hook on httpServer. Without it the h2s this server
-	// built is a bag of settings nothing consults at shutdown.
+	// Registers the HTTP/2 graceful-shutdown hook on httpServer. Without it, h2s's settings are
+	// never consulted at shutdown.
 	if err := http2.ConfigureServer(httpServer, s.h2s); err != nil {
 		return err
 	}
@@ -199,8 +176,7 @@ func (s *Server) Run(ctx context.Context) error {
 // drain waits for the requests still running, or reports that it gave up on them.
 //
 // Giving up is reported rather than swallowed: the caller is about to close the stores those
-// requests are using, and "we closed the database on three live requests" is a log line somebody
-// needs when a shutdown produces a handful of unexplained client errors.
+// requests are using, and the report explains any client errors the shutdown produces.
 func (s *Server) drain(ctx context.Context) error {
 	done := make(chan struct{})
 	go func() {
@@ -261,9 +237,8 @@ func resolvePermissions(
 
 		grants, err := permissions.Resolve(r.Context(), subject)
 		if err != nil {
-			// Fail closed. The alternative is that an unreachable policy store silently opens
-			// every gated module, which is the failure you least want to be quiet. Signing in is
-			// unaffected: it is an anonymous request and returned above.
+			// Fail closed: an unreachable policy store must not silently open every gated
+			// module. Signing in is unaffected: it is an anonymous request and returned above.
 			log.ErrorContext(r.Context(), "permissions could not be resolved", "error", err)
 			http.Error(w, "access could not be checked", http.StatusServiceUnavailable)
 			return
@@ -295,33 +270,27 @@ func requireSignedIn(next http.Handler) http.Handler {
 
 // requirePermission refuses a request whose caller does not hold the permission the route named.
 //
-// This is the enforcement point of the whole access model, and it is one wrapper per route rather
-// than a check per handler on purpose: a handler that forgets the check is a handler nothing
-// catches, and the one somebody forgets is the breach. Here a route is checked because it declared
-// a policy, not because its author remembered to wrap it — the version this replaces required
-// exactly that wrap, in three module.go files, with nothing to catch its deletion.
+// This is the enforcement point of the whole access model: one wrapper per route rather than a
+// check per handler, so a route is checked because it declared a policy, not because its author
+// remembered to wrap it.
 //
 // It sits inside authenticate, so the Subject is already on the context, and inside logRequests,
-// so every refusal is one ordinary request line with its 403 — a refused caller shows up in the
-// same place as everything else rather than in a channel somebody has to know to look at.
+// so every refusal is one ordinary request line with its 403.
 func requirePermission(permission string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := auth.SubjectFrom(r.Context()); !ok {
-			// Anonymous, and refused. An earlier version passed these through on the reasoning
-			// that a gated module might still have an endpoint welcoming anonymous callers — which
-			// made the whole gate optional, because a caller who simply omitted the Authorization
-			// header met no check at all. Sending no token is not a way to have more permissions
-			// than sending one.
+			// Anonymous callers are refused. Passing them through would make the gate optional:
+			// a caller who omits the Authorization header must not meet fewer checks than one
+			// who sends a token.
 			deny(w, http.StatusUnauthorized, "unauthenticated",
 				"This endpoint requires a signed-in caller.")
 			return
 		}
 
 		if !auth.GrantsFrom(r.Context()).Allows(permission) {
-			// 403 rather than 404, and it names the permission. The caller knows this endpoint
-			// exists — it is compiled into the client they are running — so hiding it buys nothing
-			// and costs the one thing that makes the refusal actionable: "ask an administrator for
-			// X" is only sayable if the client is told what X is.
+			// 403 rather than 404, and it names the permission: the endpoint is compiled into the
+			// client the caller runs, so hiding it gains nothing, and naming the permission is what
+			// lets the client say which one to ask an administrator for.
 			deny(w, http.StatusForbidden, "forbidden",
 				"This endpoint requires the "+permission+" permission.")
 			return
@@ -333,10 +302,9 @@ func requirePermission(permission string, next http.Handler) http.Handler {
 
 // deny writes the refusal in the error envelope this server's REST surface is pinned to.
 //
-// {"error","message"} is what docs/CONTRACTS.md documents and what the client's gateway parses, so
-// a refusal reaches a person as a sentence rather than as a status code. A Connect client cannot
-// read a body this middleware writes — it runs before Connect sees the request — but the REST
-// endpoints under /account can, and writing two shapes would be one shape too many.
+// {"error","message"} is what docs/CONTRACTS.md documents and what the client's gateway parses;
+// changing the shape breaks deployed clients. A Connect client cannot read a body this middleware
+// writes — it runs before Connect sees the request — but the REST endpoints under /account can.
 func deny(w http.ResponseWriter, status int, code, message string) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
 	w.WriteHeader(status)
@@ -345,9 +313,8 @@ func deny(w http.ResponseWriter, status int, code, message string) {
 
 // recoverPanics keeps one bad request from taking down the process.
 //
-// net/http already recovers per connection, but it kills the connection and logs to a place
-// nobody watches. This turns the panic into a 500 the caller can act on and a log line with the
-// request attached, which is the difference between "something crashed" and knowing what.
+// net/http already recovers per connection, but it kills the connection and logs without request
+// context. This turns the panic into a 500 and a log line with the request attached.
 func recoverPanics(log *slog.Logger, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
@@ -396,17 +363,16 @@ func (r *statusRecorder) WriteHeader(status int) {
 
 // Flush forwards to the wrapped writer.
 //
-// This is not optional decoration. Embedding a ResponseWriter in a struct hides whatever other
-// interfaces the real one implements, and Connect asserts for http.Flusher: gRPC ends every call
-// with trailers that have to be flushed, and a server-streaming response that is never flushed
-// arrives all at once when the handler returns, which is the opposite of streaming. The failure is
-// silent, so it is worth the eight lines.
+// Embedding a ResponseWriter in a struct hides whatever other interfaces the real one implements,
+// and Connect asserts for http.Flusher: gRPC ends every call with trailers that have to be
+// flushed, and a server-streaming response that is never flushed arrives all at once when the
+// handler returns. The failure is silent.
 func (r *statusRecorder) Flush() {
 	if f, ok := r.ResponseWriter.(http.Flusher); ok {
 		f.Flush()
 	}
 }
 
-// Unwrap exposes the real writer to http.NewResponseController, which is how anything else that
-// needs a capability this wrapper did not think of can still reach it.
+// Unwrap exposes the real writer to http.NewResponseController, so capabilities this wrapper does
+// not forward remain reachable.
 func (r *statusRecorder) Unwrap() http.ResponseWriter { return r.ResponseWriter }

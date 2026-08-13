@@ -26,14 +26,12 @@ namespace Kakehashi.UI.Contracts {
     /// The stable id the deployment files this destination under — "notes", "account.users".
     /// </summary>
     /// <remarks>
-    /// It is what joins a compiled page to the row that says where it sits, so it has to match the
-    /// destination the server declares. Empty means the deployment has no say over this item: it is
-    /// drawn where the client puts it, which is right for the footer avatar and wrong for anything
-    /// in the menu.
+    /// Joins the compiled page to the server-declared destination, so it must match the id the
+    /// server declares. Empty opts the item out of deployment arrangement — right for the footer
+    /// avatar, wrong for anything in the menu.
     /// <para>
-    /// A destination id rather than a module id, because one module can own several destinations —
-    /// the account module owns both the account screen and the user directory, and they belong under
-    /// different headings.
+    /// A destination id rather than a module id: one module can own several destinations under
+    /// different headings (the account module owns the account screen and the user directory).
     /// </para>
     /// </remarks>
     public string Id { get; init; } = string.Empty;
@@ -42,9 +40,9 @@ namespace Kakehashi.UI.Contracts {
     /// The heading this destination sits under when the deployment has not been asked.
     /// </summary>
     /// <remarks>
-    /// A fallback, not the answer. Where a destination sits is the deployment's decision and arrives
-    /// from the server; this is what the pane falls back to when that call has not happened or could
-    /// not be made, so an unreachable server costs the arrangement rather than the whole menu.
+    /// A fallback only: the server-declared arrangement wins once it arrives; the pane uses this
+    /// heading when that call has not happened or failed, so an unreachable server costs the
+    /// arrangement rather than the whole menu.
     /// </remarks>
     public string Group { get; init; } = string.Empty;
 
@@ -52,10 +50,9 @@ namespace Kakehashi.UI.Contracts {
     /// The permission an account needs before this destination is usable. Empty means anyone.
     /// </summary>
     /// <remarks>
-    /// An item the account cannot use is shown disabled rather than hidden, for the reason the
-    /// server answers 403 rather than 404: the destination is compiled into the client they are
-    /// running, so hiding it buys nothing and costs the one thing that makes the refusal
-    /// actionable — being able to tell "not for you" from "not here", and ask for it.
+    /// An item the account cannot use is shown disabled rather than hidden (the server likewise
+    /// answers 403, not 404): the destination is compiled into the running client, and a visible
+    /// refusal lets the user tell "not for you" from "not here".
     /// </remarks>
     public string RequiredPermission { get; init; } = string.Empty;
 

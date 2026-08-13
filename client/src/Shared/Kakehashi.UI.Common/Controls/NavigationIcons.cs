@@ -68,10 +68,9 @@ namespace Kakehashi.UI.Common.Controls {
     /// to.
     /// </summary>
     /// <remarks>
-    /// Resolve prefers the caller's own fallback, which for the pane is the glyph the page was compiled
-    /// with. The screen that manages the arrangement has no such glyph — it never loads the pages — so
-    /// it needs somewhere to land. The same code point the activity feed draws for a kind it cannot
-    /// name, because it means the same thing: this build does not recognise what it was given.
+    /// For callers with no glyph of their own to fall back to — the arrangement screen never loads
+    /// the pages, so it has none. The same code point the activity feed draws for a kind it cannot
+    /// name: both mean "this build does not recognise what it was given".
     /// </remarks>
     public const string Unknown = "\uE946";
 
@@ -88,9 +87,8 @@ namespace Kakehashi.UI.Common.Controls {
         return glyph;
       }
 
-      // Then the whole font. The short vocabulary above is what a deployment is meant to reach for,
-      // but somebody who went looking through the full catalogue picked a real icon and should get
-      // the icon they picked.
+      // Fall through to the full font catalogue: a name picked from it is still a real icon and is
+      // honoured even though deployments are meant to use the short vocabulary above.
       string catalogued = SegoeFluentIcons.Glyph(name);
       return catalogued.Length > 0 ? catalogued : fallback;
     }

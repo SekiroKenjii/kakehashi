@@ -19,9 +19,9 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
   /// Drives the sign-in window, whose shape depends on <see cref="AuthMode"/>.
   /// </summary>
   /// <remarks>
-  /// In-app mode is one screen: a credentials form that shows its own errors inline and disables
-  /// itself while the attempt is in flight, because that is what every sign-in form does and because
-  /// a failed attempt must leave the typed email where the user can correct it.
+  /// In-app mode is one screen: a credentials form that shows its errors inline and disables
+  /// itself while the attempt is in flight; a failed attempt leaves the typed email in place for
+  /// correction.
   /// <para>
   /// Browser mode keeps three: explain the flow, wait for the browser, report the failure. The user
   /// is doing the work in another window, so the app has nothing to show but progress — and when it

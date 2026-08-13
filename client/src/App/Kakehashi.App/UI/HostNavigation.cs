@@ -9,9 +9,8 @@ namespace Kakehashi.App.UI {
   /// <remarks>
   /// The administration screens are not a feature module — they govern every module, and a module
   /// that governed the others would reach across the boundary the architecture tests hold. But
-  /// they are still pane items, and hard-coding them into the shell's XAML meant they could not be
-  /// grouped, ordered or gated by the same code that handles everyone else's. Declaring them here
-  /// gives the shell exactly one list to render.
+  /// they are still pane items: declaring them here lets the same planner group, order and gate
+  /// them, and gives the shell exactly one list to render.
   /// </remarks>
   public static class HostNavigation {
     /// <summary>

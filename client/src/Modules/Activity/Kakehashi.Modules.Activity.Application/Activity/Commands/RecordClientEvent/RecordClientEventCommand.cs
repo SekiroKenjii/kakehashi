@@ -6,13 +6,9 @@ namespace Kakehashi.Modules.Activity.Application.Activity.Commands.RecordClientE
   /// Reports one fact this client knows about itself so it reaches the account's other devices.
   /// </summary>
   /// <remarks>
-  /// The module's first command, and the reason the module has a write path at all. Nothing else here
-  /// writes: see <see cref="ClientActivityKind"/> for why these two facts are the exception.
-  /// <para>
-  /// Nothing else in the request. Whose feed comes from the token, and when it happened is the
-  /// server's clock — a client with a wrong clock could otherwise scatter rows through a history that
-  /// somebody reads in order.
-  /// </para>
+  /// The request carries only the kind: whose feed comes from the token, and the timestamp is the
+  /// server's clock — a client with a wrong clock could otherwise scatter rows through a history
+  /// that is read in order. See <see cref="ClientActivityKind"/> for what may be reported.
   /// </remarks>
   public sealed record RecordClientEventCommand(ClientActivityKind Kind) : IRequest<Result>;
 }

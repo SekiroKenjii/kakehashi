@@ -2,23 +2,20 @@ using System;
 
 namespace Kakehashi.UI.Contracts {
   /// <summary>
-  /// Represents a subscription to a system. It manages the lifecycle of the subscription and
-  /// disposes of it when it is not needed anymore.
+  /// Collects <see cref="IDisposable"/>s and disposes them together when the subscription ends.
   /// </summary>
   public interface ISubscription : ITransientDependency, IDisposable {
     /// <summary>
-    /// Gets a value indicating whether the subscription has been unsubscribed. Once a subscription is unsubscribed, it should not be used again.
+    /// Whether <see cref="Unsubscribe"/> (or Dispose) has run; a spent subscription must not be
+    /// reused.
     /// </summary>
     bool Unsubscribed { get; }
 
-    /// <summary>
-    /// Add a disposable to the subscription. The disposable will be disposed of when the subscription is unsubscribed.
-    /// </summary>
-    /// <param name="disposable">The disposable to add to the subscription.</param>
+    /// <summary>Adds a disposable to dispose when the subscription ends.</summary>
     void Add(IDisposable disposable);
 
     /// <summary>
-    /// Unsubscribes all disposables added to the subscription and marks the subscription as unsubscribed. After calling this method, the subscription should not be used again.
+    /// Disposes everything added and marks the subscription <see cref="Unsubscribed"/>.
     /// </summary>
     void Unsubscribe();
   }

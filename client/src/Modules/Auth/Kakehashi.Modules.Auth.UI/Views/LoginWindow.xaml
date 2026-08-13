@@ -88,10 +88,9 @@
                 Orientation="Horizontal"
                 Spacing="8">
                 <!--
-                    Both bound, never literals: an unconditional green shield with the words "Sent
-                    over TLS" is false against an http authority. A reassurance that is not checked
-                    is worse than none — this is the one place a person looks before typing a
-                    password.
+                    Both bound, never literals: the glyph and text derive from the configured
+                    authority's scheme, and an unconditional "Sent over TLS" would be false against
+                    an http authority.
                 -->
                 <FontIcon
                     FontSize="13"
@@ -301,8 +300,8 @@
                         Foreground="{ThemeResource TextFillColorTertiaryBrush}"
                         Text="·" />
                     <!--
-                        A link, not a label. This sat where the other sign-in screen puts a working
-                        control, looking identical to one and doing nothing.
+                        A working link, not a label: it opens the authorization server in the
+                        system browser so the user can check reachability.
                     -->
                     <HyperlinkButton
                         Padding="0"

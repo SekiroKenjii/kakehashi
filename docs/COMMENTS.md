@@ -88,9 +88,15 @@ Right — a wire contract, said once:
 
 ## Enforcement
 
-- `revive` (`exported`, `package-comments`) in `golangci-lint` — godoc shape for exported symbols.
-- CI history-marker check (see `tools/` / workflow): the rule-2 words fail the build in
-  `server/internal/modules` and `client/src`, excluding `internal/gen`.
-- CS1591 + `GenerateDocumentationFile` on the contract assemblies only.
+- `revive` (`exported`, `package-comments`) via `golangci-lint`, configured in
+  `server/.golangci.yml` and run by the `server` CI job — godoc shape for exported symbols.
+  Methods on unexported types are not checked: they implement generated interfaces, and a doc
+  there could only restate the signature.
+- History-marker check in the `architecture` CI job: the rule-2 words fail the build in
+  `server/internal/modules` and `client/src`, excluding `gen`, `obj` and `bin` — generated gRPC
+  stubs carry proto comments this rule does not govern.
+- CS1591 + `GenerateDocumentationFile` on the contract assemblies only:
+  `Kakehashi.UI.Contracts` and `Kakehashi.Application.Abstractions`. Not `Kakehashi.Contracts`,
+  which holds generated code.
 - Everything else is review. When you touch a file for another reason, comments inside your
   change conform to this document; leave the rest alone.

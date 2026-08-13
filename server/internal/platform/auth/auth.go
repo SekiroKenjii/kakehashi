@@ -1,22 +1,16 @@
-// Package auth declares who the caller is, and the contract for finding out.
-//
-// The interface lives here rather than in the identity module for one reason: the kernel installs
-// the authentication middleware, and the kernel may not import a module. Declaring the contract in
-// the platform lets identity implement it, publish it on the registry, and have the mux pick it up
-// without anyone importing anything they are not allowed to.
-//
-// It also keeps the fence in tools/archlint honest. Only the identity module may import an OpenID
-// Connect or JWT library; everyone else — including the mux — deals in the Subject below and never
-// sees a token.
+// Package auth declares who the caller is, and the contracts for finding out what they may do.
+// The contracts live in the platform because the kernel installs the middleware and the kernel
+// may not import a module; the account module implements them and publishes them on the registry.
+// Only the account module may import an OpenID Connect or JWT library (tools/archlint); everything
+// else, the mux included, deals in Subject and never sees a token.
 package auth
 
 import "context"
 
 // Subject is an authenticated caller, reduced to what the rest of the server needs.
 //
-// Deliberately not the token, and deliberately not the whole set of claims. A handler that can
-// read the raw token can also be tempted to re-verify it, or to forward it somewhere; a handler
-// that has a Subject can only ask who this is and what they may do.
+// Deliberately not the token and not the full claim set: a handler holding only a Subject cannot
+// re-verify a token or forward it anywhere.
 type Subject struct {
 	// ID is the stable identifier for the user, from the token's subject claim.
 	ID string
@@ -33,9 +27,8 @@ type Subject struct {
 
 // Verifier turns a bearer token into a Subject, or an error.
 //
-// Implemented by the identity module and published on the kernel. It is optional: with no verifier
-// registered the server runs unauthenticated, which is what makes the boilerplate startable before
-// anyone has configured identity.
+// Implemented by the account module and published on the kernel. It is optional: with no verifier
+// registered every request is anonymous and the server still starts.
 type Verifier interface {
 	// Verify checks the token's signature, issuer, audience and expiry, and returns who it
 	// belongs to. It must not trust any claim it has not verified.
@@ -53,9 +46,8 @@ func WithSubject(ctx context.Context, subject Subject) context.Context {
 
 // SubjectFrom returns the authenticated caller, reporting false when the request was anonymous.
 //
-// Handlers that require a caller should treat false as errs.Unauthenticated rather than falling
-// back to a default: an endpoint that quietly serves anonymous requests is the kind of thing that
-// only gets noticed from the outside.
+// Handlers that require a caller treat false as errs.Unauthenticated rather than falling back to
+// a default.
 func SubjectFrom(ctx context.Context) (Subject, bool) {
 	subject, ok := ctx.Value(subjectKey{}).(Subject)
 	return subject, ok

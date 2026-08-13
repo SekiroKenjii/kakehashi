@@ -5,9 +5,6 @@ using Microsoft.UI.Xaml;
 using Windows.Graphics;
 
 namespace Kakehashi.UI.Common.Helpers {
-  /// <summary>
-  /// A helper class for managing app's windows.
-  /// </summary>
   public static class WindowHelper {
     /// <summary>
     /// Sets the window's icon from <c>Assets\app.ico</c> (taskbar, Alt+Tab, title bar). Safe to call

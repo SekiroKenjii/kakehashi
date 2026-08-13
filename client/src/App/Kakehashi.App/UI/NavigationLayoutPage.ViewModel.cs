@@ -37,12 +37,8 @@ namespace Kakehashi.App.UI {
     private readonly INavigationService _navigation;
     private readonly NavigationPlanner _planner;
 
-    /// <summary>What the last read returned, which is what Discard rebuilds from.</summary>
-    /// <remarks>
-    /// Rebuilding beats asking each node to undo itself. A node can put its own name back, but nothing
-    /// on a node knows which heading it sat under or in what order — that is a fact about the
-    /// tree, and the tree is what a rebuild restores.
-    /// </remarks>
+    /// <summary>What the last read returned; Discard rebuilds from it, because a node's heading and
+    /// position are facts about the tree that no node can restore alone.</summary>
     private IReadOnlyList<NavGroupRow> _loadedGroups = [];
     private IReadOnlyList<NavItemRow> _loadedItems = [];
 
@@ -86,15 +82,8 @@ namespace Kakehashi.App.UI {
     /// <summary>The headings a screen can be moved to, "no heading" first.</summary>
     public ObservableCollection<NavHeadingChoice> HeadingChoices { get; } = [];
 
-    /// <summary>
-    /// Every icon name this build can draw.
-    /// </summary>
-    /// <remarks>
-    /// All of them, offered as a picker. The mockup showed five chips as suggestions relevant to the
-    /// selected screen, and there is nothing to base relevance on: the vocabulary is a flat list of
-    /// eight names with no notion of which suits a page. Offering the whole list is the honest version
-    /// of the same control.
-    /// </remarks>
+    /// <summary>Every icon name this build can draw, offered whole: the vocabulary carries no notion
+    /// of which name suits a page, so there is nothing to rank suggestions by.</summary>
     public IReadOnlyList<NavIconChoice> IconChoices { get; }
 
     /// <summary>The roles the pane can be previewed as, "nobody" first.</summary>
@@ -103,7 +92,6 @@ namespace Kakehashi.App.UI {
     /// <summary>What the pane would look like: the staged arrangement, or a role's saved one.</summary>
     public ObservableCollection<NavigationEntry> Preview { get; } = [];
 
-    /// <summary>What the icon search is showing, and out of how many.</summary>
     public string IconSearchHint =>
         IconQuery.Length == 0
             ? $"{SegoeFluentIcons.Count} icons. Type to narrow them."
@@ -112,10 +100,8 @@ namespace Kakehashi.App.UI {
     /// <summary>What the icon search found, for the flyout behind the last swatch.</summary>
     public ObservableCollection<NavIconChoice> IconMatches { get; } = [];
 
-    /// <summary>The read-only facts about the selected screen.</summary>
     public ObservableCollection<NavCodeFact> CodeFacts { get; } = [];
 
-    /// <summary>Every staged change, for the diff.</summary>
     public ObservableCollection<NavChange> Diff { get; } = [];
 
     [ObservableProperty]
@@ -130,14 +116,8 @@ namespace Kakehashi.App.UI {
     [ObservableProperty]
     public partial bool IsApplying { get; set; }
 
-    /// <summary>
-    /// Whether the note about permissions is showing.
-    /// </summary>
-    /// <remarks>
-    /// Dismissible per visit rather than remembered. It answers the question this screen invites —
-    /// "am I about to take somebody's access away" — and that question is worth answering again the
-    /// next time somebody opens it.
-    /// </remarks>
+    /// <summary>Whether the note about permissions is showing; dismissal lasts one visit and is not
+    /// persisted.</summary>
     [ObservableProperty]
     public partial bool IsNoteOpen { get; set; } = true;
 
@@ -209,11 +189,10 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Adds a heading at the end, named so it can be renamed rather than demanding a name.</summary>
     /// <remarks>
-    /// It is staged like everything else: nothing reaches the server until Apply. The identifier is
-    /// chosen here rather than derived from the title, which is what the server does when given an
-    /// empty one — because a screen dragged into a heading has to name it, and a title-derived
-    /// identifier is not knowable until the apply comes back. Deriving it in this client would mean
-    /// re-implementing the server's slug rule and keeping the two in step forever.
+    /// Staged like everything else: nothing reaches the server until Apply. The identifier is chosen
+    /// here rather than left for the server to derive from the title, because a screen dragged into
+    /// the heading must name it before the apply — and deriving it client-side would mean
+    /// re-implementing the server's slug rule.
     /// </remarks>
     [RelayCommand]
     private void NewHeading() {
@@ -227,8 +206,8 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Removes a heading. What was under it becomes unfiled.</summary>
     /// <remarks>
-    /// Confirmed only for a heading that exists on the server: one somebody added a moment ago and has
-    /// not applied is theirs to take back without being asked.
+    /// Confirmed only for a heading that exists on the server; one added and not yet applied is
+    /// removed without asking.
     /// </remarks>
     [RelayCommand]
     private async Task DeleteHeadingAsync(NavHeadingNode? heading) {
@@ -259,7 +238,6 @@ namespace Kakehashi.App.UI {
       Recount();
     }
 
-    /// <summary>Throws away every staged edit.</summary>
     [RelayCommand]
     private void Discard() {
       Rebuild();
@@ -277,9 +255,8 @@ namespace Kakehashi.App.UI {
         var applied = await _admin.ApplyLayoutAsync(
             GroupSpecs(), ItemSpecs(), cancellationToken);
         if (applied.IsFailure) {
-          // Nothing was written — the server validates the whole arrangement first — so what is on
-          // screen is still exactly what the person asked for, and throwing it away would make them
-          // do it again.
+          // Nothing was written — the server validates the whole arrangement before writing — so
+          // the staged edits stay on screen for another attempt.
           _notifications.Show(applied.Error.Message, InfoBarSeverity.Error);
           return;
         }
@@ -310,13 +287,11 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Moves the selected screen one place earlier under its heading.</summary>
     [RelayCommand]
     private void MoveUp(NavScreenNode? screen) {
       Nudge(screen, -1);
     }
 
-    /// <summary>Moves the selected screen one place later under its heading.</summary>
     [RelayCommand]
     private void MoveDown(NavScreenNode? screen) {
       Nudge(screen, +1);
@@ -348,7 +323,6 @@ namespace Kakehashi.App.UI {
       Recount();
     }
 
-    /// <summary>Sets the selected screen's icon from the picker.</summary>
     [RelayCommand]
     private void PickIcon(NavIconChoice? choice) {
       if (choice is not null && SelectedScreen is { } screen) {
@@ -390,7 +364,7 @@ namespace Kakehashi.App.UI {
       await LoadAsync(CancellationToken.None);
     }
 
-    /// <summary>Moves a screen under a heading, at an index. What drag and drop calls.</summary>
+    /// <summary>The drag-and-drop entry point; the page forwards drops here.</summary>
     public void MoveScreen(NavScreenNode screen, NavHeadingNode heading, int index) {
       ArgumentNullException.ThrowIfNull(screen);
       ArgumentNullException.ThrowIfNull(heading);
@@ -399,7 +373,6 @@ namespace Kakehashi.App.UI {
       Recount();
     }
 
-    /// <summary>Moves the whole heading to a new position among the headings.</summary>
     public void MoveHeading(NavHeadingNode heading, int index) {
       ArgumentNullException.ThrowIfNull(heading);
       if (heading.IsUnfiled) {
@@ -420,13 +393,8 @@ namespace Kakehashi.App.UI {
       RebuildCodeFacts(value);
     }
 
-    /// <summary>
-    /// Refills the icon search from the whole font.
-    /// </summary>
-    /// <remarks>
-    /// Capped at forty. The catalogue holds around fifteen hundred icons, which is a number to
-    /// search rather than a number to scroll.
-    /// </remarks>
+    /// <summary>Searches the whole font, not just the curated vocabulary; capped at 40
+    /// matches.</summary>
     partial void OnIconQueryChanged(string value) {
       IconMatches.Clear();
       foreach (var (name, glyph) in SegoeFluentIcons.Search(value, 40)) {
@@ -494,7 +462,6 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Counts what is staged and says what it is.</summary>
     private void Recount() {
       var changes = StagedChanges();
 
@@ -512,7 +479,8 @@ namespace Kakehashi.App.UI {
       _ = RefreshPreviewAsync();
     }
 
-    /// <summary>Every staged change, in the order worth reading them.</summary>
+    /// <summary>Every staged change: headings first, then the heading order, then
+    /// screens.</summary>
     private List<NavChange> StagedChanges() {
       var changes = new List<NavChange>();
 
@@ -642,10 +610,8 @@ namespace Kakehashi.App.UI {
 
     /// <summary>The read-only card: what the code owns about the selected screen.</summary>
     /// <remarks>
-    /// Route and "declared in" come from this client, not the server. The server has no notion of a
-    /// route — it is the key the shell navigates by — and no way to know which file declares a page.
-    /// The mockup showed a source path; a page type and the assembly it lives in is the same fact this
-    /// client can actually stand behind.
+    /// Route and "declared in" come from this client, not the server: the server has no notion of a
+    /// route — it is the key the shell navigates by — and no way to know which type declares a page.
     /// </remarks>
     private void RebuildCodeFacts(NavScreenNode? screen) {
       CodeFacts.Clear();
@@ -734,8 +700,8 @@ namespace Kakehashi.App.UI {
         return wanted;
       }
 
-      // Titles are unique in the database, so a second "New heading" would come back as a conflict
-      // rather than as a heading. Numbering it here turns that into nothing anybody has to see.
+      // Titles are unique in the database, so a second "New heading" would be rejected as a
+      // conflict; numbering it here avoids that.
       for (int suffix = 2; ; suffix++) {
         string candidate = string.Format(
             CultureInfo.CurrentCulture, "{0} {1}", wanted, suffix);
@@ -761,9 +727,9 @@ namespace Kakehashi.App.UI {
     /// The caller's own pane, and the way back from previewing somebody else's.
     /// </summary>
     /// <remarks>
-    /// A real item rather than the picker's placeholder. A ComboBox shows its placeholder only while
-    /// nothing is selected, so with this absent the first role somebody previewed was the last —
-    /// there was nothing left in the list to choose to get their own pane back.
+    /// A real item rather than the picker's placeholder: a ComboBox shows its placeholder only
+    /// while nothing is selected, so without this entry there is nothing to choose to get the
+    /// caller's own pane back.
     /// </remarks>
     public static NavPreviewRole Yourself { get; } = new(_yourselfId, "Yourself");
 
@@ -771,15 +737,13 @@ namespace Kakehashi.App.UI {
     /// Somebody holding no permissions at all.
     /// </summary>
     /// <remarks>
-    /// The useful worst case: it answers "would a new colleague see anything". Its id is empty, which
-    /// is what the server reads as "no role".
+    /// Its id is empty, which is what the server reads as "no role".
     /// </remarks>
     public static NavPreviewRole Nobody { get; } = new(string.Empty, "Nobody (no permissions)");
 
     /// <summary>Not an id the server ever sees: it never leaves this class.</summary>
     private const string _yourselfId = "(yourself)";
 
-    /// <summary>Whether this stands for the caller rather than for a role.</summary>
     public bool IsYourself {
       get { return Id == _yourselfId; }
     }

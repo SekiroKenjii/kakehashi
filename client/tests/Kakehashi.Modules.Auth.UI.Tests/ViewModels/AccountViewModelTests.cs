@@ -302,8 +302,8 @@ namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
     /// A dialog service that says yes.
     /// </summary>
     /// <remarks>
-    /// Sign-out-everywhere now confirms first, and a substitute returning the default would answer
-    /// "cancel" — so every test of that path would pass by never running it.
+    /// Sign-out-everywhere confirms before revoking, and a substitute returning the default would
+    /// answer "cancel" — so every test of that path would pass by never running it.
     /// </remarks>
     private static IDialogService Dialogs() {
       var dialogs = Substitute.For<IDialogService>();

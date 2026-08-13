@@ -9,11 +9,9 @@ namespace Kakehashi.Application.Abstractions.Security {
   /// request is sent unauthenticated.
   /// </summary>
   /// <remarks>
-  /// The host registers a no-op implementation by default, so the backend works with or without
-  /// authentication. The Auth module replaces it with a session-backed provider that transparently
-  /// refreshes the token when it is close to expiry. Defining the contract here (rather than in the
-  /// host or a module) lets both the host infrastructure and a feature module depend on it without a
-  /// project reference between them.
+  /// The host registers a no-op implementation by default; the Auth module replaces it with a
+  /// session-backed provider that refreshes tokens near expiry. The contract lives here so host
+  /// infrastructure and feature modules can both depend on it without referencing each other.
   /// </remarks>
   public interface IAccessTokenProvider {
     /// <summary>Returns the current access token, or <see langword="null"/> when none is available.</summary>

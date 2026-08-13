@@ -95,10 +95,8 @@ namespace Kakehashi.App.UI {
     /// <summary>Whether the account may use this screen at all.</summary>
     public bool IsPermitted => _permissions.Allows(PermissionKeys.ManageUsers);
 
-    /// <summary>
-    /// Whether roles can be changed from here. A second permission: listing who holds what is part
-    /// of managing users, and deciding it is not.
-    /// </summary>
+    /// <summary>Whether roles can be changed from here — a second permission: listing who holds
+    /// what is part of managing users, deciding it is not.</summary>
     public bool CanManageRoles => _permissions.Allows(PermissionKeys.ManageRoles);
 
     public ObservableCollection<UserRow> Users { get; } = [];
@@ -112,18 +110,15 @@ namespace Kakehashi.App.UI {
     /// The newest few of the selected user's sessions.
     /// </summary>
     /// <remarks>
-    /// Capped, because the list is every session the account has ever opened that has not been
-    /// revoked — a development account that has signed in from a script fifty times shows fifty
-    /// rows, and the detail panel becomes a scroll of near-identical lines. The newest three answer
-    /// the question the panel is for ("who is signed in right now, and from where"); the rest are
-    /// counted rather than drawn.
+    /// Capped at three: the full list is every unrevoked session the account has ever opened, which
+    /// can run to dozens of near-identical rows. Older ones are counted, not drawn.
     /// </remarks>
     public ObservableCollection<SessionEntry> Sessions { get; } = [];
 
     /// <summary>The roles the selected user does NOT hold — the only ones worth offering.</summary>
     /// <remarks>
-    /// Offering a role somebody already has is the bug this replaces: the server accepted it
-    /// idempotently, so the button appeared to do nothing at all.
+    /// The server accepts a duplicate assignment idempotently, so offering a held role produces a
+    /// button that appears to do nothing.
     /// </remarks>
     public ObservableCollection<RoleRow> AssignableRoles { get; } = [];
 
@@ -144,15 +139,10 @@ namespace Kakehashi.App.UI {
     public partial UserRow? SelectedUser { get; set; }
 
     /// <summary>
-    /// Whether the detail panel is showing.
+    /// Its own flag rather than "is a row selected": the row stays selected after the panel closes,
+    /// and a panel derived from the selection cannot close — a ListView with a focused item puts a
+    /// cleared selection straight back, reopening it.
     /// </summary>
-    /// <remarks>
-    /// Its own flag rather than "is a row selected", and the two are genuinely different questions:
-    /// the row stays selected and highlighted after the panel is closed, which is what a list is
-    /// supposed to do. Deriving the panel from the selection also meant closing it required
-    /// deselecting, and a ListView with a focused item puts that selection straight back — the
-    /// panel reopened, empty, every time.
-    /// </remarks>
     [ObservableProperty]
     public partial bool IsDetailOpen { get; set; }
 
@@ -161,11 +151,10 @@ namespace Kakehashi.App.UI {
     [NotifyCanExecuteChangedFor(nameof(AssignRoleCommand))]
     public partial RoleRow? RoleToAssign { get; set; }
 
-    /// <summary>Whether there is a role chosen to assign.</summary>
-    /// <remarks>
-    /// The Add button had no CanExecute, so pressing it with the picker empty did nothing and
-    /// reported nothing — indistinguishable, from the outside, from a request that failed.
-    /// </remarks>
+    /// <summary>
+    /// Backs the Add button's CanExecute: enabled with an empty picker, the button does nothing and
+    /// reports nothing — indistinguishable from a request that failed.
+    /// </summary>
     public bool CanAssignRole => RoleToAssign is not null;
 
     [ObservableProperty]
@@ -253,8 +242,7 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Creates an account, with a password the administrator hands over.</summary>
     /// <remarks>
-    /// Set rather than mailed, because this server has no mail. The dialog says so, and the first
-    /// thing the new owner should do is change it from their own account page.
+    /// The password is set rather than mailed because this server has no mail; the dialog says so.
     /// </remarks>
     [RelayCommand]
     private async Task AddUserAsync(CancellationToken cancellationToken) {
@@ -281,15 +269,8 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Writes the list to a CSV where the user asks for it.</summary>
     /// <remarks>
-    /// It exports what is on screen — the filtered set — because that is what somebody who has just
-    /// filtered the list means by "export".
-    /// <para>
-    /// The save dialog replaces a hardcoded folder under LocalAppData. An export that lands
-    /// somewhere the user did not choose, cannot open from the app, and only learns the path of from
-    /// a notification that disappears is most of the work of exporting left undone. The write is
-    /// also reported when it fails, which the fixed-folder version did not: a read-only location or
-    /// a full disk produced silence.
-    /// </para>
+    /// Exports what is on screen — the filtered set, not the whole list. Write failures are
+    /// reported: a read-only location or a full disk must not fail silently.
     /// </remarks>
     [RelayCommand]
     private async Task ExportAsync() {
@@ -327,7 +308,6 @@ namespace Kakehashi.App.UI {
       _notifications.Show($"Exported {Users.Count} users to {path}", InfoBarSeverity.Success);
     }
 
-    /// <summary>Edits the selected account's profile.</summary>
     [RelayCommand]
     private async Task EditAsync(CancellationToken cancellationToken) {
       if (SelectedUser is not { } user) {
@@ -365,9 +345,8 @@ namespace Kakehashi.App.UI {
           $"Reset password for {user.DisplayName}", "Reset",
           ("New password (at least 12 characters)", string.Empty, true));
 
-      // Said before it happens, not after. This server has no mail, so nothing reaches the person
-      // whose password was just changed — and every session they have ends immediately. An
-      // administrator who did not know that has locked somebody out and told nobody.
+      // The dialog warns before the call: this server has no mail, so nothing notifies the person,
+      // and the reset ends every session they have immediately.
       if (values is null || string.IsNullOrWhiteSpace(values[0])) {
         return;
       }
@@ -384,7 +363,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    /// <summary>Ends one session.</summary>
     [RelayCommand]
     private async Task RevokeSessionAsync(string sessionId) {
       if (SelectedUser is not { } user) {
@@ -399,19 +377,15 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(CancellationToken.None);
     }
 
-    /// <summary>Ends every session the account has.</summary>
     [RelayCommand]
     private async Task SignOutEverywhereAsync(CancellationToken cancellationToken) {
       if (SelectedUser is not { } user) {
         return;
       }
 
-      // Read the sessions BEFORE asking, and from the server rather than from the panel's cache.
-      // The panel shows the newest three and is empty until the detail has loaded at all, so a
-      // count taken from it would ask about a stale cache and revoke a stale cache — reporting
-      // "Signed out everywhere" after revoking nothing whenever the load had not happened or had
-      // failed. A success message for work that did not happen is the one kind of lie a person
-      // cannot detect.
+      // Read the sessions from the server, not the panel's cache: the panel holds only the newest
+      // three and is empty until its load completes, so a count taken from it could revoke nothing
+      // and still report success.
       var live = await _admin.ListUserSessionsAsync(user.Id, cancellationToken);
       if (live.IsFailure) {
         Notify(live.Error);
@@ -440,9 +414,8 @@ namespace Kakehashi.App.UI {
         }
       }
 
-      // Including this one, when the account being signed out is the caller's. The server has
-      // already killed the token; leaving the app sitting on a shell it cannot talk to
-      // would turn "signed out everywhere" into "everywhere except the screen you are looking at".
+      // When the account is the caller's own, sign this client out too: the server has already
+      // revoked the token, so the shell cannot talk to it.
       var current = await _sender.Send(new GetCurrentSessionQuery());
       if (string.Equals(current.Email, user.Email, StringComparison.OrdinalIgnoreCase)) {
         await _sender.Send(new SignOutCommand());
@@ -457,7 +430,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    /// <summary>Copies the selected account's email address.</summary>
     [RelayCommand]
     private void CopyEmail() {
       if (SelectedUser is not { } user) {
@@ -467,7 +439,6 @@ namespace Kakehashi.App.UI {
       _notifications.Show($"{user.Email} copied.", InfoBarSeverity.Informational);
     }
 
-    /// <summary>Copies the selected account's id — what a support ticket actually needs.</summary>
     [RelayCommand]
     private void CopyAccountId() {
       if (SelectedUser is not { } user) {
@@ -477,7 +448,6 @@ namespace Kakehashi.App.UI {
       _notifications.Show("Account ID copied.", InfoBarSeverity.Informational);
     }
 
-    /// <summary>Gives the selected user the selected role.</summary>
     [RelayCommand(CanExecute = nameof(CanAssignRole))]
     private async Task AssignRoleAsync(CancellationToken cancellationToken) {
       if (SelectedUser is null || RoleToAssign is null) {
@@ -522,7 +492,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(CancellationToken.None);
     }
 
-    /// <summary>Switches the selected account off, or back on.</summary>
     [RelayCommand]
     private async Task ToggleActiveAsync(CancellationToken cancellationToken) {
       if (SelectedUser is null) {
@@ -549,7 +518,6 @@ namespace Kakehashi.App.UI {
       await ReloadKeepingSelectionAsync(cancellationToken);
     }
 
-    /// <summary>Removes the selected account permanently, after asking in plain words.</summary>
     [RelayCommand]
     private async Task DeleteUserAsync(CancellationToken cancellationToken) {
       if (SelectedUser is null) {
@@ -610,7 +578,6 @@ namespace Kakehashi.App.UI {
       _ = LoadSessionsAsync(value.Id);
     }
 
-    /// <summary>Offers only the roles the selected user does not already hold.</summary>
     private void RebuildAssignableRoles(UserRow user) {
       AssignableRoles.Clear();
       foreach (var role in Roles.Where(role => !user.RoleNames.Contains(role.Name))) {
@@ -620,13 +587,10 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Re-reads the list and puts the selection back on the same person.</summary>
     /// <remarks>
-    /// The rows are records, so the reloaded one is a different object and the selection would
-    /// otherwise land on nothing — closing the detail panel in front of somebody who has just
-    /// pressed a button in it.
+    /// The rows are records, so the reloaded row is a different object and a stale reference
+    /// matches nothing; ApplyFilter restores the selection by id.
     /// </remarks>
     private async Task ReloadKeepingSelectionAsync(CancellationToken cancellationToken) {
-      // The reload runs through ApplyFilter, which restores the selection by id — the rows are
-      // records, so the reloaded one is a different object and the stale reference matches nothing.
       await LoadAsync(cancellationToken);
     }
 
@@ -652,7 +616,6 @@ namespace Kakehashi.App.UI {
       MoreSessions = hidden > 0 ? $"+{hidden} older session(s) not shown" : string.Empty;
     }
 
-    /// <summary>Quotes a CSV field, which matters the moment a display name contains a comma.</summary>
     private static string Csv(string value) {
       return value.Contains(',') || value.Contains('"')
           ? $"\"{value.Replace("\"", "\"\"")}\""
@@ -704,8 +667,8 @@ namespace Kakehashi.App.UI {
       var needle = SearchText.Trim();
 
       // Clearing the collection resets the ListView's selection, and the TwoWay binding writes
-      // that null straight back — so without this, one keystroke in the search box closed the
-      // detail panel of the person the administrator was working on.
+      // that null straight back — restoring by id keeps one keystroke in the search box from
+      // closing the detail panel.
       var selectedId = SelectedUser?.Id;
 
       Users.Clear();

@@ -17,15 +17,9 @@
 //
 // Modules add their own under KAKEHASHI_<MODULE>_*; see Config.Module.
 //
-// Environment variables rather than a file, because that is what every place this is likely to run
-// already speaks: docker compose, a systemd unit, a Kubernetes secret. A file would need a path,
-// which would need an environment variable anyway, and would then have to be mounted into the
-// container the config was meant to configure.
-//
 // Everything the server reads is prefixed KAKEHASHI_, with two deliberate exceptions:
 // OTEL_SERVICE_NAME and OTEL_EXPORTER_OTLP_ENDPOINT are spelled the way the OpenTelemetry
-// specification spells them. Renaming standard variables to match a house style is how you end up
-// with a collector that silently exports nothing because the operator set the name they knew.
+// specification spells them, so operators and collectors that know the standard names find them.
 package config
 
 import (
@@ -47,9 +41,9 @@ type Config struct {
 
 	// PublicURL is the externally reachable origin, e.g. "https://api.example.com".
 	//
-	// It is not cosmetic. It becomes the OpenID Connect issuer, and an issuer that does not match
-	// what the client dialled is rejected by every conforming client, including this project's.
-	// Behind a reverse proxy it is the proxy's address, not the container's.
+	// It becomes the OpenID Connect issuer, and an issuer that does not match what the client
+	// dialled is rejected by every conforming client, including this project's. Behind a reverse
+	// proxy it is the proxy's address, not the container's.
 	PublicURL string
 
 	// ShutdownTimeout bounds how long modules get to stop cleanly before the process exits anyway.
@@ -66,8 +60,7 @@ type SQLServer struct {
 	// "sqlserver://sa:pass@localhost:1433?database=kakehashi".
 	DSN string
 
-	// MaxOpenConns caps the pool. Unlike the desktop original, which pinned it to one connection
-	// because SQLite serialises writes anyway, a server has real concurrency to serve.
+	// MaxOpenConns caps the pool. Load rejects values below one.
 	MaxOpenConns int
 }
 
@@ -85,20 +78,15 @@ type Telemetry struct {
 	// Enabled reports whether traces and metrics are exported.
 	//
 	// Off unless an OTLP endpoint is configured, and forced off by KAKEHASHI_TELEMETRY_ENABLED=false
-	// whatever else is set — which is the switch to reach for when a collector is running for
-	// something else on the same machine and you want this server to stay out of it. With it off
-	// the server keeps logging to the console exactly as before; nothing else changes.
+	// whatever else is set. Console logging is unaffected either way.
 	//
-	// The endpoint itself is not stored: the OTLP exporters read that variable themselves, along
-	// with the headers, protocol and timeout variables that go with it. Parsing it here would mean
-	// reimplementing that whole family, slightly differently.
+	// The endpoint itself is not stored: the OTLP exporters read OTEL_EXPORTER_OTLP_ENDPOINT
+	// themselves, along with the headers, protocol and timeout variables that go with it.
 	Enabled bool
 }
 
-// Load reads the configuration, reporting every problem at once.
-//
-// Every problem, not the first: a fresh deployment usually has several variables missing, and
-// finding them one restart at a time is a waste of everybody's afternoon.
+// Load reads the configuration, reporting every problem at once rather than the first: a fresh
+// deployment usually has several variables missing.
 func Load() (*Config, error) {
 	l := &loader{}
 
@@ -125,9 +113,8 @@ func Load() (*Config, error) {
 	}
 
 	if c.SQLServer.MaxOpenConns <= 0 {
-		// Not clamped to a default, because a number somebody wrote means something to them.
-		// database/sql reads zero as "unlimited", which is the opposite of what a person setting a
-		// pool size to zero expects, and a negative is not a size at all.
+		// Rejected rather than clamped: database/sql reads zero as "unlimited", the opposite of
+		// what a pool size of zero intends, and a negative is not a size at all.
 		l.problems = append(l.problems, fmt.Errorf(
 			"%sSQLSERVER_MAX_OPEN_CONNS must be greater than zero, got %d",
 			EnvPrefix, c.SQLServer.MaxOpenConns))

@@ -1,10 +1,8 @@
 namespace Kakehashi.UI.Common.Controls {
   /// <summary>What a stat card's number means, which is what decides its colour.</summary>
   /// <remarks>
-  /// Named for the meaning rather than for a screen's rows. The first four of these were
-  /// Total/Active/Inactive/Idle, which described the Users screen and nothing else — a second screen
-  /// cannot call its failed sign-ins "inactive", so it would have had to invent a parallel enum and
-  /// a parallel palette. Naming the meaning keeps the palette one decision for every screen.
+  /// Named for the meaning rather than for any screen's rows, so the palette stays one decision:
+  /// every screen maps its own rows onto these five meanings instead of adding a parallel enum.
   /// </remarks>
   public enum StatKind {
     /// <summary>No judgement, just a count. Takes the app accent.</summary>

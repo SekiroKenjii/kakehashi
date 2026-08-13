@@ -93,6 +93,27 @@ layers loaded.
 4. `NavigationService` resolves the selected page **from the container** (so pages get constructor
    injection) and shows it in the shell frame.
 
+## Page skeleton
+
+Every page opens with the shared `PageHeader` control (`Kakehashi.UI.Common.Controls`): a
+breadcrumb on the left, the page's commands on the right. The commands are the control's XAML
+content property, so they need no property element:
+
+```xml
+<controls:PageHeader Section="Administration" Title="Users">
+    <StackPanel Orientation="Horizontal" Spacing="2">
+        <Button Style="{StaticResource AccentToolbarButtonStyle}" …/>
+        <Border Style="{StaticResource CommandBarDividerStyle}"/>
+        <Button Style="{StaticResource ToolbarButtonStyle}" …/>
+    </StackPanel>
+</controls:PageHeader>
+```
+
+`Root` defaults to the product name so every trail starts at the same place; set `Section` for the
+muted middle crumb and `Title` for the page's own name. An empty crumb — and an empty command set —
+collapses instead of drawing empty chrome. The control lives in `Kakehashi.UI.Common` because
+feature modules have pages too, and a control in the host is one they cannot reference.
+
 ## Conventions that aren't tool-enforced
 
 - **Class member order** follows the Google guide: nested types, then static/const/readonly fields,

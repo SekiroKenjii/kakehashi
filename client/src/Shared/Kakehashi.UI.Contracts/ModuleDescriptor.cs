@@ -13,10 +13,9 @@ namespace Kakehashi.UI.Contracts {
   /// The server's module id, when this module has a server half whose access an administrator
   /// governs. Null means the module is local-only and nobody can lock it.
   /// <para>
-  /// It is separate from <see cref="IModule.Name"/> because the two genuinely differ: the client
-  /// calls its sign-in module "Auth" while the server calls the module behind it "account". A
-  /// permission key that quietly drifts between the halves is a permission that quietly stops
-  /// applying, so the mapping is written down here rather than guessed from the display name.
+  /// Separate from <see cref="IModule.Name"/> because the halves name modules differently (client
+  /// "Auth", server "account"); declaring the mapping here keeps the permission key from drifting,
+  /// and a drifted key is a permission that silently stops applying.
   /// </para>
   /// </param>
   public sealed record ModuleDescriptor(

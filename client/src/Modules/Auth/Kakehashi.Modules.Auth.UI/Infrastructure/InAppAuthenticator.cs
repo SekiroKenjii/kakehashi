@@ -21,11 +21,10 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
   /// <see cref="AuthMode.InApp"/>.
   /// </summary>
   /// <remarks>
-  /// Only the two interactive halves are ours. Refreshing delegates to
-  /// <see cref="OidcInteractiveAuthenticator"/> on purpose: the server issues both modes' tokens
-  /// through one provider and rotates them on one standard endpoint, so a session that began here
-  /// and a session that began in a browser have the same lifecycle from the second request onward.
-  /// Reimplementing the refresh grant would be a second chance to get it wrong for no gain.
+  /// Refreshing delegates to <see cref="OidcInteractiveAuthenticator"/>: the server issues both
+  /// modes' tokens through one provider and rotates them on one standard endpoint, so a session
+  /// that began here and one that began in a browser have the same lifecycle from the second
+  /// request onward.
   /// </remarks>
   public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDisposable {
     private static readonly JsonSerializerOptions _json = new(JsonSerializerDefaults.Web);
@@ -56,11 +55,9 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
     /// What the server will record as this session's device.
     /// </summary>
     /// <remarks>
-    /// It exists because <see cref="HttpClient"/> sends no User-Agent by default, and the server
-    /// reads that header to fill the device column the Account page shows — so without one, every
-    /// in-app session is a blank row and the session list stops answering "which of these is the
-    /// laptop I left at the office". The browser flow never had the problem because the browser
-    /// sends its own.
+    /// <see cref="HttpClient"/> sends no User-Agent by default, and the server reads that header
+    /// to fill the device column the Account page shows — without one, every in-app session is a
+    /// blank row. The browser flow sends the browser's own.
     /// </remarks>
     public static string DeviceLabel() {
       var version = Assembly.GetEntryAssembly()?.GetName().Version;

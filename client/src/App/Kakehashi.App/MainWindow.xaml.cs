@@ -6,8 +6,8 @@ using WinUIEx;
 
 namespace Kakehashi.App {
   /// <summary>
-  /// The main container for the app's content. It hosts the <see cref="ShellPage"/> and registers the
-  /// shell's custom title bar; lifecycle is driven by the startup orchestrators.
+  /// Hosts the <see cref="ShellPage"/> and registers the shell's custom title bar; lifecycle is
+  /// driven by the startup orchestrators.
   /// </summary>
   public sealed partial class MainWindow : WindowEx {
     public MainWindow() {
@@ -19,7 +19,6 @@ namespace Kakehashi.App {
       Closed += OnMainWindowClosed;
     }
 
-    /// <summary>Hosts the shell in the window and wires its custom title bar.</summary>
     internal void AttachShell(ShellPage shell) {
       ArgumentNullException.ThrowIfNull(shell);
 

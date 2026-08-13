@@ -11,9 +11,8 @@ using AuthzV1 = Kakehashi.Authz.V1;
 namespace Kakehashi.App.Services {
   /// <summary>What the signed-in account may do, as this client understands it.</summary>
   /// <remarks>
-  /// A port so view models can be tested without a server, and so the one answer everything reads
-  /// comes from one place. A second component asking the server the same question separately is a
-  /// second component that can be told something different.
+  /// A port so view models can be tested without a server, and so every reader takes the one answer
+  /// from one place instead of asking the server separately.
   /// </remarks>
   public interface IPermissionService {
     /// <summary>
@@ -91,9 +90,8 @@ namespace Kakehashi.App.Services {
 
     /// <summary>Fetches the grants and applies the module locks to the registry.</summary>
     /// <remarks>
-    /// Failure leaves the previous answer standing rather than emptying it. An unreachable server
-    /// must not lock a user out of a client the server is going to refuse anyway; the alternative
-    /// trades a lock nobody can act on for an app that will not open.
+    /// Failure leaves the previous answer standing rather than emptying it: an unreachable server
+    /// must not lock a user out of a client the server is going to refuse anyway.
     /// </remarks>
     public async Task RefreshAsync(CancellationToken cancellationToken) {
       try {
@@ -121,9 +119,8 @@ namespace Kakehashi.App.Services {
         }
 
         // Nothing is reported as granted. A grant means the account MAY use the module, not that
-        // it must: which modules are actually in the composition stays the user's preference, and
-        // a permission that also forced a page into their navigation would be an administrator
-        // rearranging somebody's desk.
+        // it must: which modules are attached stays the user's preference, so a permission never
+        // forces a page into their navigation.
         _registry.SetAssignments(withheld, []);
         LogApplied(grants.Count, withheld.Count);
 

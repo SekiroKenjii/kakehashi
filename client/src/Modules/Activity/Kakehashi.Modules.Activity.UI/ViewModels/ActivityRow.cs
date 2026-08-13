@@ -13,20 +13,15 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
   /// One row in the feed, which may stand for several entries.
   /// </summary>
   /// <remarks>
-  /// An observable object rather than a record because a row is expandable, and expansion is state
-  /// the row owns. The facts themselves are get-only: an entry never changes once it happened.
-  /// <para>
-  /// The wording, the icon and the grouping are all decided here rather than sent by the server. The
-  /// server ships a stable kind and structured facts, which is what lets this page be re-worded and
-  /// re-illustrated without a server release — and what stops a server from owning presentation for
-  /// clients it cannot see.
-  /// </para>
+  /// An observable object rather than a record because expansion is mutable state the row owns;
+  /// the facts themselves are get-only. Wording, icon and grouping are decided here from the
+  /// server's stable kind and structured facts, so the page can be re-worded without a server
+  /// release.
   /// </remarks>
   public sealed partial class ActivityRow : ObservableObject {
-    // Written as escapes rather than as literal characters. These are Private Use Area code points,
-    // so a literal shows as nothing at all in an editor and in a diff — which is how a glyph mapping
-    // gets destroyed by an edit that looked harmless. The older screens in this repo still hold
-    // literals; this is the direction to move them.
+    // Written as an escape, not a literal character: Private Use Area code points render as
+    // nothing in an editor and in a diff, so a literal glyph is easily destroyed by an edit that
+    // looks harmless.
     private const string _fallbackGlyph = "\uE946";
 
     private ActivityRow(IReadOnlyList<ActivityEntryDto> entries) {
@@ -68,7 +63,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     public string TimeText { get; }
     public string Glyph { get; }
 
-    /// <summary>Whether this row is the reason somebody opened the page.</summary>
+    /// <summary>Whether the row is drawn as an alert: kinds where "was that me?" could be no.</summary>
     public bool IsAlert { get; }
 
     /// <summary>Whether to badge this as a first sighting of a device.</summary>
@@ -84,15 +79,14 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// Whether this row offers a way to act on it.
     /// </summary>
     /// <remarks>
-    /// Only where the answer to "was that me?" could be no. Offering it on every row would make the
-    /// offer meaningless, which is the same reason the mockup only draws it twice.
+    /// Only where the answer to "was that me?" could be no; offering it on every row would make
+    /// the offer meaningless.
     /// </remarks>
     public bool CanSecure =>
         Kind is ActivityKinds.FailedSignIn
             or ActivityKinds.NewDeviceSignedIn
             or ActivityKinds.SessionRevokedByAdmin;
 
-    /// <summary>How many entries this row stands for. One unless it is a burst.</summary>
     public int Count => Entries.Count;
 
     public bool IsBurst => Entries.Count > 1;
@@ -106,9 +100,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// Whether to label the row with its category.
     /// </summary>
     /// <remarks>
-    /// Sign-in rows are not labelled. A feed of an account's activity is mostly sessions, so a chip
-    /// repeating "SignIn" on two rows in three is decoration; a chip on the ones that are not is
-    /// information.
+    /// Sign-in rows carry no chip: most of the feed is sessions, so a chip on the exceptions is
+    /// information and a chip on every row is decoration.
     /// </remarks>
     public bool ShowCategory => Category.Length > 0 && Category != ActivityCategories.SignIn;
 
@@ -140,10 +133,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     /// <summary>Builds one row per entry, collapsing consecutive repeats into a burst.</summary>
     /// <remarks>
-    /// Consecutive is load-bearing. Grouping every matching entry in the page would reorder the feed
-    /// — nine sign-outs from this morning would swallow one from last week and claim it happened at
-    /// breakfast. Only a run of the same fact, from the same session, inside a short window is one
-    /// event as far as a reader is concerned.
+    /// Consecutive is load-bearing: grouping every matching entry in the page would reorder the
+    /// feed and misdate the older entries. Only a run of the same fact, from the same session,
+    /// inside a short window collapses.
     /// </remarks>
     public static IReadOnlyList<ActivityRow> Collapse(
         IReadOnlyList<ActivityEntryDto> entries, TimeSpan window) {
@@ -177,9 +169,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
 
     private static (string Title, string Glyph, bool IsAlert) Present(string kind) {
-      // An unrecognised kind shows its raw value rather than being dropped. Every module added to
-      // this boilerplate contributes kinds of its own, and a feed that silently hides what it does
-      // not recognise is a feed you cannot trust to be complete.
+      // An unrecognised kind shows its raw value rather than being dropped: the server can add
+      // kinds without a client release, and a feed that hides them is incomplete.
       return kind switch {
         ActivityKinds.SignedIn => ("Signed in", "\uE930", false),
         ActivityKinds.SignedOut => ("Signed out", "\uE7E8", false),
@@ -201,15 +192,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// The detail lines, with every empty one left out.
     /// </summary>
     /// <remarks>
-    /// The mockup this page follows also drew an "Initiated by" line. There is no such field, at any
-    /// layer — the server records what happened, not who asked — and inventing one would be a
-    /// fabrication on the single screen somebody opens to check whether a stranger has been in their
-    /// account. It is absent rather than guessed.
-    /// <para>
-    /// "Device" and "User agent" were two lines in the mockup and are one fact here: the stored
-    /// device string *is* the user agent. Both forms are shown — the readable one and the raw one —
-    /// but they come from one value rather than from two that could disagree.
-    /// </para>
+    /// No "Initiated by" line: no layer records who asked, only what happened, and inventing one
+    /// would fabricate data on a security screen. The stored device string is the user agent — the
+    /// readable and raw forms both come from that one value.
     /// </remarks>
     private static IReadOnlyList<ActivityDetail> Describe(ActivityEntryDto entry) {
       var facts = new List<ActivityDetail>(5) { new("Event", entry.Id) };
@@ -232,7 +217,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       return entry.OccurredAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture);
     }
 
-    /// <summary>The span a burst covers, oldest to newest, as the mockup draws it.</summary>
+    /// <summary>The span a burst covers, oldest to newest.</summary>
     private static string Span(IReadOnlyList<ActivityEntryDto> entries) {
       string oldest = entries[^1].OccurredAt.ToLocalTime()
           .ToString("HH:mm", CultureInfo.CurrentCulture);
@@ -274,8 +259,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
   /// One day's rows, which is what the list groups by.
   /// </summary>
   /// <remarks>
-  /// The boundary is the reader's local midnight, not the server's. A sign-in at 00:30 in Ho Chi Minh
-  /// City belongs under today for the person reading it, whatever UTC thinks.
+  /// The boundary is the reader's local midnight, not the server's.
   /// </remarks>
   public sealed class ActivityDay {
     public ActivityDay(DateTime day, IReadOnlyList<ActivityRow> items) {

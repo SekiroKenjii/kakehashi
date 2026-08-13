@@ -116,13 +116,13 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
     }
 
     /// <summary>
-    /// The name the server knows this fact by.
+    /// The name the server knows this fact by. These strings cross the wire and the server
+    /// switches on them.
     /// </summary>
     /// <remarks>
-    /// A switch with no default arm, on purpose: adding a value to
-    /// <see cref="ClientActivityKind"/> without deciding what to call it on the wire should not
-    /// compile. The alternative — a default that sends the enum's own name — would send a string the
-    /// server has never heard of and turn a missed edit into a runtime refusal.
+    /// No default arm: adding a <see cref="ClientActivityKind"/> value without choosing its wire
+    /// name must not compile. Defaulting to the enum's own name would send a string the server has
+    /// never heard of and turn a missed edit into a runtime refusal.
     /// </remarks>
     private static string WireName(ClientActivityKind kind) {
       return kind switch {

@@ -14,16 +14,6 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/telemetry"
 )
 
-// Everything a running server needs, acquired in one place.
-//
-// Naming the modules is a decision about this product and stays at the composition root; opening
-// a database is the same for every build and belongs here, where the kernel lives.
-//
-// Acquisitions are ordered and torn down in reverse. A failure at any step releases what the
-// earlier steps acquired — returning early instead would leave a Mongo connection that could not
-// be opened sitting on an already-open SQL pool and a live telemetry exporter, which a test that
-// boots a server in-process cannot afford.
-
 // BootOptions is what a caller must decide. Everything else comes from the environment.
 type BootOptions struct {
 	// Log receives everything from configuration onwards. Required.
@@ -48,9 +38,8 @@ type Runtime struct {
 	Cfg    *config.Config
 	Kernel *Kernel
 
-	// cleanup is unwound last-acquired-first by Close. A stack rather than a list of named steps,
-	// because the order is not a policy to be maintained — it is the acquisition order, reversed,
-	// and a stack cannot drift from it.
+	// cleanup is unwound last-acquired-first by Close; the order is the acquisition order,
+	// reversed, and a stack cannot drift from it.
 	cleanup []cleanupStep
 }
 

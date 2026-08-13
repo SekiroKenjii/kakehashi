@@ -14,9 +14,9 @@ using WinUIEx;
 
 namespace Kakehashi.App {
   /// <summary>
-  /// Application composition root. Kept deliberately lean: it builds the host and hands control to the
-  /// <see cref="AppOrchestrator"/>, which runs the startup pipeline. Service access for the few
-  /// framework-instantiated types (XAML behaviors) goes through the static accessors below.
+  /// Application composition root: builds the host, hands control to the <see cref="AppOrchestrator"/>
+  /// startup pipeline, and exposes static service accessors for the few framework-instantiated XAML
+  /// types.
   /// </summary>
   /// <remarks>
   /// The base type is fully qualified because the solution also has a <c>Kakehashi.Application</c>
@@ -32,47 +32,40 @@ namespace Kakehashi.App {
 
       UnhandledException += OnUnhandledException;
 
-      // The two channels the XAML handler above does not cover. A fire-and-forget Task that
-      // faults never reaches it — the failure is finalized quietly and the app carries on with a
-      // page that silently did not load, which is the hardest kind of bug to be told about.
+      // The two channels the XAML handler above does not cover: a faulted fire-and-forget Task
+      // surfaces only at finalization, and exceptions on non-UI threads never reach XAML. Both
+      // would otherwise pass unrecorded.
       TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
       AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
     }
 
-    /// <summary>The current application instance, typed as <see cref="App"/>.</summary>
     public new static App Current =>
         Microsoft.UI.Xaml.Application.Current as App
         ?? throw new InvalidOperationException("Current application is not App.");
 
-    /// <summary>The application's service provider. Throws if accessed before the host is built.</summary>
+    /// <summary>Throws if accessed before the host is built.</summary>
     public static IServiceProvider Services =>
         Current._host?.Services
         ?? throw new InvalidOperationException("The host has not been built yet.");
 
-    /// <summary>The main application window. Throws if accessed before it is created.</summary>
+    /// <summary>Throws if accessed before the window is created.</summary>
     public static WindowEx MainWindow =>
         Current._window
         ?? throw new InvalidOperationException("The main window has not been created yet.");
 
-    /// <summary>The element registered as the window's title bar.</summary>
     public static UIElement AppTitleBar {
       get => Current._appTitleBar
           ?? throw new InvalidOperationException("The app title bar has not been set yet.");
       set => Current._appTitleBar = value;
     }
 
-    /// <summary>
-    /// Gets the a new instance of <see cref="ISubscription"/> from the service provider.
-    /// </summary>
+    /// <summary>Resolves a new <see cref="ISubscription"/> instance on every access.</summary>
     public static ISubscription Subscription => Services.GetRequiredService<ISubscription>();
 
     /// <summary>
-    /// Gets a UI service from the container. Services accessed via this method must implement <see cref="IUiContractService"/>
-    /// to indicate that they are designed for use in the UI layer and can be safely accessed via this static accessor. This is a compile-time convention only, but helps to prevent accidental misuse of the static service accessors by non-UI code.
+    /// The <see cref="IUiContractService"/> constraint is a compile-time convention marking types
+    /// intended for this static accessor; throws when the service is not registered.
     /// </summary>
-    /// <typeparam name="TService">The type of the UI service that implements <see cref="IUiContractService"/>.</typeparam>
-    /// <returns>The requested service instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if the service is not registered.</exception>
     public static TService GetService<TService>() where TService : IUiContractService {
       return Services.GetService(typeof(TService)) is TService service
           ? service
@@ -80,21 +73,11 @@ namespace Kakehashi.App {
               $"Service of type {typeof(TService)} is not registered.");
     }
 
-    /// <summary>
-    /// Gets all registered services of the specified type. Services accessed via this method must implement <see cref="IUiContractService"/> to indicate that they are designed for use in the UI layer and can be safely accessed via this static accessor. This is a compile-time convention only, but helps to prevent accidental misuse of the static service accessors by non-UI code.
-    /// </summary>
-    /// <typeparam name="TService">The type of the UI service that implements <see cref="IUiContractService"/>.</typeparam>
-    /// <returns>An enumerable of the requested service instances.</returns>
     public static IEnumerable<TService> GetServices<TService>() where TService : class {
       return Services.GetServices<TService>();
     }
 
-    /// <summary>
-    /// Gets a view model from the container. View models accessed via this method must implement <see cref="ViewModel"/> to indicate that they are designed for use as view models and can be safely accessed via this static accessor. This is a compile-time convention only, but helps to prevent accidental misuse of the static service accessors by non-UI code.
-    /// </summary>
-    /// <typeparam name="TViewModel">The type of the view model that implements <see cref="ViewModel"/>.</typeparam>
-    /// <returns>The requested view model instance.</returns>
-    /// <exception cref="InvalidOperationException">Thrown if the view model is not registered.</exception>
+    /// <summary>Throws when the view model is not registered.</summary>
     public static TViewModel GetViewModel<TViewModel>() where TViewModel : ViewModel {
       return Services.GetService(typeof(TViewModel)) is TViewModel viewModel
           ? viewModel
@@ -103,9 +86,9 @@ namespace Kakehashi.App {
     }
 
     /// <summary>
-    /// Shuts down the application host, allowing for graceful cleanup of resources. This should be called during application exit to ensure that all hosted services are properly stopped and disposed. The method attempts to stop the host within a 5-second timeout, but will not throw if shutdown fails, as it is a best-effort operation during application teardown.
+    /// Stops and disposes the host with a 5-second timeout; failures are swallowed because shutdown
+    /// during application exit is best-effort.
     /// </summary>
-    /// <returns>A task that represents the asynchronous shutdown operation.</returns>
     public static async Task ShutdownAsync() {
       var host = Current._host;
       if (host is null) {
@@ -150,16 +133,16 @@ namespace Kakehashi.App {
 
     /// <summary>Records a Task that faulted with nobody awaiting it.</summary>
     /// <remarks>
-    /// Marked observed, so it is written down rather than escalating. The alternative is a process
-    /// that dies at an arbitrary later moment, during a garbage collection, with a stack that
-    /// points at the finalizer instead of at the code that failed.
+    /// SetObserved stops the exception escalating at finalization, which would kill the process at
+    /// an arbitrary later moment with a stack pointing at the finalizer instead of the code that
+    /// failed.
     /// </remarks>
     private void OnUnobservedTaskException(object? sender, UnobservedTaskExceptionEventArgs e) {
       Log("Unobserved task exception.", e.Exception);
       e.SetObserved();
     }
 
-    /// <summary>Records anything that escapes a non-UI thread. Nothing can be done but write it.</summary>
+    /// <summary>Logs anything that escapes a non-UI thread; the runtime terminates regardless.</summary>
     private void OnDomainUnhandledException(object sender, System.UnhandledExceptionEventArgs e) {
       Log("Unhandled exception on a background thread.", e.ExceptionObject as Exception);
     }

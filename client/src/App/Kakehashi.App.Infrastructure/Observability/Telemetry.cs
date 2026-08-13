@@ -21,10 +21,8 @@ namespace Kakehashi.App.Infrastructure.Observability {
         ?? typeof(Telemetry).Assembly.GetName().Version?.ToString()
         ?? "0.0.0";
 
-    /// <summary>The source for application-authored traces (spans).</summary>
     public static readonly ActivitySource ActivitySource = new(ServiceName, ServiceVersion);
 
-    /// <summary>The meter for application-authored metrics.</summary>
     public static readonly Meter Meter = new(ServiceName, ServiceVersion);
   }
 }

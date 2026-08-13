@@ -1,4 +1,3 @@
-// Account is the module's central aggregate root: who someone is.
 package domain
 
 import (
@@ -24,7 +23,7 @@ const (
 // Account is the entity.
 //
 // PasswordHash is exported for the store to scan into, but it is never the plaintext and never
-// leaves the module: accountapi.User has no such field, and the mapping in service/ is what
+// leaves the module: accountapi.Account has no such field, and the mapping in service/ is what
 // guarantees it.
 type Account struct {
 	ID           string

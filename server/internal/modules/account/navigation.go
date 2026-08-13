@@ -5,11 +5,8 @@ import (
 	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
 )
 
-// The screen this module owns.
-//
-// One, and not the one you might expect: the caller's own Account page is a footer item the client
-// places itself, so nothing about it is a deployment's to arrange. What is here is the
-// administrative user directory.
+// The screen this module owns is the administrative user directory. The caller's own Account page
+// is a footer item the client places itself, so nothing about it is a deployment's to arrange.
 
 // NavigationDestinations declares the Users screen.
 //

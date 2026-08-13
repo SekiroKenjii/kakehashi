@@ -1,7 +1,7 @@
 namespace Kakehashi.UI.Contracts.Services {
   /// <summary>
-  /// Marker interface for application services. These are services that are registered in the
-  /// dependency-injection container and can be resolved by other services or view models.
+  /// Marks a service that UI code may resolve through the host's static service accessor — a
+  /// compile-time gate on that accessor, nothing more.
   /// </summary>
   public interface IUiContractService;
 }

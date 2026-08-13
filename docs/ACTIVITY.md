@@ -128,7 +128,15 @@ basis on which to authorize a cross-account read.
 
 `kind` is deliberately **not** indexed. The counts group by it, but only after a match on `user_id` and
 a date range the compound index serves completely, so the group runs over one account's window rather
-than over the collection.
+than over the collection. An index on `kind` would earn its write cost only if something matched on
+`kind` first, and nothing does: every read starts from "whose feed is this".
+
+The store is one file, `store/entry.go`, because there is one collection: store/'s unit of
+decomposition is the table or collection, and an axis with one value has nothing to split. There is
+deliberately no `storable` truncation helper as in `notes/store`: the driver truncates timestamps to
+milliseconds on encode and decodes them back as UTC, and nothing in this module observes it, because
+the subscriber discards the entry after writing. The day an insert returns the stored entry to a
+caller that compares it, the helper comes back.
 
 ## What the client decides
 

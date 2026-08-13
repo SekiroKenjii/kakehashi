@@ -1,24 +1,13 @@
-// Package database wraps the server's SQL Server store.
+// Package database wraps the server's SQL Server store. Every module shares one database and one
+// pool, and each owns a schema named after its module ID, created by Migrate before the module's
+// first migration runs. Inside a module, only store/ may import this package (tools/archlint).
 //
-// Every module shares one database and one pool, and each owns a schema named after its module ID:
-// notes.Note, identity.User. Migrate creates that schema before a module's first migration runs, so
-// a module writing outside it has to say so in the SQL, in a statement a reviewer can see.
-//
-// # Style
-//
-// SQL in this project follows the conventions in ktaranov/sqlserver-kit: PascalCase singular object
-// names, no square brackets, /* */ comments rather than --, lower-case data types, spaces not tabs,
-// explicit column lists, table aliases, and a semicolon on every statement.
-//
-// # Two things SQL Server does differently
-//
-// Parameters are @p1, @p2, not ?. The driver will not rewrite them for you.
-//
-// There is no LastInsertId. The driver does not implement it, and asking returns an error rather
-// than a wrong answer. Use an OUTPUT clause instead, which is safe under triggers and concurrent
-// inserts in a way that SCOPE_IDENTITY() is only mostly safe:
+// Two driver facts: parameters are @p1, @p2 — the driver does not rewrite ?; and LastInsertId is
+// not implemented — use an OUTPUT clause, which is safe under triggers and concurrent inserts:
 //
 //	INSERT INTO notes.Note (Title, Body) OUTPUT INSERTED.Id VALUES (@p1, @p2);
+//
+// SQL style follows ktaranov/sqlserver-kit; see docs/ARCHITECTURE.md.
 package database
 
 import (
@@ -90,10 +79,6 @@ func Open(ctx context.Context, opts Options) (*DB, error) {
 func (db *DB) initMigrationTable(ctx context.Context) error {
 	/*
 		T-SQL has no CREATE TABLE IF NOT EXISTS, so the existence check is explicit.
-
-		Naming and style throughout the project follow ktaranov/sqlserver-kit: PascalCase singular
-		objects, no square brackets, block comments, lower-case data types, spaces. See
-		docs/ARCHITECTURE.md.
 	*/
 	const stmt = `
         IF OBJECT_ID(N'dbo.SchemaMigration', N'U') IS NULL
@@ -115,11 +100,9 @@ func (db *DB) initMigrationTable(ctx context.Context) error {
 
 // ensureSchema creates the schema a module owns, if it is not there yet.
 //
-// One schema per module, named after the module ID, is how table namespacing is expressed. It
-// replaces the prefix convention the desktop original used, and it is better in three ways: it is
-// what SQL Server provides for the purpose, it survives a table being renamed, and it can carry
-// permissions — a module's credentials can be granted rights on its own schema and nothing else,
-// which turns a review rule into something the database enforces.
+// One schema per module, named after the module ID, is how table namespacing is expressed: it
+// survives a table being renamed, and a module's credentials can be granted rights on its own
+// schema and nothing else.
 //
 // CREATE SCHEMA has to be the only statement in its batch, which is why it is executed on its own
 // rather than folded into the migration.
@@ -155,10 +138,9 @@ func (db *DB) Migrate(ctx context.Context, module string, migrations []Migration
 		return err
 	}
 
-	// One migrator at a time, across processes. The applied set is read and then acted on, so two
-	// instances starting together both saw the same gap and both tried to create the same object —
-	// one of them failing on a duplicate rather than skipping work already done. An application
-	// lock is the portable way to serialise that: it is held on this connection until released, and
+	// One migrator at a time, across processes: the applied set is read and then acted on, so two
+	// instances starting together would both see the same gap and try to create the same object.
+	// An application lock serialises that; it is held on this connection until released, and
 	// released automatically if the process dies holding it.
 	conn, err := db.Conn(ctx)
 	if err != nil {

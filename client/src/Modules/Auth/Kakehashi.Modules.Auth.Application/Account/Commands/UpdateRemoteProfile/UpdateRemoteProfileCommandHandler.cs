@@ -6,7 +6,6 @@ using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
 namespace Kakehashi.Modules.Auth.Application.Account.Commands.UpdateRemoteProfile {
-  /// <summary>Updates the profile through the account gateway.</summary>
   public sealed class UpdateRemoteProfileCommandHandler
       : IRequestHandler<UpdateRemoteProfileCommand, Result> {
     private readonly IAccountGateway _account;

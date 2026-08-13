@@ -20,10 +20,9 @@ const PermissionManageNavigation = "navigation.manage"
 // Contributor is implemented by a module that owns a screen.
 //
 // It is how a module says "this destination exists, this is what it is called, and this is what
-// protects it" without anything having to be listed twice. The alternative, which this replaces,
-// was a table at the composition root: adding a module meant editing it in four places, and the
-// two facts only the module can be sure of — its permission and whether the screen should be
-// hidden rather than locked — sat in a file that had no other reason to know them.
+// protects it" without anything having to be listed twice. The two facts only the module can be
+// sure of — its permission and whether the screen should be hidden rather than locked — stay in
+// the module that owns them.
 type Contributor interface {
 	NavigationDestinations() []Destination
 }

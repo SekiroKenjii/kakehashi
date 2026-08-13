@@ -22,10 +22,9 @@ func (m *Module) Permissions() []authzapi.Permission {
 			Category:    "Administration",
 			IsHighRisk:  true,
 
-			// The one permission in this build whose row scope is real: Accounts narrows on it.
-			// own sees only yourself, team sees the accounts sharing your TeamId, all sees every
-			// account. The TeamId column's migration comment says "TeamId is what the 'team' row
-			// scope means", and that narrowing is its only reader.
+			// The one permission in this build whose row scope is real: the Accounts listing
+			// narrows on it. own sees only yourself, team sees the accounts sharing your TeamId,
+			// all sees every account.
 			IsScoped: true,
 		},
 	}

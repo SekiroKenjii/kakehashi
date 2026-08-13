@@ -32,11 +32,8 @@ const (
 // docs/adr/0001-per-route-permission-policy.md.
 //
 // The fields are unexported and there is no exported literal form, so the only non-zero values come
-// from the four constructors below. That stops an accidental half-built policy, not a deliberate
-// one: PolicyPublic still costs one exported call inside a module's own file, and the documented way
-// to add a module is to copy an existing one. So the composition root names the modules permitted
-// to make that call — see Kernel.AllowUnprotectedRoutes. Granularity lives at the route; review
-// salience at the root.
+// from the four constructors below. The composition root additionally names the modules permitted
+// to declare Public or SignedIn — see Kernel.AllowUnprotectedRoutes.
 //
 // A policy covers everything its handler can reach. Two shapes here are whole routers — the OpenID
 // Connect provider mounted at "/", and each Connect service, which is one route and N procedures

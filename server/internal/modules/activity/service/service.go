@@ -1,11 +1,6 @@
-// Package service implements the activity use cases. It is private to the module.
-//
-// One file, because there is one use-case family and it has two members: append a fact, read the
-// feed back. They are the two halves of one question, exactly as the account module's audit trail
-// is.
-//
-// Nothing here imports another module. The whole foreign vocabulary of this package is its own
-// domain type, which is what keeps its tests free of any other module's events.
+// Package service implements the activity use cases: append a fact, read the feed back. It is
+// private to the module and imports no other module; its whole foreign vocabulary is its own
+// domain type, which keeps its tests free of any other module's events.
 package service
 
 import (
@@ -21,12 +16,10 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// Store is the persistence these use cases need, declared here rather than in store/.
-//
-// The interface belongs to the consumer, which is what lets these use cases be tested against a
-// fake in microseconds. See the notes module for the longer argument; it applies unchanged, and
-// here it does one more thing — it keeps a package that must never import another module from
-// naming anything but its own domain.
+// Store is the persistence these use cases need, declared here rather than in store/: the
+// interface belongs to the consumer, so the use cases test against a fake, and a package that
+// must never import another module names nothing but its own domain. The longer argument is at
+// the notes module's Store.
 type Store interface {
 	Insert(ctx context.Context, e domain.Entry) error
 	List(
@@ -56,12 +49,11 @@ func New(store Store, ids IDs) *Service {
 // Record appends one fact to an account's feed.
 //
 // It is absent from activityapi.Service on purpose: a feed another module can write into is a feed
-// every module must call, which is the inverted dependency this module exists to avoid. The
-// account module's sign-in use cases are withheld from its own interface for the same reason.
+// every module must call, which is the inverted dependency this module exists to avoid.
 //
-// `at` is when the fact happened, not when the row was written. Those are the same instant today,
-// because the bus delivers synchronously on the publisher's goroutine — naming the parameter for
-// the fact is what keeps the feed correct the first time a handler defers its work.
+// `at` is when the fact happened, not when the row is written. The bus delivers synchronously, so
+// the two coincide; naming the parameter for the fact keeps the feed correct the first time a
+// handler defers its work.
 func (s *Service) Record(
 	ctx context.Context, userID, kind, sessionID, device, ip string, at time.Time,
 ) error {
@@ -99,9 +91,8 @@ func (s *Service) List(
 	}
 
 	// One more than asked for, so whether there is a next page is something this read observed
-	// rather than something a second query has to guess at. A page that comes back exactly full is
-	// otherwise indistinguishable from the last one, and a "Load more" that leads to nothing is a
-	// worse bug than one that is missing.
+	// rather than something a second query has to guess at: a page that comes back exactly full is
+	// otherwise indistinguishable from the last one.
 	entries, err := s.store.List(ctx, userID, filter, take+1)
 	if err != nil {
 		return activityapi.Page{}, err
@@ -156,11 +147,9 @@ func (s *Service) List(
 
 // withoutCategory drops the chip from a filter.
 //
-// The counts are what every chip shows while one of them is active, so they have to be taken over the
-// whole set rather than over the filtered view — otherwise every chip but the active one reads zero.
-// The range and the search still apply: those are what the reader chose to look at, and the category
-// is not. It is the same rule the Role Permissions screen writes down about collecting from the whole
-// set rather than from the view somebody is looking at.
+// The counts are what every chip shows while one of them is active, so they are taken over the
+// whole set rather than over the filtered view — otherwise every chip but the active one reads
+// zero. The range and the search still apply: those are what the reader chose to look at.
 func withoutCategory(filter domain.Filter) domain.Filter {
 	filter.Kinds = nil
 	return filter
@@ -219,16 +208,14 @@ func decodeCursor(token string) (*domain.Cursor, error) {
 	return &domain.Cursor{OccurredAt: occurredAt, ID: id}, nil
 }
 
-// toAPI is the border checkpoint: nothing crosses out of the module without passing through here,
-// and the account it belongs to stops at it.
+// toAPI maps a domain entry to the api type; nothing leaves the module except through here.
 //
 // The entry id goes out: the reader of a row is the account that owns it, and a screen offering
-// "copy this event" needs something to copy; withholding it protects nobody. The user id stops,
-// because it is the query's filter and never its result.
+// "copy this event" needs something to copy. The user id stops here — it is the query's filter,
+// never its result.
 //
-// Category and Platform are both computed here rather than stored. They are answers about a stored
-// value, so deriving them on the way out means a better answer applies to every row already written
-// instead of only to the ones recorded after the improvement.
+// Category and Platform are computed on the way out rather than stored, so a better answer
+// applies to every row already written instead of only to the ones recorded after the change.
 func toAPI(e domain.Entry) activityapi.Entry {
 	return activityapi.Entry{
 		ID:         e.ID,

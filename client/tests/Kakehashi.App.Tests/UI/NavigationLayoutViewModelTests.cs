@@ -277,9 +277,8 @@ namespace Kakehashi.App.Tests.UI {
     }
 
     /// <summary>
-    /// A heading the product ships offers no delete button at all. The server refuses it too; this is
-    /// what stops it being offered, because a control that exists to be refused teaches somebody to
-    /// distrust the screen.
+    /// A heading the product ships offers no delete control: the server refuses the delete, so a
+    /// button's only possible outcome would be the error bar.
     /// </summary>
     [Fact]
     public async Task AHeadingTheProductShipsCannotBeDeleted() {

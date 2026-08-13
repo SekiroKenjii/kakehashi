@@ -114,10 +114,8 @@ func (s *Service) CompleteAuthRequest(ctx context.Context, requestID, subject, s
 	return s.store.CompleteAuthRequest(ctx, requestID, subject, sessionID, s.now())
 }
 
-// failed records a rejected attempt and announces it.
-//
-// Both refusals go through here so the audit row and the announcement cannot drift apart — the
-// account page grew its row first, and the feed had no way to know an attempt had happened at all.
+// failed records a rejected attempt and announces it. Both refusals go through here so the audit
+// row and the published event cannot drift apart.
 func (s *Service) failed(ctx context.Context, userID, device, ip string) {
 	s.record(ctx, userID, accountapi.EventFailedSignIn, device, ip)
 	eventbus.Publish(s.bus, ctx, accountapi.FailedSignIn{

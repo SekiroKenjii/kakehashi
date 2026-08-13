@@ -29,26 +29,24 @@ const (
 	EventSignedOut = "SignedOut"
 )
 
-// PermissionManageUsers guards the administrative account surface.
+// PermissionManageUsers guards the administrative account surface. The key is stored in role
+// grants and crosses the wire; renaming it revokes it from every role that holds it.
 //
-// In the api package rather than beside the catalogue that declares it, because the module's own
-// wire layer is mounted behind it and a package cannot import the package that imports it. An api
-// package is where a module puts what something else has to name.
+// It lives in the api package because the module's own wire layer is mounted behind it, and a
+// package cannot import the package that imports it.
 const PermissionManageUsers = "users.manage"
 
-// User is an account as the rest of the application sees it.
+// Account is a user account as the rest of the application sees it.
 type Account struct {
 	ID          string
 	Email       string
 	DisplayName string
 	Phone       string
 	// TeamID is what a team-scoped permission resolves against. Roles are deliberately absent:
-	// asking the account module which roles somebody holds is asking the wrong module, and two
-	// places holding that fact is how they stop agreeing.
+	// role membership is the authz module's fact, and a copy here would drift from it.
 	TeamID string
 
-	// TwoFactorEnabled is reported to the client's account page. Nothing enforces it yet; it is
-	// here because the shape is already agreed and adding a field later is the awkward part.
+	// TwoFactorEnabled is reported to the client's account page; nothing enforces it server-side.
 	TwoFactorEnabled bool
 
 	// LastSignInAt is zero when the account has never signed in — a state the administration
@@ -60,8 +58,8 @@ type Account struct {
 	IsActive bool
 
 	// ActiveSessionCount is how many sessions are open. Filled in by the administrative listing
-	// only; the caller's own profile leaves it zero, because that page has the session list itself
-	// and a count beside it would be one more thing to keep in step.
+	// only; the caller's own profile leaves it zero because that page renders the session list
+	// itself.
 	ActiveSessionCount int
 
 	CreatedAt time.Time
@@ -82,7 +80,7 @@ type Session struct {
 	LastSeenAt time.Time
 
 	// IsCurrent marks the session that is asking. The account page uses it to hide the revoke
-	// button on the row you are sitting in, which is otherwise a very easy mis-click.
+	// button on the caller's own row.
 	IsCurrent bool
 }
 
@@ -114,9 +112,7 @@ type Service interface {
 	// SignOut ends the caller's own session because they asked to leave.
 	//
 	// Mechanically identical to RevokeSession, and separate anyway: only the caller knows which of
-	// the two happened, and "you signed out" and "a session was revoked" are different sentences to
-	// read in a feed a week later. Collapsing them into one method is what made the activity feed
-	// unable to tell them apart.
+	// the two happened, and the activity feed records them as different kinds.
 	SignOut(ctx context.Context, userID, sessionID string) error
 
 	// RevokeSession ends one session the account owner picked out. Revoking one that is already
@@ -129,17 +125,13 @@ type Service interface {
 	// SecurityEvents returns the most recent entries, newest first.
 	SecurityEvents(ctx context.Context, userID string, take int) ([]SecurityEvent, error)
 
-	// FindByEmail resolves an address to an account, or returns an errs.NotFound error.
-	//
-	// The one method here that is not about the caller's own account, and it exists for one
-	// reason: an administrator granting somebody access knows their email address, not the UUID
-	// this server files them under. Without it the whole administrative surface takes a primary
-	// key nobody can obtain, and the documented procedure becomes "run a SELECT against the
-	// database".
+	// FindByEmail resolves an address to an account, or returns an errs.NotFound error. It exists
+	// because an administrator granting access knows an email address, not the UUID this server
+	// files the account under.
 	//
 	// It is a lookup, not a search: exact address in, one account out. Nothing here enumerates
 	// accounts, so it cannot be walked to discover who has one — the caller must already know the
-	// address, which is the same thing the sign-in form assumes.
+	// address.
 	FindByEmail(ctx context.Context, email string) (Account, error)
 }
 
@@ -154,10 +146,10 @@ type SignedIn struct {
 
 	// NewDevice is true when this account has no other session from this device.
 	//
-	// A field rather than a second event, because it is one fact with an attribute: the sign-in
-	// happened either way, and a subscriber that did not care would otherwise have to handle two
-	// events to see every sign-in. The account module already decides this to choose its own audit
-	// kind; this carries the answer instead of making every subscriber work it out again.
+	// A field rather than a second event: the sign-in happened either way, and a subscriber that
+	// does not care about the distinction sees every sign-in through one event. The account module
+	// already decides this to choose its own audit kind; the event carries the answer instead of
+	// making every subscriber work it out again.
 	NewDevice bool
 }
 
@@ -178,12 +170,9 @@ type SessionRevoked struct {
 	SessionID string
 	At        time.Time
 
-	// ByAdmin is true when somebody other than the account holder ended it.
-	//
-	// The one actor distinction this server can honestly make, and it is worth making: "you ended a
-	// session" and "somebody else ended your session" are the difference between a line to skim and
-	// a line to act on. It is knowable because it is a different service method reached through a
-	// different route behind a different permission — not because anything guesses.
+	// ByAdmin is true when somebody other than the account holder ended it. It is knowable because
+	// administrative revocation is a different service method reached through a different route
+	// behind a different permission — nothing guesses.
 	ByAdmin bool
 }
 

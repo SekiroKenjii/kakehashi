@@ -164,8 +164,6 @@ namespace Kakehashi.App.Tests.Services {
       Assert.Equal(0, received);
     }
 
-    /// <summary>A minimal <see cref="IModule"/> that constructs no WinUI types.</summary>
-
     /* --- Assignments: what the server says, as opposed to what the user prefers --- */
 
     [Fact]
@@ -217,7 +215,7 @@ namespace Kakehashi.App.Tests.Services {
 
     [Fact]
     public void Detach_AGrantedModule_IsRefused() {
-      // An assignment is a ceiling the user may sit under, not a floor they may leave.
+      // Granted means an administrator assigned the module; detaching it is not the user's call.
       var registry = CreateRegistry();
       registry.SetAssignments(withheld: [], granted: ["notes"]);
 

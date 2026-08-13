@@ -13,11 +13,8 @@ type Options struct {
 	// than failing: a typo in an environment variable should not stop the server from starting.
 	Level string
 
-	// JSON switches to structured output.
-	//
-	// Unlike a desktop app, the default here is on. A server's logs are read by a collector far
-	// more often than by a human with a terminal, and text output that has to be re-parsed
-	// downstream loses the structure slog went to the trouble of recording.
+	// JSON switches to structured output. FromEnv defaults it to on: server logs are read by
+	// collectors more often than by people, and text output loses slog's structure.
 	JSON bool
 }
 
