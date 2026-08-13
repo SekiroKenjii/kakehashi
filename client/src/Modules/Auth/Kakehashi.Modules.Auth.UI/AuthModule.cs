@@ -29,14 +29,16 @@ namespace Kakehashi.Modules.Auth.UI {
   public sealed class AuthModule : IModule {
     public string Name => "Auth";
 
-    // Required: the startup sign-in gate and the forced re-sign-in depend on this module.
+    /// <summary>
+    /// Marked required: the startup sign-in gate and the forced re-sign-in depend on this module,
+    /// so it cannot be detached.
+    /// </summary>
     public ModuleDescriptor Descriptor { get; } = new(
         "Account",
         "Identity, security activity and session management — sign out here or everywhere.",
         IsRequired: true,
-        // The server calls this module "account", not "auth": IDENTITY is a reserved T-SQL
-        // word, so the module ID had to be something else. Written down rather than derived,
-        // because a permission key that drifts is a permission that stops applying.
+        // The server calls this module "account", not "auth", because IDENTITY is reserved in
+        // T-SQL. Written down, not derived: a permission key that drifts stops applying.
         AssignmentId: "account");
 
     public void RegisterServices(IServiceCollection services) {
@@ -50,10 +52,8 @@ namespace Kakehashi.Modules.Auth.UI {
       // Shared between the authenticator (drives the flow) and the login view model (reopen browser).
       services.TryAddSingleton(provider => new SystemBrowser(
           provider.GetRequiredService<IOptions<AuthOptions>>().Value.RedirectUri));
-      // Which adapter answers IInteractiveAuthenticator is decided when it is first resolved, not
-      // here: RegisterServices runs before configuration is bound, so Auth:Mode is not readable yet.
-      // The in-app adapter needs the OIDC one for the refresh grant, so both are always registered
-      // and only the port's answer changes.
+      // Both are always registered and only the port's answer changes: RegisterServices runs before
+      // configuration binds, so Auth:Mode is unreadable here, and in-app needs OIDC to refresh.
       services.TryAddSingleton<OidcInteractiveAuthenticator>();
       services.TryAddSingleton<InAppAuthenticator>();
       services.TryAddSingleton<IInteractiveAuthenticator>(provider =>

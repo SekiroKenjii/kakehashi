@@ -173,9 +173,8 @@ func (k *Kernel) Boot(ctx context.Context) error {
 	for _, m := range k.modules {
 		if s, ok := m.(Starter); ok {
 			if err := s.Start(ctx, k); err != nil {
-				// A fresh deadline, detached from the boot context: handing the cleanup the very
-				// context whose cancellation may have caused the failure makes every Stop fail
-				// immediately.
+				// Detached from the boot context: handing cleanup the context whose cancellation
+				// caused the failure makes every Stop fail immediately.
 				stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownGrace)
 				stopErr := k.Shutdown(stopCtx)
 				cancel()
@@ -246,9 +245,8 @@ func (k *Kernel) Routes() []Route {
 			continue
 		}
 		for _, route := range c.Routes(k) {
-			// Stamped here, over anything the module put there, because the loop already knows
-			// whose route this is and the module must not get a say. A module that could name
-			// itself could name another, and the name is what decides whose permission applies.
+			// Stamped over whatever the module put there: the name decides whose permission
+			// applies, so a module able to name itself could name another's.
 			route.Module = m.ID()
 
 			// Two boot-time refusals: a route that declared no policy, and a route that checks

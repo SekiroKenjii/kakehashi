@@ -16,8 +16,11 @@ namespace Kakehashi.Modules.Notes.Application.Notes.Queries.GetNotes {
       _notes = notes;
     }
 
-    // A pass-through. View models still go through this handler rather than the gateway, so
-    // client-side sorting, filtering or merging has a place to live without changing callers.
+    /// <summary>Returns every note.</summary>
+    /// <remarks>
+    /// A pass-through kept on purpose: view models call this rather than the gateway, so
+    /// client-side sorting, filtering or merging has a home that costs no caller a change.
+    /// </remarks>
     public Task<Result<IReadOnlyList<NoteDto>>> Handle(
         GetNotesQuery request, CancellationToken cancellationToken) {
       return _notes.ListAsync(cancellationToken);

@@ -74,9 +74,8 @@ func normalizeTitle(title string) (string, error) {
 	if title == "" {
 		return "", errs.Invalidf("A note needs a title.")
 	}
-	// Runes, not bytes. len() would let a Vietnamese title through at 40 characters and reject an
-	// English one at 121, which is the kind of rule that only looks correct in the language it was
-	// written in.
+	// Runes, not bytes: len() lets a Vietnamese title through at 40 characters and rejects an
+	// English one at 121.
 	if text.UTF16Len(title) > MaxTitleLength {
 		return "", errs.Invalidf("Titles are limited to %d characters.", MaxTitleLength)
 	}

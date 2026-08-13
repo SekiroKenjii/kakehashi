@@ -28,8 +28,10 @@ namespace Kakehashi.App.Services {
     public const string ThemeChangedKind = "ThemeChanged";
     private const string _entriesKey = "App.ActivityLog";
     private const string _lastVersionKey = "App.LastRunVersion";
-    // Mirrors the private key ThemeService persists under, so the first "Theme changed" entry can
-    // show the correct old theme (the theme service itself has not initialized yet when we awake).
+    /// <summary>
+    /// Mirrors the private key ThemeService persists under, so the first "Theme changed" entry can
+    /// name the prior theme — the theme service has not initialized when this service awakes.
+    /// </summary>
     private const string _themeSettingKey = "AppTheme";
     private const int _maxEntries = 50;
 
@@ -52,12 +54,8 @@ namespace Kakehashi.App.Services {
       ArgumentNullException.ThrowIfNull(serviceProvider);
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-      // Deferred by one turn of the message loop: startup creates awake services in registration
-      // order, so a recipient registered after this one would otherwise miss the app-update
-      // announcement, which is only raised on the first run after an update.
-      // The null check is not defensive padding: there is no dispatcher on a thread that is not a
-      // UI thread, which is every thread a unit test runs on. The rest of this class guards it the
-      // same way for the same reason.
+      // Deferred one turn, or a recipient registered after this service misses the app-update
+      // announcement. The null guard is load-bearing: no thread but the UI one has a dispatcher.
       if (_dispatcherQueue is null || !_dispatcherQueue.TryEnqueue(RecordAppUpdateIfAny)) {
         RecordAppUpdateIfAny();
       }
@@ -86,10 +84,8 @@ namespace Kakehashi.App.Services {
 
       _localSettings.Save(_entriesKey, _entries);
 
-      // Announced as well as stored, because two of these are facts no server can observe for
-      // itself and the activity module forwards them. This log keeps its own string kinds — they
-      // are the shape of what is already persisted in settings — and the announcement carries the
-      // shared enum instead, so the two assemblies cannot drift apart on a literal.
+      // Announced as well as stored: two of these are facts no server can observe. The announcement
+      // carries the shared enum, not this log's own strings, which match what settings persist.
       if (Announceable(kind) is { } announced) {
         WeakReferenceMessenger.Default.Send(new AppActivityRecordedMessage(announced));
       }

@@ -36,10 +36,8 @@ namespace Kakehashi.App.UI {
       Permission = permission;
 
       _savedEnabled = savedScope.Length > 0;
-      // A grant that is off still carries a scope, so the selector beside it always has a value
-      // that matches one of its items. Two things follow, and both are bugs this shape prevents:
-      // the selector can never coerce its TwoWay binding back to null, and switching a permission
-      // on cannot silently re-scope one that was already on.
+      // A grant that is off still carries a scope, so the selector always matches one of its items:
+      // its TwoWay binding cannot coerce back to null, and switching one on cannot re-scope another.
       _savedScope = _savedEnabled ? savedScope : DefaultScope;
 
       IsEnabled = _savedEnabled;
@@ -294,9 +292,8 @@ namespace Kakehashi.App.UI {
             + $"{outcome.Revoked} revoked.",
             InfoBarSeverity.Success);
 
-        // Reloaded rather than assumed. The counts on the role list moved, and somebody else may
-        // have saved between this screen reading and writing — the server's answer is the one
-        // worth drawing.
+        // Reloaded, not assumed: the role list counts moved, and somebody else may have saved
+        // between this screen reading and writing.
         await LoadAsync(cancellationToken);
       } finally {
         IsBusy = false;

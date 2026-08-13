@@ -339,9 +339,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
 
     partial void OnSearchTextChanged(string value) {
-      // Only the emptying case. Applying on every keystroke would be a server round-trip per
-      // character; leaving a cleared box filtered would be a list that stays narrow for no visible
-      // reason.
+      // Only the emptying case: applying per keystroke is a round-trip per character, and leaving a
+      // cleared box filtered is a list that stays narrow for no visible reason.
       if (value.Length == 0 && _appliedSearch.Length > 0) {
         _appliedSearch = string.Empty;
         _ = LoadCommand.ExecuteAsync(parameter: null);
@@ -363,11 +362,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     private void Fail(Error error) {
       ErrorMessage = error.Message;
 
-      // Cleared for two failures and no others: NotSignedIn, because a page left open across a
-      // sign-out would keep showing the prior account's devices and addresses; PageLost,
-      // because the on-screen position cannot be continued from. A network blip keeps its
-      // rows — they are still true, and clearing them would make a flaky connection look like an
-      // empty history.
+      // These two failures only. A network blip keeps its rows: they are still true, and clearing
+      // them would make a flaky connection look like an empty history.
       if (error == ActivityErrors.NotSignedIn || error == ActivityErrors.PageLost) {
         _entries.Clear();
         _nextPageToken = string.Empty;
@@ -383,9 +379,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       HasMore = page.HasMore;
       _total = page.Total;
 
-      // Only the first page carries the counts, so a later page must not overwrite them. Asking the
-      // reply whether it has any would look equivalent and is not: an account whose feed is genuinely
-      // empty sends no counts either, and every chip would then keep whatever it last showed.
+      // Only the first page carries counts, so a later one must not overwrite them. Asking the reply
+      // whether it has any is not equivalent: a genuinely empty feed sends none, freezing the chips.
       if (isFirstPage) {
         _retentionDays = page.RetentionDays;
         foreach (var chip in Chips) {

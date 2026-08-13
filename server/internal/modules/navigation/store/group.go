@@ -54,10 +54,8 @@ func insertGroupTx(ctx context.Context, on execer, g domain.Group, at time.Time)
 
 	_, err := on.ExecContext(ctx, q, g.ID, g.Title, g.Order, g.IsSystem, at.UTC())
 	if isUniqueViolation(err) {
-		// Two constraints can fire here and they mean different things. The primary key is the
-		// identifier, which for a heading created from a title is derived — so "Ops / Tools" and
-		// "Ops Tools" collide on ops-tools while their titles differ. Reporting that as a title
-		// collision sent somebody looking for a heading that does not exist.
+		// Two constraints, two meanings. The key is derived from the title, so "Ops / Tools" and
+		// "Ops Tools" collide on ops-tools with different titles — not a title collision.
 		if errorContains(err, "PK_NavGroupId") {
 			return errs.Conflictf(
 				"The identifier %s is already taken by another heading. Give this one an "+
@@ -124,10 +122,8 @@ func (s *SQLServer) EnsureGroup(ctx context.Context, g domain.Group, at time.Tim
 
 	_, err := s.db.ExecContext(ctx, q, g.ID, g.Title, g.Order, g.IsSystem, at.UTC())
 
-	// A title already taken is not a failure here. The IF NOT EXISTS guards the id, but titles are
-	// unique too, so an administrator who renamed one heading to what another ships as would turn
-	// every subsequent boot into a refusal to start — over a seed that was never going to be
-	// written anyway.
+	// A taken title is not a failure here: IF NOT EXISTS guards the id, but titles are unique too,
+	// so a rename onto a shipped title would fail every later boot over a seed nothing would write.
 	if isUniqueViolation(err) {
 		return nil
 	}

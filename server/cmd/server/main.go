@@ -32,15 +32,13 @@ import (
 func main() {
 	log := logging.FromEnv()
 
-	// The context is cancelled on SIGINT or SIGTERM, which is what a container runtime sends
-	// before it resorts to SIGKILL. Everything downstream treats cancellation as "wind up", so
-	// this one line is the whole graceful-shutdown trigger.
+	// Cancelled on SIGINT or SIGTERM, which a container runtime sends before SIGKILL. Everything
+	// downstream treats cancellation as "wind up", so this line is the whole shutdown trigger.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Default signal handling is restored the moment the first signal arrives, so a second Ctrl-C
-	// during a slow shutdown kills the process instead of being swallowed by a still-installed
-	// handler.
+	// Default handling is restored on the first signal, so a second Ctrl-C during a slow shutdown
+	// kills the process rather than being swallowed.
 	go func() {
 		<-ctx.Done()
 		stop()
@@ -100,24 +98,9 @@ func modules() []app.Module {
 }
 
 // unprotectedRouteModules are the modules permitted to serve a route whose policy checks no
-// permission. The kernel refuses at boot any route declaring Public or SignedIn from a module that
-// is not named here, giving both the module and the pattern.
+// permission. Boot refuses Public or SignedIn from any other module.
 //
-// Four, and each for a reason that would break the server without it:
-//
-//	health       a liveness probe that needs an account is not a liveness probe.
-//	account      signing in cannot require a permission you can only have after signing in, and
-//	             OpenID Connect has to answer an anonymous browser.
-//	authz        a module that answers "what may I do" cannot require permission to answer.
-//	navigation   a client cannot draw a locked door until it knows the door is there, so an account
-//	             with no grants must still be able to ask what its pane looks like.
-//
-// Each of the four also serves an administrative surface, and each of those names its own
-// permission on its own route. Being on this list buys a module permission to ASK for an
-// unprotected route, not blanket exemption.
-//
-// The list lives here, at the composition root, because exemption is a security decision a module
-// must not make about itself: docs/adr/0001-per-route-permission-policy.md.
-//
-// It grows per security exemption. It does not grow when a module is added.
+// It lives at the composition root because exemption is a security decision a module must not make
+// about itself, and it grows per exemption, never per added module. What earns a place, and why
+// each of the four has one: docs/adr/0001-per-route-permission-policy.md.
 var unprotectedRouteModules = []string{"health", "account", "authz", "navigation"}

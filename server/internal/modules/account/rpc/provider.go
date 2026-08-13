@@ -74,9 +74,8 @@ func New(
 
 	providerOptions := []op.Option{op.WithLogger(opts.Logger)}
 	if insecure {
-		// A plain-http issuer is a development stack. op refuses to build one unless told the
-		// operator knows; in production the reverse proxy terminates TLS and the issuer is https,
-		// so this branch never runs there.
+		// A plain-http issuer is a development stack, and op refuses to build one unless told. In
+		// production the reverse proxy terminates TLS, so this branch never runs.
 		providerOptions = append(providerOptions, op.WithAllowInsecure())
 	}
 
@@ -117,30 +116,15 @@ func New(
 
 	return &Wire{
 		Verifier: newVerifier(opts.Issuer, &publicKey{id: signer.id, key: &signer.key.PublicKey}),
-		// Every route names its policy, and the split is the whole security surface of this
-		// module. Public is only what has to answer before anybody can sign in: the OpenID Connect
-		// endpoints, which an anonymous browser navigates to, and sign-in itself. Everything about
-		// somebody's own account requires a verified caller and no permission — a permission
-		// guarding your own profile is one an administrator could take away, leaving an account
-		// that can sign in and then do nothing.
-		//
-		// The handlers behind the signed-in routes still call requireSubject, because they need the
-		// Subject's value and answer in this surface's own JSON error shape. The policy is the
-		// outer guarantee; requireSubject is the inner one that produces the answer.
+		// The policy split is this module's whole security surface, and requireSubject inside each
+		// handler is the inner guarantee: docs/adr/0001-per-route-permission-policy.md.
 		Routes: []app.Route{
-			// The provider is the catch-all: discovery, /authorize, /oauth/token, /userinfo,
-			// /keys, /end_session and /revoke all live under it, and net/http's specificity rules
-			// keep every other module's more specific patterns on top of it.
-			//
-			// One route, one policy, and everything behind it inherits Public. That is correct for
-			// OpenID Connect — every endpoint under it either serves an anonymous browser or
-			// authenticates by its own protocol, with the client secret or the PKCE verifier
-			// rather than with this server's bearer token.
+			// The catch-all: discovery, /authorize, /oauth/token, /userinfo, /keys, /end_session and
+			// /revoke inherit Public, each authenticating by its own protocol rather than a bearer.
 			{Pattern: "/", Handler: provider, Policy: app.Public()},
 
-			// In-app sign-in: the default for a first-party desktop client against its own
-			// backend. Refresh and revocation stay on the standard OAuth endpoints, so both
-			// sign-in modes share one token lifecycle.
+			// In-app sign-in, the default for a first-party desktop client: refresh and revocation
+			// stay on the standard OAuth endpoints, so both modes share one token lifecycle.
 			{
 				Pattern: "POST /account/sign-in",
 				Handler: http.HandlerFunc(inAppSignIn.signIn),

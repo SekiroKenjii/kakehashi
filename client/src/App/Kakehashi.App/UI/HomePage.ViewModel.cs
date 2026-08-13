@@ -72,9 +72,11 @@ namespace Kakehashi.App.UI {
     private const string _exploreStepId = "explore";
     private const string _themeStepId = "theme";
     private const string _registerStepId = "register";
-    // Notes, Activity and Auth ship with the template; a count above this means the developer
-    // registered their own module. Keep it equal to the shipped modules, or "register your first
-    // module" reports itself complete on a fresh install.
+    /// <summary>
+    /// How many modules ship with the template: Notes, Activity and Auth. A higher count means the
+    /// developer registered their own. Keep it equal to the shipped modules, or "register your
+    /// first module" reports itself complete on a fresh install.
+    /// </summary>
     private const int _shippedModuleCount = 3;
     private const int _pageSize = 5;
 
@@ -376,9 +378,8 @@ namespace Kakehashi.App.UI {
         }
       }
 
-      // Withheld modules are never in Attached — the nav rail must not offer a page the server
-      // refuses — but they are drawn on this grid, locked, so the user can see what to ask an
-      // administrator for.
+      // Withheld modules are never in Attached — the rail must not offer a page the server refuses
+      // — but they are drawn here, locked, so the user can see what to ask an administrator for.
       foreach (var module in _moduleRegistry.All) {
         if (!_moduleRegistry.IsWithheld(module.Name)) {
           continue;

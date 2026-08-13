@@ -14,9 +14,12 @@ namespace Kakehashi.Modules.Notes.Application.Notes.Commands.DeleteNote {
       _notes = notes;
     }
 
-    // Nothing to validate: an id either names a note or does not, and the server is the only one
-    // who knows which. It treats a delete of something already gone as success, so a retry after a
-    // dropped connection does not surface as an error the user has to interpret.
+    /// <summary>Deletes the note, without validating the id first.</summary>
+    /// <remarks>
+    /// An id either names a note or does not, and only the server knows which. It treats deleting
+    /// something already gone as success, so a retry after a dropped connection does not surface
+    /// as an error the user has to interpret.
+    /// </remarks>
     public Task<Result> Handle(DeleteNoteCommand request, CancellationToken cancellationToken) {
       ArgumentNullException.ThrowIfNull(request);
       return _notes.DeleteAsync(request.Id, cancellationToken);

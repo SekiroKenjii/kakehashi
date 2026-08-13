@@ -64,9 +64,8 @@ func (s *Service) Build(ctx context.Context, grants auth.Grants) (Pane, error) {
 	for _, d := range s.declared {
 		placement, ok := stored.placements[d.ID]
 		if !ok {
-			// Declared but unreconciled — only reachable if a boot failed between the migration and
-			// Reconcile. Skipped rather than defaulted, because a pane assembled from a layout that
-			// was never written would disagree with the one every other client sees.
+			// Declared but unreconciled: only reachable if a boot failed mid-migration. Skipped, not
+			// defaulted, or this pane disagrees with the one every other client sees.
 			continue
 		}
 		if !placement.IsVisible {

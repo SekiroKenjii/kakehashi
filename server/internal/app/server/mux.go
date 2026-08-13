@@ -30,9 +30,8 @@ import (
 // with no policy, and one that checks no permission unless the composition root named its module.
 // Why per route, not per module: docs/adr/0001-per-route-permission-policy.md.
 func New(k *app.Kernel) *Server {
-	// ReadIdleTimeout and IdleTimeout must be set on the http2.Server, not the http.Server: an h2c
-	// connection is hijacked out of net/http's tracking on its first byte, so http.Server's own
-	// timeouts never reach it.
+	// On the http2.Server, not the http.Server: h2c hijacks the connection out of net/http's
+	// tracking on its first byte, so http.Server's own timeouts never reach it.
 	srv := &Server{
 		kernel: k,
 		h2s: &http2.Server{
@@ -69,22 +68,11 @@ func New(k *app.Kernel) *Server {
 			"pattern", route.Pattern, "module", route.Module, "policy", route.Policy.String())
 	}
 
-	// Wrapped innermost-first, so the chain reads outside-in as:
-	//   recoverPanics -> otelhttp -> logRequests -> mux
-	//
-	// otelhttp puts the span on the request context, so logging has to sit inside it: from there
-	// r.Context() carries the trace, and a log line can be matched to the trace it came from.
+	// Outside-in: recoverPanics -> otelhttp -> logRequests -> mux. Logging sits inside otelhttp so
+	// r.Context() carries the span, and a log line can be matched to its trace.
 	var handler http.Handler = mux
-	// Authentication sits between the mux and the log so log lines can carry the caller. The
-	// verifier comes from the registry rather than an import — with none registered, every request
-	// is anonymous and each endpoint decides what that means for it.
-	//
-	// Resolution sits between authentication and the mux, and applies to EVERY route, not only
-	// the gated ones: authz and account are exempt from the module gate by necessity, yet serve
-	// administrative endpoints needing roles.manage and users.manage — resolving only inside the
-	// gate would leave exactly those handlers with nothing to check against.
-	//
-	// Cost: one query per authenticated request, a primary-key lookup on a small table.
+	// Resolution runs on every route, not only gated ones:
+	// docs/adr/0001-per-route-permission-policy.md.
 	if gating {
 		handler = resolvePermissions(k.Log, permissions, handler)
 	}
@@ -105,9 +93,8 @@ func New(k *app.Kernel) *Server {
 	// the ones that 404 or panic. Shutdown waits on this before anything closes a database pool.
 	handler = srv.track(handler)
 
-	// gRPC requires HTTP/2 and net/http only negotiates HTTP/2 over TLS; behind the
-	// TLS-terminating proxy (and in development) this server speaks cleartext, so it serves h2c.
-	// Not a security decision: transport trust is settled by what runs in front of this process.
+	// gRPC needs HTTP/2 and net/http negotiates it only over TLS; this server speaks cleartext
+	// behind a TLS-terminating proxy, so it serves h2c. Transport trust is settled in front of it.
 	srv.handler = h2c.NewHandler(handler, srv.h2s)
 
 	return srv
@@ -139,9 +126,8 @@ func (s *Server) Run(ctx context.Context) error {
 		Addr:    s.kernel.Cfg.Addr,
 		Handler: s.handler,
 
-		// ReadHeaderTimeout and nothing else. A blanket ReadTimeout would also cap how long a
-		// request body may take, which silently breaks client-streaming RPCs the moment someone
-		// adds one; this bounds only the part that a Slowloris attack abuses.
+		// Headers only. A blanket ReadTimeout would cap the body too, silently breaking any
+		// client-streaming RPC somebody adds later.
 		ReadHeaderTimeout: 10 * time.Second,
 		IdleTimeout:       120 * time.Second,
 	}
@@ -279,18 +265,16 @@ func requireSignedIn(next http.Handler) http.Handler {
 func requirePermission(permission string, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if _, ok := auth.SubjectFrom(r.Context()); !ok {
-			// Anonymous callers are refused. Passing them through would make the gate optional:
-			// a caller who omits the Authorization header must not meet fewer checks than one
-			// who sends a token.
+			// Refused, not passed through: omitting the header must not meet fewer checks than
+			// sending a token.
 			deny(w, http.StatusUnauthorized, "unauthenticated",
 				"This endpoint requires a signed-in caller.")
 			return
 		}
 
 		if !auth.GrantsFrom(r.Context()).Allows(permission) {
-			// 403 rather than 404, and it names the permission: the endpoint is compiled into the
-			// client the caller runs, so hiding it gains nothing, and naming the permission is what
-			// lets the client say which one to ask an administrator for.
+			// 403 naming the permission, not 404: the endpoint is compiled into the client anyway,
+			// and the name is what lets it say which grant to ask for.
 			deny(w, http.StatusForbidden, "forbidden",
 				"This endpoint requires the "+permission+" permission.")
 			return

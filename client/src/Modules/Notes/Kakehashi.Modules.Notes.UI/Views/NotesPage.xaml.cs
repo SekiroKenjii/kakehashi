@@ -43,8 +43,10 @@ namespace Kakehashi.Modules.Notes.UI.Views {
       }
     }
 
-    // Cancelling the close keeps the dialog open so the validation error stays visible — and so a
-    // rejected title does not cost the user the body they just typed.
+    /// <summary>
+    /// Saves the note. Cancelling the close keeps the dialog open so the validation error stays
+    /// visible, and a rejected title does not cost the user the body they just typed.
+    /// </summary>
     private async void OnSaveNote(ContentDialog sender, ContentDialogButtonClickEventArgs args) {
       var deferral = args.GetDeferral();
       try {

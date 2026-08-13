@@ -51,10 +51,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
         using var overlay = _overlay.Show();
         using var modal = WindowHelper.ShowModalOver(window, owner);
 
-        // The shell is hidden entirely, not left blurred: after a sign-out it shows the previous
-        // user's name and data, and none of that may stay visible. Hidden after the modal is
-        // established, so the ownership and centring above still have a visible owner to work
-        // from.
+        // Hidden entirely, not blurred: after a sign-out the shell still shows the previous user.
+        // Hidden after the modal is established, so ownership and centring have a visible owner.
         owner.AppWindow.Hide();
 
         bool didSignIn = await window.Outcome;

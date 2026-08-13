@@ -63,9 +63,8 @@ func (s *SQLServer) EnsurePlacements(
                 VALUES (@p1, @p2, @p3, @p4, @p5, @p6);`
 
 		for _, seed := range seeds {
-			// The group is written as NULL rather than an empty string when a destination is
-			// ungrouped, so the foreign key has something legal to point at — and so "no heading"
-			// and "a heading whose id is the empty string" cannot both exist.
+			// NULL rather than an empty string when ungrouped, so the foreign key has something legal
+			// to point at and "no heading" cannot collide with a heading whose id is empty.
 			var group any
 			if seed.GroupID != "" {
 				group = seed.GroupID
@@ -75,9 +74,8 @@ func (s *SQLServer) EnsurePlacements(
 				ctx, q, seed.DestinationID, seed.ModuleID, group, seed.Order,
 				seed.IsVisible, at.UTC())
 			if isForeignKeyViolation(err) {
-				// Reached only if a destination's DefaultGroup names a heading this build does not
-				// ship — which Finalize refuses first, with a better message. Kept because the
-				// alternative is an opaque internal error naming the item rather than the heading.
+				// Reached only if a DefaultGroup names a heading this build does not ship, which
+				// Finalize refuses first with a message naming the heading rather than the item.
 				return errs.Invalidf(
 					"Destination %s seeds into heading %s, which does not exist.",
 					seed.DestinationID, seed.GroupID)

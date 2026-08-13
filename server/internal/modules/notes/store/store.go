@@ -48,9 +48,8 @@ func scanNote(sc scanner) (domain.Note, error) {
 		return domain.Note{}, errs.Internalf(err, "scan note")
 	}
 
-	// DATETIME2 carries no time zone, so the driver hands back a time.Time whose location is
-	// whatever it defaulted to. We only ever write UTC, so say so rather than letting a local
-	// zone be inferred from a value that never had one.
+	// DATETIME2 carries no zone, so the driver returns whatever location it defaulted to. Only UTC
+	// is ever written, so say so rather than let a local zone be inferred.
 	n.CreatedAt = n.CreatedAt.UTC()
 	n.UpdatedAt = n.UpdatedAt.UTC()
 	return n, nil

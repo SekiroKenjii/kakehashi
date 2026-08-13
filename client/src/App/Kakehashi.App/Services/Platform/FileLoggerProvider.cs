@@ -29,9 +29,8 @@ namespace Kakehashi.App.Services.Platform {
       Directory.CreateDirectory(directory);
       _path = Path.Combine(directory, $"app-{DateTime.Now:yyyy-MM-dd}.log");
 
-      // Background, and IsBackground so it never keeps a closing app alive. Anything still queued
-      // at shutdown is lost, which is the right trade for a log: an app that hangs on exit to
-      // flush its diagnostics is a worse bug than a missing last line.
+      // IsBackground so it never keeps a closing app alive. Anything still queued at shutdown is
+      // lost: hanging on exit to flush diagnostics is a worse bug than a missing last line.
       _writer = new Thread(Drain) { IsBackground = true, Name = "Kakehashi.FileLog" };
       _writer.Start();
     }

@@ -53,9 +53,8 @@ func (h *handler) Ping(
 ) (*connect.Response[healthv1.PingResponse], error) {
 	status, err := h.svc.Ping(ctx, req.Msg.GetMessage())
 	if err != nil {
-		// Returned bare. The interceptor in platform/rpc decides the status code and what the
-		// caller is allowed to read; doing it here would mean doing it differently in every
-		// handler.
+		// Returned bare: the interceptor in platform/rpc decides the status code and what the caller
+		// may read, which every handler would otherwise decide differently.
 		return nil, err
 	}
 

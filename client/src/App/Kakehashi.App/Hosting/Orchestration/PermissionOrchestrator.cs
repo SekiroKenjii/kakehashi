@@ -11,9 +11,8 @@ namespace Kakehashi.App.Hosting.Orchestration {
   /// between signing in and building the shell.
   /// </summary>
   /// <remarks>
-  /// Runs at order 17 — after authentication (15) because both calls need a token, before the
-  /// shell (20) because the pane is built from both answers — and re-reads both on every session
-  /// change: docs/adr/0010-startup-orchestrator-ordering.md
+  /// Order 17: after authentication (15), before the shell (20). Re-reads on every session change.
+  /// docs/adr/0010-startup-orchestrator-ordering.md
   /// </remarks>
   public sealed class PermissionOrchestrator : IStartupOrchestrator {
     private readonly PermissionService _permissions;
@@ -37,16 +36,12 @@ namespace Kakehashi.App.Hosting.Orchestration {
       await _permissions.RefreshAsync(cancellationToken);
       await _layout.RefreshAsync(cancellationToken);
 
-      // Registered after the first fetch rather than in the constructor, so the sign-in that
-      // startup itself performs does not trigger a second, redundant call. The orchestrator is a
-      // singleton, so the weak recipient stays alive for the life of the process.
-      // The handler is a named delegate rather than an inline lambda because the messenger has a
-      // second two-generic overload taking a token, and a lambda is ambiguous between them.
+      // Registered after the first fetch, so startup's own sign-in does not trigger a second call.
+      // Named delegate: the messenger's two-generic token overload makes a lambda ambiguous.
       MessageHandler<PermissionOrchestrator, AuthSessionChangedMessage> onSessionChanged =
           static (recipient, message) => {
             // Fire and forget: the messenger's handler is synchronous, and a failed refresh leaves
-            // the previous answer standing rather than blocking a sign-in. The service swallows
-            // and logs its own failures for exactly this reason.
+            // the previous answer standing rather than blocking a sign-in.
             _ = recipient.RefreshAsync();
           };
 

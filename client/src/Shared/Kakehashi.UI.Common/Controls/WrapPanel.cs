@@ -55,9 +55,8 @@ namespace Kakehashi.UI.Common.Controls {
         child.Measure(childLimit);
         var desired = child.DesiredSize;
 
-        // A child that does not fit beside what is already on this line starts the next one. The
-        // first child on a line always stays there, however wide it is: moving it down would leave
-        // an empty line above and still not make it fit.
+        // A child that does not fit beside this line starts the next. The first on a line stays,
+        // however wide: moving it down leaves an empty line above and still does not make it fit.
         if (lineWidth > 0 && lineWidth + HorizontalSpacing + desired.Width > availableSize.Width) {
           totalWidth = Math.Max(totalWidth, lineWidth);
           totalHeight += lineHeight + VerticalSpacing;

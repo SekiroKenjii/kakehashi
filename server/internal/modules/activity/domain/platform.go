@@ -25,9 +25,8 @@ func PlatformOf(userAgent string) string {
 	case strings.Contains(agent, "windows"):
 		return "Windows"
 	case strings.Contains(agent, "mac os"), strings.Contains(agent, "macintosh"):
-		// An iPad on a recent iOS claims to be a Macintosh, and nothing in the string contradicts
-		// it. Reported as macOS rather than guessed at: a wrong specific answer reads as a fact to
-		// somebody deciding whether to change their password.
+		// A recent iPad claims to be a Macintosh and nothing contradicts it. Reported as macOS, not
+		// guessed: a wrong specific answer reads as fact to somebody deciding about their password.
 		return "macOS"
 	case strings.Contains(agent, "linux"):
 		return "Linux"

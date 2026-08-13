@@ -82,9 +82,8 @@ func (ix Index) model() mongo.IndexModel {
 
 	opts := options.Index().SetName(ix.Name).SetUnique(ix.Unique)
 	if ix.ExpireAfter > 0 {
-		// Guarded rather than set unconditionally: SetExpireAfterSeconds(0) is a valid instruction
-		// meaning "expire the moment the date passes", so passing an unset duration straight through
-		// would turn every ordinary index into one that empties its collection.
+		// Guarded, never unconditional: SetExpireAfterSeconds(0) means "expire the moment the date
+		// passes", so an unset duration would turn every index into one that empties its collection.
 		opts = opts.SetExpireAfterSeconds(int32(ix.ExpireAfter.Seconds()))
 	}
 
@@ -95,13 +94,8 @@ func (ix Index) model() mongo.IndexModel {
 func Open(ctx context.Context, opts Options) (*DB, error) {
 	client, err := mongo.Connect(options.Client().
 		ApplyURI(opts.URI).
-		// Without a ceiling the driver blocks for its 30-second default while it picks a server.
-		// That matters more here than it would elsewhere: an event handler runs synchronously on
-		// the publisher's goroutine, so a stalled Mongo lands the wait on whatever request
-		// announced the fact — a sign-in, for the activity module. Bounded once, here, because one
-		// ceiling covers every read and every write this server makes and there is nowhere else a
-		// reader would think to look for it. Five seconds rather than two so a legitimate
-		// replica-set failover is not mistaken for an outage.
+		// The driver defaults to 30 seconds, and a handler runs on the publisher's goroutine, so a
+		// stalled Mongo lands that wait on a sign-in. Five not two: a failover is not an outage.
 		SetServerSelectionTimeout(5 * time.Second))
 	if err != nil {
 		return nil, fmt.Errorf("connect to mongo: %w", err)

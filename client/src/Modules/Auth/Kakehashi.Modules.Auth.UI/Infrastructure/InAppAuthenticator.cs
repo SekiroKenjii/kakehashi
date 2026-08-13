@@ -45,9 +45,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       _options = options.Value;
       _logger = logger;
 
-      // Added without validation on purpose. A machine name is user-controlled — someone can put
-      // almost anything in it — and a header the parser dislikes must degrade to a blank device on
-      // the Account page, never to a sign-in that throws before it reaches the network.
+      // Unvalidated on purpose: a machine name is user-controlled, and a header the parser
+      // dislikes must degrade to a blank device, never to a sign-in that throws before the network.
       _http.DefaultRequestHeaders.TryAddWithoutValidation("User-Agent", DeviceLabel());
     }
 
@@ -86,9 +85,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
 
         if (!response.IsSuccessStatusCode) {
           LogSignInFailed((int)response.StatusCode);
-          // The server answers a wrong password and an unknown address identically, on purpose, so
-          // the form reveals nothing about which addresses have accounts. Passing its message
-          // through keeps that property instead of inventing a more specific one here.
+          // The server answers a wrong password and an unknown address identically so the form
+          // reveals no addresses. Passing its message through keeps that; inventing one loses it.
           return SharedKernelResult.Failure<AuthSession>(
               await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false));
         }
@@ -138,10 +136,8 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
       using var activity = AuthTelemetry.Source.StartActivity("Auth.Logout.InApp");
       try {
         using var request = new HttpRequestMessage(HttpMethod.Post, Endpoint("account/sign-out"));
-        // The session's own token, not one asked of IAccessTokenProvider: that provider refreshes
-        // near expiry, and minting a token in order to revoke the session it belongs to is a race
-        // with itself. A token already too old to pass costs a 401 and a log line, and the local
-        // session is cleared either way.
+        // The session's own token, never one from IAccessTokenProvider: that provider refreshes
+        // near expiry, so minting one to revoke its own session races itself.
         request.Headers.Authorization =
             new AuthenticationHeaderValue("Bearer", session.AccessToken);
 

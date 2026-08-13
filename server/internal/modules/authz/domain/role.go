@@ -64,10 +64,8 @@ func NewRole(id, name, description string, isSystem bool) (Role, error) {
 	if trimmed == "" {
 		return Role{}, errs.Invalidf("A role needs a name.")
 	}
-	// Runes, not bytes. len() counts UTF-8 bytes, so "Quản trị hệ thống nhân sự" — twenty-five
-	// characters — would measure well over the limit and be refused with a message about
-	// characters. The column is nvarchar(64), which counts UTF-16 units, so runes are the closer
-	// of the two and the one the message means.
+	// Runes, not bytes: len() counts UTF-8, so a Vietnamese name would measure over the limit and
+	// be refused with a message about characters. nvarchar(64) counts UTF-16, so runes are closer.
 	if utf8.RuneCountInString(trimmed) > MaxRoleName {
 		return Role{}, errs.Invalidf("A role name is limited to %d characters.", MaxRoleName)
 	}

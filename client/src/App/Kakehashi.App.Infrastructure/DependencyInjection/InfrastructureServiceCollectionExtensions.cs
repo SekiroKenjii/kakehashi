@@ -69,9 +69,8 @@ namespace Kakehashi.App.Infrastructure.DependencyInjection {
             var options = provider.GetRequiredService<IOptions<BackendOptions>>().Value;
             client.Address = new Uri(options.BaseAddress);
           })
-          // Call credentials normally require a secured channel. In development the backend is
-          // reached over plain HTTP behind nothing, so the guard has to be lifted or no token is
-          // ever sent; in production TLS is terminated by the reverse proxy in front of it.
+          // Call credentials normally require a secured channel, and development reaches the backend
+          // over plain HTTP; in production TLS is terminated by the reverse proxy in front of it.
           .ConfigureChannel(channel => channel.UnsafeUseInsecureChannelCallCredentials = true)
           .AddCallCredentials(async (context, metadata, serviceProvider) => {
             var tokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();

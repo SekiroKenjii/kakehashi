@@ -33,8 +33,7 @@ namespace Kakehashi.App {
       UnhandledException += OnUnhandledException;
 
       // The two channels the XAML handler above does not cover: a faulted fire-and-forget Task
-      // surfaces only at finalization, and exceptions on non-UI threads never reach XAML. Both
-      // would otherwise pass unrecorded.
+      // surfaces only at finalization, and exceptions off the UI thread never reach XAML.
       TaskScheduler.UnobservedTaskException += OnUnobservedTaskException;
       AppDomain.CurrentDomain.UnhandledException += OnDomainUnhandledException;
     }

@@ -97,10 +97,8 @@ func (m *Module) Finalize(ctx context.Context, k *app.Kernel) error {
 	m.destinations = declared
 	m.svc.WithDestinations(declared...)
 
-	// Optional, and resolved here for the same reason the declarations are: Finalize is the first
-	// point at which another module's service is guaranteed to exist. Without an authorization module
-	// there are no roles, and PreviewLayout says so rather than the boot failing over a screen nobody
-	// in that build can reach anyway.
+	// Finalize is the first point another module's service is guaranteed to exist. Optional: with
+	// no authorization module there are no roles, and PreviewLayout says so rather than failing boot.
 	if grants, ok := app.TryUse[authzapi.Service](k); ok {
 		m.svc.WithRoleGrants(grants)
 	}
@@ -127,9 +125,8 @@ func collect(k *app.Kernel) ([]navigationapi.Destination, error) {
 		}
 
 		for _, d := range contributor.NavigationDestinations() {
-			// Stamped, not claimed. It decides which permission applies when the destination names
-			// none, and a module that could name another's would be granting itself that module's
-			// treatment.
+			// Stamped, never claimed: it decides which permission applies, so a module able to name
+			// another's would be granting itself that module's treatment.
 			d.ModuleID = module.ID()
 
 			if owner, dup := seen[d.ID]; dup {
@@ -147,11 +144,8 @@ func collect(k *app.Kernel) ([]navigationapi.Destination, error) {
 					d.ID, d.DefaultGroup)
 			}
 
-			// The one that is easy to get wrong and impossible to notice: a destination owned by a
-			// module whose routes are not gated on its own access permission, declaring no
-			// permission of its own, falls back to a key nobody holds. The row is drawn disabled
-			// for everybody, forever, and looks like a permissions bug rather than a declaration
-			// that never made sense.
+			// A destination naming no permission, owned by a module nothing gates on its access
+			// key, falls back to a key nobody holds: drawn disabled for everybody, forever.
 			if d.Permission == "" && !slices.Contains(gated, d.ModuleID) {
 				return nil, fmt.Errorf(
 					"destination %q names no permission, and its module %q does not gate any route "+

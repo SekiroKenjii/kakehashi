@@ -52,9 +52,8 @@ namespace Kakehashi.App.UI {
 
       InitializeComponent();
 
-      // Rebuilt when the deployment's arrangement arrives, which is normally once at startup — but
-      // also every time an administrator saves the layout screen, and after signing in as somebody
-      // else. The pane is drawn from whatever is current, so the handler needs no argument.
+      // Rebuilt whenever the arrangement arrives: at startup, on every save of the layout screen,
+      // and after signing in as somebody else. The pane draws from what is current, so no argument.
       _layout.Changed += OnLayoutChanged;
 
       WeakReferenceMessenger.Default.Register<ShellPage, ModuleSetChangedMessage>(
@@ -129,10 +128,8 @@ namespace Kakehashi.App.UI {
         string pageKey = _navigationService.GetPageKey(item.PageType);
         var navItem = new NavigationViewItem { Tag = pageKey };
 
-        // The icon is set even for custom content: a non-null Icon keeps the presenter's icon
-        // column at its full width in every pane state (expanded and compact), which custom
-        // content relies on for stable alignment. Custom content draws its own visual, though,
-        // so it gets a blank glyph instead of one showing through from underneath.
+        // Set even for custom content: a non-null Icon holds the presenter's icon column at full
+        // width in every pane state. Custom content draws its own visual, so its glyph is blank.
         navItem.Icon = new FontIcon {
           Glyph = item.ContentFactory is null ? item.IconGlyph : string.Empty,
         };
@@ -251,9 +248,14 @@ namespace Kakehashi.App.UI {
       SyncSelection(container);
     }
 
-    // Drives the pane selection (and, via its binding, the header) without re-triggering navigation.
-    // NavigationView suppresses selection (even programmatic) for SelectsOnInvoked=false items, so
-    // flyout items get the suppression lifted just long enough to show the selection indicator.
+    /// <summary>
+    /// Drives the pane selection, and through its binding the header, without re-triggering
+    /// navigation.
+    /// </summary>
+    /// <remarks>
+    /// NavigationView suppresses selection — even programmatic — for SelectsOnInvoked=false items,
+    /// so the suppression is lifted just long enough to show the selection indicator.
+    /// </remarks>
     private void SyncSelection(NavigationViewItem container) {
       _isSyncingSelection = true;
       bool restoreSuppression = !container.SelectsOnInvoked;

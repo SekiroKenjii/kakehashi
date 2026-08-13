@@ -118,9 +118,8 @@ namespace Kakehashi.App.Services {
           }
         }
 
-        // Nothing is reported as granted. A grant means the account MAY use the module, not that
-        // it must: which modules are attached stays the user's preference, so a permission never
-        // forces a page into their navigation.
+        // Nothing is reported as granted: a grant means the account MAY use the module. Which are
+        // attached stays the user's preference, so a permission never forces a page into the pane.
         _registry.SetAssignments(withheld, []);
         LogApplied(grants.Count, withheld.Count);
 
@@ -129,9 +128,8 @@ namespace Kakehashi.App.Services {
         }
       } catch (RpcException exception)
           when (exception.StatusCode == StatusCode.Unauthenticated) {
-        // Signing out revokes the token, and the refresh that follows the session change lands
-        // here. Keeping the prior grants would leave a shell drawn for somebody who has left,
-        // and logging it as an error would fill the log with the most ordinary event there is.
+        // Signing out revokes the token and the refresh that follows lands here. Keeping the prior
+        // grants would draw a shell for somebody who has left; an error would log the ordinary.
         _grants = [];
         LogSignedOut();
       } catch (RpcException exception) {

@@ -40,8 +40,7 @@ namespace Kakehashi.App.Infrastructure.Observability {
       if (options.EnableTracing) {
         builder.WithTracing(tracing => {
           // Grpc.Net.Client runs over HttpClient, so HTTP-client instrumentation already captures
-          // gRPC calls as spans. The dedicated OpenTelemetry.Instrumentation.GrpcNetClient package
-          // (gRPC-semantic attributes) is prerelease-only today; add it when it ships stable.
+          // gRPC calls as spans; the gRPC-semantic package is prerelease-only today.
           tracing
               .AddSource(Telemetry.ServiceName)
               // The Auth module's ActivitySource; harmless when the module is absent (no spans emitted).

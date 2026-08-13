@@ -127,9 +127,8 @@ func (f *fakeStore) InsertGroup(_ context.Context, g domain.Group, _ time.Time) 
 	if _, exists := f.groups[g.ID]; exists {
 		return errs.Conflictf("The identifier %s is already taken by another heading.", g.ID)
 	}
-	// AK_NavGroup_Title: the real schema refuses two headings with the same name. The fake refuses
-	// them too — a fake that accepts them makes the conflict path unreachable from either side of
-	// the boundary.
+	// AK_NavGroup_Title: the real schema refuses two headings with one name, so the fake must too,
+	// or the conflict path is unreachable from either side of the boundary.
 	if f.titleTaken(g.Title, g.ID) {
 		return errs.Conflictf("A navigation heading called %s already exists.", g.Title)
 	}

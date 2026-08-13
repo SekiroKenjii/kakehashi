@@ -10,16 +10,7 @@ namespace Kakehashi.App.UI {
   /// <summary>
   /// The Role Permissions screen.
   /// </summary>
-  /// <remarks>
-  /// Loads on <see cref="FrameworkElement.Loaded"/>, not <c>OnNavigatedTo</c>, which never fires
-  /// in this app: docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md
-  /// <para>
-  /// The static helpers exist because <c>x:Bind</c> calls functions but does not do arithmetic or
-  /// string formatting. They are on the page rather than in converters for the reason the rest of
-  /// this codebase prefers: a function is compile-checked against its arguments, a converter is
-  /// not.
-  /// </para>
-  /// </remarks>
+  /// <remarks>client/docs/architecture.md, "Static helpers on the page, not converters".</remarks>
   public sealed partial class RolePermissionsPage : Page {
     public RolePermissionsPage(RolePermissionsViewModel viewModel) {
       ArgumentNullException.ThrowIfNull(viewModel);

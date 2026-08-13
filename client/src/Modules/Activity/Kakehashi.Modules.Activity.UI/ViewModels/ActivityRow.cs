@@ -19,9 +19,11 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
   /// release.
   /// </remarks>
   public sealed partial class ActivityRow : ObservableObject {
-    // Written as an escape, not a literal character: Private Use Area code points render as
-    // nothing in an editor and in a diff, so a literal glyph is easily destroyed by an edit that
-    // looks harmless.
+    /// <summary>
+    /// The glyph drawn for a kind this build does not recognise. Written as an escape, never a
+    /// literal: Private Use Area code points render as nothing in an editor and in a diff, so a
+    /// literal is destroyed by an edit that looks harmless.
+    /// </summary>
     private const string _fallbackGlyph = "\uE946";
 
     private ActivityRow(IReadOnlyList<ActivityEntryDto> entries) {

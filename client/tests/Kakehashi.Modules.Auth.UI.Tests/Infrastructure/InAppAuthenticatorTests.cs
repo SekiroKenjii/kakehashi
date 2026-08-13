@@ -19,9 +19,8 @@ namespace Kakehashi.Modules.Auth.UI.Tests.Infrastructure {
 
     [Fact]
     public void DeviceLabel_IsAWellFormedUserAgent() {
-      // The header is added without validation so a hostile machine name cannot break sign-in.
-      // That makes it worth proving the ordinary case still parses as a real User-Agent rather
-      // than silently reaching the server as something no proxy or log will understand.
+      // The header is added without validation so a hostile machine name cannot break sign-in, so
+      // the ordinary case is worth proving still parses as something a proxy or log understands.
       Assert.True(ProductInfoHeaderValue.TryParse(
           InAppAuthenticator.DeviceLabel().Split(' ')[0], out _));
     }

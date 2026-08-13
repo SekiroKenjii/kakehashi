@@ -26,15 +26,8 @@ import (
 // module registers. And the earlier the subscription exists, the smaller the window in which a
 // published fact finds no listener.
 func (m *Module) subscribe(k *app.Kernel) {
-	// One line per kind, and this mapping is the whole vocabulary translation — the reason
-	// activityapi declares its own constants instead of re-exporting the account module's. It is
-	// also the place to ask "should the user see this?": the account module publishes IP addresses
-	// and device strings, and no row appears in the feed without a line here choosing to write it.
-	//
-	// The NewDevice flag rides the event. The seam forbids a direction of dependency — activity
-	// calling into account, or account naming activity — not which fields an event carries: the
-	// account module computes NewDevice to choose its own audit kind whether anybody listens or
-	// not.
+	// The whole vocabulary translation, and the gate on what a user sees: no row reaches the feed
+	// without a line here choosing to write it.
 	app.Subscribe(k, func(ctx context.Context, e accountapi.SignedIn) {
 		kind := activityapi.KindSignedIn
 		if e.NewDevice {

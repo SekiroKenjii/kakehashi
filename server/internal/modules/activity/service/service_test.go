@@ -163,10 +163,8 @@ func TestListReturnsWhatTheFeedDrawsAndKeepsTheAccountIdBack(t *testing.T) {
 		t.Fatalf("got %d entries, want 1", len(page.Entries))
 	}
 
-	// The row id crosses now: the reader of a row is the account that owns it, and a screen offering
-	// "copy this event" needs something to copy. The account id still does not, and activityapi.Entry
-	// has no field for it — that half is a compile-time fact rather than one a test can observe, so
-	// what this asserts is that the rest of the mapping stays complete.
+	// The row id crosses; the account id does not, and activityapi.Entry has no field for it. That
+	// half is a compile-time fact, so this asserts the rest of the mapping stays complete.
 	got := page.Entries[0]
 	if got.ID != "id-1" || got.Kind != "SignedIn" || got.SessionID != "session-1" ||
 		got.IPAddress != "10.0.0.1" || !got.OccurredAt.Equal(occurred) {

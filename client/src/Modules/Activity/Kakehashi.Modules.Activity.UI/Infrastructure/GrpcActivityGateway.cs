@@ -45,9 +45,8 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
         Query = filter.Search,
       };
 
-      // Left unset rather than sent as a zero timestamp: the server reads an absent bound as
-      // unbounded, and the epoch is a real instant that would quietly exclude nothing on one side
-      // while looking deliberate.
+      // Unset, never a zero timestamp: the server reads an absent bound as unbounded, and the
+      // epoch is a real instant that would look deliberate while excluding nothing.
       if (filter.From is { } from) {
         request.From = Timestamp.FromDateTimeOffset(from);
       }
@@ -81,9 +80,8 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
             entries, reply.NextPageToken, reply.TotalCount, counts, kindCounts,
             reply.RetentionDays));
       } catch (RpcException exception) {
-        // InvalidArgument here is an unreadable page token, which means this client and the server
-        // disagree about where the reader is. Reported as its own failure so the view model can start
-        // the list again rather than sit under a "load more" button that will never work.
+        // An unreadable page token: client and server disagree about where the reader is. Its own
+        // failure so the view model restarts the list instead of a "load more" that never works.
         if (exception.StatusCode == StatusCode.InvalidArgument) {
           LogFailed(exception.StatusCode, exception);
           return Result.Failure<ActivityPageDto>(ActivityErrors.PageLost);
@@ -103,10 +101,8 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
             .ConfigureAwait(false);
         return Result.Success();
       } catch (RpcException exception) {
-        // Mapped here rather than in Translate because InvalidArgument means something different on
-        // each call: on a list it is an unreadable page token, and on this one it is the server
-        // refusing a kind — which can only happen if this client is newer than the server it is
-        // talking to.
+        // Mapped here, not in Translate: InvalidArgument means an unreadable page token on a list
+        // and a refused kind here, which happens only when this client is newer than the server.
         if (exception.StatusCode == StatusCode.InvalidArgument) {
           LogFailed(exception.StatusCode, exception);
           return Result.Failure(ActivityErrors.ReportRefused);
@@ -145,10 +141,8 @@ namespace Kakehashi.Modules.Activity.UI.Infrastructure {
     }
 
     private Error Translate(RpcException exception) {
-      // Unauthenticated is kept distinct from everything else rather than collapsed into it,
-      // because it is the one failure whose correct handling is to stop showing what is on screen.
-      // A page left open across a sign-out keeps polling, and without this it would keep the
-      // previous account's devices and addresses visible indefinitely.
+      // Distinct because it is the one failure whose correct handling is to stop showing what is
+      // on screen: a page left open across a sign-out would keep the prior account visible.
       if (exception.StatusCode == StatusCode.Unauthenticated) {
         return ActivityErrors.NotSignedIn;
       }

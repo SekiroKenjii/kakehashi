@@ -114,6 +114,26 @@ muted middle crumb and `Title` for the page's own name. An empty crumb — and a
 collapses instead of drawing empty chrome. The control lives in `Kakehashi.UI.Common` because
 feature modules have pages too, and a control in the host is one they cannot reference.
 
+### A page subscribes on `Loaded` and drops the subscription on `Unloaded`
+
+Never for the life of the object. Pages are transient: navigating away releases the page's WinRT
+peer while `WeakReferenceMessenger` still holds the managed object, so the next broadcast reads
+`DispatcherQueue` off a disposed peer — an `ObjectDisposedException` that takes the process down.
+
+`UnregisterAll` runs first, because `Register` throws on a duplicate and `Loaded` fires more than
+once for the same instance.
+
+### Static helpers on the page, not converters
+
+`x:Bind` calls functions, but it cannot format a string, negate a bool, or pick a brush from one.
+Pages carry small `public static` helpers for that instead of `IValueConverter` implementations,
+because a function is compile-checked against its arguments and a converter is not — a converter
+with the wrong input type fails silently at runtime, on a binding, where nothing points at the
+cause.
+
+Pages also start their first load from `FrameworkElement.Loaded`, never `OnNavigatedTo`:
+[docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md](../../docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md).
+
 ## Conventions that aren't tool-enforced
 
 - **Class member order** follows the Google guide: nested types, then static/const/readonly fields,

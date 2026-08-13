@@ -90,9 +90,8 @@ func (s *Service) List(
 		After: after,
 	}
 
-	// One more than asked for, so whether there is a next page is something this read observed
-	// rather than something a second query has to guess at: a page that comes back exactly full is
-	// otherwise indistinguishable from the last one.
+	// One more than asked for, so this read observes whether a next page exists: a page that comes
+	// back exactly full is otherwise indistinguishable from the last one.
 	entries, err := s.store.List(ctx, userID, filter, take+1)
 	if err != nil {
 		return activityapi.Page{}, err

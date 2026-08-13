@@ -212,14 +212,8 @@ func (s *SQLServer) DeleteAccount(ctx context.Context, id string) error {
 		return errs.Internalf(err, "delete account events")
 	}
 
-	// The authorization module's rows go in this transaction, not via a published event: an event
-	// delivered after the commit can fail while the delete stands, leaving a membership that
-	// over-counts "how many people hold this role" forever. One transaction is the only shape
-	// where the account and its memberships go together.
-	//
-	// A cross-schema DELETE rather than a foreign key because authz.AccountRole must not depend on
-	// account.Account existing — the authorization module is meant to survive the account module
-	// being swapped for somebody else's identity provider.
+	// In this transaction, not an event that could fail after the commit. Cross-schema DELETE, not
+	// a foreign key: authz must survive the account module being swapped for another provider.
 	if _, err := tx.ExecContext(
 		ctx, `DELETE FROM authz.AccountRole WHERE AccountId = @p1;`, id); err != nil {
 		return errs.Internalf(err, "delete account roles")

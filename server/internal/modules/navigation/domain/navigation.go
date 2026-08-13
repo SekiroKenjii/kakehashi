@@ -74,9 +74,8 @@ func NewGroup(id, title string, order int, isSystem bool) (Group, error) {
 	if id == "" {
 		id = Slug(title)
 		if id == "" {
-			// The derivation failed, which is a different problem from a bad identifier: the title
-			// is readable but has no character a slug may contain — "日本語", "///". Saying so beats
-			// reporting an empty identifier the person never typed.
+			// Derivation failed, not a bad identifier: the title is readable but holds no character a
+			// slug may contain — "日本語", "///".
 			return Group{}, errs.Invalidf(
 				"An identifier could not be derived from %q. Give the heading one, using lowercase "+
 					"letters, digits and hyphens.", title)

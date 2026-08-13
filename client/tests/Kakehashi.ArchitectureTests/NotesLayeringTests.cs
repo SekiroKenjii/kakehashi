@@ -56,12 +56,8 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void ApplicationAndDomain_DoNotDependOnTheGeneratedContract() {
-      // Generated protobuf types are the wire's shape, not the module's. Letting them past the UI
-      // layer would make a change to the schema a change to a use case, which is exactly the
-      // coupling the gateway port exists to prevent. This is the client-side statement of the
-      // server rule that only rpc/ may import internal/gen — there enforced by archlint, here by
-      // this test, because the generated code lives in one shared project rather than one per
-      // module.
+      // The client-side statement of the server's rule that only rpc/ may import internal/gen.
+      // A test rather than archlint, because the generated code is one shared project here.
       foreach (var assembly in new[] { _notesDomain, _notesApplication }) {
         var references = ReferencedAssemblyNames(assembly);
 

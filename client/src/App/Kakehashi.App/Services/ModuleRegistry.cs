@@ -30,11 +30,14 @@ namespace Kakehashi.App.Services {
     private readonly IReadOnlyList<IModule> _all;
     private readonly HashSet<string> _detached;
 
-    // What the server says about this account, by SERVER module id — which is not IModule.Name.
-    // Both start empty and stay empty until the fetch after sign-in returns, which is what makes
-    // a failed or slow fetch leave the app exactly as a build without assignments would behave.
-    // Failing open here is safe precisely because it is not the enforcement: the server refuses an
-    // unassigned module's requests whatever this object believes.
+    /// <summary>
+    /// What the server says about this account, keyed by SERVER module id — not IModule.Name.
+    /// </summary>
+    /// <remarks>
+    /// Empty until the fetch after sign-in returns, so a failed or slow fetch leaves the app as a
+    /// build without assignments behaves. Failing open is safe because this is not the
+    /// enforcement: docs/adr/0015-module-attachment-is-not-a-security-boundary.md
+    /// </remarks>
     private HashSet<string> _withheld = new(StringComparer.Ordinal);
     private HashSet<string> _granted = new(StringComparer.Ordinal);
 

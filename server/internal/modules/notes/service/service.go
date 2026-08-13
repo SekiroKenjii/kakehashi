@@ -131,11 +131,8 @@ func (s *Service) Delete(ctx context.Context, id int64) error {
 	// afterwards. That is the whole problem with deletion events.
 	n, err := s.store.Get(ctx, id)
 	if errs.KindOf(err) == errs.NotFound {
-		// Already gone, which is what the caller asked for, so this succeeded. Reporting NotFound
-		// here would make a delete retried after a dropped connection look like a failure — and
-		// the second attempt is exactly when a client is least able to tell the difference.
-		//
-		// Nothing is published: this call removed nothing, and the call that did already said so.
+		// Already gone is what the caller asked for. NotFound here would make a delete retried
+		// after a dropped connection look failed. Nothing is published: this call removed nothing.
 		return nil
 	}
 	if err != nil {

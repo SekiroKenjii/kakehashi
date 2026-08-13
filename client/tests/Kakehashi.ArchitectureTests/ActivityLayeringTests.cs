@@ -36,10 +36,8 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void ActivityLayer_DoesNotDependOnAnotherFeatureModule() {
-      // The feed is assembled from other modules' facts, but that assembly happens on the server,
-      // where the activity module imports their api packages under archlint's eye. Nothing of it
-      // reaches the client: here the module knows only its own contract, which is why this test
-      // must keep passing even as the feed grows to cover more of the product.
+      // The feed is assembled from other modules' facts, but on the server, under archlint's eye.
+      // Here the module knows only its own contract, however far the feed grows.
       foreach (var name in ReferencedAssemblyNames(_activityApplication)) {
         if (name.StartsWith("Kakehashi.Modules.", StringComparison.Ordinal)) {
           Assert.StartsWith("Kakehashi.Modules.Activity.", name);
@@ -49,9 +47,8 @@ namespace Kakehashi.ArchitectureTests {
 
     [Fact]
     public void Application_DoesNotDependOnTheGeneratedContract() {
-      // Generated protobuf types are the wire's shape, not the module's. Letting them past the UI
-      // layer would make a change to the schema a change to a use case, which is exactly the
-      // coupling the gateway port exists to prevent.
+      // Generated protobuf types are the wire's shape, not the module's: past the UI layer a
+      // schema change becomes a use-case change, the coupling the gateway port exists to prevent.
       var references = ReferencedAssemblyNames(_activityApplication);
 
       Assert.DoesNotContain(

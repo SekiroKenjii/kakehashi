@@ -46,8 +46,7 @@ namespace Kakehashi.App.Hosting {
       builder.Logging.AddDebug();
 
       // A file log beside the debug one: AddDebug writes through OutputDebugString, which only an
-      // attached debugger sees, so the file is the only record on machines without one. Level
-      // comes from configuration; the default is Information.
+      // attached debugger sees, so the file is the only record on machines without one.
       builder.Logging.AddProvider(new FileLoggerProvider(
           builder.Configuration.GetValue("Logging:File:MinimumLevel", LogLevel.Information)));
 
@@ -67,9 +66,8 @@ namespace Kakehashi.App.Hosting {
       services.AddSingleton<ILocalSettingsService, LocalSettingsService>();
       services.AddSingleton<IModuleRegistry, ModuleRegistry>();
 
-      // The authorization clients are the host's, not a module's: they feed the registry and the
-      // two administration screens, which govern every module. A feature module in that role
-      // would couple across the module boundary the architecture tests enforce.
+      // The host's clients, not a module's: they feed the registry and the two administration
+      // screens, which govern every module — a role that would couple a feature module across.
       services.AddBackendGrpcClient<AuthzV1.AuthzService.AuthzServiceClient>();
       services.AddSingleton<PermissionService>();
       services.AddSingleton<IPermissionService>(

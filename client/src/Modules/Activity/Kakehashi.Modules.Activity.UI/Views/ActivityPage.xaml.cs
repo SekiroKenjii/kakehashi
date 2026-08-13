@@ -11,13 +11,8 @@ namespace Kakehashi.Modules.Activity.UI.Views {
   /// The activity page: the signed-in account's feed, gathered server-side from every device.
   /// </summary>
   /// <remarks>
-  /// Refreshes on open and on demand, never on a timer; the load starts from the page's
-  /// <c>Loaded</c> handler: docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md
-  /// <para>
-  /// The static helpers exist because <c>x:Bind</c> calls functions but cannot choose a brush from a
-  /// bool. They live on the page rather than in converters for the reason the rest of this codebase
-  /// prefers: a function is compile-checked against its arguments, a converter is not.
-  /// </para>
+  /// Refreshes on open and on demand, never on a timer. See client/docs/architecture.md, "Static
+  /// helpers on the page, not converters".
   /// </remarks>
   public sealed partial class ActivityPage : Page {
     public ActivityPage(ActivityViewModel viewModel) {
@@ -26,9 +21,8 @@ namespace Kakehashi.Modules.Activity.UI.Views {
 
       InitializeComponent();
 
-      // Grouping is wired here rather than in XAML because a CollectionViewSource lives in a resource
-      // dictionary, and x:Bind cannot reach into one. The source is the view model's own observable
-      // collection, so re-grouping a page of results updates the list without touching this again.
+      // Wired here, not in XAML: a CollectionViewSource lives in a resource dictionary and x:Bind
+      // cannot reach one. The source is the view model's own collection, so regrouping is enough.
       FeedList.ItemsSource = new CollectionViewSource {
         IsSourceGrouped = true,
         ItemsPath = new PropertyPath("Items"),
@@ -99,9 +93,12 @@ namespace Kakehashi.Modules.Activity.UI.Views {
       await ViewModel.SearchCommand.ExecuteAsync(parameter: null);
     }
 
-    // The row comes off Tag rather than DataContext: these templates are inside an ItemsRepeater,
-    // which does not set DataContext on what it realizes. A handler that read DataContext would match
-    // nothing and return silently on every click.
+    /// <summary>Applies the clicked category chip as the feed's filter.</summary>
+    /// <remarks>
+    /// The row comes off Tag, never DataContext: these templates sit inside an ItemsRepeater,
+    /// which does not set DataContext on what it realizes, so a handler reading DataContext would
+    /// match nothing and return silently on every click.
+    /// </remarks>
     private async void OnChipClicked(object sender, RoutedEventArgs e) {
       if (sender is FrameworkElement { Tag: ActivityChip chip }) {
         await ViewModel.SelectCategoryCommand.ExecuteAsync(chip);

@@ -21,12 +21,11 @@ namespace Kakehashi.App.UI {
   /// One destination in the structure tree, as an administrator stages it.
   /// </summary>
   /// <remarks>
-  /// Every edit is held here until Apply, then written in one atomic call:
-  /// docs/adr/0004-staged-edits-atomic-apply.md
+  /// Edits are held until Apply: docs/adr/0004-staged-edits-atomic-apply.md
   /// <para>
-  /// The baselines are what "unsaved" is measured against. The order comparison is positional, not
-  /// numeric: stored orders of 5 and 7 are a valid arrangement, and comparing them against
-  /// renumbered values (10, 20) would claim unsaved changes the moment the screen opened.
+  /// The order comparison against the baseline is positional, not numeric: stored orders of 5 and
+  /// 7 are a valid arrangement, and comparing them against renumbered values would claim unsaved
+  /// changes the moment the screen opened.
   /// </para>
   /// </remarks>
   public sealed partial class NavScreenNode : ObservableObject {

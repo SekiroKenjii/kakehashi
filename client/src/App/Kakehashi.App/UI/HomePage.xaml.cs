@@ -23,11 +23,8 @@ namespace Kakehashi.App.UI {
     public HomeViewModel ViewModel { get; }
 
     private async void OnLoaded(object sender, RoutedEventArgs e) {
-      // Subscribed here and dropped again on Unloaded: navigating away releases this page's WinRT
-      // peer while the messenger still holds the managed object, and the next broadcast then reads
-      // DispatcherQueue off a disposed peer — an ObjectDisposedException that takes the process
-      // down. UnregisterAll first, because Register throws on a duplicate and Loaded can fire more
-      // than once for the same instance.
+      // Subscribe on Loaded, drop on Unloaded, UnregisterAll first:
+      // client/docs/architecture.md, "A page subscribes on Loaded".
       WeakReferenceMessenger.Default.UnregisterAll(this);
       WeakReferenceMessenger.Default.Register<HomePage, AuthSessionChangedMessage>(
           this, static (page, message) => page.DispatcherQueue.TryEnqueue(
@@ -76,8 +73,10 @@ namespace Kakehashi.App.UI {
       await AttachModuleDialog.ShowAsync();
     }
 
-    // The dialog stays open so several modules can be re-attached in one visit; the attach
-    // command refreshes the list, so the row disappears and the empty text appears when done.
+    /// <summary>
+    /// Attaches a module without closing the dialog, so several can be re-attached in one visit.
+    /// The attach command refreshes the list, so the row leaves and the empty text appears.
+    /// </summary>
     private void OnAttachModuleClick(object sender, RoutedEventArgs e) {
       if ((sender as FrameworkElement)?.Tag is DetachedModuleListItem module) {
         ViewModel.AttachModuleCommand.Execute(module);

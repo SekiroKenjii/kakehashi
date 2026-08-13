@@ -18,8 +18,19 @@ Every `app.Route` states a `RoutePolicy` beside its pattern, and the kernel refu
 collect a route whose policy is the zero value. The only non-zero values come from four
 constructors — `Public()`, `SignedIn()`, `ModuleAccess()` (the module's `<id>.access`), and
 `Permission(key)` — and the mux applies each policy as one wrapper per route. The composition root
-(`unprotectedRouteModules` in server/cmd/server/main.go: health, account, authz, navigation) names
-the only modules allowed to declare Public or SignedIn; boot refuses those from anyone else.
+(`unprotectedRouteModules` in server/cmd/server/main.go) names the only modules allowed to declare
+Public or SignedIn; boot refuses those from anyone else. Four qualify, each because the server
+breaks without it:
+
+| Module | Why it may declare an unprotected route |
+| --- | --- |
+| `health` | a liveness probe that needs an account is not a liveness probe |
+| `account` | signing in cannot require a permission only obtainable after signing in, and OpenID Connect must answer an anonymous browser |
+| `authz` | a module that answers "what may I do" cannot require permission to answer |
+| `navigation` | a client cannot draw a locked door before it knows the door is there, so an account with no grants must still be able to ask what its pane holds |
+
+All four also serve administrative surfaces, and each of those names its own permission on its own
+route. Being on the list buys permission to *ask* for an unprotected route, never blanket exemption.
 
 ## Consequences
 

@@ -15,9 +15,11 @@ namespace Kakehashi.Modules.Activity.Application.Activity.Queries.GetActivity {
       _activity = activity;
     }
 
-    // Day grouping and burst grouping are presentation — they depend on the reader's time zone and
-    // on how rows are drawn — so they belong to the view model. What belongs here is anything that
-    // changes *which* entries the page is about.
+    /// <summary>Fetches one page of the feed.</summary>
+    /// <remarks>
+    /// Only what changes WHICH entries the page is about belongs here. Day and burst grouping
+    /// depend on the reader's time zone and on how rows are drawn, so they are the view model's.
+    /// </remarks>
     public Task<Result<ActivityPageDto>> Handle(
         GetActivityQuery request, CancellationToken cancellationToken) {
       ArgumentNullException.ThrowIfNull(request);
