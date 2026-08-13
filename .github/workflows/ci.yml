@@ -147,6 +147,12 @@ jobs:
         working-directory: .
         run: bash tools/check-doc-comments.sh .
 
+      # Three lines of prose beside a statement is a paragraph, and a paragraph belongs in docs/
+      # with a one-line pointer left behind (docs/COMMENTS.md rule 4).
+      - name: Forbid paragraph-length inline comments
+        working-directory: .
+        run: bash tools/check-comment-length.sh .
+
   client:
     # WinUI 3 (Windows App SDK) requires Windows to build.
     runs-on: windows-latest

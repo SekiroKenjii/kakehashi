@@ -28,6 +28,11 @@ breaking it, or a technical reason that cannot be read off the code. Nothing els
    wearing a comment costume. Move it to `docs/` or `docs/adr/NNNN-<slug>.md`
    (Context → Decision → Consequences, 10–20 lines) and leave one sentence plus the link.
 
+   **Beside a statement the limit is two lines, and CI enforces it.** Three lines of prose in a
+   logic flow is a paragraph, and a paragraph interrupts the code it is meant to explain. This
+   applies to `//` inside a function body — in either language, in `src` and in tests. A `///`
+   doc comment and Go godoc may be as long as the declaration deserves.
+
    **A comment that carries a link says what the thing is, then links. Nothing more.** Restating
    the document's argument above the link is the document twice, and the copy is the one that goes
    stale. If a fact is only true at this line — a trap, an invariant the reader is about to break —
@@ -48,7 +53,7 @@ comment that forgot to be one, and no tooling will ever surface it. `<summary>` 
 `<remarks>` only for a real invariant or contract, at most ~4 lines. XML docs are required (CS1591)
 only in the contract assemblies; elsewhere they are earned, not default.
 
-**Inline comments** (both halves): 1–3 lines, leading with the fact.
+**Inline comments** (both halves): one or two lines, leading with the fact. Three fails CI.
 
 ## Examples
 
@@ -106,6 +111,10 @@ Right — a wire contract, said once:
   declaration. Only a compiler knows what a declaration is, so it approximates by looking for an
   attribute or a declaration keyword after a run of `//` lines; a local inside a body does not
   match.
+- `tools/check-comment-length.sh`, in the same job: fails on a `//` block of three lines or more
+  beside a statement. C# is checked wherever it appears, since a `//` above a declaration is
+  already refused above; Go only inside a function body, because the same `//` above a top-level
+  declaration is godoc.
 - CS1591 + `GenerateDocumentationFile` on the contract assemblies only:
   `Kakehashi.UI.Contracts` and `Kakehashi.Application.Abstractions`. Not `Kakehashi.Contracts`,
   which holds generated code.
