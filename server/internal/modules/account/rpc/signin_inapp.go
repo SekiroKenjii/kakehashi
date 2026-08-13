@@ -71,17 +71,12 @@ func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		"openid", "profile", "email", "offline_access", scopeRoles,
 	}
 
-	// A synthetic authorization, already authenticated. op's token builder wants an
-	// op.IDTokenRequest, and everything it asks for is known here — which is the whole reason this
-	// endpoint is short: the token minting, signing and claim assembly are the provider's, not
-	// ours, so the two sign-in modes cannot drift into issuing different tokens.
+	// A synthetic op.IDTokenRequest so the provider mints both modes' tokens the same way:
+	// docs/adr/0007-in-app-sign-in-alongside-browser-oidc.md.
 	//
-	// ResponseType is "code" and it is not decoration. op decides whether an exchange earns a
-	// refresh token by asking three questions of the request — offline_access in the scopes, a
-	// response type of code, and refresh_token among the client's grants — and a request that
-	// answers no to any of them gets an access token alone. Without this field the client would be
-	// back at the sign-in form every time the access token aged out, which for a desktop app is
-	// every ten minutes.
+	// ResponseType "code" is load-bearing: op grants a refresh token only for offline_access plus
+	// a code response type plus refresh_token in the client's grants. Drop it and the desktop app
+	// returns to the sign-in form every time the access token ages out.
 	request := &authRequest{row: domain.AuthRequest{
 		ID:           session.ID,
 		ClientID:     h.client.id,
@@ -93,15 +88,12 @@ func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		AuthTime:     time.Now(),
 	}}
 
-	// The issuer normally rides in on the context that op's own handlers build. Minting a token
-	// outside them means putting it there by hand — without it the JWT ships with no "iss" claim
-	// and every verifier, including this server's own, rejects it as not ours.
+	// op's own handlers put the issuer on the context; minting outside them means doing it by hand.
+	// Without it the JWT ships with no "iss" and every verifier rejects it, including this one.
 	ctx := op.ContextWithIssuer(r.Context(), h.issuer)
 
-	// The empty last two arguments are the authorization code and the refresh token being rotated.
-	// This flow has neither: no code was ever issued, so claiming one would put a c_hash in the ID
-	// token that hashes something the client never saw, and there is no prior refresh token
-	// because this is the first exchange.
+	// The empty arguments are the authorization code and the refresh token being rotated; this
+	// flow has neither. Claiming a code would put a c_hash over something the client never saw.
 	response, err := op.CreateTokenResponse(
 		ctx, request, h.client, h.provider, true, "", "")
 	if err != nil {

@@ -109,9 +109,8 @@ func NewAccount(id, email, displayName, plainPassword string, now time.Time) (Ac
 		Email:        normalizedEmail,
 		DisplayName:  name,
 		PasswordHash: hash,
-		// Active from the moment it exists. An account that had to be switched on afterwards is a
-		// second step every caller must remember, and whoever forgets has created an account that
-		// cannot sign in for reasons nothing explains.
+		// Active from the moment it exists: a switch-on step every caller must remember is one
+		// somebody forgets, leaving an account that cannot sign in for no visible reason.
 		IsActive:  true,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -195,10 +194,8 @@ func (u *Account) UpdateProfile(displayName, phone *string, now time.Time) error
 }
 
 func normalizeEmail(email string) (string, error) {
-	// Lower-cased and trimmed, because the address is the account's identity and users do not
-	// remember which case they typed. The local part is technically case-sensitive per RFC 5321;
-	// no mail provider anyone uses actually treats it that way, and honouring it would create two
-	// accounts for one person.
+	// Lower-cased: the address is the account's identity. RFC 5321 makes the local part
+	// case-sensitive, but no provider treats it so, and honouring it splits one person into two.
 	trimmed := strings.ToLower(strings.TrimSpace(email))
 
 	if trimmed == "" {
@@ -208,8 +205,7 @@ func normalizeEmail(email string) (string, error) {
 		return "", errs.Invalidf("That email address is too long.")
 	}
 
-	// Deliberately not a regular expression. Every address-validating regex is either wrong or
-	// unreadable, and the only real proof an address exists is that mail sent to it arrives. This
+	// Deliberately not a regex: the only proof an address exists is that mail arrives. This
 	// rejects what is obviously not an address and leaves the rest to delivery.
 	at := strings.IndexByte(trimmed, '@')
 	if at <= 0 || at == len(trimmed)-1 || strings.ContainsAny(trimmed, " \t\r\n") {

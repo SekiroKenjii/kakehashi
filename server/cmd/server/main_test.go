@@ -33,9 +33,8 @@ func TestNoTwoModulesClaimTheSameID(t *testing.T) {
 }
 
 func TestEveryUnprotectedRouteModuleIsMounted(t *testing.T) {
-	// A typo here is silent in the worst direction: the module it was meant to name would be
-	// refused at boot for declaring an unprotected route, and the first symptom is a server that
-	// will not start.
+	// A typo fails in the worst direction: the module it meant to name is refused at boot, and the
+	// first symptom is a server that will not start.
 	mounted := mountedIDs()
 	for _, id := range unprotectedRouteModules {
 		if !slices.Contains(mounted, id) {
@@ -45,10 +44,8 @@ func TestEveryUnprotectedRouteModuleIsMounted(t *testing.T) {
 }
 
 func TestThePrerequisitesOfTheCheckAreExempt(t *testing.T) {
-	// These four are not a policy choice, they are what the check depends on. health must answer a
-	// probe with no account; account must let someone sign in before they can have permissions;
-	// authz must be able to say what those permissions are; navigation must be able to say what a
-	// pane looks like before a client can draw a lock on it.
+	// Not a policy choice: the check depends on these four.
+	// docs/adr/0001-per-route-permission-policy.md names what each one would break.
 	for _, id := range []string{"health", "account", "authz", "navigation"} {
 		if !slices.Contains(unprotectedRouteModules, id) {
 			t.Errorf("%q must be able to serve an unprotected route", id)
@@ -57,9 +54,8 @@ func TestThePrerequisitesOfTheCheckAreExempt(t *testing.T) {
 }
 
 func TestTheFeatureModulesAreNotExempt(t *testing.T) {
-	// The other direction, and the one that matters for the feature: a module added to the mount
-	// list cannot serve an unprotected route unless somebody deliberately exempts it here. This is
-	// what turns "we forgot" into a failing boot rather than an open door.
+	// The direction that matters: a newly mounted module cannot serve an unprotected route unless
+	// somebody exempts it here, which turns "we forgot" into a failed boot rather than an open door.
 	for _, id := range []string{"notes", "activity"} {
 		if slices.Contains(unprotectedRouteModules, id) {
 			t.Errorf("%q may serve an unprotected route; it should not be able to", id)
@@ -68,14 +64,9 @@ func TestTheFeatureModulesAreNotExempt(t *testing.T) {
 }
 
 func TestEveryScreenIsReachableBySomebody(t *testing.T) {
-	// A destination naming no permission falls back to its module's <id>.access. For a module on
-	// the exemption list that key is never checked by any route, so nobody is ever granted it and
-	// the screen is drawn disabled for everybody — forever, and looking like a permissions bug
-	// rather than a declaration that never made sense.
-	//
-	// The kernel refuses this at boot too, by asking the real route table. This asks the weaker
-	// question that needs no database, and it is the half that actually goes wrong: somebody copies
-	// a screen declaration into a module that happens to be exempt.
+	// A destination naming no permission falls back to <id>.access, which no route on an exempt
+	// module ever checks — so nobody is granted it and the screen is disabled for everybody.
+	// The kernel refuses this at boot too; this asks the same question without a database.
 	for _, m := range modules() {
 		contributor, ok := m.(navigationapi.Contributor)
 		if !ok {
