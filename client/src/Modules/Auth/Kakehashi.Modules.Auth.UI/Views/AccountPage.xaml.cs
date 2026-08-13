@@ -24,11 +24,8 @@ namespace Kakehashi.Modules.Auth.UI.Views {
     public AccountViewModel ViewModel { get; }
 
     private async void OnLoaded(object sender, RoutedEventArgs e) {
-      // Subscribed here and dropped again on Unloaded, not for the life of the object. Pages are
-      // transient: navigating away releases this one's WinRT peer while the messenger still holds
-      // the managed object, and the next broadcast reads DispatcherQueue off a disposed peer — an
-      // ObjectDisposedException that takes the process down. UnregisterAll first, because Register
-      // throws on a duplicate and Loaded can fire more than once for the same instance.
+      // Subscribe on Loaded, drop on Unloaded, UnregisterAll first:
+      // client/docs/architecture.md, "A page subscribes on Loaded".
       WeakReferenceMessenger.Default.UnregisterAll(this);
       WeakReferenceMessenger.Default.Register<AccountPage, AuthSessionChangedMessage>(
           this, static (page, message) => page.DispatcherQueue.TryEnqueue(

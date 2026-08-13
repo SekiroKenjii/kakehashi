@@ -54,12 +54,9 @@ namespace Kakehashi.App.Services {
       ArgumentNullException.ThrowIfNull(serviceProvider);
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-      // Deferred by one turn of the message loop: startup creates awake services in registration
-      // order, so a recipient registered after this one would otherwise miss the app-update
-      // announcement, which is only raised on the first run after an update.
-      // The null check is not defensive padding: there is no dispatcher on a thread that is not a
-      // UI thread, which is every thread a unit test runs on. The rest of this class guards it the
-      // same way for the same reason.
+      // Deferred one turn: a recipient registered after this service would miss the app-update
+      // announcement, which is raised only on the first run after an update.
+      // The null guard is required, not padding: no thread but the UI one has a dispatcher.
       if (_dispatcherQueue is null || !_dispatcherQueue.TryEnqueue(RecordAppUpdateIfAny)) {
         RecordAppUpdateIfAny();
       }

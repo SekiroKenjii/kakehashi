@@ -363,11 +363,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     private void Fail(Error error) {
       ErrorMessage = error.Message;
 
-      // Cleared for two failures and no others: NotSignedIn, because a page left open across a
-      // sign-out would keep showing the prior account's devices and addresses; PageLost,
-      // because the on-screen position cannot be continued from. A network blip keeps its
-      // rows — they are still true, and clearing them would make a flaky connection look like an
-      // empty history.
+      // These two failures only. A network blip keeps its rows: they are still true, and clearing
+      // them would make a flaky connection look like an empty history.
       if (error == ActivityErrors.NotSignedIn || error == ActivityErrors.PageLost) {
         _entries.Clear();
         _nextPageToken = string.Empty;

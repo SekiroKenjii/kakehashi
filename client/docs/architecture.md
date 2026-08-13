@@ -114,6 +114,15 @@ muted middle crumb and `Title` for the page's own name. An empty crumb — and a
 collapses instead of drawing empty chrome. The control lives in `Kakehashi.UI.Common` because
 feature modules have pages too, and a control in the host is one they cannot reference.
 
+### A page subscribes on `Loaded` and drops the subscription on `Unloaded`
+
+Never for the life of the object. Pages are transient: navigating away releases the page's WinRT
+peer while `WeakReferenceMessenger` still holds the managed object, so the next broadcast reads
+`DispatcherQueue` off a disposed peer — an `ObjectDisposedException` that takes the process down.
+
+`UnregisterAll` runs first, because `Register` throws on a duplicate and `Loaded` fires more than
+once for the same instance.
+
 ### Static helpers on the page, not converters
 
 `x:Bind` calls functions, but it cannot format a string, negate a bool, or pick a brush from one.

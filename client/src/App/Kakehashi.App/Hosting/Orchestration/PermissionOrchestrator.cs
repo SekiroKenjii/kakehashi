@@ -36,11 +36,9 @@ namespace Kakehashi.App.Hosting.Orchestration {
       await _permissions.RefreshAsync(cancellationToken);
       await _layout.RefreshAsync(cancellationToken);
 
-      // Registered after the first fetch rather than in the constructor, so the sign-in that
-      // startup itself performs does not trigger a second, redundant call. The orchestrator is a
-      // singleton, so the weak recipient stays alive for the life of the process.
-      // The handler is a named delegate rather than an inline lambda because the messenger has a
-      // second two-generic overload taking a token, and a lambda is ambiguous between them.
+      // Registered after the first fetch, so startup's own sign-in does not trigger a second call.
+      // Named delegate, not a lambda: the messenger's two-generic token overload makes one
+      // ambiguous.
       MessageHandler<PermissionOrchestrator, AuthSessionChangedMessage> onSessionChanged =
           static (recipient, message) => {
             // Fire and forget: the messenger's handler is synchronous, and a failed refresh leaves

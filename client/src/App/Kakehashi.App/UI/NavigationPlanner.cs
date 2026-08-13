@@ -122,18 +122,12 @@ namespace Kakehashi.App.UI {
     private Dictionary<string, NavigationEntry> Available() {
       var available = new Dictionary<string, NavigationEntry>(StringComparer.Ordinal);
 
+      // Two questions, own keys, detached asked first:
+      // docs/adr/0015-module-attachment-is-not-a-security-boundary.md
       foreach (var module in _registry.All) {
-        // Withheld is keyed by the server's module id, which is what an administrator governs;
-        // attachment is keyed by the client's module name. They differ (Auth vs account), so the two
-        // questions are asked with the identifier each one is actually filed under.
         var withheld = !module.Descriptor.IsRequired
             && _registry.IsWithheld(module.Descriptor.AssignmentId ?? module.Name);
 
-        // Detached is asked FIRST and independently of withholding. The two are different
-        // questions — one is the user's preference about their own composition, the other is an
-        // administrator's decision — and gating "attached?" on "not withheld" makes a detached
-        // module reappear, disabled, the moment an administrator withholds it.
-        // See docs/adr/0015-module-attachment-is-not-a-security-boundary.md
         if (!module.Descriptor.IsRequired && !_registry.IsAttached(module.Name)) {
           continue;
         }
@@ -144,9 +138,8 @@ namespace Kakehashi.App.UI {
       }
 
       foreach (var item in _hostItems) {
-        // TryAdd, not an assignment: host items are added last, and an assignment silently
-        // overwrites a module destination sharing the id. First one wins, deterministically; a
-        // test on the composition catches two things claiming one id at build time.
+        // TryAdd, never an assignment: host items go in last, so assigning would silently
+        // overwrite a module destination sharing the id.
         _ = available.TryAdd(KeyOf(item), new NavigationEntry(item, true));
       }
       return available;
