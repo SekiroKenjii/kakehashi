@@ -383,9 +383,8 @@ namespace Kakehashi.App.UI {
         return;
       }
 
-      // Read the sessions from the server, not the panel's cache: the panel holds only the newest
-      // three and is empty until its load completes, so a count taken from it could revoke nothing
-      // and still report success.
+      // From the server, never the panel's cache: it holds the newest three and is empty until
+      // its load completes, so a count from it could revoke nothing and report success.
       var live = await _admin.ListUserSessionsAsync(user.Id, cancellationToken);
       if (live.IsFailure) {
         Notify(live.Error);
@@ -454,9 +453,8 @@ namespace Kakehashi.App.UI {
         return;
       }
 
-      // Captured before the call. Both are TwoWay-bound selections the user can change while the
-      // request is in flight, and reading them afterwards is how a success message ends up naming
-      // the wrong person — or dereferencing a null one.
+      // Captured before the call: both are TwoWay-bound selections the user can change in flight,
+      // so reading them after is how a success message names the wrong person, or a null one.
       var email = SelectedUser.Email;
       var role = RoleToAssign;
       RoleToAssign = null;
@@ -666,9 +664,8 @@ namespace Kakehashi.App.UI {
     private void ApplyFilter() {
       var needle = SearchText.Trim();
 
-      // Clearing the collection resets the ListView's selection, and the TwoWay binding writes
-      // that null straight back — restoring by id keeps one keystroke in the search box from
-      // closing the detail panel.
+      // Clearing resets the ListView selection and the TwoWay binding writes that null back, so
+      // one keystroke in the search box would close the detail panel. Restored by id instead.
       var selectedId = SelectedUser?.Id;
 
       Users.Clear();

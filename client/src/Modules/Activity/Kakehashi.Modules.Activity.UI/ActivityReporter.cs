@@ -35,9 +35,8 @@ namespace Kakehashi.Modules.Activity.UI {
     public void Initialize(IServiceProvider serviceProvider) {
       ArgumentNullException.ThrowIfNull(serviceProvider);
 
-      // App-lifetime singleton, so the registration is deliberately never undone. The static
-      // recipient keeps this from closing over the instance, which is what would otherwise let the
-      // messenger's weak reference be the only thing keeping it alive.
+      // App-lifetime singleton, so the registration is never undone. The static recipient avoids
+      // closing over the instance, which would leave the weak reference its only owner.
       WeakReferenceMessenger.Default.Register<ActivityReporter, AppActivityRecordedMessage>(
           this, static (reporter, message) => reporter.Forward(message.Kind));
     }
@@ -47,9 +46,8 @@ namespace Kakehashi.Modules.Activity.UI {
         return;
       }
 
-      // Unawaited: a failure is a log line, not anything a person sees. An exception must not
-      // escape into the messenger's dispatch, which would take down whichever thread announced
-      // the fact.
+      // Unawaited: a failure is a log line. An exception escaping into the messenger's dispatch
+      // would take down whichever thread announced the fact.
       _ = ReportAsync(reportable);
     }
 
@@ -63,9 +61,8 @@ namespace Kakehashi.Modules.Activity.UI {
           LogNotReported(kind, result.Error.Message);
         }
       } catch (Exception exception) {
-        // Deliberately broad. This is a background report of something that already happened; there
-        // is no caller to hand an exception to, and letting one escape an unawaited task would end
-        // the process on an unobserved-exception policy.
+        // Deliberately broad: a background report has no caller to hand an exception to, and one
+        // escaping an unawaited task would end the process.
         LogNotReportedAtAll(kind, exception);
       }
     }

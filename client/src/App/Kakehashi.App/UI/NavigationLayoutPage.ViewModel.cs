@@ -161,9 +161,8 @@ namespace Kakehashi.App.UI {
         _loadedItems = items.Value;
         Rebuild();
 
-        // The roles are for the preview picker, and a build without an authorization module has none.
-        // A failure here is not the screen failing: the arrangement loaded, and previewing as somebody
-        // else is the one thing that stops working.
+        // Roles feed the preview picker, and a build without an authorization module has none. A
+        // failure is not the screen failing: only previewing as somebody else stops working.
         var roles = await _access.ListRolesAsync(cancellationToken);
         PreviewRoles.Clear();
         PreviewRoles.Add(NavPreviewRole.Yourself);
@@ -419,9 +418,8 @@ namespace Kakehashi.App.UI {
       }
       Headings.Add(unfiled);
 
-      // Ordered by what the pane orders by. The server lists declared destinations in declaration
-      // order and orphans after them, which is not the order they are drawn in — OrderBy is stable, so
-      // the server's order survives as the tie-break exactly as the server's own sort intends.
+      // Ordered as the pane orders. OrderBy is stable, so the server's declaration order — which
+      // is not the drawn order — survives as the tie-break.
       foreach (var row in _loadedItems.OrderBy(row => row.SortOrder)) {
         var target = Headings.FirstOrDefault(
             heading => !heading.IsUnfiled && heading.Id == row.GroupId) ?? unfiled;
@@ -503,9 +501,8 @@ namespace Kakehashi.App.UI {
     private IReadOnlyList<NavGroupSpec> GroupSpecs() {
       var headings = Headings.Where(heading => !heading.IsUnfiled).ToList();
 
-      // Renumbered only when the order actually moved. Renumbering unconditionally would rewrite rows
-      // nobody touched — and on a deployment whose stored orders are 5 and 7, every apply would report
-      // changes that were nothing but this client's arithmetic.
+      // Only when the order actually moved: renumbering always would rewrite untouched rows, and
+      // on stored orders of 5 and 7 every apply would report this client's arithmetic as changes.
       bool renumber = headings.Any(heading => heading.IsNew)
           || !headings.Where(heading => !heading.IsNew).Select(heading => heading.Id)
               .SequenceEqual(_savedHeadingOrder, StringComparer.Ordinal);
@@ -558,9 +555,8 @@ namespace Kakehashi.App.UI {
       if (previewed.IsFailure) {
         _notifications.Show(previewed.Error.Message, InfoBarSeverity.Error);
 
-        // Back to the local preview rather than leaving the box showing somebody else's pane.
-        // Assigning re-enters this method through the change hook, which is where the note is put
-        // right.
+        // Back to the local preview rather than somebody else's pane. Assigning re-enters here
+        // through the change hook, which is where the note is corrected.
         PreviewRole = NavPreviewRole.Yourself;
         return;
       }
