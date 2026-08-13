@@ -85,10 +85,8 @@ namespace Kakehashi.App.Services {
 
       _localSettings.Save(_entriesKey, _entries);
 
-      // Announced as well as stored, because two of these are facts no server can observe for
-      // itself and the activity module forwards them. This log keeps its own string kinds — they
-      // are the shape of what is already persisted in settings — and the announcement carries the
-      // shared enum instead, so the two assemblies cannot drift apart on a literal.
+      // Announced as well as stored: two of these are facts no server can observe. The announcement
+      // carries the shared enum, not this log's own strings, which match what settings persist.
       if (Announceable(kind) is { } announced) {
         WeakReferenceMessenger.Default.Send(new AppActivityRecordedMessage(announced));
       }

@@ -53,10 +53,8 @@ namespace Kakehashi.Modules.Auth.UI {
       // Shared between the authenticator (drives the flow) and the login view model (reopen browser).
       services.TryAddSingleton(provider => new SystemBrowser(
           provider.GetRequiredService<IOptions<AuthOptions>>().Value.RedirectUri));
-      // Which adapter answers IInteractiveAuthenticator is decided when it is first resolved, not
-      // here: RegisterServices runs before configuration is bound, so Auth:Mode is not readable yet.
-      // The in-app adapter needs the OIDC one for the refresh grant, so both are always registered
-      // and only the port's answer changes.
+      // Both are always registered and only the port's answer changes: RegisterServices runs before
+      // configuration binds, so Auth:Mode is unreadable here, and in-app needs OIDC to refresh.
       services.TryAddSingleton<OidcInteractiveAuthenticator>();
       services.TryAddSingleton<InAppAuthenticator>();
       services.TryAddSingleton<IInteractiveAuthenticator>(provider =>

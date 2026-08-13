@@ -1,10 +1,8 @@
 using System.Threading;
 using System.Threading.Tasks;
 using Kakehashi.App.Infrastructure.Backend.Contracts;
-// Aliased, because the generated PingRequest/PingResponse would otherwise collide with the
-// transport-agnostic contracts of the same name. The alias is "HealthV1" rather than "Health"
-// on purpose: inside a Kakehashi.* namespace, the identifier "Health" binds to the enclosing
-// Kakehashi.Health namespace before it ever reaches a using alias.
+// Aliased because the generated PingRequest/PingResponse collide with the transport-agnostic
+// contracts. "HealthV1", not "Health": that identifier binds to the enclosing namespace first.
 using HealthV1 = Kakehashi.Health.V1;
 
 namespace Kakehashi.App.Infrastructure.Backend.Grpc {

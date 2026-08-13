@@ -396,10 +396,8 @@ namespace Kakehashi.App.Services {
     private static Error ToError(RpcException exception) {
       var detail = exception.Status.Detail ?? string.Empty;
 
-      // A refusal from the ROUTE GATE never carries the server's words: that middleware runs
-      // before Connect sees the request, answers with a plain HTTP 403, and the client is handed
-      // the transport's own "Bad gRPC response. HTTP status code: 403". Showing that to a person
-      // tells them nothing, so those get a sentence that at least names the next step.
+      // A route-gate refusal never carries the server's words: it answers with a plain HTTP 403
+      // before Connect sees the request, so the transport's own text is all that arrives.
       if (detail.Length == 0
           || detail.StartsWith("Bad gRPC response", StringComparison.Ordinal)) {
         detail = exception.StatusCode switch {

@@ -112,10 +112,8 @@ namespace Kakehashi.Modules.Notes.UI.Infrastructure {
     private Error Translate(RpcException exception, string operation) {
       switch (exception.StatusCode) {
         case StatusCode.InvalidArgument:
-          // The server's validation message is written for a user and is the authoritative one —
-          // it is what the domain returned. Passing it through rather than substituting a generic
-          // string is the difference between "Titles are limited to 120 characters" and
-          // "Something went wrong".
+          // The server's message is what the domain returned and is written for a user: passing it
+          // through is the difference between naming the limit and "Something went wrong".
           LogRejected(operation, exception.Status.Detail);
           return new Error(NotesErrors.TitleRequired.Code, exception.Status.Detail);
 

@@ -129,10 +129,8 @@ namespace Kakehashi.App.UI {
         string pageKey = _navigationService.GetPageKey(item.PageType);
         var navItem = new NavigationViewItem { Tag = pageKey };
 
-        // The icon is set even for custom content: a non-null Icon keeps the presenter's icon
-        // column at its full width in every pane state (expanded and compact), which custom
-        // content relies on for stable alignment. Custom content draws its own visual, though,
-        // so it gets a blank glyph instead of one showing through from underneath.
+        // Set even for custom content: a non-null Icon holds the presenter's icon column at full
+        // width in every pane state. Custom content draws its own visual, so its glyph is blank.
         navItem.Icon = new FontIcon {
           Glyph = item.ContentFactory is null ? item.IconGlyph : string.Empty,
         };
