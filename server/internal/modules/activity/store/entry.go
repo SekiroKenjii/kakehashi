@@ -26,39 +26,32 @@ const collection = "activity_entry"
 func Indexes() []mongodb.Index {
 	return []mongodb.Index{
 		{
-			// Named after its keys rather than its query, on purpose. EnsureIndexes creates by
-			// name with CreateOne and Mongo cannot alter an existing index, so a name kept while
-			// its keys change fails the boot of every database that already holds that name — and
-			// there is no migration to fix it with. Change the name with the keys.
+			// Change this name whenever the keys change. Mongo cannot alter an existing index, so
+			// a kept name with new keys fails the boot of every database that already holds it.
 			Name:       "IX_Entry_UserId_OccurredAt_Id",
 			Collection: collection,
 			Keys: []mongodb.Key{
-				// The equality field leads, so one traversal satisfies both the match and the
-				// sort. An index led by occurred_at would serve "everyone's activity, newest
-				// first" — a query this module must never answer.
+				// The equality field leads, so one traversal serves both match and sort. Leading
+				// with occurred_at would serve "everyone's activity" — never a query here.
 				{Field: "user_id"},
 				{Field: "occurred_at", Descending: true},
 
-				// The tiebreaker: BSON dates are millisecond-precision, so same-millisecond
-				// collisions are real, and it is exactly the key the keyset cursor needs. Without
-				// it the order between equal timestamps is unstable across reads.
+				// The tiebreaker the keyset cursor needs. BSON dates are millisecond-precision, so
+				// without it the order between equal timestamps is unstable across reads.
 				{Field: "_id", Descending: true},
 			},
 		},
 		{
-			// Retention, and the only thing in this module that removes anything. Its own index
-			// because Mongo honours a TTL only over a single date field, so it cannot be a flag on
-			// the compound index above. Expiry is approximate — the TTL monitor wakes about once a
-			// minute. Why deletion is Mongo's job rather than a scheduled sweep: docs/ACTIVITY.md.
+			// The only thing here that removes anything. Its own index because Mongo honours a TTL
+			// only over a single date field. Why Mongo rather than a sweep: docs/ACTIVITY.md.
 			Name:        "IX_Entry_OccurredAt_TTL",
 			Collection:  collection,
 			Keys:        []mongodb.Key{{Field: "occurred_at"}},
 			ExpireAfter: domain.Retention,
 		},
 	}
-	// `kind` is deliberately not indexed: every read matches on user_id and a date range the
-	// compound index serves completely, so CountByKind's group runs over one account's window
-	// rather than the collection.
+	// `kind` is deliberately not indexed: every read matches user_id and a date range the compound
+	// index already serves, so CountByKind groups over one account's window, not the collection.
 }
 
 // Mongo is the activity module's document store.
@@ -175,13 +168,8 @@ func queryFor(userID string, f domain.Filter) bson.D {
 		})
 	}
 	if f.Query != "" {
-		// Escaped, because the caller's text reaches a regular-expression engine: an unescaped "("
-		// is a syntax error the driver reports as a failed read, and an unescaped ".*" is an
-		// unintended scan.
-		//
-		// A regex rather than a text index: a text index tokenises on word boundaries, and these
-		// fields — an event kind, a user-agent string, an IP address — are searched by fragment
-		// ("203.0", "iPhone"). It runs over one account's window, after the index has narrowed.
+		// Escaped: the text reaches a regex engine, where "(" is a failed read and ".*" a scan.
+		// Regex not a text index: these fields are searched by fragment, not by word.
 		needle := bson.Regex{Pattern: regexp.QuoteMeta(f.Query), Options: "i"}
 		clauses = append(clauses, bson.D{{Key: "$or", Value: []bson.D{
 			{{Key: "kind", Value: needle}},
@@ -190,9 +178,8 @@ func queryFor(userID string, f domain.Filter) bson.D {
 		}}})
 	}
 	if f.After != nil {
-		// Keyset, matching the sort and the index exactly: strictly older, or the same instant with
-		// a smaller id. Never skip-and-limit — new rows land at the head of this collection between
-		// any two reads, which is the case offset paging gets wrong.
+		// Keyset, matching the sort and index exactly. Never skip-and-limit: new rows land at the
+		// head between any two reads, which is the case offset paging gets wrong.
 		clauses = append(clauses, bson.D{{Key: "$or", Value: []bson.D{
 			{{Key: "occurred_at", Value: bson.D{{Key: "$lt", Value: f.After.OccurredAt}}}},
 			{
