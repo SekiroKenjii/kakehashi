@@ -54,9 +54,8 @@ namespace Kakehashi.App.Services {
       ArgumentNullException.ThrowIfNull(serviceProvider);
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-      // Deferred one turn: a recipient registered after this service would miss the app-update
-      // announcement, which is raised only on the first run after an update.
-      // The null guard is required, not padding: no thread but the UI one has a dispatcher.
+      // Deferred one turn, or a recipient registered after this service misses the app-update
+      // announcement. The null guard is load-bearing: no thread but the UI one has a dispatcher.
       if (_dispatcherQueue is null || !_dispatcherQueue.TryEnqueue(RecordAppUpdateIfAny)) {
         RecordAppUpdateIfAny();
       }

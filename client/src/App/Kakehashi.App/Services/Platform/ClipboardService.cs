@@ -9,9 +9,8 @@ namespace Kakehashi.App.Services.Platform {
       package.SetText(text);
       Clipboard.SetContent(package);
 
-      // Without this the clipboard's contents live only as long as this process: the package is
-      // held by reference until something flushes it to the OS. Copying an email and then closing
-      // the app would otherwise paste nothing.
+      // Without this the package is held by reference until something flushes it to the OS, so a
+      // copy outlives this process only if the app stays open.
       Clipboard.Flush();
     }
   }

@@ -188,9 +188,8 @@ namespace Kakehashi.App.UI {
       Storyboard.SetTarget(slide, PreviewSlide);
       Storyboard.SetTargetProperty(slide, "X");
 
-      // Held in a field, not a local. A Storyboard nobody references can be collected before it
-      // finishes, and the Completed that collapses the panel then never runs - which left the panel
-      // sitting open and hit-testable over the page after it had been asked to close.
+      // Held in a field, not a local: an unreferenced Storyboard can be collected before it
+      // finishes, so the Completed that collapses the panel never runs and it stays hit-testable.
       _previewSlide?.Stop();
       _previewSlide = new Storyboard();
       _previewSlide.Children.Add(slide);

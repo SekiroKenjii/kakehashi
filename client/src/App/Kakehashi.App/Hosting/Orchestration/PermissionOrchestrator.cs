@@ -37,13 +37,11 @@ namespace Kakehashi.App.Hosting.Orchestration {
       await _layout.RefreshAsync(cancellationToken);
 
       // Registered after the first fetch, so startup's own sign-in does not trigger a second call.
-      // Named delegate, not a lambda: the messenger's two-generic token overload makes one
-      // ambiguous.
+      // Named delegate: the messenger's two-generic token overload makes a lambda ambiguous.
       MessageHandler<PermissionOrchestrator, AuthSessionChangedMessage> onSessionChanged =
           static (recipient, message) => {
             // Fire and forget: the messenger's handler is synchronous, and a failed refresh leaves
-            // the previous answer standing rather than blocking a sign-in. The service swallows
-            // and logs its own failures for exactly this reason.
+            // the previous answer standing rather than blocking a sign-in.
             _ = recipient.RefreshAsync();
           };
 

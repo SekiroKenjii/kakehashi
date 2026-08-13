@@ -378,9 +378,8 @@ namespace Kakehashi.App.UI {
         }
       }
 
-      // Withheld modules are never in Attached — the nav rail must not offer a page the server
-      // refuses — but they are drawn on this grid, locked, so the user can see what to ask an
-      // administrator for.
+      // Withheld modules are never in Attached — the rail must not offer a page the server refuses
+      // — but they are drawn here, locked, so the user can see what to ask an administrator for.
       foreach (var module in _moduleRegistry.All) {
         if (!_moduleRegistry.IsWithheld(module.Name)) {
           continue;

@@ -100,9 +100,8 @@ namespace Kakehashi.App.Services {
         Changed?.Invoke(this, EventArgs.Empty);
       } catch (RpcException exception)
           when (exception.StatusCode == StatusCode.Unauthenticated) {
-        // Signing out revokes the token and the refresh that follows the session change lands here.
-        // The arrangement is dropped rather than kept: what it describes is a pane for somebody who
-        // has left.
+        // Signing out revokes the token and the refresh that follows lands here. The arrangement is
+        // dropped, not kept: what it describes is a pane for somebody who has left.
         Current = NavigationLayout.None;
         LogSignedOut();
         Changed?.Invoke(this, EventArgs.Empty);

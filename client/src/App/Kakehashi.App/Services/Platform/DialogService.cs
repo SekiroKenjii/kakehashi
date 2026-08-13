@@ -54,9 +54,8 @@ namespace Kakehashi.App.Services.Platform {
       var panel = new StackPanel { Spacing = 12, MinWidth = 360 };
       var inputs = new List<Control>(fields.Length);
       foreach (var (label, initialValue, isSecret) in fields) {
-        // A PasswordBox for a secret, and not merely for the dots. It also keeps the value out of
-        // the clipboard history and off the screen of whoever is standing behind an administrator
-        // creating an account — which is precisely when these two dialogs are used.
+        // A PasswordBox for a secret, not merely for the dots: it also keeps the value out of the
+        // clipboard history and off the screen of whoever is standing behind the administrator.
         Control input = isSecret
             ? new PasswordBox { Header = label, Password = initialValue }
             : new TextBox { Header = label, Text = initialValue, AcceptsReturn = false };
