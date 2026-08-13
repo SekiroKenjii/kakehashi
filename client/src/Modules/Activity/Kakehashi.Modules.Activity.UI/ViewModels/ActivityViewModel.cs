@@ -68,14 +68,10 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
   /// Presentation logic for the Activity page: the account's own feed, newest first.
   /// </summary>
   /// <remarks>
-  /// It reaches the server exclusively through the mediator and has never heard of gRPC.
-  /// <para>
-  /// The filtering, the counts and the paging are all the server's, and deliberately so. A page that
-  /// filtered what it had already fetched would answer "no matches" for something three pages down,
-  /// and counts taken over the loaded rows would change as somebody scrolled. What is decided here is
-  /// everything that depends on the reader: the wording, the icons, which day a moment belongs to, and
-  /// which repeats are one event.
-  /// </para>
+  /// Filtering, counts and paging are all the server's: filtering the fetched rows would answer
+  /// "no matches" for something three pages down, and counts over the loaded rows would change as
+  /// somebody scrolled. Decided here is everything that depends on the reader: wording, icons,
+  /// which day a moment belongs to, and which repeats are one event.
   /// </remarks>
   public sealed partial class ActivityViewModel : ViewModel {
     /// <summary>
@@ -185,10 +181,7 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     public bool HasError => ErrorMessage is not null;
 
-    /// <summary>
-    /// Whether to show the empty state: nothing to show, nothing to blame, nothing in flight.
-    /// A feed that is loading and a feed that is genuinely empty are different pictures.
-    /// </summary>
+    /// <summary>Whether to show the empty state: no rows, no error, nothing in flight.</summary>
     public bool IsEmpty => !IsBusy && !HasError && Days.Count == 0;
 
     /// <summary>Fetches the first page, replacing whatever is on screen.</summary>
@@ -243,11 +236,10 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
       }
     }
 
-    /// <summary>Applies the search box. Submitted rather than typed — see the remark.</summary>
+    /// <summary>Applies the search box.</summary>
     /// <remarks>
-    /// The search runs on the server, so a request per keystroke would be a request per keystroke.
-    /// Clearing the box is different: it applies immediately, because nobody expects to press Enter
-    /// to stop filtering.
+    /// On submit, not per keystroke: the search runs on the server. Clearing the box applies
+    /// immediately — nobody expects to press Enter to stop filtering.
     /// </remarks>
     [RelayCommand]
     private Task SearchAsync(CancellationToken cancellationToken) {
@@ -287,10 +279,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     /// <summary>Takes somebody to the screen where they can end sessions and change a password.</summary>
     /// <remarks>
-    /// Through a port, because the screen belongs to another module and the only join available is a
-    /// navigation key with nothing checking it — see <see cref="IAccountScreen"/>. The failure is
-    /// handled rather than assumed: if that module is not mounted, saying where to go is better than a
-    /// link that does nothing.
+    /// Through a port because the screen belongs to another module — see
+    /// <see cref="IAccountScreen"/>. When that module is not mounted, the fallback says where to
+    /// go instead of doing nothing.
     /// </remarks>
     [RelayCommand]
     private void SecureAccount() {
@@ -303,9 +294,8 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     /// <summary>Writes what is on screen to a CSV file.</summary>
     /// <remarks>
-    /// What is on screen, and it says so: the file holds the entries that have been loaded, not every
-    /// entry in the range. Exporting the whole range would mean paging the entire feed behind a button
-    /// that looks instant.
+    /// The file holds the loaded entries, not every entry in the range: exporting the whole range
+    /// would mean paging the entire feed behind a button that looks instant.
     /// </remarks>
     [RelayCommand]
     private async Task ExportAsync() {
@@ -373,12 +363,11 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     private void Fail(Error error) {
       ErrorMessage = error.Message;
 
-      // Cleared for two failures and no others. A page left open across a sign-out keeps refreshing,
-      // and a feed that held its rows would go on showing the previous account's devices and addresses
-      // to whoever signs in next. A lost page means this client and the server disagree about where
-      // the reader is, so what is on screen cannot be trusted to continue from. A network blip is
-      // different: there the rows are still true, and throwing them away would make a flaky connection
-      // look like an empty history.
+      // Cleared for two failures and no others: NotSignedIn, because a page left open across a
+      // sign-out would keep showing the prior account's devices and addresses; PageLost,
+      // because the on-screen position cannot be continued from. A network blip keeps its
+      // rows — they are still true, and clearing them would make a flaky connection look like an
+      // empty history.
       if (error == ActivityErrors.NotSignedIn || error == ActivityErrors.PageLost) {
         _entries.Clear();
         _nextPageToken = string.Empty;
@@ -452,14 +441,12 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     }
 
     /// <summary>
-    /// The four cards, each stating something the server counted rather than something inferred from
-    /// the page that happens to be loaded.
+    /// The four cards, each stating something the server counted rather than something inferred
+    /// from the page that happens to be loaded.
     /// </summary>
     /// <remarks>
-    /// The mockup this page follows had a "Devices" card counting distinct machines over the range.
-    /// That count does not exist: the server groups by kind and by category, not by device, and
-    /// counting the loaded rows would give a number that grew as somebody pressed "load more". The
-    /// card here says what it actually counts.
+    /// No per-device count exists: the server groups by kind and by category only, and counting
+    /// the loaded rows would give a number that grew as somebody pressed "load more".
     /// </remarks>
     private void RebuildStatCards(ActivityPageDto page) {
       int refused = page.CountOf(ActivityKinds.FailedSignIn);

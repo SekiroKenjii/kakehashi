@@ -11,10 +11,8 @@ namespace Kakehashi.App.UI {
   /// The Role Permissions screen.
   /// </summary>
   /// <remarks>
-  /// Loads on <see cref="FrameworkElement.Loaded"/>, not <c>OnNavigatedTo</c>: the navigation
-  /// service sets <c>Frame.Content</c> directly — pages come from the container, not from
-  /// <c>Frame.Navigate</c> — so the navigation overrides never fire. Every page in this app loads
-  /// the same way.
+  /// Loads on <see cref="FrameworkElement.Loaded"/>, not <c>OnNavigatedTo</c>, which never fires
+  /// in this app: docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md
   /// <para>
   /// The static helpers exist because <c>x:Bind</c> calls functions but does not do arithmetic or
   /// string formatting. They are on the page rather than in converters for the reason the rest of

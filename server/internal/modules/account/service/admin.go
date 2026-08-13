@@ -55,8 +55,8 @@ func (s *Service) UpdateAccount(
 
 // ResetPassword sets a new password and ends every session the account had.
 //
-// The revocation is not a courtesy. A reset happens because somebody lost control of an account or
-// left; leaving the existing sessions alive would change the password and change nothing else.
+// A reset happens because somebody lost control of an account or left; leaving the existing
+// sessions alive would change the password and change nothing else.
 func (s *Service) ResetPassword(ctx context.Context, accountID, newPassword string) error {
 	account, err := s.store.AccountByID(ctx, accountID)
 	if err != nil {
@@ -84,18 +84,15 @@ func (s *Service) RevokeAccountSession(ctx context.Context, accountID, sessionID
 		return err
 	}
 	if !ended {
-		// Nothing happened, so nothing is announced. This is the path where saying otherwise would
-		// matter most: any session id at all would otherwise put "somebody else ended your session"
-		// into an account's security feed, which is the one line on that screen a person acts on.
+		// Nothing happened, so nothing is announced: any session id at all would otherwise put
+		// "somebody else ended your session" into an account's security feed.
 		return nil
 	}
 
 	s.record(ctx, accountID, accountapi.EventSessionRevoked, "", "")
 
-	// Announced, which it was not before: an administrator ending somebody's session was written
-	// into that account's own audit trail and told nobody else, so the activity feed — the screen a
-	// person opens to ask whether anyone has been in their account — was silent about the one event
-	// most worth its silence being broken.
+	// Published with ByAdmin set so the activity feed can say "somebody else ended your session" —
+	// the one line on that screen a reader acts on.
 	eventbus.Publish(s.bus, ctx, accountapi.SessionRevoked{
 		UserID:    accountID,
 		SessionID: sessionID,
@@ -150,14 +147,13 @@ func (s *Service) Accounts(ctx context.Context) ([]accountapi.Account, error) {
 
 // SetActive switches an account on or off, and revokes its sessions on the way down.
 //
-// Revoking is the half that makes deactivation mean anything. Without it the account keeps working
-// until its access token expires and its refresh token is next used — minutes during which the
-// administrator believes they have switched somebody off and has not. Deactivation is usually done
-// in a hurry, for a reason, and "in a few minutes" is not what it is understood to mean.
+// Revoking is what makes deactivation immediate: without it the account keeps working until its
+// access token expires and its refresh token is next used, minutes during which the administrator
+// believes they have switched somebody off and has not.
 func (s *Service) SetActive(ctx context.Context, accountID string, active bool, actor string) error {
 	if accountID == actor && !active {
-		// The refusal that costs nothing and prevents the mistake nobody recovers from alone. A
-		// second administrator can still switch this account off, which is the correct escape.
+		// Refusing self-deactivation prevents the lockout nobody recovers from alone; a second
+		// administrator can still switch this account off.
 		return errs.Invalidf("You cannot deactivate your own account.")
 	}
 

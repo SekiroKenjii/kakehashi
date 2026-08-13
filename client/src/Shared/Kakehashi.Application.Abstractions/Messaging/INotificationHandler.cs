@@ -6,6 +6,7 @@ namespace Kakehashi.Application.Abstractions.Messaging {
   /// <typeparam name="TNotification">The notification type.</typeparam>
   public interface INotificationHandler<in TNotification>
       where TNotification : INotification {
+    /// <summary>Handles one published notification.</summary>
     Task Handle(TNotification notification, CancellationToken cancellationToken);
   }
 }

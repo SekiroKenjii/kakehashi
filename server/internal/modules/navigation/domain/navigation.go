@@ -12,9 +12,9 @@ package domain
 import (
 	"strings"
 	"unicode"
-	"unicode/utf16"
 
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"github.com/SekiroKenjii/kakehashi/server/internal/platform/text"
 )
 
 // MaxTitle is the longest a heading or an override may be. It matches the column, so a title that
@@ -41,7 +41,7 @@ type Placement struct {
 	DestinationID string
 
 	// ModuleID is denormalised from the declaration so an orphan row can still say which module it
-	// came from. A row whose destination this build no longer has is the case the whole field
+	// came from. A row whose destination is not part of this build is the case the whole field
 	// exists for: without it an orphan is an unexplained id.
 	ModuleID string
 
@@ -64,7 +64,7 @@ func NewGroup(id, title string, order int, isSystem bool) (Group, error) {
 	if title == "" {
 		return Group{}, errs.Invalidf("A heading needs a name.")
 	}
-	if utf16Len(title) > MaxTitle {
+	if text.UTF16Len(title) > MaxTitle {
 		return Group{}, errs.Invalidf("A heading's name cannot be longer than %d characters.", MaxTitle)
 	}
 
@@ -139,18 +139,8 @@ func Slug(title string) string {
 // a page, or an override is a one-way door.
 func NormaliseOverride(what, value string) (string, error) {
 	value = strings.TrimSpace(value)
-	if utf16Len(value) > MaxTitle {
+	if text.UTF16Len(value) > MaxTitle {
 		return "", errs.Invalidf("A %s cannot be longer than %d characters.", what, MaxTitle)
 	}
 	return value, nil
-}
-
-// utf16Len is how many units a string takes in an nvarchar column.
-//
-// Not the rune count, which is what these checks used. nvarchar(n) counts UTF-16 code units, and a
-// character outside the Basic Multilingual Plane — an emoji, an old CJK ideograph — takes two of
-// them. Counting runes let a value pass the domain and fail the INSERT, turning a message somebody
-// could act on into an opaque 500 from the driver.
-func utf16Len(s string) int {
-	return len(utf16.Encode([]rune(s)))
 }

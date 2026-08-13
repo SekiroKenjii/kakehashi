@@ -49,14 +49,9 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     public partial string SignedInText { get; set; }
 
     /// <summary>
-    /// "3 devices · this + 2 others" under the sessions row.
+    /// "3 devices · this + 2 others" under the sessions row. Computed from the server's session
+    /// list, never hard-coded into the XAML.
     /// </summary>
-    /// <remarks>
-    /// Read from the server, not written into the XAML. This line used to be the literal string
-    /// "2 devices · this + iOS mobile" — a number nobody had, about a device this product has never
-    /// run on. A figure that is always wrong is worse than no figure, because a reader has no way
-    /// to tell which one they are looking at.
-    /// </remarks>
     [ObservableProperty]
     public partial string SessionSummary { get; set; }
 
@@ -91,11 +86,6 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     }
 
     /// <summary>Whether a support destination is configured. Unset hides the row.</summary>
-    /// <remarks>
-    /// Hidden rather than shown-and-dead. This is a boilerplate: it has no support site until
-    /// somebody's product gives it one, and a row that opens nothing teaches a user to stop
-    /// trusting the menu.
-    /// </remarks>
     public bool HasSupport => _supportUrl.Length > 0;
 
     [RelayCommand]
@@ -120,11 +110,6 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     }
 
     /// <summary>Opens the account page, where the password is changed.</summary>
-    /// <remarks>
-    /// Three rows land on the same page, and that is not a shortcut: the account page is where a
-    /// person's password, their sessions and their own audit trail all live. They are named
-    /// separately here because that is what somebody is looking for when they open this menu.
-    /// </remarks>
     [RelayCommand]
     private void ChangePassword() {
       GoToAccount();
@@ -163,8 +148,8 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
 
       var result = await _sender.Send(new GetRemoteSessionsQuery());
       if (result is null || result.IsFailure) {
-        // The menu still opens. A count that could not be fetched is left blank rather than shown
-        // as zero, which would read as "you are not signed in anywhere" while you plainly are.
+        // A count that could not be fetched is left blank rather than shown as zero, which would
+        // read as "not signed in anywhere".
         return "—";
       }
 

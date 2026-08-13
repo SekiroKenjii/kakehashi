@@ -88,23 +88,23 @@ namespace Kakehashi.App.UI {
       NavView.SelectedItem = Home;
     }
 
+    private void OnLayoutChanged(object? sender, EventArgs e) {
+      _ = DispatcherQueue.TryEnqueue(OnModuleSetChanged);
+    }
+
     /// <summary>
     /// Rebuilds every pane item the shell does not own outright, grouped under their headings.
     /// </summary>
     /// <remarks>
-    /// Host items and module items go through the same planner, which is the point: grouping,
-    /// ordering and gating are decided once instead of once per source. Home stays in XAML because it
-    /// is the one destination that is always there and always first.
+    /// Host items and module items go through the same planner: grouping, ordering and gating are
+    /// decided once instead of once per source. Home stays in XAML because it is the one destination
+    /// that is always there and always first.
     /// <para>
     /// What to draw is <see cref="NavigationPlanner"/>'s decision, not this method's. Everything here
     /// is about controls: making a <c>NavigationViewItem</c>, giving a disabled one a tooltip that
     /// says why, and putting each under its heading.
     /// </para>
     /// </remarks>
-    private void OnLayoutChanged(object? sender, EventArgs e) {
-      _ = DispatcherQueue.TryEnqueue(OnModuleSetChanged);
-    }
-
     private void RebuildModuleNavItems() {
       foreach (var existing in _moduleNavItems) {
         NavView.MenuItems.Remove(existing);
@@ -114,9 +114,8 @@ namespace Kakehashi.App.UI {
         }
       }
 
-      // The headings too. Clearing only the dictionary left the controls in the pane, so signing
-      // in again — which rebuilds — stacked a second "Utilities" and "Administration" under the
-      // first.
+      // The heading controls too, not just the dictionary: controls left in the pane stack a
+      // second copy of every heading on the next rebuild (for example after signing in again).
       foreach (var header in _groupHeaders.Values) {
         NavView.MenuItems.Remove(header);
       }
@@ -141,9 +140,8 @@ namespace Kakehashi.App.UI {
             ? contentFactory()
             : item.Title;
 
-        // Named explicitly rather than left to the presenter. An item drawing custom content has no
-        // text for UIA to derive a name from, so the account avatar announced itself as
-        // "NavigationViewItem" — the class name — to every screen reader.
+        // Named explicitly: an item drawing custom content has no text for UIA to derive a name
+        // from, so screen readers announce the class name instead.
         AutomationProperties.SetName(navItem, item.Title);
 
         if (item.FlyoutFactory is { } flyoutFactory) {
@@ -210,7 +208,7 @@ namespace Kakehashi.App.UI {
         // The selected container may have been recreated by the rebuild; re-point the selection.
         SyncSelection(container);
       } else {
-        // The page being shown belongs to a module that is no longer attached: leave it, and
+        // The page being shown belongs to a module that has been detached: leave it, and
         // clear the back stack so its stale entries cannot be navigated back to.
         _navigationService.NavigateTo(_homePageKey);
         _navigationService.ClearBackStack();
@@ -282,10 +280,8 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Undoes exactly what loading did, so the page survives being shown twice.</summary>
     /// <remarks>
-    /// The version this replaces cleared the tracking lists and left the controls in the pane, and
-    /// unsubscribed from things it had subscribed to in the CONSTRUCTOR rather than on load — so an
-    /// Unloaded/Loaded cycle produced a pane with every row twice and no live subscriptions. Setup
-    /// and teardown are symmetric now: both happen on load and unload, and both name the same things.
+    /// Teardown must mirror <see cref="OnShellPageLoaded"/> exactly: asymmetric cleanup leaves an
+    /// Unloaded/Loaded cycle with every pane row doubled or with dead subscriptions.
     /// </remarks>
     private void OnShellPageUnloaded(object sender, RoutedEventArgs e) {
       _layout.Changed -= OnLayoutChanged;
@@ -293,8 +289,8 @@ namespace Kakehashi.App.UI {
         _subscription.Unsubscribe();
       }
 
-      // The controls, not just the lists that track them. Removing only the lists left the pane
-      // populated and the next load appended a second copy of everything.
+      // The controls, not just the lists that track them: a pane left populated gets a second copy
+      // of everything appended on the next load.
       foreach (var existing in _moduleNavItems) {
         NavView.MenuItems.Remove(existing);
         NavView.FooterMenuItems.Remove(existing);

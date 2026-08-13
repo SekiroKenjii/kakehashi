@@ -4,7 +4,7 @@
 // destinations EXIST is a fact about the build: a destination is a compiled page behind a permission,
 // and no row in a table can conjure one. Where they are ARRANGED is a fact about the deployment:
 // which heading a screen sits under, in what order, under what label. The first belongs in code. The
-// second belonged in code too, until it meant that renaming a heading needed a release.
+// second is data, because renaming a heading must not need a release.
 //
 // So: code declares, the database places, and boot reconciles the two. The reconciliation has one
 // rule worth remembering — a destination with no row is seeded from its declared defaults, a

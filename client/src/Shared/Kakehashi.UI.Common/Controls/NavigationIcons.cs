@@ -7,16 +7,9 @@ namespace Kakehashi.UI.Common.Controls {
   /// Turns the semantic icon names a deployment uses into the glyphs this build can draw.
   /// </summary>
   /// <remarks>
-  /// The server sends "note", not <c></c>, and the split is deliberate. Which code point draws a
-  /// note is a fact about the font a client ships with — Segoe Fluent Icons here, something else on a
-  /// platform that does not have it — and a server sending code points would be deciding what a
-  /// Windows font looks like on behalf of clients it knows nothing about. That is also why the server
-  /// accepts any short string: this vocabulary is one client's, not the contract's.
-  /// <para>
-  /// An unknown name falls back to whatever the page already declared rather than to a placeholder.
-  /// That way a deployment naming an icon this build has never heard of costs nothing: the row draws
-  /// the glyph it always did.
-  /// </para>
+  /// The server sends semantic names, never code points; each client owns its glyph mapping, and
+  /// an unknown name falls back to the caller's glyph:
+  /// docs/adr/0013-client-owned-icon-vocabulary.md
   /// <para>
   /// The glyphs are written as escapes rather than as literal characters. They are Private Use Area
   /// code points, so a literal shows up as nothing at all in most editors and diffs — which is how a
@@ -75,10 +68,9 @@ namespace Kakehashi.UI.Common.Controls {
     /// to.
     /// </summary>
     /// <remarks>
-    /// Resolve prefers the caller's own fallback, which for the pane is the glyph the page was compiled
-    /// with. The screen that manages the arrangement has no such glyph — it never loads the pages — so
-    /// it needs somewhere to land. The same code point the activity feed draws for a kind it cannot
-    /// name, because it means the same thing: this build does not recognise what it was given.
+    /// For callers with no glyph of their own to fall back to — the arrangement screen never loads
+    /// the pages, so it has none. The same code point the activity feed draws for a kind it cannot
+    /// name: both mean "this build does not recognise what it was given".
     /// </remarks>
     public const string Unknown = "\uE946";
 
@@ -95,9 +87,8 @@ namespace Kakehashi.UI.Common.Controls {
         return glyph;
       }
 
-      // Then the whole font. The short vocabulary above is what a deployment is meant to reach for,
-      // but somebody who went looking through the full catalogue picked a real icon and should get
-      // the icon they picked.
+      // Fall through to the full font catalogue: a name picked from it is still a real icon and is
+      // honoured even though deployments are meant to use the short vocabulary above.
       string catalogued = SegoeFluentIcons.Glyph(name);
       return catalogued.Length > 0 ? catalogued : fallback;
     }

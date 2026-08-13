@@ -47,8 +47,9 @@ read what the delete affected before they say anything, and the delete still suc
 
 ## The one write from outside
 
-`RecordClientEvent` is the exception, and the service comment used to forbid it: "an endpoint that let
-a caller append to their own history would be an endpoint that lets a caller rewrite it".
+`RecordClientEvent` is the deliberate exception: the one write on an otherwise read-only module. An
+endpoint that let a caller freely append to their own history would be an endpoint that lets a
+caller rewrite it, which is why this write is shaped so the request decides almost nothing.
 
 What makes a history worthless is a caller who gets to say what happened. This one does not:
 
@@ -127,7 +128,15 @@ basis on which to authorize a cross-account read.
 
 `kind` is deliberately **not** indexed. The counts group by it, but only after a match on `user_id` and
 a date range the compound index serves completely, so the group runs over one account's window rather
-than over the collection.
+than over the collection. An index on `kind` would earn its write cost only if something matched on
+`kind` first, and nothing does: every read starts from "whose feed is this".
+
+The store is one file, `store/entry.go`, because there is one collection: store/'s unit of
+decomposition is the table or collection, and an axis with one value has nothing to split. There is
+deliberately no `storable` truncation helper as in `notes/store`: the driver truncates timestamps to
+milliseconds on encode and decodes them back as UTC, and nothing in this module observes it, because
+the subscriber discards the entry after writing. The day an insert returns the stored entry to a
+caller that compares it, the helper comes back.
 
 ## What the client decides
 

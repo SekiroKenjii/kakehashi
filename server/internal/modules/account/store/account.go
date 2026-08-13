@@ -55,13 +55,10 @@ func (s *SQLServer) InsertAccount(ctx context.Context, u domain.Account) error {
 
 // UpdateAccount rewrites the parts of an account its owner edits.
 //
-// LastSignInAt and IsActive are deliberately NOT in the SET list, and that omission is the whole
-// point of this comment. Both are written by other code paths — signing in stamps one, an
-// administrator deactivating an account flips the other — so including them here meant an ordinary
-// profile save wrote back whatever this copy happened to be loaded with. Somebody editing their
-// display name while an administrator disabled them silently switched themselves back on.
-//
-// Each column belongs to exactly one statement: TouchSignIn owns the stamp, SetActive owns the flag.
+// LastSignInAt and IsActive are deliberately NOT in the SET list: both are written by other code
+// paths — TouchSignIn stamps one, SetActive flips the other — and a profile save that included
+// them would write back whatever this copy was loaded with, silently re-enabling an account an
+// administrator just disabled. Each column belongs to exactly one statement.
 func (s *SQLServer) UpdateAccount(ctx context.Context, u domain.Account) error {
 	const q = `
         UPDATE account.Account
@@ -131,19 +128,16 @@ func (s *SQLServer) scanAccount(row scanner, what string) (domain.Account, error
 	return u, nil
 }
 
-// Accounts lists every account, newest first.
+// Accounts lists the accounts the CALLER may see, newest first — not always all of them.
 //
-// Unpaged, and that is a decision with a limit worth naming: it serves an administration screen
-// whose own design is a filterable table over the whole set. A deployment large enough for that to
-// hurt needs paging in the contract, not a TOP the client cannot see.
-// Accounts lists the accounts the CALLER may see, which is not always all of them.
+// Unpaged: it serves an administration screen whose design is a filterable table over the whole
+// set. A deployment large enough for that to hurt needs paging in the contract, not a TOP the
+// client cannot see.
 //
-// This is where row scope stops being a column and starts being a rule. A grant of users.manage
-// carries own, team or all, and the narrowing belongs here rather than in the route gate for the
-// reason the platform's ScopeOf comment gives: a gate that rewrote everyone's SQL would have to
-// understand everyone's schema, while a store narrowing its own query only has to understand its
-// own. This one understands that TeamId is what "team" means — which the schema has said since it
-// was written, and nothing read until now.
+// A grant of users.manage carries own, team or all, and the narrowing belongs here rather than in
+// the route gate: a gate that rewrote everyone's SQL would have to understand everyone's schema,
+// while a store narrowing its own query only has to understand its own. TeamId is what "team"
+// means, and this narrowing is its only reader.
 //
 // An unrecognised or absent scope narrows to nothing rather than widening to everything. The route
 // gate has already established that the caller holds the permission; if this cannot tell how far it
@@ -218,16 +212,14 @@ func (s *SQLServer) DeleteAccount(ctx context.Context, id string) error {
 		return errs.Internalf(err, "delete account events")
 	}
 
-	// The authorization module's rows, deleted here, in this transaction, and not by publishing an
-	// event for it to react to. That is a deliberate exception to how the two modules otherwise
-	// talk: a role membership pointing at an account that no longer exists is over-reported in
-	// every "how many people hold this role" count, forever, and an event delivered after the
-	// commit can fail while the delete stands. One transaction is the only shape where the account
-	// and its memberships go together.
+	// The authorization module's rows go in this transaction, not via a published event: an event
+	// delivered after the commit can fail while the delete stands, leaving a membership that
+	// over-counts "how many people hold this role" forever. One transaction is the only shape
+	// where the account and its memberships go together.
 	//
-	// It is a cross-schema DELETE rather than a foreign key because authz.AccountRole must not
-	// depend on account.Account existing — the authorization module is meant to survive the account
-	// module being swapped for somebody else's identity provider.
+	// A cross-schema DELETE rather than a foreign key because authz.AccountRole must not depend on
+	// account.Account existing — the authorization module is meant to survive the account module
+	// being swapped for somebody else's identity provider.
 	if _, err := tx.ExecContext(
 		ctx, `DELETE FROM authz.AccountRole WHERE AccountId = @p1;`, id); err != nil {
 		return errs.Internalf(err, "delete account roles")

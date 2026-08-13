@@ -99,8 +99,8 @@ func (h *browserSignInHandler) submit(w http.ResponseWriter, r *http.Request) {
 	email := r.PostFormValue("email")
 	password := r.PostFormValue("password")
 	if requestID == "" {
-		// No request id means the browser did not arrive here via /authorize. There is nothing to
-		// complete, so there is nothing to show but the truth.
+		// No request id means the browser did not arrive here via /authorize, so there is no
+		// authorization to complete.
 		http.Error(w, "this page is only reachable from a sign-in request", http.StatusBadRequest)
 		return
 	}
@@ -136,7 +136,7 @@ func (h *browserSignInHandler) submit(w http.ResponseWriter, r *http.Request) {
 
 func (h *browserSignInHandler) render(w http.ResponseWriter, data browserSignInPageData) {
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	// Belt and braces for a page that handles credentials: no framing, no caching.
+	// This page handles credentials: forbid framing and caching.
 	w.Header().Set("X-Frame-Options", "DENY")
 	w.Header().Set("Cache-Control", "no-store")
 	_ = browserSignInPage.Execute(w, data)

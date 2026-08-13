@@ -14,9 +14,9 @@ namespace Kakehashi.Modules.Notes.IntegrationTests {
   /// ids, newest-first ordering, and a delete that succeeds even when there is nothing to delete.
   /// </summary>
   /// <remarks>
-  /// Writing the server's semantics down here is the point. If the real service ever stops
-  /// behaving this way, these tests keep passing and the end-to-end run fails — which is the right
-  /// division of labour, because only one of those two can be run on every commit.
+  /// If the real service ever stops behaving this way, these tests keep passing and the
+  /// end-to-end run fails; that division of labour is deliberate, because only this suite can run
+  /// on every commit.
   /// </remarks>
   internal sealed class InMemoryNotesGateway : INotesGateway {
     private readonly Dictionary<long, NoteDto> _notes = [];

@@ -55,15 +55,10 @@ namespace Kakehashi.App.Infrastructure.DependencyInjection {
     /// attached to every call.
     /// </summary>
     /// <remarks>
-    /// Feature modules call this from <c>IModule.RegisterServices</c> rather than assembling a
-    /// channel themselves. The token plumbing is the reason: a module that wired its own client
-    /// and forgot the call credentials would send unauthenticated requests, and it would keep
-    /// working right up until the server started checking. One place to get it right, and no way
-    /// to half-do it.
-    /// <para>
-    /// The address is read at resolve time rather than captured at registration, so a module can
-    /// register before or after <see cref="AddBackendInfrastructure"/> without the order mattering.
-    /// </para>
+    /// The single registration path for generated gRPC clients: feature modules call it from
+    /// <c>IModule.RegisterServices</c> rather than assembling a channel, so every client carries
+    /// the bearer token, and the resolve-time address read makes registration order irrelevant.
+    /// See docs/adr/0009-centralized-grpc-client-registration.md
     /// </remarks>
     public static IHttpClientBuilder AddBackendGrpcClient<TClient>(this IServiceCollection services)
         where TClient : class {

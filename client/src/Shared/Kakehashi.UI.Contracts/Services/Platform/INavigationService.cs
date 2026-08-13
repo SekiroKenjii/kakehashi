@@ -17,22 +17,22 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
     void Initialize(Frame frame);
 
     /// <summary>
-    /// Registers a page type with the service, associating it with a key derived from the type name. The key is used to
-    /// identify the page type when navigating.
+    /// Registers a page type with the service, associating it with a key derived from the type
+    /// name. The key identifies the page type when navigating.
     /// </summary>
     /// <typeparam name="TPage">The type of the page to register.</typeparam>
     void Register<TPage>() where TPage : Page;
 
     /// <summary>
-    /// Registers pages with the service, associating them with keys derived from their type names. The keys are used to
-    /// identify the page types when navigating.
+    /// Registers pages with the service, associating them with keys derived from their type names.
+    /// The keys identify the page types when navigating.
     /// </summary>
     /// <param name="pageTypes">The types of the pages to register.</param>
     void Register(params ReadOnlySpan<Type> pageTypes);
 
     /// <summary>
     /// Returns the navigation key the service derives for a page type (the same key used by
-    /// <see cref="Register(System.Type[])"/>). Callers that build navigation UI use this so the key they
+    /// <see cref="Register"/>). Callers that build navigation UI use this so the key they
     /// tag an item with matches the key the page is registered under.
     /// </summary>
     /// <param name="pageType">The page type to derive a key for.</param>

@@ -1,12 +1,7 @@
-// Package passwords hashes and verifies user passwords with Argon2id.
-//
-// Argon2id rather than bcrypt: it is the current recommendation, it resists GPU and side-channel
-// attacks better, and it lets the cost be tuned along two axes instead of one. The parameters
-// below follow OWASP's baseline.
-//
-// The encoded form carries its own parameters, so raising the cost later does not invalidate
-// existing hashes — old ones keep verifying with the parameters they were made with, and get
-// re-hashed the next time their owner signs in successfully. NeedsRehash reports when that is.
+// Package passwords hashes and verifies user passwords with Argon2id, parameters at OWASP's
+// baseline. The encoded form carries its own parameters, so raising the cost here never
+// invalidates an existing hash: it keeps verifying with the parameters it was made with, and
+// NeedsRehash reports when it should be re-hashed on the next successful sign-in.
 package passwords
 
 import (

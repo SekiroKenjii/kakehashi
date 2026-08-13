@@ -2,32 +2,25 @@ using System;
 
 namespace Kakehashi.UI.Contracts {
   /// <summary>
-  /// Represents a state manager that manages the state of a system. It provides methods to get the current state, subscribe to state changes, and update the state. The implementation of this interface is platform-specific, as it needs to interact with the XAML framework to manage the state in the UI.
+  /// An observable state cell: holds a current value and pushes every update to subscribers.
   /// </summary>
-  /// <typeparam name="T">The type that represents the state of the system.</typeparam>
+  /// <typeparam name="T">The state type.</typeparam>
   public interface IStateManager<T> : ITransientDependency, IDisposable {
-    /// <summary>
-    /// Gets the current state of the system. The state is represented by a generic type T, which can be any type that represents the state of the system. The implementation of this property is platform-specific, as it needs to interact with the XAML framework to get the current state from the UI.
-    /// </summary>
+    /// <summary>The most recently set state.</summary>
     T CurrentState { get; }
 
     /// <summary>
-    /// Returns an observable that emits the current state and subsequent state changes. This allows subscribers to react to state changes in real-time. The implementation of this method is platform-specific, as it needs to interact with the XAML framework to observe state changes in the UI.
+    /// Returns an observable that emits the current state immediately, then every update.
     /// </summary>
-    /// <returns>An observable that emits the current state and subsequent state changes.</returns>
     IObservable<T> AsObservable();
 
     /// <summary>
-    /// Subscribes to state changes and invokes the provided callback whenever the state changes. The callback receives the new state as a parameter. The implementation of this method is platform-specific, as it needs to interact with the XAML framework to subscribe to state changes in the UI.
+    /// Invokes <paramref name="onNext"/> with the current state immediately, then on every update.
     /// </summary>
-    /// <param name="onNext">The callback to invoke when the state changes.</param>
-    /// <returns>A disposable that can be used to unsubscribe from state changes.</returns>
+    /// <returns>A disposable that ends the subscription.</returns>
     IDisposable Subscribe(Action<T> onNext);
 
-    /// <summary>
-    /// Updates the state of the system. The new state is represented by a generic type T, which can be any type that represents the state of the system. The implementation of this method is platform-specific, as it needs to interact with the XAML framework to update the state in the UI.
-    /// </summary>
-    /// <param name="state">The new state to set.</param>
+    /// <summary>Sets the state and notifies subscribers.</summary>
     void Next(T state);
   }
 }

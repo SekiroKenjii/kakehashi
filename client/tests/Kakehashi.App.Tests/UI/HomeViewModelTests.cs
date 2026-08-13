@@ -287,14 +287,12 @@ namespace Kakehashi.App.Tests.UI {
       return new FakeModule(name, isRequired, navItem);
     }
 
-    /// <summary>A minimal <see cref="IModule"/> that constructs no WinUI types.</summary>
-
     /* --- The assignment lock --- */
 
     [Fact]
     public async Task Load_AWithheldModule_GetsALockedTileRatherThanVanishing() {
-      // The whole point of the client half of P4: a module that disappears tells the user nothing
-      // and looks the same as one that was never built.
+      // A withheld module must keep a tile: one that disappears tells the user nothing and looks
+      // the same as one that was never built.
       var notes = Module("Notes", navItem: new NavigationItem("Notes", "", typeof(HomePage)));
       _all = [notes];
       _attached = [];  // withheld modules are never attached
@@ -337,15 +335,15 @@ namespace Kakehashi.App.Tests.UI {
       var tile = viewModel.ModuleCards.Single(card => card.ModuleName == "Notes");
       Assert.True(tile.CanOpen);
       Assert.True(tile.IsGranted);
-      // An assignment is a ceiling the user may sit under, not a floor they may leave.
+      // Granted means an administrator assigned the module; detaching it is not the user's call.
       Assert.False(tile.CanDetach);
       Assert.Contains("administrator", tile.FootText, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]
     public async Task Load_AnUngovernedModule_IsUnchanged() {
-      // "Open" is not "granted". A module nobody restricted stays entirely the user's own choice,
-      // which is what makes P4 invisible on a deployment that does not use it.
+      // "Open" is not "granted". A module nobody restricted stays entirely the user's own choice;
+      // assignments must have no visible effect on a deployment that does not use them.
       var notes = Module("Notes", navItem: new NavigationItem("Notes", "", typeof(HomePage)));
       _all = [notes];
       _attached = [notes];

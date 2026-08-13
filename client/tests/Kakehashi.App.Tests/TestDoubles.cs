@@ -19,7 +19,6 @@ namespace Kakehashi.App.Tests {
     }
   }
 
-  /// <summary>A trivial <see cref="IOptions{TOptions}"/> wrapper for a known value.</summary>
   internal sealed class StubOptions<T>(T value) : IOptions<T> where T : class {
     public T Value { get; } = value;
   }

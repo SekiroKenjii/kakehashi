@@ -6,10 +6,9 @@
 // middleware in internal/app/server, so this is where it is read and where its absence is
 // answered. The service below is handed a user id and never learns it was on a network.
 //
-// One runtime dependency worth saying out loud rather than leaving to be discovered: the mux
-// resolves the verifier with TryUse, so this module depends at runtime on some module publishing
-// an auth.Verifier — in practice, account — but never at compile time. If account is ever
-// unmounted, ListActivity answers UNAUTHENTICATED to everyone instead of failing the build. That
+// The mux resolves the verifier with TryUse, so this module depends at runtime on some module
+// publishing an auth.Verifier — in practice, account — but never at compile time. If account is
+// unmounted, ListActivity answers UNAUTHENTICATED to everyone instead of failing the build, which
 // is correct for a per-account feed in a server with no notion of accounts.
 package rpc
 
@@ -95,10 +94,9 @@ func (h *handler) RecordClientEvent(
 // Both are claims rather than facts — a user agent lies freely and an address may be a proxy — which
 // is why they are only ever displayed and never used for a decision.
 //
-// It duplicates the account module's edge helper of the same name, and that is the module boundary
-// working rather than failing: that one reads a *http.Request from a REST handler, this one reads a
-// Connect request, and neither module may import the other. If a second Connect handler ever needs
-// this, it belongs in platform/rpc — one caller is not yet a reason to put it there.
+// It duplicates the account module's edge helper of the same name: that one reads a *http.Request
+// from a REST handler, this one reads a Connect request, and neither module may import the other.
+// If a second Connect handler ever needs this, it moves to platform/rpc.
 func callerFacts(req connect.AnyRequest) (device, ip string) {
 	device = strings.TrimSpace(req.Header().Get("User-Agent"))
 	if len(device) > 256 {

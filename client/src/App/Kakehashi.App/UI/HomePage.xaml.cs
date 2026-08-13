@@ -7,9 +7,7 @@ using Microsoft.UI.Xaml.Controls;
 
 namespace Kakehashi.App.UI {
   /// <summary>
-  /// The default landing page shown in the shell: the session-aware greeting, the getting-started
-  /// checklist, the feature-module tiles, the backend status, the recent security activity, and
-  /// developer resources. Reloads itself whenever the auth session changes (e.g. after a re-login).
+  /// The default landing page; reloads itself whenever the auth session or the module set changes.
   /// </summary>
   public sealed partial class HomePage : Page {
     public HomePage(HomeViewModel viewModel) {
@@ -25,16 +23,11 @@ namespace Kakehashi.App.UI {
     public HomeViewModel ViewModel { get; }
 
     private async void OnLoaded(object sender, RoutedEventArgs e) {
-      // Subscribed here and dropped again on Unloaded, rather than for the life of the object.
-      //
-      // Pages are transient: navigating away releases this one's WinRT peer while the messenger
-      // still holds the managed object, and the next broadcast then reads DispatcherQueue off a
-      // disposed peer — an ObjectDisposedException that takes the process down. It only shows up
-      // once something broadcasts while the user is on a different page, which is exactly what the
-      // access gate does when an administrator changes an assignment.
-      //
-      // UnregisterAll first, because Register throws on a duplicate and Loaded can fire more than
-      // once for the same instance.
+      // Subscribed here and dropped again on Unloaded: navigating away releases this page's WinRT
+      // peer while the messenger still holds the managed object, and the next broadcast then reads
+      // DispatcherQueue off a disposed peer — an ObjectDisposedException that takes the process
+      // down. UnregisterAll first, because Register throws on a duplicate and Loaded can fire more
+      // than once for the same instance.
       WeakReferenceMessenger.Default.UnregisterAll(this);
       WeakReferenceMessenger.Default.Register<HomePage, AuthSessionChangedMessage>(
           this, static (page, message) => page.DispatcherQueue.TryEnqueue(

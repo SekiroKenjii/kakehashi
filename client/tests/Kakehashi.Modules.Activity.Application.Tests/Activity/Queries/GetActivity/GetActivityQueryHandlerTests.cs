@@ -11,8 +11,8 @@ using Xunit;
 
 namespace Kakehashi.Modules.Activity.Application.Tests.Activity.Queries.GetActivity {
   /// <summary>
-  /// Unit tests for <see cref="GetActivityQueryHandler"/>: a pass-through, and the point of the tests
-  /// is that it stays one — everything the reader chose has to reach the gateway unaltered.
+  /// Unit tests for <see cref="GetActivityQueryHandler"/>, a pass-through: everything the reader
+  /// chose has to reach the gateway unaltered.
   /// </summary>
   public sealed class GetActivityQueryHandlerTests {
     private readonly IActivityGateway _activity = Substitute.For<IActivityGateway>();

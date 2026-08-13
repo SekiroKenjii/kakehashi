@@ -117,8 +117,8 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 			wantKind: "SignedOut", wantSession: "session-1", wantWhere: "", wantIP: "",
 		},
 		{
-			// Leaving and being ended are two facts. They arrived as one event until now, so the feed
-			// said "signed out" for a revocation that the account page called a revocation.
+			// Leaving and being ended are two facts and arrive as two events:
+			// docs/adr/0003-signedout-vs-sessionrevoked.md
 			name: "one session revoked",
 			publish: func(k *app.Kernel) {
 				eventbus.Publish(k.Bus, context.Background(), accountapi.SessionRevoked{
@@ -140,7 +140,7 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 		{
 			// The only row in the feed that says another person acted on your account, so it is its
 			// own kind rather than an attribute: the client picks a label and an icon by kind, and
-			// this is the one that has to look different. It reached the feed not at all until now.
+			// this is the one that has to look different.
 			name: "an administrator revoked somebody's session",
 			publish: func(k *app.Kernel) {
 				eventbus.Publish(k.Bus, context.Background(), accountapi.SessionRevoked{

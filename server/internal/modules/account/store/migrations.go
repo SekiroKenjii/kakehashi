@@ -143,14 +143,10 @@ func Migrations() []database.Migration {
 			Name: "0002_roles_move_to_authz",
 			SQL: `
                 /*
-                    Roles leave this module. They were a space-joined string on the account — a
-                    claims shortcut, not a model: no role entity, no permission catalogue, nothing
-                    an administrator could change or a screen could render. The authz module owns
-                    them now, as rows.
-
-                    Dropped rather than kept in step. Two places holding the same fact is how they
-                    stop agreeing, and this one had exactly one writer — a development seed — so
-                    there is nothing here worth migrating across.
+                    Roles move to the authz module, which owns them as rows. Here they are a
+                    space-joined string with no role entity and no permission catalogue. Dropped
+                    rather than kept in step: the column's only writer is a development seed, so
+                    nothing is worth migrating across.
                 */
                 ALTER TABLE account.Account
                     DROP CONSTRAINT DF_Account_Roles;
@@ -163,9 +159,8 @@ func Migrations() []database.Migration {
                     every team is the ordinary case in a fresh deployment, and a scope that resolves
                     to no rows is the safe reading of it.
 
-                    One nullable column rather than a hierarchy nobody asked for: this is the seam a
-                    product redefines as department, tenant or region, and it is easier to widen
-                    than to unpick.
+                    One nullable column rather than a hierarchy: the seam a product redefines as
+                    department, tenant or region, and easier to widen than to unpick.
                 */
                 ALTER TABLE account.Account
                     ADD TeamId nvarchar(64) NULL;
@@ -175,17 +170,17 @@ func Migrations() []database.Migration {
 			Name: "0003_account_status",
 			SQL: `
                 /*
-                    Two facts the administration screen asks for and nothing recorded.
+                    Two columns the administration screen reads.
 
                     LastSignInAt is nullable because "never signed in" is a real state and the
-                    obvious alternatives both lie: the epoch reads as 1970, and CreatedAt reads as
-                    an account in use. A NULL is the one value a screen can render as "Never"
+                    alternatives mislead: the epoch reads as 1970, and CreatedAt reads as an
+                    account in use. A NULL is the one value a screen can render as "Never"
                     without having to guess.
 
                     IsActive is the switch an administrator throws instead of deleting. Deleting an
                     account takes its audit trail and its sessions with it; deactivating stops the
-                    sign-in and leaves the history intact, which is what an offboarding actually
-                    wants. Defaulted to 1 so every existing row keeps behaving as it does today.
+                    sign-in and leaves the history intact. Defaulted to 1 so every existing row
+                    keeps its current behaviour.
                 */
                 ALTER TABLE account.Account ADD
                     LastSignInAt datetime2(3) NULL,
@@ -197,10 +192,9 @@ func Migrations() []database.Migration {
 			Name: "0004_authrequest_expires",
 			SQL: `
                 /*
-                    An authorization request is a step in a sign-in someone is in the middle of. It
-                    had no expiry, no expiry predicate and nothing sweeping it, so an abandoned
-                    sign-in stayed in the table forever and its authorization code stayed redeemable
-                    forever — a one-time credential with no clock on it.
+                    ExpiresAt puts a clock on in-flight authorizations: without one, an abandoned
+                    sign-in stays in the table and its authorization code stays redeemable
+                    indefinitely.
 
                     Existing rows get an expiry in the past: anything already here is from a sign-in
                     nobody completed, and treating it as live would be the bug this fixes.

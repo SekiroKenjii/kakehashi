@@ -14,15 +14,10 @@ namespace Kakehashi.Modules.Activity.UI {
   /// Forwards the two app-level facts the server cannot observe for itself into the account's feed.
   /// </summary>
   /// <remarks>
-  /// The host notices when this installation has been updated and when the theme changes, and
-  /// announces both. It cannot hand them to this module directly — the host does not reference a
-  /// feature module — so it announces and this listens.
-  /// <para>
-  /// It lives in the module rather than in the host because what belongs in the feed is the activity
-  /// module's business. The host's own local log keeps recording all four kinds it knows about for its
-  /// Home page; only two of them are this module's to report, because the server already writes the
-  /// other two from facts it saw itself. Forwarding those would double every sign-in.
-  /// </para>
+  /// The host announces app updates and theme changes over the messenger — it does not reference
+  /// feature modules — and this listens. Only those two of the host's four kinds are forwarded:
+  /// the server writes sign-ins and sign-outs from facts it observes itself, and forwarding them
+  /// would double every sign-in in the feed.
   /// </remarks>
   public sealed partial class ActivityReporter : IAwakeOnStartup {
     private readonly ISender _sender;
@@ -52,9 +47,9 @@ namespace Kakehashi.Modules.Activity.UI {
         return;
       }
 
-      // Nobody asked for this and nobody is waiting on it, so it runs unawaited and a failure is a
-      // log line rather than anything a person sees. What must not happen is an exception escaping
-      // into the messenger's dispatch, which would take down whichever thread announced the fact.
+      // Unawaited: a failure is a log line, not anything a person sees. An exception must not
+      // escape into the messenger's dispatch, which would take down whichever thread announced
+      // the fact.
       _ = ReportAsync(reportable);
     }
 

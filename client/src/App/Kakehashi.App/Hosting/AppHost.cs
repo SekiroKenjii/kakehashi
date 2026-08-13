@@ -27,10 +27,6 @@ namespace Kakehashi.App.Hosting {
   /// feature modules. This is the one place composition happens; <c>App.xaml.cs</c> just runs it.
   /// </summary>
   internal static class AppHost {
-    /// <summary>
-    /// Builds the application's host, which is the container for all services and composition. This is the one place composition happens; <c>App.xaml.cs</c> just runs it.
-    /// </summary>
-    /// <returns>The built <see cref="IHost"/> instance.</returns>
     public static IHost Build() {
       var builder = Host.CreateApplicationBuilder();
 
@@ -49,9 +45,9 @@ namespace Kakehashi.App.Hosting {
 
       builder.Logging.AddDebug();
 
-      // A file log beside the debug one. AddDebug alone writes through OutputDebugString, which a
-      // debugger sees and nobody else does — so a build handed to anyone but its author kept no
-      // record of what went wrong. Level comes from configuration; the default is Information.
+      // A file log beside the debug one: AddDebug writes through OutputDebugString, which only an
+      // attached debugger sees, so the file is the only record on machines without one. Level
+      // comes from configuration; the default is Information.
       builder.Logging.AddProvider(new FileLoggerProvider(
           builder.Configuration.GetValue("Logging:File:MinimumLevel", LogLevel.Information)));
 
@@ -71,9 +67,9 @@ namespace Kakehashi.App.Hosting {
       services.AddSingleton<ILocalSettingsService, LocalSettingsService>();
       services.AddSingleton<IModuleRegistry, ModuleRegistry>();
 
-      // The authorization clients are the host's, not a module's: what they feed is the registry
-      // and the two administration screens, which govern every module. A feature module that
-      // governed the others would be one reaching across the boundary the architecture tests hold.
+      // The authorization clients are the host's, not a module's: they feed the registry and the
+      // two administration screens, which govern every module. A feature module in that role
+      // would couple across the module boundary the architecture tests enforce.
       services.AddBackendGrpcClient<AuthzV1.AuthzService.AuthzServiceClient>();
       services.AddSingleton<PermissionService>();
       services.AddSingleton<IPermissionService>(

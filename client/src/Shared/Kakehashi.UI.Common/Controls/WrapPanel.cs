@@ -9,19 +9,8 @@ namespace Kakehashi.UI.Common.Controls {
   /// runs out of room.
   /// </summary>
   /// <remarks>
-  /// WinUI ships no wrapping panel, and the nearest thing — <c>UniformGridLayout</c> — is uniform by
-  /// definition: it measures the first item and gives every cell that width. For chips that is
-  /// exactly wrong in both directions. Left to content, a short first chip set the width and a
-  /// longer one had its remove button clipped off the end; forced to fill a fixed column count, a
-  /// two-letter role stretched across half the panel with its × marooned at the far right.
-  /// <para>
-  /// A chip is as wide as the word inside it. That is the whole requirement, and it needs a panel
-  /// that asks each child what it wants rather than one that decides for all of them.
-  /// </para>
-  /// <para>
-  /// Deliberately not virtualizing. The lists it serves are a handful of roles or tags, and a
-  /// virtualizing layout costs a recycling context and a realization window to save nothing.
-  /// </para>
+  /// Measures each child at its own width and does not virtualize, so it is wrong for large
+  /// collections: docs/adr/0012-wrappanel-over-uniformgridlayout.md
   /// </remarks>
   public sealed partial class WrapPanel : Panel {
     /// <summary>Identifies the <see cref="HorizontalSpacing"/> dependency property.</summary>

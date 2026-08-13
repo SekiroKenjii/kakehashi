@@ -13,8 +13,8 @@ using Xunit;
 
 namespace Kakehashi.Modules.Activity.UI.Tests {
   /// <summary>
-  /// Unit tests for <see cref="ActivityReporter"/>: which announced facts reach the server, and — the
-  /// part worth a test — which do not.
+  /// Unit tests for <see cref="ActivityReporter"/>: which announced facts reach the server, and
+  /// which do not.
   /// </summary>
   /// <remarks>
   /// The reporter registers with the static <c>WeakReferenceMessenger</c>, so the instance is held in

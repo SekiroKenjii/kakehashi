@@ -1,29 +1,8 @@
-// Package activity is the MongoDB reference module, and the reference for one module reacting to
-// another's facts without a reference between them.
-//
-// What it demonstrates that notes does not:
-//
-//	a document store with no migrations, whose schema management is an index list;
-//	the activity_ collection prefix, which EnsureIndexes checks at boot;
-//	a subscriber that turns another module's api events into its own records.
-//
-// Its value is the seam rather than the feature. The account module's /account/security-events
-// endpoint already satisfies the literal test — sign in on one machine, open the account page on
-// another, the event is there. This module reaches that result down a different path, using a fact
-// that is already published instead of inventing a synthetic one to demonstrate it with. Said out
-// loud so the next reader does not over-build it.
-//
-// Two things about it that are easy to get wrong:
-//
-// The feed is per account. Every read is scoped to the caller's own subject and there is no
-// parameter a caller can set. A global feed would require an authorization decision, and this
-// module has no basis on which to make one.
-//
-// Mounting an Indexer makes this module's Mongo health a boot gate for the whole process: the
-// kernel aborts Boot on the first index failure, so a Mongo that is up but cannot build an index
-// stops the server serving authentication. The compile-time asymmetry — deleting this directory
-// costs one line in main.go and breaks nothing — does not hold at boot, and someone will otherwise
-// rely on it.
+// Package activity turns facts published by other modules into a per-account feed. Every read is
+// scoped to the caller's own subject: a global feed would require an authorization decision this
+// module has no basis to make. It is the MongoDB reference module — no migrations, the store's
+// index list is the whole schema management — and subscriptions.go is the only file in the module
+// that imports another module.
 package activity
 
 import (
@@ -61,13 +40,12 @@ func (m *Module) Register(k *app.Kernel) error {
 	return nil
 }
 
-// Indexes hands the kernel this module's index list. The kernel creates whatever is missing, after
-// every module has registered and before any module starts.
+// Indexes hands the kernel this module's index list. The kernel creates whatever is missing after
+// every module has registered and before any starts. Mounting an Indexer makes this module's Mongo
+// health a boot gate: the kernel aborts Boot on the first index failure.
 //
-// The loop converts between two identical-looking types on purpose: returning the store's own type
-// would mean naming platform/mongodb here, and archlint reserves it for store/. The store itself
-// is constructible from this file only because its type is never named — the same move
-// notes/module.go makes with the SQL handle.
+// The loop converts between two identical-looking types because returning the store's own type
+// would name platform/mongodb here, and archlint reserves that import for store/.
 func (m *Module) Indexes() []app.Index {
 	src := store.Indexes()
 
@@ -92,7 +70,7 @@ func (m *Module) Indexes() []app.Index {
 func (m *Module) Routes(k *app.Kernel) []app.Route {
 	pattern, handler := rpc.NewRoute(m.svc, k.RPC)
 
-	// The ordinary case: gated on activity.access.
+	// Gated on activity.access.
 	return []app.Route{
 		{Pattern: pattern, Handler: handler, Policy: app.ModuleAccess()},
 	}

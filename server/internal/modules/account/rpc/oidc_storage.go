@@ -108,9 +108,8 @@ func (s *storage) CreateAccessToken(
 // CreateAccessAndRefreshTokens issues an access token and rotates the refresh token.
 //
 // On the first exchange currentRefreshToken is empty and a fresh one is minted. On a refresh the
-// old token row is deleted before the new one is written: a refresh token that has been used is a
-// refresh token that no longer exists, so a replay of it fails loudly instead of silently minting
-// a second session.
+// spent token row is deleted before the new one is written: a refresh token that has been used
+// ceases to exist, so a replay of it fails loudly instead of silently minting a second session.
 func (s *storage) CreateAccessAndRefreshTokens(
 	ctx context.Context, request op.TokenRequest, currentRefreshToken string,
 ) (string, string, time.Time, error) {
@@ -255,10 +254,10 @@ func (s *storage) SetIntrospectionFromToken(
 func (s *storage) GetPrivateClaimsFromScopes(
 	ctx context.Context, userID, clientID string, scopes []string,
 ) (map[string]any, error) {
-	// Nothing to add today. Roles left this module when authorization became its own: a token that
-	// carried them would be a second source of truth with a ten-minute lag, and the gate resolves
-	// the real answer per request. Kept as a hook because op asks for it either way, and the next
-	// private claim will want somewhere to go.
+	// Empty: roles are deliberately not token claims — a token that carried them would be a second
+	// source of truth with a ten-minute lag, and the gate resolves the real answer per request.
+	// Kept as a hook because op asks for it either way, and the next private claim will want
+	// somewhere to go.
 	return map[string]any{}, nil
 }
 
@@ -300,12 +299,12 @@ func (s *storage) Health(ctx context.Context) error {
 	return s.store.Health(ctx)
 }
 
-// insertToken writes one issued-token row for whichever request shape op handed us.
-// insertToken writes a token, retiring the refresh token it replaces in the same transaction.
+// insertToken writes one issued-token row, retiring the refresh token it replaces in the same
+// transaction.
 //
 // retire is empty on the first exchange of a session. On a refresh it is the token being spent: a
-// refresh token that has been used is a refresh token that no longer exists, so a replay of it
-// fails loudly instead of silently minting a second session.
+// refresh token that has been used ceases to exist, so a replay of it fails loudly instead of
+// silently minting a second session.
 func (s *storage) insertToken(
 	ctx context.Context, request op.TokenRequest, refreshToken, retire string,
 ) (domain.IssuedToken, error) {

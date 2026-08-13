@@ -16,16 +16,15 @@ using Microsoft.UI.Xaml.Controls;
 namespace Kakehashi.App.UI {
   /// <summary>One permission as the grid draws it, with the edit staged on top of it.</summary>
   /// <remarks>
-  /// The staged value and the saved one both live here on purpose. "Changed" is the whole point of
-  /// the screen — an administrator flips eight toggles and wants to see what they have done before
-  /// committing — and a row that only knew its current value could not colour itself.
+  /// The staged value and the saved one both live here: a row that only knew its current value
+  /// could not mark itself as changed before the save.
   /// </remarks>
   public sealed partial class GrantViewModel : ObservableObject {
     /// <summary>What a permission is granted at when nothing narrower was chosen.</summary>
     /// <remarks>
-    /// The widest, not the narrowest. A permission granted at "own" looks granted and does almost
-    /// nothing, which is a failure an administrator hears about from a confused user rather than
-    /// seeing on this screen. Narrowing is then one click, and deliberate.
+    /// The widest, not the narrowest: a permission granted at "own" looks granted while doing
+    /// almost nothing, and that failure surfaces off this screen. Narrowing is one deliberate
+    /// click.
     /// </remarks>
     public const string DefaultScope = "all";
 
@@ -49,7 +48,6 @@ namespace Kakehashi.App.UI {
 
     public PermissionRow Permission { get; }
 
-    /// <summary>Whether the permission is granted at all.</summary>
     [ObservableProperty]
     public partial bool IsEnabled { get; set; }
 
@@ -71,24 +69,19 @@ namespace Kakehashi.App.UI {
     /// Whether to offer the own/team/all picker for this permission.
     /// </summary>
     /// <remarks>
-    /// Only where the server says some store narrows on it. The picker used to be shown for every
-    /// permission, which made a row-level promise on keys nothing narrows — the choice was stored,
-    /// displayed back, and changed no answer anywhere.
+    /// Only where the server says some store narrows on it. Offering the picker on every permission
+    /// would make a row-level promise on keys nothing narrows — a choice stored and displayed back
+    /// while changing no answer anywhere.
     /// </remarks>
     public bool IsScoped => Permission.IsScoped;
 
     /// <summary>
-    /// Whether this row differs from what is saved.
+    /// The scope only counts while the permission is on: re-scoping a grant nobody holds changes
+    /// nothing that would be saved, so it must not count as a pending change.
     /// </summary>
-    /// <remarks>
-    /// The scope only counts while the permission is on. Re-scoping a grant nobody holds changes
-    /// nothing that would be saved, so calling it a pending change would put a number on the
-    /// unsaved-changes bar that Save could not account for.
-    /// </remarks>
     public bool IsChanged => IsEnabled != _savedEnabled
         || (IsEnabled && !string.Equals(Scope, _savedScope, StringComparison.Ordinal));
 
-    /// <summary>The saved state, for a discard that puts every row back at once.</summary>
     public void Discard() {
       IsEnabled = _savedEnabled;
       Scope = _savedScope;
@@ -155,9 +148,8 @@ namespace Kakehashi.App.UI {
   /// The Role Permissions screen: pick a role, stage its grants, save once.
   /// </summary>
   /// <remarks>
-  /// The staging is the design. A screen that saved on every toggle would give an administrator no
-  /// way to change their mind, and would write one audit entry per click for what was one decision;
-  /// the server takes the whole grant set in a transaction for the same reason.
+  /// Grants are staged in this view model and saved in one atomic call:
+  /// docs/adr/0004-staged-edits-atomic-apply.md
   /// <para>
   /// Nothing here is enforcement. Every call it makes needs <c>roles.manage</c> and the server
   /// checks it; the page's own check keeps a screen nobody can use out of the way.
@@ -206,14 +198,9 @@ namespace Kakehashi.App.UI {
     public partial RoleRow? SelectedRole { get; set; }
 
     /// <summary>
-    /// Whether the selected role can actually be deleted.
+    /// The server refuses to delete a role the product ships; hiding the menu item keeps a
+    /// permanent-deletion confirmation from being offered for an operation that always fails.
     /// </summary>
-    /// <remarks>
-    /// The server refuses a role the product ships, with a sentence explaining why. Offering the
-    /// menu item anyway walked an administrator through a permanent-deletion confirmation for
-    /// something that was never going to happen — a control that exists to be refused teaches
-    /// somebody to distrust the screen.
-    /// </remarks>
     public bool CanDeleteSelectedRole => SelectedRole is { IsSystem: false };
 
     [ObservableProperty]
@@ -316,7 +303,6 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Puts every row back to what is saved.</summary>
     [RelayCommand]
     private void Discard() {
       foreach (var grant in _allGroups.SelectMany(group => group.All)) {
@@ -325,7 +311,6 @@ namespace Kakehashi.App.UI {
       RecountChanges();
     }
 
-    /// <summary>Copies the selected role into a new one.</summary>
     [RelayCommand]
     private async Task CloneAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null) {
@@ -348,7 +333,6 @@ namespace Kakehashi.App.UI {
       await SelectAfterReloadAsync(result.Value.Id, cancellationToken);
     }
 
-    /// <summary>Creates an empty role.</summary>
     [RelayCommand]
     private async Task CreateAsync(CancellationToken cancellationToken) {
       var values = await _dialogs.ShowInputsAsync(
@@ -368,7 +352,6 @@ namespace Kakehashi.App.UI {
       await SelectAfterReloadAsync(result.Value.Id, cancellationToken);
     }
 
-    /// <summary>Renames the selected role or rewrites its description.</summary>
     [RelayCommand]
     private async Task EditDetailsAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null) {
@@ -392,7 +375,6 @@ namespace Kakehashi.App.UI {
       await SelectAfterReloadAsync(result.Value.Id, cancellationToken);
     }
 
-    /// <summary>Deletes the selected role, after asking.</summary>
     [RelayCommand]
     private async Task DeleteAsync(CancellationToken cancellationToken) {
       if (SelectedRole is null) {
@@ -420,9 +402,9 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Opens or closes the audit panel, loading it the first time.</summary>
     /// <remarks>
-    /// The in-flight guard is not decoration. "Have I already loaded this?" was a count of the
-    /// list, which stays zero for as long as the fetch takes — so closing and reopening during it
-    /// started a second fetch, and both replies appended, showing every entry twice.
+    /// The in-flight guard is required: the list count stays zero for the whole fetch, so a close
+    /// and reopen during it would start a second fetch, and both replies would append every entry
+    /// twice.
     /// </remarks>
     [RelayCommand]
     private async Task ToggleAuditAsync(CancellationToken cancellationToken) {
@@ -461,10 +443,8 @@ namespace Kakehashi.App.UI {
 
     /// <summary>Rebuilds the grid for whichever role is now selected.</summary>
     /// <remarks>
-    /// Staged edits on the previous role are dropped without asking, and that is a real trade: the
-    /// alternative is a confirmation between every click on the role list. The unsaved-changes bar
-    /// is visible the whole time somebody has pending edits, which is the warning that costs
-    /// nothing.
+    /// Staged edits on the previous role are dropped without asking — the alternative is a
+    /// confirmation between every click on the role list; the unsaved-changes bar is the warning.
     /// </remarks>
     async partial void OnSelectedRoleChanged(RoleRow? value) {
       _allGroups = [];

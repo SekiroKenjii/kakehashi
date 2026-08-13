@@ -47,9 +47,9 @@ namespace Kakehashi.App.Tests.UI {
     /// own catalogue behind it is PascalCase.
     /// </summary>
     /// <remarks>
-    /// This used to probe with "Home", which stopped proving anything once the full Segoe catalogue
-    /// was chained on: "Home" is a real icon in it, so knowing it is correct. "Activity" is not,
-    /// which is what makes it a probe rather than a coincidence.
+    /// The probe name must not exist in the chained Segoe catalogue: "Home" is a real icon there,
+    /// so knowing it would be correct and prove nothing. "Activity" is not, which is what makes it
+    /// a probe rather than a coincidence.
     /// </remarks>
     [Fact]
     public void MatchingIsOrdinalRatherThanForgiving() {

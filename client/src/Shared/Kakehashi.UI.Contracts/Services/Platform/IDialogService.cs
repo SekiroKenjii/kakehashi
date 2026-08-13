@@ -21,16 +21,12 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
     Task<string?> ShowPromptAsync(
         string title, string label, string initialValue = "", string primaryText = "OK");
 
-    /// <summary>Asks for several lines of text at once, one labelled field each.</summary>
-    /// <returns>What was typed, in field order, or <see langword="null"/> if dismissed.</returns>
     /// <summary>
-    /// Asks for several values at once and returns them in order, or null when cancelled.
+    /// Asks for several values at once and returns them in field order, or null when cancelled.
     /// </summary>
     /// <remarks>
-    /// A field marked secret is rendered masked. It is a field of the tuple rather than a separate
-    /// overload because the dialogs that need it are mixed — "Add user" asks for an email, a name
-    /// and a password in one breath — and an overload would have meant either two dialogs or a
-    /// second parameter nobody remembers to pass.
+    /// A field marked secret is rendered masked. Secrecy is per field rather than per call because
+    /// one dialog mixes plain and secret fields ("Add user": email, name, password).
     /// </remarks>
     Task<IReadOnlyList<string>?> ShowInputsAsync(
         string title,

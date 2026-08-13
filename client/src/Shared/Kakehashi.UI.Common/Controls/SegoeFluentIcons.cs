@@ -11,11 +11,8 @@ namespace Kakehashi.UI.Common.Controls {
   /// https://learn.microsoft.com/windows/apps/design/style/segoe-fluent-icons-font - not hand
   /// written, and not to be hand edited. Regenerate it rather than adding a line.
   /// <para>
-  /// This is the long tail behind <see cref="NavigationIcons"/>. That short list is the vocabulary a
-  /// deployment is expected to use, because those names say what a screen is <em>about</em> and so
-  /// mean something to a client shipping a different icon font. A name from this catalogue is still
-  /// a name rather than a code point, so it crosses the wire the same way and degrades the same way:
-  /// a client that cannot draw it falls back to the icon the page was compiled with.
+  /// The long tail behind <see cref="NavigationIcons"/>: a catalogue name crosses the wire and
+  /// degrades exactly like a vocabulary name: docs/adr/0013-client-owned-icon-vocabulary.md
   /// </para>
   /// </remarks>
   public static class SegoeFluentIcons {

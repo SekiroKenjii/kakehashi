@@ -13,24 +13,12 @@ import (
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
 )
 
-// inAppSignInHandler issues tokens from credentials posted by the app itself, with no browser involved.
+// inAppSignInHandler issues tokens from credentials posted by the app itself, with no browser
+// involved. The tokens come from the provider's own op.CreateTokenResponse, so both sign-in modes
+// issue identical tokens: docs/adr/0007-in-app-sign-in-alongside-browser-oidc.md
 //
-// # Why this exists alongside the browser flow
-//
-// Authorization Code + PKCE through the system browser is the right answer when the identity
-// provider is someone else's — Entra, Okta, Google — because the whole point is that the password
-// is typed into *their* page and this application never sees it, and because that is where SSO,
-// MFA and conditional access live.
-//
-// None of that applies when the provider is this very process. A first-party desktop client
-// talking to its own backend gains nothing from bouncing through a browser: the password crosses
-// the same trust boundary either way, and the user pays for it with a window that steals focus and
-// a loopback listener that corporate firewalls dislike. So the default is this endpoint, and the
-// browser flow stays mounted for the day the issuer becomes someone else's.
-//
-// The line to remember: **the moment Auth:Authority points at a real IdP, the client must switch
-// back to browser mode.** Entra and friends refuse password grants for most configurations
-// precisely because it defeats MFA — and they are right to.
+// The moment Auth:Authority points at an external IdP, the client must switch back to browser
+// mode — real IdPs refuse password grants because they defeat MFA.
 type inAppSignInHandler struct {
 	svc      *service.Service
 	store    *store.SQLServer

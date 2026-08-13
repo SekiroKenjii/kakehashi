@@ -11,10 +11,8 @@ namespace Kakehashi.Modules.Activity.UI.Views {
   /// The activity page: the signed-in account's feed, gathered server-side from every device.
   /// </summary>
   /// <remarks>
-  /// It refreshes when you open it and when you ask, and not on a timer. A poll would keep running
-  /// while the window is minimised and while the machine is locked, filling the server's request
-  /// log with calls nobody is looking at — and this page is not a live monitor. Navigating to it
-  /// is the natural "show me now", which is also exactly what the two-machine test does.
+  /// Refreshes on open and on demand, never on a timer; the load starts from the page's
+  /// <c>Loaded</c> handler: docs/adr/0011-pages-load-on-loaded-not-onnavigatedto.md
   /// <para>
   /// The static helpers exist because <c>x:Bind</c> calls functions but cannot choose a brush from a
   /// bool. They live on the page rather than in converters for the reason the rest of this codebase
@@ -42,7 +40,7 @@ namespace Kakehashi.Modules.Activity.UI.Views {
 
     public ActivityViewModel ViewModel { get; }
 
-    /// <summary>The icon square's colour: red only where the answer to "was that me?" could be no.</summary>
+    /// <summary>The icon square's colour: red only for alert rows.</summary>
     public static Brush IconBackground(bool isAlert) {
       return Resource(isAlert
           ? "SystemFillColorCriticalBackgroundBrush"
@@ -93,9 +91,8 @@ namespace Kakehashi.Modules.Activity.UI.Views {
 
     /// <summary>Applies the search box.</summary>
     /// <remarks>
-    /// On submit, not on every keystroke: the search runs on the server, and a request per character
-    /// is a request per character. Emptying the box is handled by the view model, which reloads
-    /// immediately — nobody expects to press Enter to stop filtering.
+    /// On submit, not on every keystroke: the search runs on the server. Emptying the box is
+    /// handled by the view model, which reloads immediately.
     /// </remarks>
     private async void OnSearchSubmitted(
         AutoSuggestBox sender, AutoSuggestBoxQuerySubmittedEventArgs args) {

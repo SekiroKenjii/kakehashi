@@ -3,9 +3,6 @@ using System.Collections.Generic;
 using Kakehashi.App.Core;
 
 namespace Kakehashi.App.Extensions {
-  /// <summary>
-  /// Extension methods for <see cref="System.Exception"/>.
-  /// </summary>
   public static class ExceptionExtension {
     /// <summary>
     /// Flattens an exception and its inner exceptions into <see cref="CallStack"/> records suitable

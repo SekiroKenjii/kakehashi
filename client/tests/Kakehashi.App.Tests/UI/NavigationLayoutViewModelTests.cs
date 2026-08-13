@@ -92,9 +92,9 @@ namespace Kakehashi.App.Tests.UI {
     }
 
     /// <summary>
-    /// A screen with no heading, and a leftover from a module this build no longer has, both need
-    /// somewhere to be — the mockup had nowhere for either, and this is the one screen where anybody
-    /// can discover the leftover exists.
+    /// A screen with no heading, and a leftover from a module that is not part of this build, both
+    /// need somewhere to be — and this is the one screen where anybody can discover the leftover
+    /// exists.
     /// </summary>
     [Fact]
     public async Task Load_PutsEverythingSomewhere() {
@@ -208,8 +208,8 @@ namespace Kakehashi.App.Tests.UI {
     }
 
     /// <summary>
-    /// Renumbering only where the order moved. Renumbering everything would rewrite rows nobody
-    /// touched, which is the defect the old per-row reorder was criticised for.
+    /// Renumbering only where the order moved: renumbering everything would rewrite rows nobody
+    /// touched.
     /// </summary>
     [Fact]
     public async Task ApplyKeepsTheOrdersOfHeadingsNobodyReordered() {
@@ -241,7 +241,7 @@ namespace Kakehashi.App.Tests.UI {
 
     /// <summary>
     /// Discard restores the placement, which no node can do for itself: a node can put its own name
-    /// back, but nothing on it knows which heading it used to sit under.
+    /// back, but nothing on it knows which heading it came from.
     /// </summary>
     [Fact]
     public async Task DiscardPutsEverythingBackIncludingWhereScreensSat() {
@@ -277,9 +277,8 @@ namespace Kakehashi.App.Tests.UI {
     }
 
     /// <summary>
-    /// A heading the product ships offers no delete button at all. The server refuses it too; this is
-    /// what stops it being offered, because a control that exists to be refused teaches somebody to
-    /// distrust the screen.
+    /// A heading the product ships offers no delete control: the server refuses the delete, so a
+    /// button's only possible outcome would be the error bar.
     /// </summary>
     [Fact]
     public async Task AHeadingTheProductShipsCannotBeDeleted() {
@@ -290,8 +289,8 @@ namespace Kakehashi.App.Tests.UI {
     }
 
     /// <summary>
-    /// Three of the five rows on this screen used to carry a switch the server always rejected, and the
-    /// only way to find out was to try it and read the error bar.
+    /// A row the server refuses to hide (hideWhenDenied) is offered no switch at all: a switch
+    /// whose only possible outcome is the error bar is discoverable only by trying it.
     /// </summary>
     [Fact]
     public async Task AScreenThatManagesThePaneOffersNoWayToHideIt() {

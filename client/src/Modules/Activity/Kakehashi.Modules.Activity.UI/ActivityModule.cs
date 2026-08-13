@@ -31,9 +31,8 @@ namespace Kakehashi.Modules.Activity.UI {
 
       services.AddActivityApplication();
 
-      // The host's helper rather than a hand-rolled channel, so the access token is attached the
-      // same way it is everywhere else. This module needs it more than most: without a token the
-      // server has no account to scope the feed to, and answers UNAUTHENTICATED.
+      // The host's helper attaches the access token; without one the server has no account to
+      // scope the feed to and answers UNAUTHENTICATED.
       services.AddBackendGrpcClient<ActivityV1.ActivityService.ActivityServiceClient>();
 
       services.TryAddSingleton<IActivityGateway, GrpcActivityGateway>();
@@ -41,9 +40,8 @@ namespace Kakehashi.Modules.Activity.UI {
       services.AddTransient<ActivityViewModel>();
       services.AddTransient<ActivityPage>();
 
-      // Registered as an awake-on-startup service, because what it listens for is announced during
-      // startup: an app update is noticed on the first run of a new build, and a listener created
-      // later would miss the one moment worth reporting.
+      // Awake-on-startup: an app update is announced on the first run of a new build, during
+      // startup, and a listener created later would miss it.
       services.AddSingleton<IAwakeOnStartup, ActivityReporter>();
     }
 

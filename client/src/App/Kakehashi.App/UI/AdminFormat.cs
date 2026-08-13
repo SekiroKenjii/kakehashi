@@ -30,8 +30,8 @@ namespace Kakehashi.App.UI {
     }
 
     /// <summary>
-    /// "2 min ago", "Yesterday", "2026-06-01". Null — never — is the caller's to phrase, because
-    /// the list says "—" where the status column says "Never signed in".
+    /// "2 min ago", "Yesterday", "2026-06-01"; callers phrase "never" themselves (the list shows
+    /// "—", the status column "Never signed in").
     /// </summary>
     public static string Relative(DateTimeOffset at) {
       var age = DateTimeOffset.Now - at;

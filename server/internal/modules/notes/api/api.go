@@ -12,9 +12,8 @@ import (
 // Note is a note as the rest of the application sees it.
 //
 // It is a data transfer object, deliberately separate from the domain entity in
-// internal/modules/notes/domain. The two look almost identical today, and that is fine: the point
-// is that the domain type is free to grow invariants, unexported fields and behaviour without any
-// of it leaking across the module boundary.
+// internal/modules/notes/domain: the domain type is free to grow invariants, unexported fields
+// and behaviour without any of it leaking across the module boundary.
 type Note struct {
 	ID        int64
 	Title     string
@@ -55,9 +54,8 @@ type Updated struct {
 
 // Deleted is published after a note is removed.
 //
-// It carries the title as well as the ID because by the time a subscriber runs, the note is gone,
-// and "Deleted 'Shopping list'" is a message you can only write if the event brought the name with
-// it.
+// It carries the title as well as the ID because the note is gone by the time a subscriber runs;
+// a message naming the note can only come from the event.
 type Deleted struct {
 	ID    int64
 	Title string

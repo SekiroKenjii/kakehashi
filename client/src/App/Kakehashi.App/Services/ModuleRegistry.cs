@@ -106,8 +106,8 @@ namespace Kakehashi.App.Services {
       }
 
       if (IsGranted(module.Name)) {
-        // An assignment is a ceiling the user may sit under, not a floor they may leave: a module
-        // an administrator deliberately granted is one the account is expected to have.
+        // An admin-granted module cannot be detached: the grant means the account is expected to
+        // have it, not merely allowed it.
         return Result.Failure(GrantedModule);
       }
 

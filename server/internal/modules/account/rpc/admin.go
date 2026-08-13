@@ -1,8 +1,8 @@
 // The administrator's surface, over Connect rather than the plain JSON the /account/* endpoints
 // use. The two are different audiences: those seven serve a caller acting on their own record and
 // answer the client's AccountGateway, this one serves somebody acting on everybody else's and
-// answers a screen. Different audience, different contract, and — the part that matters — a
-// separate route, which is the unit the server puts a permission check on.
+// answers a screen. Different audience, different contract, and a separate route — the unit the
+// server puts a permission check on.
 
 package rpc
 

@@ -8,31 +8,25 @@ using Kakehashi.App.Services;
 using Kakehashi.UI.Common.Controls;
 
 namespace Kakehashi.App.UI {
-  /// <summary>A heading as the placement picker offers it, including "no heading".</summary>
+  /// <summary>An empty <c>Id</c> is the real "no heading" choice, not a missing value.</summary>
   public sealed record NavHeadingChoice(string Id, string Title);
 
-  /// <summary>One name in the icon vocabulary, with the glyph it draws.</summary>
   public sealed record NavIconChoice(string Name, string Glyph);
 
-  /// <summary>One read-only line in the "owned by code" card.</summary>
   public sealed record NavCodeFact(string Label, string Value);
 
-  /// <summary>One line of the diff: what a screen or heading was, and what it would become.</summary>
   public sealed record NavChange(string Subject, string What);
 
   /// <summary>
   /// One destination in the structure tree, as an administrator stages it.
   /// </summary>
   /// <remarks>
-  /// Every edit is held here until Apply, which is a reversal of how this screen used to work. What
-  /// changed is the gesture: dragging a screen into another heading renumbers what it landed among, so
-  /// one action is now several writes — and a sequence of single-row calls cannot fail halfway without
-  /// leaving the pane half-rearranged. The staging is what a transaction on the server can then protect.
+  /// Every edit is held here until Apply, then written in one atomic call:
+  /// docs/adr/0004-staged-edits-atomic-apply.md
   /// <para>
-  /// The baselines are what "unsaved" is measured against. They are also why the order comparison is
-  /// positional rather than numeric: a deployment whose stored orders are 5 and 7 is perfectly
-  /// arranged, and a screen that decided "modified" by comparing them against a freshly renumbered
-  /// 10 and 20 would claim unsaved changes the moment it opened.
+  /// The baselines are what "unsaved" is measured against. The order comparison is positional, not
+  /// numeric: stored orders of 5 and 7 are a valid arrangement, and comparing them against
+  /// renumbered values (10, 20) would claim unsaved changes the moment the screen opened.
   /// </para>
   /// </remarks>
   public sealed partial class NavScreenNode : ObservableObject {
@@ -73,31 +67,23 @@ namespace Kakehashi.App.UI {
 
     public string DefaultIcon { get; }
 
-    /// <summary>Where the code puts it. What Reset moves it back to.</summary>
+    /// <summary>The heading the code declares; Reset moves the screen back to it.</summary>
     public string DefaultGroup { get; }
 
     public int DefaultOrder { get; }
 
     /// <summary>
-    /// What the code enforces, and the reason the rest of this screen is safe to edit.
+    /// The permission the code enforces; shown on screen because nothing here can change it.
     /// </summary>
-    /// <remarks>
-    /// On screen precisely because nothing here can change it: somebody wondering why a screen is
-    /// invisible to a colleague needs to see what governs it.
-    /// </remarks>
     public string RequiredPermission { get; }
 
     /// <summary>
-    /// Whether this screen refuses to be hidden.
+    /// The server rejects hiding such a screen; reading the flag here keeps the switch from being
+    /// offered at all.
     /// </summary>
-    /// <remarks>
-    /// The server refuses it, with a sentence. Reading it here as well is what stops the switch being
-    /// offered at all — three of the five rows on this screen used to carry a switch the server always
-    /// rejected, and the only way to find out was to try it and read the error bar.
-    /// </remarks>
     public bool HideWhenDenied { get; }
 
-    /// <summary>A stored row whose destination this build no longer has.</summary>
+    /// <summary>A stored row whose destination is not part of this build.</summary>
     public bool IsOrphan { get; }
 
     /// <summary>The heading holding this screen, or null while it is being moved.</summary>
@@ -110,10 +96,9 @@ namespace Kakehashi.App.UI {
     /// The heading this screen was under when the screen was last read.
     /// </summary>
     /// <remarks>
-    /// A reference rather than an identifier, and that is not fussiness. A heading created on screen has
-    /// no identifier until the apply comes back, so comparing ids would read "moved from unfiled into a
-    /// brand-new heading" as no change at all — both sides being empty — and the pending bar would miss
-    /// it entirely.
+    /// A reference rather than an identifier: a heading created on screen has no id until the apply
+    /// comes back, so comparing ids would read "moved from unfiled into a new heading" as no change
+    /// at all — both sides empty.
     /// </remarks>
     public NavHeadingNode? SavedHeading { get; internal set; }
 
@@ -139,42 +124,35 @@ namespace Kakehashi.App.UI {
     [NotifyPropertyChangedFor(nameof(IsHidden))]
     public partial bool IsVisible { get; set; }
 
-    /// <summary>What the pane will show: the override, or the code's own label.</summary>
     public string DisplayTitle => Title.Length > 0 ? Title : DefaultTitle;
 
-    /// <summary>The icon name in force: the override, or the one the code declared.</summary>
-    /// <remarks>
-    /// Shown rather than typed. The name is chosen from the vocabulary below the field, so a free
-    /// text box only ever produced a name this build cannot draw.
-    /// </remarks>
+    /// <summary>
+    /// Displayed, not typed: names are picked from the vocabulary below the field, since free text
+    /// can name an icon this build cannot draw.
+    /// </summary>
     public string IconName => Icon.Length > 0 ? Icon : DefaultIcon;
 
-    /// <summary>The glyph the pane will draw, falling back to the one the page ships with.</summary>
     public string Glyph =>
         NavigationIcons.Resolve(Icon, NavigationIcons.Resolve(DefaultIcon, NavigationIcons.Unknown));
 
-    /// <summary>Whether this build can draw the icon name as typed. Empty is not unknown — it means
-    /// "use the code's".</summary>
+    /// <summary>Whether this build can draw the icon name; empty means "use the code's", not
+    /// unknown.</summary>
     public bool IsIconKnown => Icon.Length == 0 || NavigationIcons.Knows(Icon);
 
     public bool IsIconUnknown => !IsIconKnown;
 
-    /// <summary>Why the label differs from the code's, when it does.</summary>
     public string TitleHint => Title.Length == 0
         ? "Using the name the code gives it."
         : $"Changed — the code calls it \"{DefaultTitle}\".";
 
     public bool IsHidden => !IsVisible;
 
-    /// <summary>Whether the visibility switch may be offered at all.</summary>
     public bool CanHide => !HideWhenDenied;
 
-    /// <summary>What the row says about itself under the label.</summary>
     public string Subtitle => IsOrphan
         ? $"{Id} · not in this build"
         : $"{Id} · {ModuleId}";
 
-    /// <summary>Whether anything about this screen is staged and unsaved.</summary>
     public bool IsModified {
       get {
         if (Title != _savedTitle || Icon != _savedIcon || IsVisible != _savedVisible) {
@@ -204,9 +182,9 @@ namespace Kakehashi.App.UI {
 
     /// <summary>How this screen's staged state differs from what is saved, in words.</summary>
     /// <remarks>
-    /// One sentence per kind of change rather than one per field, because that is what the pending bar
-    /// and the diff both read. Ordered so the most consequential comes first: hiding a screen is the
-    /// only change here that takes something away from somebody.
+    /// One sentence per kind of change rather than one per field — the pending bar and the diff
+    /// both read these. Hidden/shown comes first: it is the only change that takes something out
+    /// of the pane.
     /// </remarks>
     public IReadOnlyList<string> Changes {
       get {
@@ -231,7 +209,6 @@ namespace Kakehashi.App.UI {
       }
     }
 
-    /// <summary>Puts every staged edit back to what is saved.</summary>
     public void Discard() {
       Title = _savedTitle;
       Icon = _savedIcon;
@@ -292,14 +269,10 @@ namespace Kakehashi.App.UI {
     /// Builds the bucket for screens under no heading at all.
     /// </summary>
     /// <remarks>
-    /// Not in the mockup, and necessary anyway. Two kinds of row have no heading: a destination nobody
-    /// has filed, and a leftover from a module this build no longer has — which the server lists
-    /// deliberately, because this screen is the only place anybody can discover it exists. Without a
-    /// bucket they would be invisible on the one screen that manages placement.
-    /// <para>
-    /// It is not a heading. It has no identifier, it is never sent to the server, it cannot be renamed
-    /// or deleted, and it draws itself as what it is.
-    /// </para>
+    /// Two kinds of row have no heading: a destination nobody has filed, and a leftover from a
+    /// module not in this build — which the server lists deliberately, because this screen is the
+    /// only place it can be discovered. Not a heading: it has no identifier, is never sent to the
+    /// server, and cannot be renamed or deleted.
     /// </remarks>
     public static NavHeadingNode Unfiled() {
       return new NavHeadingNode("Not in any heading", int.MaxValue, unfiled: true);
@@ -309,7 +282,6 @@ namespace Kakehashi.App.UI {
 
     public bool IsSystem { get; }
 
-    /// <summary>The bucket for screens under no heading. See <see cref="Unfiled"/>.</summary>
     public bool IsUnfiled { get; }
 
     /// <summary>Created on screen and not applied yet.</summary>
@@ -325,24 +297,22 @@ namespace Kakehashi.App.UI {
     /// The number the pane orders by.
     /// </summary>
     /// <remarks>
-    /// Not part of IsModified, and not edited directly any more. Dragging a heading changes its
-    /// position in the list, not this number: the number is worked out from the position at apply time,
-    /// and only for the headings whose order actually moved. Comparing it here would have missed a drag
-    /// entirely, because at the moment of the drag it has not changed yet.
+    /// Not part of IsModified: dragging a heading changes its position in the list, not this
+    /// number — the number is derived from the position at apply time, and only for headings whose
+    /// order moved. Comparing it here would miss a drag, which has not changed it yet.
     /// </remarks>
     public int SortOrder { get; internal set; }
 
     /// <summary>
-    /// Whether this heading ships with the product.
+    /// Whether the delete button is offered: a product-shipped heading is renamable and
+    /// re-orderable, never deletable.
     /// </summary>
     /// <remarks>
-    /// Renamable and re-orderable, never deletable. The server refuses it too; this only keeps the
-    /// button from being offered, because a control that exists to be refused teaches somebody to
-    /// distrust the screen.
+    /// The server refuses the delete too; this only keeps the button from being offered.
     /// </remarks>
     public bool CanDelete => !IsSystem && !IsUnfiled;
 
-    /// <summary>Whether it can be renamed. The unfiled bucket is not a heading and has no name.</summary>
+    /// <summary>The unfiled bucket is not a heading and has no name to rename.</summary>
     public bool CanRename => !IsUnfiled;
 
     public bool IsBuiltIn => IsSystem;
@@ -353,12 +323,9 @@ namespace Kakehashi.App.UI {
     public bool IsEmpty => Screens.Count == 0;
 
     /// <summary>
-    /// Whether this heading itself is staged and unsaved.
+    /// Own name and existence only: re-ordering the headings is a fact about the list rather than
+    /// about any one of them, so the screen tracks that and this does not.
     /// </summary>
-    /// <remarks>
-    /// Its own name and existence only. Whether the headings have been re-ordered is a fact about the
-    /// list rather than about any one of them, so the screen tracks that and this does not.
-    /// </remarks>
     public bool IsModified => IsNew || Title != _savedTitle;
 
     /// <summary>How this heading differs from what is saved, in words.</summary>
@@ -378,7 +345,6 @@ namespace Kakehashi.App.UI {
     /// <summary>The saved order of the screens under it, for deciding whether it needs renumbering.</summary>
     public IReadOnlyList<string> SavedSequence { get; internal set; } = [];
 
-    /// <summary>Puts the name back to what is saved.</summary>
     public void Discard() {
       Title = _savedTitle;
     }

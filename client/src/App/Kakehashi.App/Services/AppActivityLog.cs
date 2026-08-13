@@ -11,7 +11,6 @@ using Microsoft.UI.Dispatching;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.Services {
-  /// <summary>One entry in the local app activity feed.</summary>
   public sealed record AppActivityEntry(
       string Kind, string Title, string Detail, DateTimeOffset OccurredAt);
 
@@ -53,14 +52,12 @@ namespace Kakehashi.App.Services {
       ArgumentNullException.ThrowIfNull(serviceProvider);
       _dispatcherQueue = DispatcherQueue.GetForCurrentThread();
 
-      // Deferred by one turn of the message loop, deliberately. Startup creates every awake service
-      // in registration order, so anything that registers for the announcement after this one runs
-      // would miss an app update — and that is the single run on which the update is worth
-      // announcing at all. Recording it a moment later costs nothing; announcing it to an empty room
-      // loses it for good.
-      // The null check is not defensive padding: there is no dispatcher on a thread that is not a UI
-      // thread, which is every thread a unit test runs on. The rest of this class guards it the same
-      // way for the same reason.
+      // Deferred by one turn of the message loop: startup creates awake services in registration
+      // order, so a recipient registered after this one would otherwise miss the app-update
+      // announcement, which is only raised on the first run after an update.
+      // The null check is not defensive padding: there is no dispatcher on a thread that is not a
+      // UI thread, which is every thread a unit test runs on. The rest of this class guards it the
+      // same way for the same reason.
       if (_dispatcherQueue is null || !_dispatcherQueue.TryEnqueue(RecordAppUpdateIfAny)) {
         RecordAppUpdateIfAny();
       }

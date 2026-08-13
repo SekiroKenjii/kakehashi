@@ -37,32 +37,17 @@ func (v *verifier) Verify(ctx context.Context, token string) (auth.Subject, erro
 		return auth.Subject{}, errs.Unauthenticatedf("That token is not valid.")
 	}
 
-	// VerifyAccessToken checks the issuer, the signature and the expiry, and nothing about what KIND
-	// of token this is. That is not enough here, because this process issues two kinds: sign-in
-	// hands the client an ID token beside the access token, and an ID token from this issuer passes
-	// every check above. It authenticated every endpoint, for its full hour, and — because nothing
-	// about it is a session — it kept working after sign-out, after the session was revoked, and
-	// after the account was deactivated. A credential that outlives the act of revoking it is worse
-	// than a long-lived one.
-	//
-	// The session id is what tells them apart, and it is worth saying why it and not something
-	// more obvious: both tokens this provider mints carry client_id and the same aud, so neither
-	// distinguishes them. sid is set by GetPrivateClaimsFromRequest, which runs only for an access
-	// token, and sessionIDOf covers both grants that produce one — the authorization code and the
-	// refresh. An access token from this provider always has it; an ID token never does.
-	//
-	// It is also the claim that makes the token revocable at all: the session it names is what
-	// sign-out deletes.
+	// sid is required: an access token from this provider always carries it and an ID token never
+	// does, and tokens carrying ID-token markers are rejected below.
+	// docs/adr/0006-id-token-is-not-an-access-token.md
 	sid, _ := claims.Claims[claimSession].(string)
 	if sid == "" {
 		return auth.Subject{}, errs.Unauthenticatedf(
 			"That is not an access token. Send the access token rather than the ID token.")
 	}
 
-	// The positive half of the same question, in case a future grant type mints an access token by
-	// some path that skips the private claims. These three are the OpenID Connect ID token's own
-	// signature — the hash of the access token it was issued beside, the party it was issued to,
-	// and when the user actually authenticated — and none of them belongs on an access token.
+	// The positive half of the same check: these three claims are ID-token markers, and none of
+	// them belongs on an access token.
 	for _, marker := range []string{"at_hash", "azp", "auth_time"} {
 		if _, present := claims.Claims[marker]; present {
 			return auth.Subject{}, errs.Unauthenticatedf(

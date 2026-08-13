@@ -49,6 +49,6 @@ type AuditEntry struct {
 	PermissionKey string
 
 	// Detail carries what the other fields cannot: the scope a grant moved to, the name of a role
-	// that no longer exists to be looked up.
+	// that has been deleted and cannot be looked up.
 	Detail string
 }

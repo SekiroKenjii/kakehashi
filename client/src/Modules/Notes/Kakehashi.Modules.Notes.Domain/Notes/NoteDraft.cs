@@ -12,11 +12,9 @@ namespace Kakehashi.Modules.Notes.Domain.Notes {
   /// <c>Note</c> aggregate to pretend otherwise.
   /// </para>
   /// <para>
-  /// What the client does own is the moment before the request. Re-stating the rules here buys
-  /// immediate feedback on an empty title instead of a round trip, and it costs nothing to keep
-  /// honest because the server re-checks everything anyway. The rules are duplicated on purpose;
-  /// the two copies serve different masters. This one exists for speed, the server's for truth,
-  /// and if they ever disagree the server wins.
+  /// The validation rules deliberately duplicate the server's: this copy gives immediate feedback
+  /// without a round trip, the server re-checks everything, and if the two ever disagree the
+  /// server wins.
   /// </para>
   /// </remarks>
   public sealed record NoteDraft {

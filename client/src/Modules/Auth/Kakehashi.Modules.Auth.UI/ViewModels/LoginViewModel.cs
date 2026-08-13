@@ -19,9 +19,9 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
   /// Drives the sign-in window, whose shape depends on <see cref="AuthMode"/>.
   /// </summary>
   /// <remarks>
-  /// In-app mode is one screen: a credentials form that shows its own errors inline and disables
-  /// itself while the attempt is in flight, because that is what every sign-in form does and because
-  /// a failed attempt must leave the typed email where the user can correct it.
+  /// In-app mode is one screen: a credentials form that shows its errors inline and disables
+  /// itself while the attempt is in flight; a failed attempt leaves the typed email in place for
+  /// correction.
   /// <para>
   /// Browser mode keeps three: explain the flow, wait for the browser, report the failure. The user
   /// is doing the work in another window, so the app has nothing to show but progress — and when it
@@ -53,10 +53,9 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     /// What actually protects the password on its way to the server.
     /// </summary>
     /// <remarks>
-    /// Derived from the configured authority's scheme rather than asserted. The line under the
-    /// sign-in button used to read "Sent over TLS to your Kakehashi server" no matter what, beside a
-    /// green shield — which for the http authority this ships with was a plain untruth, in the one
-    /// place a person looks before typing a password.
+    /// Derived from the configured authority's scheme rather than asserted: an unconditional
+    /// "sent over TLS" beside a green shield is untrue against an http authority, in the one place
+    /// a person looks before typing a password.
     /// <para>
     /// Loopback is called out separately because it is neither: nothing leaves the machine, so
     /// warning about interception would be alarming and wrong, and claiming TLS would still be a lie.
@@ -178,7 +177,7 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
         var credentials = IsInAppMode ? new SignInCredentials(Email.Trim(), Password) : null;
         var result = await _sender.Send(new SignInRequest(credentials), cancellationToken);
         if (result.IsSuccess) {
-          // The password lives no longer than the attempt that needed it.
+          // The password lives at most as long as the attempt that needed it.
           Password = string.Empty;
           SignInSucceeded?.Invoke(this, EventArgs.Empty);
         } else if (result.Error != AuthErrors.LoginCancelled) {

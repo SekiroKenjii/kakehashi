@@ -10,19 +10,9 @@ namespace Kakehashi.App.Services.Platform {
   /// Writes the application log to a file under <c>%LOCALAPPDATA%\Kakehashi\logs</c>.
   /// </summary>
   /// <remarks>
-  /// This exists because the alternative was nothing. The host registered only
-  /// <c>AddDebug()</c>, which writes through <c>OutputDebugString</c> — visible to a debugger and
-  /// to nobody else. A packaged build handed to a tester therefore produced no record at all, and
-  /// the first question after any crash report ("what does the log say?") had no answer.
-  /// <para>
-  /// Hand-rolled rather than a logging package, because the whole job is a line of text and a file
-  /// handle. One file per day, appended, and never deleted by this code: a log that rotates itself
-  /// away is a log that has deleted the evidence by the time somebody asks for it.
-  /// </para>
-  /// <para>
-  /// Writes are queued and drained on one background thread, so a logging call never blocks the UI
-  /// thread on disk. Failing to write is swallowed — a broken log must not become the crash.
-  /// </para>
+  /// Hand-rolled rather than a logging package: docs/adr/0008-hand-rolled-file-logger.md.
+  /// Invariants: a logging call never blocks the UI thread on disk, a failed write is swallowed
+  /// rather than becoming the crash, and this code never rotates or deletes log files.
   /// </remarks>
   public sealed class FileLoggerProvider : ILoggerProvider {
     private readonly BlockingCollection<string> _queue = new(new ConcurrentQueue<string>(), 4096);

@@ -20,7 +20,6 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml;
 
 namespace Kakehashi.App.UI {
-  /// <summary>A row in the getting-started checklist.</summary>
   public sealed record GettingStartedStep(
       string Id, string Title, string Subtitle, bool IsDone, bool HasAction) {
     public bool IsNotDone => !IsDone;
@@ -28,11 +27,9 @@ namespace Kakehashi.App.UI {
     public bool ShowsChevron => HasAction && !IsDone;
   }
 
-  /// <summary>A tile in the feature-modules grid.</summary>
   /// <param name="IsWithheld">
-  /// An administrator has not assigned this module to the account. The tile is shown anyway,
-  /// locked: a module that vanishes tells the user nothing, and looks the same as one that was
-  /// never built. The lock is a courtesy — the server refuses the module's requests regardless.
+  /// An administrator has not assigned this module to the account. The tile is drawn locked rather
+  /// than hidden, and the lock is a courtesy — the server refuses the module's requests regardless.
   /// </param>
   /// <param name="IsGranted">
   /// An administrator assigned this module. It cannot be detached: the grant is not the user's to
@@ -53,28 +50,20 @@ namespace Kakehashi.App.UI {
     public bool CanOpen => !IsWithheld;
   }
 
-  /// <summary>A detached module offered for re-attachment in the register dialog.</summary>
   /// <param name="IsWithheld">
-  /// Listed but not offerable: the account is not assigned it. Shown rather than hidden so the
-  /// user learns why the module is missing instead of wondering.
+  /// Listed but not offerable: the account is not assigned it. Shown so the user learns why the
+  /// module is missing.
   /// </param>
   public sealed record DetachedModuleListItem(
       string Name, string DisplayName, string Description, bool IsWithheld = false) {
     public bool CanAttach => !IsWithheld;
   }
 
-  /// <summary>A row in the recent-activity feed.</summary>
   public sealed record HomeActivityItem(
       string Title, string Subtitle, string TimeText, string Glyph, bool IsPositive, bool IsAlert) {
     public bool IsNeutral => !IsPositive && !IsAlert;
   }
 
-  /// <summary>
-  /// Presentation logic for the home page: the session-aware greeting, the dismissible
-  /// getting-started checklist (persisted locally), the feature-module tiles built from the
-  /// attached modules (with attach/detach through the module registry), the backend health
-  /// probe, and the paged local app activity feed.
-  /// </summary>
   public sealed partial class HomeViewModel : ViewModel {
     private const string _dismissedKey = "Home.GettingStartedDismissed";
     private const string _exploreStepDoneKey = "Home.ExploreModuleStepDone";
@@ -83,9 +72,9 @@ namespace Kakehashi.App.UI {
     private const string _exploreStepId = "explore";
     private const string _themeStepId = "theme";
     private const string _registerStepId = "register";
-    // Notes and Auth ship with the template; a third module means the developer added one.
-    // Notes, Activity and Auth. The count was two, so "register your first module"
-    // reported itself complete on a fresh install — the one step it exists to prompt.
+    // Notes, Activity and Auth ship with the template; a count above this means the developer
+    // registered their own module. Keep it equal to the shipped modules, or "register your first
+    // module" reports itself complete on a fresh install.
     private const int _shippedModuleCount = 3;
     private const int _pageSize = 5;
 
@@ -271,8 +260,8 @@ namespace Kakehashi.App.UI {
     [RelayCommand]
     private void OpenModule(ModuleCardItem module) {
       if (module.IsWithheld) {
-        // Nothing to navigate to. The click is caught here rather than left to fail on the first
-        // request, which is the whole reason the lock is drawn at all.
+        // A withheld module has nothing to navigate to; the click is swallowed here rather than
+        // failing on the page's first request.
         return;
       }
 
@@ -388,8 +377,8 @@ namespace Kakehashi.App.UI {
       }
 
       // Withheld modules are never in Attached — the nav rail must not offer a page the server
-      // refuses — but they belong on this grid, locked. "Ask an administrator" is only sayable if
-      // the thing being asked about is on screen.
+      // refuses — but they are drawn on this grid, locked, so the user can see what to ask an
+      // administrator for.
       foreach (var module in _moduleRegistry.All) {
         if (!_moduleRegistry.IsWithheld(module.Name)) {
           continue;
@@ -435,7 +424,7 @@ namespace Kakehashi.App.UI {
           module.Descriptor.Description,
           foot,
           module.Name,
-          // A granted module is a ceiling the user may sit under, not a floor they may leave; a
+          // A granted module cannot be detached — the grant is not the user's to give back; a
           // withheld one has nothing to detach.
           CanDetach: !module.Descriptor.IsRequired && !granted && !withheld,
           IsWithheld: withheld,

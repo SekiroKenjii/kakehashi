@@ -15,7 +15,6 @@ using Kakehashi.Modules.Notes.Application.Notes.Queries.GetNotes;
 using Kakehashi.UI.Contracts;
 
 namespace Kakehashi.Modules.Notes.UI.ViewModels {
-  /// <summary>A row in the notes list.</summary>
   public sealed record NoteListItem(long Id, string Title, string Preview, string TimeText) {
     public bool HasPreview => Preview.Length > 0;
 
@@ -27,9 +26,8 @@ namespace Kakehashi.Modules.Notes.UI.ViewModels {
   /// edit and delete dialogs.
   /// </summary>
   /// <remarks>
-  /// It reaches the server exclusively through the mediator. It has never heard of gRPC, and
-  /// swapping the transport underneath would not change a line in this file — which is the point
-  /// of the gateway port sitting between them.
+  /// Reaches the server only through the mediator; the transport lives behind the gateway port,
+  /// so nothing in this file may reference gRPC or the generated types.
   /// </remarks>
   public sealed partial class NotesViewModel : ViewModel {
     private const int _pageSize = 5;

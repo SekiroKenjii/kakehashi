@@ -19,8 +19,7 @@ import (
 )
 
 // The provider's token-signing key: minted on first boot, parsed on every boot after, and
-// presented in the two shapes op asks for. One unit, because a key that cannot be presented is
-// not a key — which is why the adapters and the bootstrap were never really two things.
+// presented in the two shapes op asks for.
 
 // signingKey is the provider's private key, loaded from the store.
 type signingKey struct {

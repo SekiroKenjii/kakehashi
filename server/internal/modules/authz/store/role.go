@@ -95,12 +95,8 @@ func (s *SQLServer) UpdateRole(ctx context.Context, r domain.Role) error {
 	return nil
 }
 
-// SaveGrants replaces a role's entire grant set, in one transaction.
-//
-// Delete-then-insert rather than a diff, and the whole set rather than the changed rows, because
-// what the administration screen sends IS the whole set: they staged eight toggles and pressed
-// Save once. A partial apply is a state nobody asked for and nobody can see, which is exactly what
-// the transaction is here to prevent.
+// SaveGrants replaces a role's entire grant set: delete-then-insert, in one transaction, because
+// what the screen sends IS the whole set — docs/adr/0004-staged-edits-atomic-apply.md.
 func (s *SQLServer) SaveGrants(
 	ctx context.Context, r domain.Role, actorID string, at time.Time,
 ) error {
@@ -129,20 +125,9 @@ func (s *SQLServer) DeleteRole(ctx context.Context, id string) error {
 	return nil
 }
 
-// GrantsOfAccount is the query the request gate runs, and the only one on the hot path.
-//
-// One join rather than two round trips, and the widening happens here in SQL because the answer is
-// one row per permission either way — pulling every role's every grant back to merge in Go would
-// move the same data and then do the work twice.
-//
-// The widening is done on an explicit rank rather than on the scope string, because the string
-// sorts the WRONG WAY: alphabetically 'all' < 'own' < 'team', so MAX over the text picked 'team'
-// over 'all' and an account holding two roles resolved to the NARROWER of them. A comment here
-// once claimed the two orders coincided; they never did, and nothing tested the claim because the
-// test that looked like it did was asserting auth.Widest, which ranks correctly in Go.
-//
-// CASE keeps the rank in one statement rather than pulling every role's every grant back to merge,
-// which would move the same data and then do the work twice.
+// GrantsOfAccount is the query the request gate runs, and the only one on the hot path. Widening
+// across roles happens here in SQL, folded on an explicit CASE rank, never on the scope string —
+// alphabetical order is not scope order: docs/adr/0005-scope-order-is-not-string-order.md
 func (s *SQLServer) GrantsOfAccount(
 	ctx context.Context, accountID string,
 ) (map[string]string, error) {

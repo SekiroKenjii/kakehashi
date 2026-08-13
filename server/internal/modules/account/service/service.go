@@ -2,9 +2,9 @@
 //
 // The files here are grouped by the caller that drives them, not by the aggregate they touch,
 // because most of these use cases touch several. signin.go holds the three calls the sign-in
-// handlers make in sequence — and, not by coincidence, the exact three that accountapi.Service
-// withholds from other modules. profile.go, sessions.go and securityevent.go hold the seven
-// behind the /account endpoints.
+// handlers make in sequence — the exact three that accountapi.Service withholds from other
+// modules. profile.go, sessions.go and securityevent.go hold the seven behind the /account
+// endpoints.
 //
 // This file is the seam: the port, the injected dependencies, the type and its constructor. No
 // use case belongs here.
@@ -44,11 +44,13 @@ type Store interface {
 		ctx context.Context, userID string, take int) ([]domain.SecurityEvent, error)
 }
 
-// Clock and IDs are injected so tests can pin both. A service that reaches for time.Now and
-// uuid.New has to assert on shapes instead of values.
 type (
+	// Clock is the service's source of time, injected so a test can pin it. A service that reaches
+	// for time.Now has to assert on shapes instead of values.
 	Clock func() time.Time
-	IDs   func() string
+
+	// IDs is the service's source of identifiers, injected for the same reason as Clock.
+	IDs func() string
 )
 
 // Service implements accountapi.Service and the authentication both sign-in paths drive.

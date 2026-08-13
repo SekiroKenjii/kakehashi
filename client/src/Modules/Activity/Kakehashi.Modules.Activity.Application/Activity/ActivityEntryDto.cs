@@ -3,9 +3,8 @@ using System;
 namespace Kakehashi.Modules.Activity.Application.Activity {
   /// <summary>One thing that happened to the account, as the server reports it.</summary>
   /// <remarks>
-  /// Facts, not sentences. The server sends a stable kind and the structured detail; the wording, the
-  /// icon and the grouping are the view model's, which is what lets this client re-word the feed
-  /// without a server release.
+  /// The server sends a stable kind and structured detail; wording, icon and grouping belong to
+  /// the view model, so the feed can be re-worded without a server release.
   /// </remarks>
   public sealed record ActivityEntryDto(
       string Id,

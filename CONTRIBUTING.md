@@ -40,6 +40,11 @@ gh pr create --base development --fill
 The three gates in [CLAUDE.md](CLAUDE.md) must pass before the pull request is opened, not after —
 CI runs the same ones and a red run is slower to read than a local failure.
 
+Commit subjects follow Conventional Commits (`feat:`, `fix:`, `docs:`, …) — the table is in
+[CLAUDE.md](CLAUDE.md). Comments follow [docs/COMMENTS.md](docs/COMMENTS.md): facts about the
+current code, no history, long arguments in `docs/adr/`. Both are checked in review; the history
+words additionally fail CI.
+
 ## Cutting a release
 
 ```bash

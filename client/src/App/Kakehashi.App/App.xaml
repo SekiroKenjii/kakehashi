@@ -17,8 +17,7 @@
                     is the one scope every page in every assembly can see.
 
                     The ms-appx:///<AssemblyName>/... form is what addresses a dictionary in another
-                    assembly; the host's own files need no assembly segment, which is why these
-                    paths changed when the files moved.
+                    assembly; the host's own files need no assembly segment.
                 -->
                 <ResourceDictionary Source="ms-appx:///Kakehashi.UI.Common/Styles/FontSizes.xaml" />
                 <ResourceDictionary Source="ms-appx:///Kakehashi.UI.Common/Styles/Thickness.xaml" />

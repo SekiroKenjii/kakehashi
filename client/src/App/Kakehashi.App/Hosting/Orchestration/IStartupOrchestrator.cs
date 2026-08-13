@@ -10,15 +10,12 @@ namespace Kakehashi.App.Hosting.Orchestration {
     /// <summary>Relative execution order; lower values run first.</summary>
     int Order { get; }
 
-    /// <summary>
-    /// A descriptive name for this startup step, used for logging and diagnostics.
-    /// </summary>
+    /// <summary>Name used for logging and diagnostics.</summary>
     string Name { get; }
 
     /// <summary>Short user-facing text shown on the splash screen while this step runs.</summary>
     string Description { get; }
 
-    /// <summary>Runs this startup step.</summary>
     Task ExecuteAsync(CancellationToken cancellationToken);
   }
 }

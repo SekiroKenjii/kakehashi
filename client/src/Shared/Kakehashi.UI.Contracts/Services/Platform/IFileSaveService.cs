@@ -5,11 +5,6 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
   /// <remarks>
   /// A port so a view model that exports something can be tested without a picker, and so the one
   /// place that knows about <c>FileSavePicker</c> and window handles stays in the host.
-  /// <para>
-  /// It exists because the alternative was a hardcoded folder. An export that lands somewhere the
-  /// user did not choose and cannot open from the app is a file they have to be told the path of and
-  /// then go and find — which is most of the work of exporting, left undone.
-  /// </para>
   /// </remarks>
   public interface IFileSaveService : IUiContractService, ISingletonDependency {
     /// <summary>

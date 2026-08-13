@@ -1,10 +1,8 @@
 // Package telemetry wires OpenTelemetry traces and metrics to an OTLP collector.
 //
 // Everything except the service name is configured through the standard OTEL_* environment
-// variables, which the exporters read themselves: endpoint, protocol, headers, timeouts, TLS. That
-// is not laziness. Those variables are a specification several tools already implement, and an
-// operator who knows OTEL_EXPORTER_OTLP_HEADERS should not have to discover that this particular
-// server invented its own name for it.
+// variables, which the exporters read themselves: endpoint, protocol, headers, timeouts, TLS.
+// The standard names are kept because operators and collectors already know them.
 package telemetry
 
 import (
@@ -29,8 +27,7 @@ type Options struct {
 
 	// Enabled reports whether an OTLP endpoint was configured. When false, Setup installs nothing
 	// and returns a shutdown that does nothing, so the server runs identically with no collector
-	// in front of it. A boilerplate that will not start without an observability stack is a
-	// boilerplate nobody tries.
+	// in front of it.
 	Enabled bool
 }
 
@@ -78,9 +75,8 @@ func Setup(ctx context.Context, opts Options) (func(context.Context) error, erro
 	otel.SetTracerProvider(tracerProvider)
 	otel.SetMeterProvider(meterProvider)
 
-	// Without a propagator, incoming traceparent headers are ignored and every request starts a
-	// new trace. The spans still arrive; they just do not join up with the client's, which is the
-	// half of the picture worth having.
+	// Without a propagator, incoming traceparent headers are ignored: the spans still arrive but
+	// start new traces instead of joining the client's.
 	otel.SetTextMapPropagator(propagation.NewCompositeTextMapPropagator(
 		propagation.TraceContext{},
 		propagation.Baggage{},

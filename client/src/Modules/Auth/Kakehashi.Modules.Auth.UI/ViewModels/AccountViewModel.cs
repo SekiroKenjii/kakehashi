@@ -21,12 +21,10 @@ using SignInRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignI
 using SignOutRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut.SignOutCommand;
 
 namespace Kakehashi.Modules.Auth.UI.ViewModels {
-  /// <summary>A row in the active sessions list.</summary>
   public sealed record SessionItem(string Id, string Title, string Subtitle, bool IsCurrent) {
     public bool IsNotCurrent => !IsCurrent;
   }
 
-  /// <summary>A row in the security activity feed.</summary>
   public sealed record ActivityItem(
       string Title, string Subtitle, string TimeText, string Glyph, bool IsAlert) {
     public bool IsNotAlert => !IsAlert;
@@ -190,9 +188,8 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
 
     [RelayCommand]
     private async Task SignOutEverywhereAsync() {
-      // Confirmed, because it ends this session too: the button signs the person pressing it out
-      // of the machine they are pressing it on, which is not what "all devices" reads like until it
-      // has happened.
+      // Confirmed first because it ends this session too: the button signs the person pressing it
+      // out of the machine they are pressing it on.
       var confirmed = await _dialogs.ShowConfirmAsync(
           "Sign out of all devices?",
           "Every session ends immediately, including this one. You will have to sign in again.",
@@ -328,22 +325,15 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
       if (activity.IsSuccess) {
         _allActivity = [.. activity.Value.Select(ToActivityItem)];
       } else {
-        // Said, not swallowed. An empty card is how this screen shows "nothing has ever happened to
-        // your account", which is the single most reassuring thing it could say — and exactly the
-        // wrong thing to say when the truth is that nobody could ask.
+        // The error is surfaced rather than swallowed: an empty activity card reads as "nothing
+        // has ever happened to this account", which would misreport a failed fetch as a clean
+        // history.
         _allActivity = [];
         ErrorMessage = activity.Error.Message;
       }
       ShowActivityPage(1);
     }
 
-    /// <summary>
-    /// Whether each pager button has anywhere to go.
-    /// </summary>
-    /// <remarks>
-    /// The buttons were never disabled, so at the first page "previous" was a live control that did
-    /// nothing — which reads as a broken button rather than as the end of the list.
-    /// </remarks>
     [ObservableProperty]
     public partial bool CanPageSessionsBack { get; set; }
 

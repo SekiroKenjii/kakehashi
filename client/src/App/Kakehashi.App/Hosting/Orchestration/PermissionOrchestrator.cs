@@ -11,21 +11,9 @@ namespace Kakehashi.App.Hosting.Orchestration {
   /// between signing in and building the shell.
   /// </summary>
   /// <remarks>
-  /// Order 17 is not arbitrary: after authentication (15) because both calls need a token, and
-  /// before the shell (20) because the shell needs both answers to decide what goes in the
-  /// navigation pane. Later would mean the pane is built once wrong and then corrected in front of
-  /// the user.
-  /// <para>
-  /// Two fetches in one orchestrator because they are one moment, not one concern: the permissions
-  /// decide which rows are reachable and the arrangement decides where the rows go, and a pane drawn
-  /// from one of them is a pane drawn wrong. Splitting them into two ordered steps would buy nothing
-  /// but a second progress line saying the same thing.
-  /// </para>
-  /// <para>
-  /// It also re-reads on every session change, so signing in as somebody else replaces their
-  /// predecessor's permissions rather than inheriting them — which on a shared machine is the
-  /// difference between a lock and a decoration.
-  /// </para>
+  /// Runs at order 17 — after authentication (15) because both calls need a token, before the
+  /// shell (20) because the pane is built from both answers — and re-reads both on every session
+  /// change: docs/adr/0010-startup-orchestrator-ordering.md
   /// </remarks>
   public sealed class PermissionOrchestrator : IStartupOrchestrator {
     private readonly PermissionService _permissions;

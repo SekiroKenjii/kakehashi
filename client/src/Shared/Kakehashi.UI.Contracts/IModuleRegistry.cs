@@ -9,14 +9,12 @@ namespace Kakehashi.UI.Contracts {
   /// CommunityToolkit <c>WeakReferenceMessenger</c>.
   /// </summary>
   /// <remarks>
-  /// Two different reasons a module may be unavailable, and they must not be confused. Detaching is
-  /// a <em>preference</em>: the user's own, reversible in a click, nobody else's business. An
-  /// assignment is a <em>permission</em>: decided by an administrator, and the only thing here the
-  /// user cannot overrule.
+  /// Detaching is the user's reversible preference; an assignment is an administrator's permission.
+  /// The two are separate states with their own keys, and the preference question is asked first:
+  /// docs/adr/0015-module-attachment-is-not-a-security-boundary.md
   /// <para>
-  /// <b>None of this is a security boundary.</b> The server refuses an unassigned module's requests
-  /// on its own, at one place that sees every request, whatever this client believes. What lives
-  /// here is the courtesy of drawing a lock instead of a button that is going to fail.
+  /// <b>None of this is a security boundary.</b> The server refuses an unassigned module's
+  /// requests.
   /// </para>
   /// </remarks>
   public interface IModuleRegistry {

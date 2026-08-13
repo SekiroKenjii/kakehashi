@@ -38,8 +38,8 @@ namespace Kakehashi.Modules.Notes.Application.Tests.Notes.Commands {
 
       Assert.True(result.IsFailure);
       Assert.Equal(NotesErrors.TitleRequired, result.Error);
-      // The whole point of validating client-side: no round trip for something we already know
-      // the server will reject.
+      // Client-side validation exists to save this round trip, so a rejected draft must never
+      // reach the gateway.
       await _notes.DidNotReceive().CreateAsync(
           Arg.Any<NoteDraft>(), Arg.Any<CancellationToken>());
     }

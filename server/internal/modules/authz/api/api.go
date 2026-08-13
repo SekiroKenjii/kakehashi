@@ -1,23 +1,16 @@
 // Package authzapi is the authorization module's public contract.
 //
-// Two audiences, and the split between them is the point. Other MODULES use it to declare the
-// permissions they enforce — a catalogue entry no module claims is a permission nothing checks, so
-// the catalogue is assembled from declarations rather than typed into a table. The composition root
-// uses it to hand those declarations over at mount time.
+// Other modules use it to declare the permissions they enforce — the catalogue is assembled from
+// those declarations, never typed into a table — and the composition root hands the declarations
+// over at mount time.
 //
-// Note what is absent: no way to grant. Deciding who may hold what is this module's alone, and it
+// There is no way to grant here. Deciding who may hold what is this module's alone, and it
 // answers the mux through the platform's auth.Permissions port rather than through anything here.
 //
-// This also said "no way to ask about somebody else", and GrantsForRole below is a reader of exactly
-// that, so the claim needs replacing rather than defending. What it reads is a role, not a person: it
-// grants nothing and authorizes nothing, and it exists so the navigation module can draw the pane a
-// colleague will see instead of the one the administrator happens to have.
-//
-// The honest caveat, since RolesOf is also here: the two together can be composed into "what may this
-// account do", and nothing in the type system stops it. What makes that a bug rather than a feature is
-// that the route gate is the only thing entitled to act on the answer — a module that computed its own
-// and enforced it would be a second authorization decision, drifting from the first. Read these to
-// explain and to draw. Do not read them to decide.
+// RolesOf and GrantsForRole can be composed into "what may this account do", and nothing in the
+// type system stops it. Do not: the route gate is the only component entitled to act on that
+// answer, and a module enforcing its own copy is a second authorization decision drifting from
+// the first. Read these to explain and to draw, never to decide.
 package authzapi
 
 import (
@@ -28,10 +21,10 @@ import (
 
 // Scope names mirror platform/auth's, as plain strings.
 //
-// They are duplicated rather than imported because this is a module's api package and the values
-// cross the wire; the platform owns the algebra, this owns the vocabulary. One line in the store
-// keeps them in step, and the alternative — an api package importing the platform's type — makes
-// every consumer of this contract depend on the platform's shape.
+// These strings cross the wire and are stored on grants; renaming one breaks deployed clients and
+// existing grants. They are duplicated rather than imported because an api package importing the
+// platform's type would make every consumer of this contract depend on the platform's shape; one
+// line in the store keeps them in step.
 const (
 	ScopeOwn  = "own"
 	ScopeTeam = "team"
@@ -54,31 +47,30 @@ type Permission struct {
 	// nothing behaves differently, a human just reads more carefully.
 	IsHighRisk bool
 
-	// IsScoped is a module's promise that the scope on a grant of this permission is actually
-	// honoured — that some store of its own narrows its query on auth.ScopeOf rather than merely
-	// asking whether the key is present.
-	//
-	// It is a promise rather than a description because nothing can check it. What it buys is that
-	// the administration screen offers the own/team/all choice only where choosing changes an
-	// answer; everywhere else the control is absent rather than inert.
+	// IsScoped is a module's promise that the scope on a grant of this permission is honoured —
+	// that some store of its own narrows its query on auth.ScopeOf rather than merely asking
+	// whether the key is present. Nothing can check the promise. The administration screen offers
+	// the own/team/all choice only where IsScoped is true; elsewhere the control is absent rather
+	// than inert.
 	IsScoped bool
 }
 
-// AccessPermission is the key a module's routes are gated on.
+// AccessPermission is the key a module's routes are gated on. It delegates to the platform, which
+// owns the format.
 //
-// It delegates to the platform, which is where the format lives now. Three places name this string
-// — the route gate that enforces it, this module that mints it into the catalogue, and the
-// navigation module that falls back to it for a screen declaring no permission of its own — and two
-// of those are modules that cannot see each other. A copy each is a copy that stops matching.
+// Three places name this string — the route gate that enforces it, this module that mints it into
+// the catalogue, and the navigation module that falls back to it for a screen declaring no
+// permission of its own — and two of those are modules that cannot see each other. A copy in each
+// would stop matching.
 func AccessPermission(moduleID string) string {
 	return auth.ModuleAccess(moduleID)
 }
 
 // The permissions the authorization module itself enforces, beyond the .access every module gets.
+// The keys are stored in role grants and cross the wire; renaming one revokes it everywhere.
 //
 // Here rather than in the module's own package because its wire layer checks one of them, and a
-// package cannot import the package that imports it. An api package is where a module puts what
-// something else has to name.
+// package cannot import the package that imports it.
 const (
 	// PermissionManageRoles guards the whole administrative surface. The one permission that can
 	// grant every other one, including itself.
@@ -120,12 +112,11 @@ type Service interface {
 
 	// GrantsForRole resolves what one role may do, in the form the route gate already speaks.
 	//
-	// It answers a question about a role rather than about a caller, which is what makes it useful to
-	// somebody arranging a screen for other people: the navigation module draws a pane with it, so an
-	// administrator can see what a colleague will see instead of guessing from their own.
+	// It answers a question about a role rather than about a caller: it grants nothing and
+	// authorizes nothing. The navigation module uses it to draw the pane a given role sees.
 	//
-	// auth.Grants rather than []Grant on purpose. Every consumer wants to ask "does this allow X", and
-	// handing back a slice would make each of them rebuild the same map — and decide for itself how to
-	// read a scope, which is this module's business.
+	// auth.Grants rather than []Grant on purpose: every consumer asks "does this allow X", and a
+	// slice would make each caller rebuild the same map and read scopes for itself, which is this
+	// module's business.
 	GrantsForRole(ctx context.Context, roleID string) (auth.Grants, error)
 }

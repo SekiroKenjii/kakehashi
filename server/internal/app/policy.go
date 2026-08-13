@@ -28,17 +28,12 @@ const (
 // RoutePolicy is what a caller must be before a route's handler runs.
 //
 // It is mandatory. Every route states its policy beside its pattern, and boot refuses the ones that
-// do not — which is the whole point. The set this replaces was a list of MODULES exempt from the
-// gate, so exempting a module exempted every route it served: all thirteen of the account module's
-// routes skipped the check, and its administrative service was protected only because somebody had
-// hand-written a wrapper around that one handler. Deleting that line was caught by nothing.
+// do not. Why the unit is the route rather than the module:
+// docs/adr/0001-per-route-permission-policy.md.
 //
 // The fields are unexported and there is no exported literal form, so the only non-zero values come
-// from the four constructors below. That stops an accidental half-built policy, not a deliberate
-// one: PolicyPublic still costs one exported call inside a module's own file, and the documented way
-// to add a module is to copy an existing one. So the composition root still names the modules
-// permitted to make that call — see Kernel.AllowUnprotectedRoutes. Granularity moved to the route;
-// review salience stayed at the root.
+// from the four constructors below. The composition root additionally names the modules permitted
+// to declare Public or SignedIn — see Kernel.AllowUnprotectedRoutes.
 //
 // A policy covers everything its handler can reach. Two shapes here are whole routers — the OpenID
 // Connect provider mounted at "/", and each Connect service, which is one route and N procedures

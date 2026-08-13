@@ -95,6 +95,14 @@ jobs:
             exit 1
           fi
 
+      # Godoc shape for exported identifiers and package comments, per docs/COMMENTS.md. Pinned
+      # for the same reason the code generators are: @latest fails the day a release ships.
+      - name: Lint doc comments
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.12.2
+          working-directory: server
+
   # The architecture check gets its own job so a broken boundary is obvious at a glance in the
   # checks list, rather than buried in a build log.
   architecture:
@@ -114,6 +122,23 @@ jobs:
 
       - name: Check module boundaries
         run: go run ./tools/archlint
+
+      # docs/COMMENTS.md rule 2: comments state the current code, never its history. The words are
+      # checked here because nothing in a compiler ever will. obj and bin are excluded for local
+      # parity - generated gRPC stubs under client obj/ carry proto comments this rule does not
+      # govern. Runs from the repository root, unlike the boundary check above.
+      - name: Forbid history-telling comments
+        working-directory: .
+        run: |
+          matches=$(grep -rnE '^\s*(//|///).*\b(used to|no longer|the old|until now|previously)\b' \
+            --include='*.go' --include='*.cs' server/internal/modules client/src \
+            | grep -vE '/(gen|obj|bin)/' || true)
+          if [ -n "$matches" ]; then
+            echo "comments must describe the current code; history belongs in a PR or an ADR"
+            echo "(docs/COMMENTS.md rule 2):"
+            echo "$matches"
+            exit 1
+          fi
 
   client:
     # WinUI 3 (Windows App SDK) requires Windows to build.

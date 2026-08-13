@@ -321,7 +321,7 @@ func (s *Service) UpdateRole(
 
 	detail := ""
 	if before != role.Name {
-		// The old name, because after a rename it exists nowhere else to be looked up.
+		// The prior name, because after a rename it exists nowhere else to be looked up.
 		detail = "was " + before
 	}
 	s.record(ctx, actor, role, []auditChange{{domain.ActionRoleEdited, "", detail}})
@@ -348,8 +348,7 @@ func (s *Service) DeleteRole(ctx context.Context, roleID string, actor Actor) er
 		return err
 	}
 
-	// Recorded with the name, because after this there is no row to look it up in — which is the
-	// whole problem with deletion events.
+	// Recorded with the name, because after this there is no row to look it up in.
 	s.record(ctx, actor, role, []auditChange{{domain.ActionRoleDeleted, "", ""}})
 	return nil
 }

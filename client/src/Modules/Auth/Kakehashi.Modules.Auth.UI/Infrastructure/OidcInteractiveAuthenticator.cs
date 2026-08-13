@@ -180,9 +180,7 @@ namespace Kakehashi.Modules.Auth.UI.Infrastructure {
     /// <summary>
     /// Collects role claims under both spellings. There is no standard one: Duende and legacy
     /// IdentityServer emit <c>role</c>, Entra and this product's own backend emit <c>roles</c>, and
-    /// which authorization server sits behind <c>Auth:Authority</c> is a deployment choice. Reading
-    /// both costs a predicate and removes a class of "why is the user missing every permission"
-    /// that is invisible from the client side.
+    /// which authorization server sits behind <c>Auth:Authority</c> is a deployment choice.
     /// </summary>
     private static IReadOnlyList<string> ResolveRoles(IEnumerable<Claim>? claims) {
       return claims is null

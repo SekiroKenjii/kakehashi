@@ -8,9 +8,9 @@ package domain
 import (
 	"strings"
 	"time"
-	"unicode/utf16"
 
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"github.com/SekiroKenjii/kakehashi/server/internal/platform/text"
 )
 
 // MaxTitleLength caps a note's title.
@@ -77,18 +77,8 @@ func normalizeTitle(title string) (string, error) {
 	// Runes, not bytes. len() would let a Vietnamese title through at 40 characters and reject an
 	// English one at 121, which is the kind of rule that only looks correct in the language it was
 	// written in.
-	if utf16Len(title) > MaxTitleLength {
+	if text.UTF16Len(title) > MaxTitleLength {
 		return "", errs.Invalidf("Titles are limited to %d characters.", MaxTitleLength)
 	}
 	return title, nil
-}
-
-// utf16Len is how many units a string takes in an nvarchar column.
-//
-// Not the rune count, which is what these checks used. nvarchar(n) counts UTF-16 code units, and a
-// character outside the Basic Multilingual Plane — an emoji, an old CJK ideograph — takes two of
-// them. Counting runes let a value pass the domain and fail the INSERT, turning a message somebody
-// could act on into an opaque 500 from the driver.
-func utf16Len(s string) int {
-	return len(utf16.Encode([]rune(s)))
 }

@@ -25,10 +25,10 @@ administrator safe — the worst a mistake there can do is hide something.
   `PreviewLayout`. Writes: `ApplyLayout` and `DeleteItem`. Gated **once, on the route**, by
   `navigation.manage`, so every procedure added later inherits the check.
 
-  The single-row writes it began with — `CreateGroup`, `UpdateGroup`, `DeleteGroup`, `MoveItem`,
-  `UpdateItem` — are still on the wire and still work. They are kept because removing a procedure
-  breaks a client this repo cannot see, and the comment above `ApplyLayout` says plainly that nothing
-  in this product calls them any more.
+  The single-row writes — `CreateGroup`, `UpdateGroup`, `DeleteGroup`, `MoveItem`, `UpdateItem` —
+  are still on the wire and still work, but nothing in this product calls them. They remain for
+  wire compatibility only: removing a procedure breaks a deployed client this repo cannot see.
+  The decision record is [ADR 0004](adr/0004-staged-edits-atomic-apply.md).
 
 `navigation.manage` is its own permission rather than `roles.manage`: arranging a pane and handing out
 access are different jobs, and somebody trusted to tidy the navigation need not be trusted to grant
@@ -139,13 +139,13 @@ the reported bug where "Administration" appeared, disabled, to an account with n
 `ApplyLayout` takes the **whole desired arrangement** and writes all of it or none of it. It replaced
 six procedures that each changed one row.
 
-That the six were right once is worth being precise about, because a comment in this repo argued for
-them: when every edit is applied the instant it is made, one call *is* one change, and a transaction
-has nothing to protect. What made the argument expire was the gesture, not the opinion. Dragging a
-screen into another heading renumbers what it lands among, so one gesture is several rows — and a
-sequence of single-row calls cannot fail halfway without leaving the pane half-rearranged. It already
-did: a reorder was two `MoveItem` calls, and a failure on the second left both rows holding the same
-number.
+That the six were right once is worth being precise about: while every edit applied the instant it
+was made, one call *was* one change, and a transaction had nothing to protect. The drag gesture
+ended that, not any flaw in the reasoning. Dragging a screen into another heading renumbers what it
+lands among, so one gesture is several rows — and a sequence of single-row calls can fail halfway
+and leave the pane half-rearranged. It did: a reorder was two `MoveItem` calls, and a failure on
+the second left both rows holding the same number. The decision record is
+[ADR 0004](adr/0004-staged-edits-atomic-apply.md).
 
 So the shape is authz's `SaveRoleGrants` — desired state in, an outcome summary out
 (`groups_created`, `groups_updated`, `groups_deleted`, `items_changed`):

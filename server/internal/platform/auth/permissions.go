@@ -42,9 +42,7 @@ func (s Scope) rank() int {
 
 // Widest returns whichever of two scopes reaches further.
 //
-// Roles combine by widening, never by narrowing. A system where adding a role can take access away
-// is a system where nobody can predict what a role does, and the first person to discover it is a
-// user who lost something.
+// Roles combine by widening, never by narrowing: gaining a role must never take access away.
 func Widest(a, b Scope) Scope {
 	if b.rank() > a.rank() {
 		return b
