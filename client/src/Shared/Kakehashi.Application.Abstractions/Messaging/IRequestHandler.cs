@@ -7,6 +7,7 @@ namespace Kakehashi.Application.Abstractions.Messaging {
   /// <typeparam name="TResponse">The response type.</typeparam>
   public interface IRequestHandler<in TRequest, TResponse>
       where TRequest : IRequest<TResponse> {
+    /// <summary>Handles the request and returns its response.</summary>
     Task<TResponse> Handle(TRequest request, CancellationToken cancellationToken);
   }
 

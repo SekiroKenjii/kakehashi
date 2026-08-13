@@ -40,10 +40,12 @@ type Store interface {
 	InsertAuditEntries(ctx context.Context, entries []domain.AuditEntry) error
 }
 
-// Clock and IDs are injected so tests can pin both.
 type (
+	// Clock is the service's source of time, injected so a test can pin it.
 	Clock func() time.Time
-	IDs   func() string
+
+	// IDs is the service's source of identifiers, injected for the same reason as Clock.
+	IDs func() string
 )
 
 // Service answers what a caller may do, and lets an administrator change it.

@@ -19,20 +19,20 @@ const (
 	// caller cannot act on, and a bare 500 is the honest thing to return for it.
 	Internal Kind = iota
 
-	// NotFound: the thing asked for does not exist.
+	// NotFound means the thing asked for does not exist.
 	NotFound
 
-	// Invalid: the caller supplied something the domain rejects. The message is safe, and meant,
-	// to be shown to a user.
+	// Invalid means the caller supplied something the domain rejects. The message is safe, and
+	// meant, to be shown to a user.
 	Invalid
 
-	// Conflict: the operation collides with existing state, e.g. a duplicate.
+	// Conflict means the operation collides with existing state, e.g. a duplicate.
 	Conflict
 
-	// Unauthenticated: no credentials, or credentials that did not verify.
+	// Unauthenticated means no credentials, or credentials that did not verify.
 	Unauthenticated
 
-	// Forbidden: the caller is known, and is not allowed to do this.
+	// Forbidden means the caller is known and is not allowed to do this.
 	//
 	// Kept distinct from Unauthenticated because the remedies differ: one is fixed by signing in,
 	// the other never is, and collapsing them sends users round a login loop that cannot succeed.

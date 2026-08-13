@@ -7,6 +7,7 @@ namespace Kakehashi.Application.Abstractions.Messaging {
   /// <typeparam name="TDomainEvent">The domain event type.</typeparam>
   public interface IDomainEventHandler<in TDomainEvent>
       where TDomainEvent : IDomainEvent {
+    /// <summary>Handles one raised event.</summary>
     Task Handle(TDomainEvent domainEvent, CancellationToken cancellationToken);
   }
 }

@@ -32,7 +32,7 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
 
     /// <summary>
     /// Returns the navigation key the service derives for a page type (the same key used by
-    /// <see cref="Register(System.Type[])"/>). Callers that build navigation UI use this so the key they
+    /// <see cref="Register"/>). Callers that build navigation UI use this so the key they
     /// tag an item with matches the key the page is registered under.
     /// </summary>
     /// <param name="pageType">The page type to derive a key for.</param>

@@ -8,6 +8,13 @@
     <UseWinUI>true</UseWinUI>
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
     <Platforms>x64;ARM64</Platforms>
+
+    <!--
+      A contract assembly: docs/COMMENTS.md makes documentation mandatory here, and this is what
+      enforces it. With warnings as errors, CS1591 fails the build on an undocumented public
+      member. Deliberately not solution-wide - elsewhere a doc comment is earned, not required.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
   </PropertyGroup>
 
   <ItemGroup>

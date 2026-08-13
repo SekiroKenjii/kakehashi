@@ -23,6 +23,7 @@ const placementsQuery = `
         FROM navigation.NavItem AS i
         ORDER BY i.SortOrder, i.Id;`
 
+// Placements returns every stored row, ordered within its heading.
 func (s *SQLServer) Placements(ctx context.Context) ([]domain.Placement, error) {
 	return collect(ctx, s.db, "list navigation items", placementsQuery, nil, scanPlacement)
 }

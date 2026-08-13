@@ -22,6 +22,7 @@ const groupsQuery = `
         FROM navigation.NavGroup AS g
         ORDER BY g.SortOrder, g.Title;`
 
+// Groups returns every heading, ordered as the pane draws them.
 func (s *SQLServer) Groups(ctx context.Context) ([]domain.Group, error) {
 	return collect(ctx, s.db, "list navigation groups", groupsQuery, nil, scanGroup)
 }

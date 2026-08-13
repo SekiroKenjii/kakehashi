@@ -44,11 +44,13 @@ type Store interface {
 		ctx context.Context, userID string, take int) ([]domain.SecurityEvent, error)
 }
 
-// Clock and IDs are injected so tests can pin both. A service that reaches for time.Now and
-// uuid.New has to assert on shapes instead of values.
 type (
+	// Clock is the service's source of time, injected so a test can pin it. A service that reaches
+	// for time.Now has to assert on shapes instead of values.
 	Clock func() time.Time
-	IDs   func() string
+
+	// IDs is the service's source of identifiers, injected for the same reason as Clock.
+	IDs func() string
 )
 
 // Service implements accountapi.Service and the authentication both sign-in paths drive.
