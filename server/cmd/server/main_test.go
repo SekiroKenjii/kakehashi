@@ -65,8 +65,7 @@ func TestTheFeatureModulesAreNotExempt(t *testing.T) {
 
 func TestEveryScreenIsReachableBySomebody(t *testing.T) {
 	// A destination naming no permission falls back to <id>.access, which no route on an exempt
-	// module ever checks — so nobody is granted it and the screen is disabled for everybody.
-	// The kernel refuses this at boot too; this asks the same question without a database.
+	// module checks — so the screen is disabled for everybody. The kernel refuses this at boot too.
 	for _, m := range modules() {
 		contributor, ok := m.(navigationapi.Contributor)
 		if !ok {

@@ -85,10 +85,8 @@ func (s *Service) Items(ctx context.Context) ([]ItemConfig, error) {
 		orphans = append(orphans, ItemConfig{Placement: placement, Orphan: true})
 	}
 
-	// Sorted, because the loop above ranges a map and Go randomises that. Unsorted, the leftover
-	// rows at the bottom of the layout screen swapped places between one refresh and the next with
-	// nothing having changed — the same self-reshuffling list this module's schema comment names as
-	// the thing to avoid.
+	// Sorted: the loop above ranges a map and Go randomises that, so the leftover rows would swap
+	// places between refreshes with nothing having changed.
 	sort.Slice(orphans, func(i, j int) bool {
 		if orphans[i].Order != orphans[j].Order {
 			return orphans[i].Order < orphans[j].Order
@@ -225,10 +223,8 @@ func (s *Service) itemOf(ctx context.Context, id string) (ItemConfig, error) {
 		return ItemConfig{}, err
 	}
 
-	// Keyed by what the STORE returned rather than by what the caller passed. SQL Server compares
-	// case-insensitively, so a write naming "Notes" updates the row whose id is "notes" — and
-	// looking the declaration up under the caller's spelling reported a real row as an orphan with
-	// no title, no icon and no permission.
+	// Keyed by what the STORE returned, never the caller's spelling: SQL Server compares
+	// case-insensitively, so "Notes" updates the row id "notes" and the caller's key finds nothing.
 	d, declared := s.byID[placement.DestinationID]
 	if !declared {
 		return ItemConfig{Placement: placement, Orphan: true}, nil

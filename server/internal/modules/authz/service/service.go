@@ -81,9 +81,8 @@ func (s *Service) Resolve(ctx context.Context, subject auth.Subject) (auth.Grant
 
 	grants := make(auth.Grants, len(raw))
 	for key, scope := range raw {
-		// Widest rather than assignment, even though the query already grouped: a scope the
-		// database holds that this build does not recognise must narrow, and Widest is the one
-		// place that rule lives.
+		// Widest, not assignment, even though the query grouped: a stored scope this build does
+		// not recognise must narrow, and Widest is where that rule lives.
 		grants[key] = auth.Widest(grants[key], auth.Scope(scope))
 	}
 	return grants, nil

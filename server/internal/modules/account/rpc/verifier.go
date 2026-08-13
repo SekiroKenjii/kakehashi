@@ -37,8 +37,7 @@ func (v *verifier) Verify(ctx context.Context, token string) (auth.Subject, erro
 		return auth.Subject{}, errs.Unauthenticatedf("That token is not valid.")
 	}
 
-	// sid is required: an access token from this provider always carries it and an ID token never
-	// does, and tokens carrying ID-token markers are rejected below.
+	// sid is required: this provider puts it on access tokens and never on ID tokens.
 	// docs/adr/0006-id-token-is-not-an-access-token.md
 	sid, _ := claims.Claims[claimSession].(string)
 	if sid == "" {

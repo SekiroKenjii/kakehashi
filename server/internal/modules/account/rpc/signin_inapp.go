@@ -73,15 +73,14 @@ func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 
 	// A synthetic op.IDTokenRequest so the provider mints both modes' tokens the same way:
 	// docs/adr/0007-in-app-sign-in-alongside-browser-oidc.md.
-	//
-	// ResponseType "code" is load-bearing: op grants a refresh token only for offline_access plus
-	// a code response type plus refresh_token in the client's grants. Drop it and the desktop app
-	// returns to the sign-in form every time the access token ages out.
 	request := &authRequest{row: domain.AuthRequest{
-		ID:           session.ID,
-		ClientID:     h.client.id,
-		Subject:      account.ID,
-		Scopes:       scopes,
+		ID:       session.ID,
+		ClientID: h.client.id,
+		Subject:  account.ID,
+		Scopes:   scopes,
+
+		// Load-bearing: op grants a refresh token only for offline_access plus a code response
+		// type plus refresh_token in the client's grants.
 		ResponseType: string(oidc.ResponseTypeCode),
 		SessionID:    session.ID,
 		Done:         true,

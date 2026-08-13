@@ -134,9 +134,8 @@ func TestRename_OrdinaryRoleMayChangeBoth(t *testing.T) {
 }
 
 func TestGrant_RevokingManageRolesIsAnOrdinaryDomainOperation(t *testing.T) {
-	// The domain has no opinion about self-lockout: whether removing roles.manage is allowed
-	// depends on who is asking, which is a service question. This pins that the aggregate itself
-	// stays neutral, so the guard is not accidentally duplicated in two places.
+	// Self-lockout depends on who is asking, so it is a service question. This pins the aggregate
+	// as neutral, keeping the guard from being duplicated in two places.
 	role, _ := NewRole("id-1", "Admin", "", true)
 	if err := role.Grant("roles.manage", ScopeAll); err != nil {
 		t.Fatalf("Grant: %v", err)

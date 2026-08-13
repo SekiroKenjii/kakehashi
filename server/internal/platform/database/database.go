@@ -57,9 +57,8 @@ func Open(ctx context.Context, opts Options) (*DB, error) {
 		// under steady load spends its time dialling TLS handshakes it is about to throw away.
 		sqlDB.SetMaxIdleConns(opts.MaxOpenConns)
 	}
-	// Recycle connections well inside the window where a load balancer or SQL Server itself might
-	// drop an idle one. A connection killed under us surfaces as a failed query on a healthy
-	// server, which is a confusing way to learn about a timeout.
+	// Well inside the window where a load balancer or SQL Server drops an idle connection: one
+	// killed underneath surfaces as a failed query against a healthy server.
 	sqlDB.SetConnMaxLifetime(30 * time.Minute)
 	sqlDB.SetConnMaxIdleTime(5 * time.Minute)
 
@@ -138,10 +137,8 @@ func (db *DB) Migrate(ctx context.Context, module string, migrations []Migration
 		return err
 	}
 
-	// One migrator at a time, across processes: the applied set is read and then acted on, so two
-	// instances starting together would both see the same gap and try to create the same object.
-	// An application lock serialises that; it is held on this connection until released, and
-	// released automatically if the process dies holding it.
+	// One migrator at a time across processes: two instances starting together would both see the
+	// same gap and create the same object. The lock releases if the process dies holding it.
 	conn, err := db.Conn(ctx)
 	if err != nil {
 		return fmt.Errorf("migrate %s: %w", module, err)

@@ -229,9 +229,8 @@ func (s *SQLServer) grantsOf(ctx context.Context, roleID string) (map[string]str
 	}
 	defer rows.Close()
 
-	// One role's own grants, read as stored. No folding and no rank: there is nothing to widen
-	// across, because these are the rows of a single role — which is exactly why this scan differs
-	// from GrantsOfAccount's, and why a change made to that one must not be made here.
+	// One role read as stored: no folding, no rank, nothing to widen across. This is why the scan
+	// differs from GrantsOfAccount's, and why a change there must not be copied here.
 	grants := map[string]string{}
 	for rows.Next() {
 		var key, scope string

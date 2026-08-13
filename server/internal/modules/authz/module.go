@@ -94,9 +94,8 @@ func (m *Module) Finalize(ctx context.Context, k *app.Kernel) error {
 		return err
 	}
 
-	// Without this a fresh deployment is locked out of itself: every module is gated, nobody holds
-	// a role, and the screen that would grant one needs a role to reach. The first administrator
-	// cannot be made by the product, so it is made by configuration.
+	// Without this a fresh deployment locks itself out: every module gated, nobody holding a role,
+	// and the screen that grants one needing a role to reach. So configuration makes the first.
 	admin := k.Cfg.Module(m.ID()).String("BOOTSTRAP_ADMIN", "")
 	if admin == "" {
 		k.Log.WarnContext(ctx,

@@ -32,15 +32,13 @@ import (
 func main() {
 	log := logging.FromEnv()
 
-	// The context is cancelled on SIGINT or SIGTERM, which is what a container runtime sends
-	// before it resorts to SIGKILL. Everything downstream treats cancellation as "wind up", so
-	// this one line is the whole graceful-shutdown trigger.
+	// Cancelled on SIGINT or SIGTERM, which a container runtime sends before SIGKILL. Everything
+	// downstream treats cancellation as "wind up", so this line is the whole shutdown trigger.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Default signal handling is restored the moment the first signal arrives, so a second Ctrl-C
-	// during a slow shutdown kills the process instead of being swallowed by a still-installed
-	// handler.
+	// Default handling is restored on the first signal, so a second Ctrl-C during a slow shutdown
+	// kills the process rather than being swallowed.
 	go func() {
 		<-ctx.Done()
 		stop()
