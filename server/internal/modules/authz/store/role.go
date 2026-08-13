@@ -161,9 +161,8 @@ func (s *SQLServer) GrantsOfAccount(
 			return nil, errs.Internalf(err, "scan grant")
 		}
 
-		// A rank of 0 means every row for this permission carried a scope this build does not
-		// know. Skipped rather than defaulted: a grant nothing here understands must not silently
-		// become the widest one.
+		// A rank of 0 means every row for this permission carried a scope this build does not know.
+		// Skipped, not defaulted: a grant nothing understands must not silently become the widest.
 		if scope := scopeOfRank(rank); scope != "" {
 			grants[key] = scope
 		}

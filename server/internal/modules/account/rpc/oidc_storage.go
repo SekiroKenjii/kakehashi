@@ -145,9 +145,8 @@ func (s *storage) TerminateSession(ctx context.Context, userID, clientID string)
 func (s *storage) RevokeToken(
 	ctx context.Context, tokenOrTokenID, userID, clientID string,
 ) *oidc.Error {
-	// Access tokens are referenced by id, refresh tokens by their value; nothing distinguishes
-	// them at the endpoint, so try both. Deleting something already gone succeeds — revocation is
-	// idempotent by design.
+	// Access tokens are referenced by id and refresh tokens by value, and nothing distinguishes
+	// them here, so try both. Deleting something already gone succeeds: revocation is idempotent.
 	if err := s.store.DeleteToken(ctx, tokenOrTokenID); err != nil {
 		return oidc.ErrServerError().WithDescription("could not revoke token")
 	}
@@ -254,10 +253,8 @@ func (s *storage) SetIntrospectionFromToken(
 func (s *storage) GetPrivateClaimsFromScopes(
 	ctx context.Context, userID, clientID string, scopes []string,
 ) (map[string]any, error) {
-	// Empty: roles are deliberately not token claims — a token that carried them would be a second
-	// source of truth with a ten-minute lag, and the gate resolves the real answer per request.
-	// Kept as a hook because op asks for it either way, and the next private claim will want
-	// somewhere to go.
+	// Empty: roles are deliberately not token claims — that would be a second source of truth with
+	// a ten-minute lag. Kept as a hook because op asks for it either way.
 	return map[string]any{}, nil
 }
 

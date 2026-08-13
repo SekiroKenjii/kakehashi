@@ -36,10 +36,8 @@ func (s *SQLServer) InsertAuditEntries(
             (Id, OccurredAt, ActorId, ActorName, Action, RoleId, RoleName, PermissionKey, Detail)
         VALUES (@p1, @p2, @p3, @p4, @p5, @p6, @p7, @p8, @p9);`
 
-	// One transaction, because these entries describe ONE act. An administrator saving eight
-	// toggles produces eight rows, and a failure halfway leaves an audit trail that says four
-	// permissions changed when eight did — which is the specific way an audit trail becomes worse
-	// than not having one.
+	// One transaction, because these entries describe ONE act: a failure halfway leaves a trail
+	// saying four permissions changed when eight did.
 	return s.inTransaction(ctx, func(tx *sql.Tx) error {
 		for _, e := range entries {
 			_, err := tx.ExecContext(

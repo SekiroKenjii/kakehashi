@@ -110,9 +110,8 @@ func (s *Service) planGroups(
 		}
 		wanted[group.ID] = struct{}{}
 
-		// Titles are unique in the database, so a collision would surface as a conflict from the
-		// middle of a transaction naming one row. Caught here it names both, before anything is
-		// written. Compared case-insensitively because the database's collation is.
+		// Titles are unique in the database, so a collision caught here names both rows before
+		// anything is written. Compared case-insensitively because the collation is.
 		folded := strings.ToLower(group.Title)
 		if other, clash := titles[folded]; clash {
 			return nil, ApplyOutcome{}, errs.Invalidf(
@@ -159,9 +158,8 @@ func (s *Service) planGroups(
 func (s *Service) planItems(
 	specs []ItemSpec, stored *layout, plan *domain.LayoutPlan, outcome *ApplyOutcome,
 ) error {
-	// The headings this arrangement will end with, which is what an item may be placed under — not
-	// the ones stored now. A screen that creates a heading and drops a destination into it in one
-	// gesture is the ordinary case, and checking against the stored set would refuse it.
+	// The headings this arrangement will END with, not the ones stored now: creating a heading and
+	// dropping a destination into it in one gesture is the ordinary case.
 	available := make(map[string]struct{}, len(plan.CreateGroups)+len(stored.groups))
 	for _, g := range plan.CreateGroups {
 		available[g.ID] = struct{}{}
@@ -173,11 +171,8 @@ func (s *Service) planItems(
 		available[g.ID] = struct{}{}
 	}
 
-	// Headings on their way out, kept separately rather than removed from available. An item still
-	// pointing at one is not an error: the schema ungroups whatever was under a deleted heading, and
-	// the single-row DeleteGroup relies on exactly that. Refusing here would make the two ways of
-	// deleting a heading disagree about what happens to its contents, and a screen would have to
-	// renumber every affected row to say something the server already knows.
+	// Headings on their way out, kept separately rather than removed from available: the schema
+	// ungroups whatever was under a deleted heading, and single-row DeleteGroup relies on that.
 	deleting := make(map[string]struct{}, len(plan.DeleteGroups))
 	for _, id := range plan.DeleteGroups {
 		delete(available, id)
@@ -198,10 +193,8 @@ func (s *Service) planItems(
 
 		groupID := spec.GroupID
 		if groupID != "" {
-			// Validated in Go before the write, because the database is more forgiving than the pane:
-			// SQL Server compares case-insensitively, so the foreign key accepts "Administration" for
-			// the heading whose id is "administration" — and then Build, which matches exactly, finds
-			// no such heading and drops the destination out of every pane it belonged in.
+			// Validated in Go before the write: SQL Server compares case-insensitively, so the foreign
+			// key accepts "Administration" where Build, matching exactly, then finds no such heading.
 			if err := domain.ValidateSlug(groupID); err != nil {
 				return err
 			}
@@ -214,9 +207,8 @@ func (s *Service) planItems(
 		}
 
 		if !spec.IsVisible {
-			// The one hide that cannot be undone: Build skips an invisible destination before it
-			// checks anything, so hiding the screen that manages the pane removes the only surface
-			// that could unhide it, from every client at once.
+			// The one hide that cannot be undone: Build skips an invisible destination, so hiding the
+			// layout screen removes the only surface that could unhide it, on every client at once.
 			if d, declared := s.byID[spec.ID]; declared && d.HideWhenDenied {
 				return errs.Invalidf(
 					"%s is shown only to accounts that hold its permission, so it cannot also be "+

@@ -159,10 +159,8 @@ func (s *Service) DeleteGroup(ctx context.Context, id string) error {
 func (s *Service) MoveItem(
 	ctx context.Context, id, groupID string, order int,
 ) (ItemConfig, error) {
-	// Validated before the write, because the database is more forgiving than the pane. SQL Server
-	// compares case-insensitively, so the foreign key accepts "Administration" for the heading
-	// whose id is "administration" — and then Build, which matches in Go, finds no heading with
-	// that spelling and drops the destination out of every pane it was supposed to appear in.
+	// Validated before the write: SQL Server compares case-insensitively, so the foreign key accepts
+	// "Administration" where Build, matching in Go, then finds no heading with that spelling.
 	if groupID != "" {
 		if err := domain.ValidateSlug(groupID); err != nil {
 			return ItemConfig{}, err
@@ -184,10 +182,8 @@ func (s *Service) MoveItem(
 func (s *Service) UpdateItem(
 	ctx context.Context, id, title, icon string, isVisible bool,
 ) (ItemConfig, error) {
-	// The one hide that cannot be undone. Build skips an invisible destination before it checks
-	// anything, so hiding the screen that manages the layout removes the only surface that could
-	// unhide it — from every client at once, recoverable only by somebody hand-writing an RPC call
-	// or an UPDATE. Refused with the reason, the way a system heading refuses deletion.
+	// The one hide that cannot be undone: Build skips an invisible destination, so hiding the layout
+	// screen removes the only surface that could unhide it, on every client at once.
 	if !isVisible {
 		if d, declared := s.byID[id]; declared && d.HideWhenDenied {
 			return ItemConfig{}, errs.Invalidf(

@@ -40,9 +40,8 @@ func (h *handler) GetNavigation(
 	ctx context.Context, _ *connect.Request[navigationv1.GetNavigationRequest],
 ) (*connect.Response[navigationv1.GetNavigationResponse], error) {
 	if _, ok := auth.SubjectFrom(ctx); !ok {
-		// Unauthenticated rather than the pane an anonymous caller would get. An account that may
-		// reach nothing and an expired token draw the same empty pane and mean opposite things; only
-		// one of them is fixed by signing in again.
+		// Unauthenticated rather than the pane an anonymous caller would get: reaching nothing and an
+		// expired token draw the same empty pane, and only one is fixed by signing in again.
 		return nil, errs.Unauthenticatedf("Sign in to see your navigation.")
 	}
 

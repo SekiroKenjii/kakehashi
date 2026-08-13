@@ -32,11 +32,8 @@ func (s *Service) Authenticate(
 	}
 
 	if !user.IsActive {
-		// Checked before the password, so a deactivated account is refused without the hash
-		// comparison — and refused with its own message, because "your account has been
-		// deactivated" is actionable and "wrong password" sends someone to the reset form for
-		// nothing. The address is known to exist by the administrator who switched it off, so this
-		// message enumerates nothing that was private.
+		// Before the password, so a deactivated account is refused without the hash comparison and
+		// with its own message: "wrong password" would send someone to the reset form for nothing.
 		s.failed(ctx, user.ID, device, ip)
 		return domain.Account{}, errs.Unauthenticatedf(
 			"This account has been deactivated. Ask an administrator to restore it.")
@@ -91,9 +88,8 @@ func (s *Service) StartSession(
 
 	s.record(ctx, user.ID, kind, device, ip)
 
-	// Best-effort, and after the session exists. A sign-in that succeeded must not be undone
-	// because a reporting column could not be written; the session is the fact, this is the
-	// convenience.
+	// Best-effort, and after the session exists: the session is the fact and this is the
+	// convenience, so a sign-in must not be undone by an unwritable reporting column.
 	_ = s.store.TouchSignIn(ctx, user.ID, now)
 
 	eventbus.Publish(s.bus, ctx, accountapi.SignedIn{

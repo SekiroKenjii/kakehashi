@@ -37,9 +37,8 @@ func (h *handler) ListMyGrants(
 	ctx context.Context, _ *connect.Request[authzv1.ListMyGrantsRequest],
 ) (*connect.Response[authzv1.ListMyGrantsResponse], error) {
 	if _, ok := auth.SubjectFrom(ctx); !ok {
-		// Unauthenticated rather than an empty list. An account that may do nothing and an expired
-		// token draw the same screen and mean opposite things; only one of them is fixed by
-		// signing in again.
+		// Unauthenticated rather than an empty list: an account that may do nothing and an expired
+		// token draw the same screen, and only one is fixed by signing in again.
 		return nil, errs.Unauthenticatedf("Sign in to see your permissions.")
 	}
 
