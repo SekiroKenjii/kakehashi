@@ -107,10 +107,12 @@ do
     rm -rf "$path"
 done
 
+# Deletes any line mentioning one of the patterns. \|…| rather than /…/ because the patterns are
+# paths, and a slash inside a /…/ address ends the address.
 drop_lines() {
     local file="$1"; shift
     local expr=""
-    for pattern in "$@"; do expr="$expr;/$pattern/d"; done
+    for pattern in "$@"; do expr="$expr;\\|$pattern|d"; done
     sed "${expr#;}" "$file" > "$file.tmp" && cat "$file.tmp" > "$file" && rm -f "$file.tmp"
 }
 drop_lines docs/adr/README.md \
@@ -131,6 +133,9 @@ substitution="${substitution#;}"
 substituted=0
 while IFS= read -r -d '' file; do
     [ -f "$file" ] || continue
+    # These scripts hold the placeholder table itself, and this one is still being read from disk:
+    # rewriting it mid-run makes the shell resume at a byte offset into different text.
+    case "$file" in tools/rename/*) continue ;; esac
     # -I reports no match in a binary file, which is how an icon is skipped.
     grep -Iq '__[A-Z][A-Z0-9_]*__' "$file" 2>/dev/null || continue
     sed "$substitution" "$file" > "$file.rename.tmp"

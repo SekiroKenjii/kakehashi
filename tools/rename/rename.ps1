@@ -119,6 +119,8 @@ if (Test-Path 'templates/README.scaffold.md') {
 $substituted = 0
 foreach ($file in (git ls-files)) {
     if (-not (Test-Path -LiteralPath $file -PathType Leaf)) { continue }
+    # These scripts hold the placeholder table itself. rename.sh is also read from disk as it runs.
+    if ($file -like 'tools/rename/*') { continue }
 
     $bytes = [System.IO.File]::ReadAllBytes($file)
     # A NUL byte means an image or an icon, which no substitution reaches.

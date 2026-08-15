@@ -9,8 +9,8 @@
 // when somebody decides to exempt a route from the permission check, which is a decision worth
 // seeing in a diff.
 //
-// The kakehashi: markers below delimit the wiring a generator writes and a removable unit takes
-// back: docs/BOILERPLATE.md.
+// The markers below — kakehashi:module-imports:begin and its kind — delimit the wiring a generator
+// writes and a removable unit takes back: docs/BOILERPLATE.md.
 package main
 
 import (
