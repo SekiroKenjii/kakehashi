@@ -12,7 +12,7 @@
     <LangVersion>latest</LangVersion>
     <Nullable>enable</Nullable>
 
-    <!-- Google style requires explicit, ordered using directives, so implicit usings are off. -->
+    <!-- Requires explicit, ordered using directives, so implicit usings are off. -->
     <ImplicitUsings>disable</ImplicitUsings>
 
     <!-- Run the IDE code-style (IDExxxx) analyzers, configured in .editorconfig, during build. -->

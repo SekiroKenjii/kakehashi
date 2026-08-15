@@ -173,7 +173,7 @@ jobs:
       - name: Restore
         run: dotnet restore Kakehashi.slnx
 
-      # Hard gate: every file must already match the Google-style .editorconfig.
+      # Hard gate: every file must already match the style .editorconfig.
       - name: Verify formatting
         run: dotnet format Kakehashi.slnx --verify-no-changes --severity warn --no-restore
 
