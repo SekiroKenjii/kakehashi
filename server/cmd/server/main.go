@@ -8,6 +8,9 @@
 // Neither list grows because a module was added. modules() gains one line; the other changes only
 // when somebody decides to exempt a route from the permission check, which is a decision worth
 // seeing in a diff.
+//
+// The kakehashi: markers below delimit the wiring a generator writes and a removable unit takes
+// back: docs/BOILERPLATE.md.
 package main
 
 import (
@@ -20,12 +23,18 @@ import (
 
 	"github.com/SekiroKenjii/kakehashi/server/internal/app"
 	"github.com/SekiroKenjii/kakehashi/server/internal/app/server"
+	// kakehashi:module-imports:begin
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account"
+	// kakehashi:unit-activity:begin
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity"
+	// kakehashi:unit-activity:end
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz"
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/health"
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation"
+	// kakehashi:unit-notes:begin
 	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes"
+	// kakehashi:unit-notes:end
+	// kakehashi:module-imports:end
 	"github.com/SekiroKenjii/kakehashi/server/internal/platform/logging"
 )
 
@@ -88,12 +97,18 @@ func run(ctx context.Context, log *slog.Logger) error {
 // A function rather than a literal inside run(), so a test can walk it without booting a server.
 func modules() []app.Module {
 	return []app.Module{
+		// kakehashi:module-registrations:begin
 		health.New(),
+		// kakehashi:unit-notes:begin
 		notes.New(),
+		// kakehashi:unit-notes:end
 		account.New(),
+		// kakehashi:unit-activity:begin
 		activity.New(),
+		// kakehashi:unit-activity:end
 		authz.New(),
 		navigation.New(),
+		// kakehashi:module-registrations:end
 	}
 }
 

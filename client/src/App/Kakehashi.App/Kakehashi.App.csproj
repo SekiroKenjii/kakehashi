@@ -97,9 +97,15 @@
     <ProjectReference Include="..\..\Shared\Kakehashi.Interoperability\Kakehashi.Interoperability.csproj" />
     <ProjectReference Include="..\..\Shared\Kakehashi.UI.Common\Kakehashi.UI.Common.csproj" />
     <ProjectReference Include="..\..\Shared\Kakehashi.UI.Contracts\Kakehashi.UI.Contracts.csproj" />
+    <!-- kakehashi:module-projects:begin -->
     <ProjectReference Include="..\..\Modules\Auth\Kakehashi.Modules.Auth.UI\Kakehashi.Modules.Auth.UI.csproj" />
+    <!-- kakehashi:unit-activity:begin -->
     <ProjectReference Include="..\..\Modules\Activity\Kakehashi.Modules.Activity.UI\Kakehashi.Modules.Activity.UI.csproj" />
+    <!-- kakehashi:unit-activity:end -->
+    <!-- kakehashi:unit-notes:begin -->
     <ProjectReference Include="..\..\Modules\Notes\Kakehashi.Modules.Notes.UI\Kakehashi.Modules.Notes.UI.csproj" />
+    <!-- kakehashi:unit-notes:end -->
+    <!-- kakehashi:module-projects:end -->
   </ItemGroup>
 
   <!-- WinUI 3 dotnet-publish bug: XBF, PRI and Assets are not copied to the publish directory -->

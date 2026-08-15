@@ -25,6 +25,8 @@
     </Project>
   </Folder>
   <Folder Name="/src/Modules/" />
+  <!-- kakehashi:module-projects:begin -->
+  <!-- kakehashi:unit-activity:begin -->
   <Folder Name="/src/Modules/Activity/">
     <Project Path="src/Modules/Activity/Kakehashi.Modules.Activity.Application/Kakehashi.Modules.Activity.Application.csproj">
       <Platform Solution="*|x64" Project="x64" />
@@ -33,6 +35,8 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
   </Folder>
+  <!-- kakehashi:unit-activity:end -->
+  <!-- kakehashi:unit-notes:begin -->
   <Folder Name="/src/Modules/Notes/">
     <Project Path="src/Modules/Notes/Kakehashi.Modules.Notes.Application/Kakehashi.Modules.Notes.Application.csproj">
       <Platform Solution="*|x64" Project="x64" />
@@ -44,6 +48,7 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
   </Folder>
+  <!-- kakehashi:unit-notes:end -->
   <Folder Name="/src/Modules/Auth/">
     <Project Path="src/Modules/Auth/Kakehashi.Modules.Auth.Application/Kakehashi.Modules.Auth.Application.csproj">
       <Platform Solution="*|x64" Project="x64" />
@@ -55,6 +60,7 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
   </Folder>
+  <!-- kakehashi:module-projects:end -->
   <Folder Name="/src/Shared/">
     <Project Path="src/Shared/Kakehashi.Application.Abstractions/Kakehashi.Application.Abstractions.csproj" />
     <Project Path="src/Shared/Kakehashi.Contracts/Kakehashi.Contracts.csproj" />
@@ -82,21 +88,27 @@
     </Project>
     <Project Path="tests/Kakehashi.ArchitectureTests/Kakehashi.ArchitectureTests.csproj" />
     <Project Path="tests/Kakehashi.Mediator.Tests/Kakehashi.Mediator.Tests.csproj" />
+    <!-- kakehashi:module-test-projects:begin -->
     <Project Path="tests/Kakehashi.Modules.Auth.Application.Tests/Kakehashi.Modules.Auth.Application.Tests.csproj" />
     <Project Path="tests/Kakehashi.Modules.Auth.Domain.Tests/Kakehashi.Modules.Auth.Domain.Tests.csproj" />
     <Project Path="tests/Kakehashi.Modules.Auth.IntegrationTests/Kakehashi.Modules.Auth.IntegrationTests.csproj" />
     <Project Path="tests/Kakehashi.Modules.Auth.UI.Tests/Kakehashi.Modules.Auth.UI.Tests.csproj">
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+    <!-- kakehashi:unit-activity:begin -->
     <Project Path="tests/Kakehashi.Modules.Activity.Application.Tests/Kakehashi.Modules.Activity.Application.Tests.csproj" />
-    <Project Path="tests/Kakehashi.Modules.Notes.Application.Tests/Kakehashi.Modules.Notes.Application.Tests.csproj" />
-    <Project Path="tests/Kakehashi.Modules.Notes.Domain.Tests/Kakehashi.Modules.Notes.Domain.Tests.csproj" />
-    <Project Path="tests/Kakehashi.Modules.Notes.IntegrationTests/Kakehashi.Modules.Notes.IntegrationTests.csproj" />
     <Project Path="tests/Kakehashi.Modules.Activity.UI.Tests/Kakehashi.Modules.Activity.UI.Tests.csproj">
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+    <!-- kakehashi:unit-activity:end -->
+    <!-- kakehashi:unit-notes:begin -->
+    <Project Path="tests/Kakehashi.Modules.Notes.Application.Tests/Kakehashi.Modules.Notes.Application.Tests.csproj" />
+    <Project Path="tests/Kakehashi.Modules.Notes.Domain.Tests/Kakehashi.Modules.Notes.Domain.Tests.csproj" />
+    <Project Path="tests/Kakehashi.Modules.Notes.IntegrationTests/Kakehashi.Modules.Notes.IntegrationTests.csproj" />
     <Project Path="tests/Kakehashi.Modules.Notes.UI.Tests/Kakehashi.Modules.Notes.UI.Tests.csproj">
       <Platform Solution="*|x64" Project="x64" />
     </Project>
+    <!-- kakehashi:unit-notes:end -->
+    <!-- kakehashi:module-test-projects:end -->
   </Folder>
 </Solution>

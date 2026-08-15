@@ -56,7 +56,16 @@ func TestThePrerequisitesOfTheCheckAreExempt(t *testing.T) {
 func TestTheFeatureModulesAreNotExempt(t *testing.T) {
 	// The direction that matters: a newly mounted module cannot serve an unprotected route unless
 	// somebody exempts it here, which turns "we forgot" into a failed boot rather than an open door.
-	for _, id := range []string{"notes", "activity"} {
+	for _, id := range []string{
+		// kakehashi:module-ids:begin
+		// kakehashi:unit-notes:begin
+		"notes",
+		// kakehashi:unit-notes:end
+		// kakehashi:unit-activity:begin
+		"activity",
+		// kakehashi:unit-activity:end
+		// kakehashi:module-ids:end
+	} {
 		if slices.Contains(unprotectedRouteModules, id) {
 			t.Errorf("%q may serve an unprotected route; it should not be able to", id)
 		}
