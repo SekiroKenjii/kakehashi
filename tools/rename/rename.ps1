@@ -158,7 +158,7 @@ foreach ($path in $targets) {
 }
 Write-Host "rename: renamed $renamed paths"
 
-# ── 5. regenerate the contract ─────────────────────────────────────────────────────────────────
+# ── 5. regenerate what substitution cannot preserve ────────────────────────────────────────────
 # Substituting the committed generated code is not the same as generating it. protoc derives Go
 # symbol names and the per-language namespace options from the proto package, and it collapses the
 # placeholder's underscores on the way: a renamed file says file__smokeapp_… where a generated one
@@ -180,6 +180,23 @@ if ($regenerated) {
     Write-Warning ("rename: could not regenerate the contract — buf and its protoc-gen-go and " +
         "protoc-gen-connect-go plugins have to be on PATH. Run 'buf generate' before committing, " +
         "or the next run of it will show a diff.")
+}
+
+# The analyzer sorts imports by namespace, and a new name sorts somewhere else: Kakehashi sat
+# between CommunityToolkit and Microsoft, SmokeApp does not. This is the same command CI verifies
+# with --verify-no-changes, so the two cannot disagree.
+$solution = Get-ChildItem -Path client -Filter *.slnx -File | Select-Object -First 1
+$formatted = $false
+if ($solution -and (Get-Command dotnet -ErrorAction SilentlyContinue)) {
+    dotnet format $solution.FullName --severity warn 2>&1 | Out-Null
+    $formatted = $LASTEXITCODE -eq 0
+}
+if ($formatted) {
+    Write-Host 'rename: reformatted the client'
+} else {
+    Write-Warning ("rename: could not reformat the client — the .NET SDK has to be installed. " +
+        "Run 'dotnet format client/$($solution.Name)' before committing, or the format check " +
+        "will fail on import ordering.")
 }
 
 # ── 6. clean ───────────────────────────────────────────────────────────────────────────────────

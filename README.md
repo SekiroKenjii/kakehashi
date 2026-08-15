@@ -94,11 +94,21 @@ it leaves a tree that still passes every gate.
 
 ## Building the template itself
 
-This repository holds placeholders, so it does not build as it stands: `buf lint` rejects a proto
-package spelled `__PROTO_PACKAGE__`, and the Go tool skips a directory beginning with an
-underscore. Both clear the moment the tree is renamed, which is what CI does before it runs the
-gates — see `.github/workflows/scaffold-smoke.yml`. The template is never merged unless a renamed
-copy of it builds.
+This repository holds placeholders, so it does not build as it stands:
+
+- `buf lint` rejects a proto package spelled `__PROTO_PACKAGE__` — no double underscore is
+  lower_snake.case;
+- the Go tool skips a directory beginning with an underscore when it expands `./...`;
+- a C# namespace spelled `__ROOT_NAMESPACE__` violates IDE1006, and an underscore sorts before
+  every letter, so the import order is wrong by construction.
+
+All three clear the moment the tree is renamed, which is what CI does before it runs the gates —
+see `.github/workflows/scaffold-smoke.yml`. The template is never merged unless a renamed copy of
+it builds.
+
+The rename regenerates what it cannot substitute: `buf generate`, because protoc derives Go symbol
+names from the proto package, and `dotnet format`, because the analyzer sorts imports by namespace
+and a new name sorts somewhere else.
 
 ## Where to look first
 

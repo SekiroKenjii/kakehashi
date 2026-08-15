@@ -169,17 +169,19 @@ done < <(find . -path ./.git -prune -o -name '*__*__*' -print |
     awk -F/ '{print NF"\t"$0}' | sort -rn | cut -f2-)
 echo "rename: renamed $renamed paths"
 
-# ── 5. regenerate the contract ─────────────────────────────────────────────────────────────────
-# Substituting the committed generated code is not the same as generating it. protoc derives Go
-# symbol names and the per-language namespace options from the proto package, and it collapses the
-# placeholder's underscores on the way: a renamed file says file__smokeapp_… where a generated one
-# says file_smokeapp_…. Only regeneration produces the tree buf generate will next be checked
-# against.
+# ── 5. regenerate what substitution cannot preserve ────────────────────────────────────────────
+# Two things are derived from the name rather than spelled with it, so replacing text does not
+# reproduce them:
 #
-# Not fatal. By this point the tree has already been substituted and renamed, and abandoning it
-# half-done is worse than a tree whose generated code is a rename behind — that still compiles,
-# because the substituted symbols are consistent with each other. It is the next buf generate that
-# would show a diff, so say so.
+#   the contract    protoc builds Go symbol names and the per-language namespace options out of the
+#                   proto package, collapsing the placeholder's underscores on the way: a renamed
+#                   file says file__smokeapp_… where a generated one says file_smokeapp_…
+#   the using order the analyzer sorts imports by namespace, and a new name sorts somewhere else.
+#                   Kakehashi sat between CommunityToolkit and Microsoft; SmokeApp does not.
+#
+# Neither is fatal. By this point the tree is already substituted and renamed, and abandoning it
+# half-done is worse than leaving one derived artifact a step behind — both are one command away,
+# and both are named in the warning.
 regenerate() {
     if ! command -v buf >/dev/null 2>&1; then
         echo "buf is not installed"
@@ -194,6 +196,17 @@ else
     echo "rename: could not regenerate the contract — buf and its protoc-gen-go and" >&2
     echo "        protoc-gen-connect-go plugins have to be on PATH. Run 'buf generate'" >&2
     echo "        before committing, or the next run of it will show a diff." >&2
+fi
+
+# The same command CI verifies with --verify-no-changes, so the two cannot disagree.
+solution=$(find client -maxdepth 1 -name '*.slnx' 2>/dev/null | head -1)
+if [ -n "$solution" ] && command -v dotnet >/dev/null 2>&1 &&
+    dotnet format "$solution" --severity warn >/dev/null 2>&1; then
+    echo "rename: reformatted the client"
+else
+    echo "rename: could not reformat the client — the .NET SDK has to be installed, on Windows" >&2
+    echo "        for a WinUI solution. Run 'dotnet format $solution' before committing, or" >&2
+    echo "        the format check will fail on import ordering." >&2
 fi
 
 # ── 6. clean ───────────────────────────────────────────────────────────────────────────────────

@@ -161,6 +161,11 @@ jobs:
   client:
     # WinUI 3 (Windows App SDK) requires Windows to build.
     runs-on: windows-latest
+    # Skipped in the template for the same reason buf lint is: a namespace spelled
+    # __ROOT_NAMESPACE__ violates IDE1006, and an underscore sorts before every letter, so the
+    # import order is wrong by construction. scaffold-smoke-client builds the renamed tree
+    # instead. The condition is the placeholder proto directory, so a scaffolded project runs it.
+    if: ${{ hashFiles('proto/__PROTO_PACKAGE__/**') == '' }}
     defaults:
       run:
         working-directory: client
