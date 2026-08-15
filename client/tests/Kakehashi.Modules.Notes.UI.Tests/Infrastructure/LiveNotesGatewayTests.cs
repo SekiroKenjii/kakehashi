@@ -34,6 +34,7 @@ public sealed class LiveNotesGatewayTests
     private static string? Address()
     {
         var address = Environment.GetEnvironmentVariable(_addressVariable);
+
         return string.IsNullOrWhiteSpace(address) ? null : address;
     }
 

@@ -60,8 +60,10 @@ public sealed class AppOrchestratorTests
         orchestrator.ExecuteAsync(Arg.Any<CancellationToken>())
             .Returns(_ => {
                 sink.Add(name);
+
                 return Task.CompletedTask;
             });
+
         return orchestrator;
     }
 }

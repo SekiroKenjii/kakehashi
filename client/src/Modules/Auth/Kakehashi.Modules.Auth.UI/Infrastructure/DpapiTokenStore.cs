@@ -37,6 +37,7 @@ public sealed class DpapiTokenStore : ITokenStore
             }
             var protectedBytes = File.ReadAllBytes(_path);
             var bytes = ProtectedData.Unprotect(protectedBytes, _entropy, DataProtectionScope.CurrentUser);
+
             return Task.FromResult<string?>(Encoding.UTF8.GetString(bytes));
         }
         catch (Exception ex)
@@ -60,6 +61,7 @@ public sealed class DpapiTokenStore : ITokenStore
         {
             // Best-effort persistence; failure just means the user re-authenticates next launch.
         }
+
         return Task.CompletedTask;
     }
 
@@ -76,6 +78,7 @@ public sealed class DpapiTokenStore : ITokenStore
         {
             // Ignore: a leftover encrypted token is unusable without the user's DPAPI key.
         }
+
         return Task.CompletedTask;
     }
 }

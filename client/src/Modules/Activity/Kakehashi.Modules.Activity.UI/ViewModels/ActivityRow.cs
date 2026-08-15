@@ -133,6 +133,7 @@ public sealed partial class ActivityRow : ObservableObject
     {
         get {
             string burst = IsBurst ? $", {Count} times" : string.Empty;
+
             return $"{Title}, {TimeText}{burst}, {(IsExpanded ? "expanded" : "collapsed")}";
         }
     }
@@ -158,10 +159,12 @@ public sealed partial class ActivityRow : ObservableObject
             }
             run.Add(entry);
         }
+
         if (run.Count > 0)
         {
             rows.Add(new ActivityRow(run));
         }
+
         return rows;
     }
 
@@ -211,59 +214,75 @@ public sealed partial class ActivityRow : ObservableObject
     private static IReadOnlyList<ActivityDetail> Describe(ActivityEntryDto entry)
     {
         var facts = new List<ActivityDetail>(5) { new("Event", entry.Id) };
+
         if (entry.SessionId.Length > 0)
         {
             facts.Add(new ActivityDetail("Session", entry.SessionId));
         }
+
         if (entry.IPAddress.Length > 0)
         {
             facts.Add(new ActivityDetail("IP address", entry.IPAddress));
         }
+
         if (entry.Platform.Length > 0)
         {
             facts.Add(new ActivityDetail("Platform", entry.Platform));
         }
+
         if (entry.Device.Length > 0)
         {
             facts.Add(new ActivityDetail("Reported as", entry.Device));
         }
+
         return facts;
     }
 
     private static string Occurrence(ActivityEntryDto entry)
     {
-        return entry.OccurredAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+        return entry.OccurredAt
+            .ToLocalTime()
+            .ToString("HH:mm:ss", CultureInfo.CurrentCulture);
     }
 
     /// <summary>The span a burst covers, oldest to newest.</summary>
     private static string Span(IReadOnlyList<ActivityEntryDto> entries)
     {
-        string oldest = entries[^1].OccurredAt.ToLocalTime()
+        string oldest = entries[^1].OccurredAt
+            .ToLocalTime()
             .ToString("HH:mm", CultureInfo.CurrentCulture);
-        string newest = entries[0].OccurredAt.ToLocalTime()
+        string newest = entries[0].OccurredAt
+            .ToLocalTime()
             .ToString("HH:mm", CultureInfo.CurrentCulture);
+
         return oldest == newest ? newest : oldest + "–" + newest;
     }
 
     /// <summary>Clock time, plus how long ago while that is still the more useful answer.</summary>
     private static string Moment(DateTimeOffset occurred)
     {
-        string clock = occurred.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
+        string clock = occurred
+            .ToLocalTime()
+            .ToString("HH:mm", CultureInfo.CurrentCulture);
         string relative = Relative(occurred);
+
         return relative.Length == 0 ? clock : clock + " · " + relative;
     }
 
     private static string Relative(DateTimeOffset moment)
     {
         var elapsed = DateTimeOffset.UtcNow - moment;
+
         if (elapsed < TimeSpan.FromMinutes(1))
         {
             return "just now";
         }
+
         if (elapsed < TimeSpan.FromHours(1))
         {
             return $"{(int)elapsed.TotalMinutes}m ago";
         }
+
         if (elapsed < TimeSpan.FromDays(1))
         {
             return $"{(int)elapsed.TotalHours}h ago";
@@ -311,10 +330,12 @@ public sealed class ActivityDay
         {
             return "Today · " + date.ToString("d MMMM", CultureInfo.CurrentCulture);
         }
+
         if (date == today.AddDays(-1))
         {
             return "Yesterday · " + date.ToString("d MMMM", CultureInfo.CurrentCulture);
         }
+
         return spelled;
     }
 }

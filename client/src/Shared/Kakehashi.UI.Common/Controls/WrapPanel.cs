@@ -77,6 +77,7 @@ public sealed partial class WrapPanel : Panel
 
         totalWidth = Math.Max(totalWidth, lineWidth);
         totalHeight += lineHeight;
+
         return new Size(totalWidth, totalHeight);
     }
 

@@ -184,7 +184,9 @@ public sealed partial class HomeViewModel : ViewModel
         _moduleRegistry = moduleRegistry;
         // The committed appsettings.json ships without a Backend section; in that state the bound
         // options only hold placeholder defaults, so the card must not present them as a real backend.
-        _isBackendConfigured = configuration.GetSection(BackendOptions.SectionName).Exists();
+        _isBackendConfigured = configuration
+            .GetSection(BackendOptions.SectionName)
+            .Exists();
 
         GreetingText = BuildGreeting(displayName: null);
         DateText = DateTime.Now.ToString("dddd, MMMM d");
@@ -225,6 +227,7 @@ public sealed partial class HomeViewModel : ViewModel
     {
         get {
             var version = typeof(HomeViewModel).Assembly.GetName().Version;
+
             return version is null ? "v1.0.0" : $"v{version.ToString(3)}";
         }
     }
@@ -446,6 +449,7 @@ public sealed partial class HomeViewModel : ViewModel
         string glyph = string.IsNullOrEmpty(item.IconGlyph) ? "" : item.IconGlyph;
         bool withheld = _moduleRegistry.IsWithheld(module.Name);
         bool granted = _moduleRegistry.IsGranted(module.Name);
+
         if (withheld)
         {
             (badge, foot) = ("LOCKED", "Ask an administrator for access");
@@ -478,6 +482,7 @@ public sealed partial class HomeViewModel : ViewModel
             IsBackendNeutral = true;
             IsBackendConnected = false;
             IsBackendOffline = false;
+
             return;
         }
 
@@ -508,7 +513,9 @@ public sealed partial class HomeViewModel : ViewModel
 
     private void LoadActivity()
     {
-        _allActivity = [.. _activityLog.GetRecent().Select(ToActivityItem)];
+        _allActivity = [.. _activityLog
+            .GetRecent()
+            .Select(ToActivityItem)];
         HasActivity = _allActivity.Count > 0;
         ShowActivityPage(1);
     }
@@ -518,7 +525,9 @@ public sealed partial class HomeViewModel : ViewModel
         var pageCount = Math.Max(1, (int)Math.Ceiling(_allActivity.Count / (double)_pageSize));
         _activityPage = Math.Clamp(page, 1, pageCount);
         Activity.Clear();
-        foreach (var item in _allActivity.Skip((_activityPage - 1) * _pageSize).Take(_pageSize))
+        foreach (var item in _allActivity
+            .Skip((_activityPage - 1) * _pageSize)
+            .Take(_pageSize))
         {
             Activity.Add(item);
         }
@@ -536,6 +545,7 @@ public sealed partial class HomeViewModel : ViewModel
             AppActivityLog.ThemeChangedKind => ("", false),
             _ => ("", false),
         };
+
         return new HomeActivityItem(
             entry.Title,
             entry.Detail,
@@ -555,6 +565,7 @@ public sealed partial class HomeViewModel : ViewModel
         string? firstName = displayName?
             .Split(' ', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
             .FirstOrDefault();
+
         return string.IsNullOrEmpty(firstName) ? greeting : $"{greeting}, {firstName}";
     }
 
@@ -570,22 +581,29 @@ public sealed partial class HomeViewModel : ViewModel
     private static string FormatRelative(DateTimeOffset at)
     {
         var span = DateTimeOffset.UtcNow - at;
+
         if (span < TimeSpan.FromMinutes(1))
         {
             return "now";
         }
+
         if (span < TimeSpan.FromHours(1))
         {
             return $"{(int)span.TotalMinutes}m ago";
         }
+
         if (span < TimeSpan.FromDays(1))
         {
             return $"{(int)span.TotalHours}h ago";
         }
+
         if (span < TimeSpan.FromDays(30))
         {
             return $"{(int)span.TotalDays}d ago";
         }
-        return at.ToLocalTime().ToString("MMM d, yyyy");
+
+        return at
+            .ToLocalTime()
+            .ToString("MMM d, yyyy");
     }
 }

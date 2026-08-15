@@ -37,6 +37,7 @@ public sealed class NavigationPlannerTests
         module.Name.Returns(name);
         module.Descriptor.Returns(new ModuleDescriptor(name, "", isRequired, assignmentId));
         module.GetNavigationItems().Returns(items);
+
         return module;
     }
 

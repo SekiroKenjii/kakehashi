@@ -51,6 +51,7 @@ public sealed partial class GrpcNotesGateway : INotesGateway
             {
                 notes.Add(ToDto(note));
             }
+
             return Result.Success<IReadOnlyList<NoteDto>>(notes);
         }
         catch (RpcException exception)
@@ -138,6 +139,7 @@ public sealed partial class GrpcNotesGateway : INotesGateway
                 // The server's message is what the domain returned and is written for a user: passing it
                 // through is the difference between naming the limit and "Something went wrong".
                 LogRejected(operation, exception.Status.Detail);
+
                 return new Error(NotesErrors.TitleRequired.Code, exception.Status.Detail);
 
             case StatusCode.NotFound:
@@ -152,6 +154,7 @@ public sealed partial class GrpcNotesGateway : INotesGateway
                 // Everything else is the network, the server, or a bug — none of which the user can act
                 // on beyond trying again. The detail goes to the log, not the screen.
                 LogFailed(operation, exception.StatusCode, exception);
+
                 return NotesErrors.RequestFailed;
         }
     }

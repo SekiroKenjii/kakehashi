@@ -18,6 +18,7 @@ public sealed class MediatorTests
         services.AddSingleton<CallRecorder>();
         services.AddMediator(typeof(MediatorTests).Assembly);
         configure?.Invoke(services);
+
         return services.BuildServiceProvider();
     }
 

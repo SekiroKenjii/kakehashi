@@ -24,6 +24,7 @@ public sealed class ActivationOrchestrator : IStartupOrchestrator
         _context.MainWindow?.Activate();
         _context.Splash?.Close();
         _context.Splash = null;
+
         return Task.CompletedTask;
     }
 }

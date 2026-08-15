@@ -47,6 +47,7 @@ public sealed partial class SignedOutReauthenticationHandler
                 LogReauthenticationFailed(ex);
             }
         });
+
         return Task.CompletedTask;
     }
 

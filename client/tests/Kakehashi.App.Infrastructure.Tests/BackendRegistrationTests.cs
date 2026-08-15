@@ -53,6 +53,7 @@ public sealed class BackendRegistrationTests
 
         var services = new ServiceCollection();
         services.AddBackendInfrastructure(configuration);
+
         return services;
     }
 }

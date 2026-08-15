@@ -116,6 +116,7 @@ public sealed partial class NavigationLayoutPage : Page
             return "This screen is shown only to accounts that hold its permission, so it cannot also "
                 + "be hidden by hand. Take the permission away instead.";
         }
+
         return isVisible ? "Offered in the pane — click to hide" : "Hidden — click to offer it";
     }
 
@@ -136,8 +137,10 @@ public sealed partial class NavigationLayoutPage : Page
         if (e.PropertyName == nameof(NavigationLayoutViewModel.IsPreviewOpen))
         {
             SlidePreview(ViewModel.IsPreviewOpen);
+
             return;
         }
+
         if (e.PropertyName != nameof(NavigationLayoutViewModel.SelectedScreen))
         {
             return;
@@ -178,6 +181,7 @@ public sealed partial class NavigationLayoutPage : Page
         var target = choice.Id.Length == 0
             ? FindUnfiled()
             : FindHeading(choice.Id);
+
         if (target is null || ReferenceEquals(target, screen.Heading))
         {
             return;
@@ -218,6 +222,7 @@ public sealed partial class NavigationLayoutPage : Page
         _previewSlide?.Stop();
         _previewSlide = new Storyboard();
         _previewSlide.Children.Add(slide);
+
         if (!open)
         {
             _previewSlide.Completed += (_, _) => PreviewPanel.Visibility = Visibility.Collapsed;
@@ -254,6 +259,7 @@ public sealed partial class NavigationLayoutPage : Page
             if (!string.Equals(entry.Item.Group, group, StringComparison.Ordinal))
             {
                 group = entry.Item.Group;
+
                 if (group.Length > 0)
                 {
                     PanePreview.MenuItems.Add(new NavigationViewItemHeader { Content = group });
@@ -288,6 +294,7 @@ public sealed partial class NavigationLayoutPage : Page
         {
             return;
         }
+
         if (sender is FrameworkElement { Tag: NavScreenNode screen })
         {
             ViewModel.SelectedScreen = screen;
@@ -404,6 +411,7 @@ public sealed partial class NavigationLayoutPage : Page
                 return heading;
             }
         }
+
         return null;
     }
 
@@ -416,6 +424,7 @@ public sealed partial class NavigationLayoutPage : Page
                 return heading;
             }
         }
+
         return null;
     }
 

@@ -63,14 +63,17 @@ public sealed class AuthSessionAccessor : IAuthSessionAccessor, IAccessTokenProv
     public async ValueTask<string?> GetAccessTokenAsync(CancellationToken cancellationToken = default)
     {
         var session = _current;
+
         if (session is null)
         {
             return null;
         }
+
         if (!session.NeedsRefresh(_clock.UtcNow, _refreshSkew))
         {
             return session.AccessToken;
         }
+
         return await RefreshAsync(session, cancellationToken).ConfigureAwait(false);
     }
 
@@ -85,10 +88,12 @@ public sealed class AuthSessionAccessor : IAuthSessionAccessor, IAccessTokenProv
         try
         {
             var session = _current;
+
             if (session is null)
             {
                 return null;
             }
+
             // Another caller may have refreshed while we waited for the lock.
             if (!session.NeedsRefresh(_clock.UtcNow, _refreshSkew))
             {
@@ -98,6 +103,7 @@ public sealed class AuthSessionAccessor : IAuthSessionAccessor, IAccessTokenProv
             var result = await _authenticator
                 .RefreshAsync(session.RefreshToken!, cancellationToken)
                 .ConfigureAwait(false);
+
             if (result.IsFailure)
             {
                 return session.AccessToken; // keep the current token; the call may still succeed or 401
@@ -109,12 +115,14 @@ public sealed class AuthSessionAccessor : IAuthSessionAccessor, IAccessTokenProv
                 result.Value.RefreshToken,
                 result.Value.ExpiresAtUtc);
             _current = refreshed;
+
             if (refreshed.HasRefreshToken)
             {
                 await _tokenStore
                     .SaveRefreshTokenAsync(refreshed.RefreshToken!, cancellationToken)
                     .ConfigureAwait(false);
             }
+
             return refreshed.AccessToken;
         }
         finally

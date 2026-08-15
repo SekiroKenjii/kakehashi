@@ -28,6 +28,7 @@ public sealed class LocalSettingsService : ILocalSettingsService
     public T? Read<T>(string key)
     {
         ArgumentException.ThrowIfNullOrEmpty(key);
+
         return _cache.TryGetValue(key, out var element) ? element.Deserialize<T>() : default;
     }
 
@@ -53,6 +54,7 @@ public sealed class LocalSettingsService : ILocalSettingsService
             if (File.Exists(path))
             {
                 var json = File.ReadAllText(path);
+
                 return JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json) ?? [];
             }
         }

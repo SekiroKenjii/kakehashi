@@ -14,6 +14,7 @@ public class Result
         {
             throw new ArgumentException("A successful result cannot carry an error.", nameof(error));
         }
+
         if (!isSuccess && error == Error.None)
         {
             throw new ArgumentException("A failed result must carry an error.", nameof(error));

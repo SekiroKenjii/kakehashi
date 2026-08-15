@@ -1592,6 +1592,7 @@ public static class SegoeFluentIcons
         {
             return [];
         }
+
         if (query.Length == 0)
         {
             return [.. _catalogue.Take(take)];

@@ -28,6 +28,7 @@ public sealed class NotesViewModelTests
     private static NoteDto Note(long id, string title, string body = "", int minutesAgo = 0)
     {
         var moment = DateTimeOffset.UtcNow.AddMinutes(-minutesAgo);
+
         return new NoteDto(id, title, body, moment, moment);
     }
 
@@ -124,7 +125,9 @@ public sealed class NotesViewModelTests
     [Fact]
     public async Task Load_SinglePage_HidesThePager()
     {
-        GivenNotes([.. Enumerable.Range(1, 5).Select(i => Note(i, $"Note {i}"))]);
+        GivenNotes([.. Enumerable
+            .Range(1, 5)
+            .Select(i => Note(i, $"Note {i}"))]);
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
@@ -136,7 +139,9 @@ public sealed class NotesViewModelTests
     [Fact]
     public async Task Load_MoreThanOnePage_PagesFiveAtATime()
     {
-        GivenNotes([.. Enumerable.Range(1, 12).Select(i => Note(i, $"Note {i}"))]);
+        GivenNotes([.. Enumerable
+            .Range(1, 12)
+            .Select(i => Note(i, $"Note {i}"))]);
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
@@ -157,7 +162,9 @@ public sealed class NotesViewModelTests
     [Fact]
     public async Task NextPage_AtTheEnd_StaysPut()
     {
-        GivenNotes([.. Enumerable.Range(1, 7).Select(i => Note(i, $"Note {i}"))]);
+        GivenNotes([.. Enumerable
+            .Range(1, 7)
+            .Select(i => Note(i, $"Note {i}"))]);
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 

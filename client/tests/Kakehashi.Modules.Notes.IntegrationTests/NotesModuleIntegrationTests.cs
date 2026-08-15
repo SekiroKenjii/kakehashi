@@ -28,6 +28,7 @@ public sealed class NotesModuleIntegrationTests
         services.AddLogging();
         services.AddNotesApplication();
         services.AddSingleton(gateway);
+
         return services.BuildServiceProvider();
     }
 

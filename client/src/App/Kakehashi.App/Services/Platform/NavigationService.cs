@@ -74,6 +74,7 @@ public sealed class NavigationService : INavigationService
 
         const string suffix = "Page";
         string pageClassName = pageType.Name;
+
         if (!pageClassName.EndsWith(suffix, StringComparison.OrdinalIgnoreCase))
         {
             throw new ArgumentException(
@@ -114,6 +115,7 @@ public sealed class NavigationService : INavigationService
         _current = new NavigationEntry(pageKey, args.ToArray());
         _frame.Content = page;
         _navigated.OnNext(new NavigationEvent(pageKey, pageType, page, _current.Parameters));
+
         return true;
     }
 
@@ -127,6 +129,7 @@ public sealed class NavigationService : INavigationService
         while (_backStack.Count > 0)
         {
             var entry = _backStack.Pop();
+
             // Entries whose module was detached after they were pushed are skipped.
             if (IsDetached(entry.PageKey))
             {
@@ -142,6 +145,7 @@ public sealed class NavigationService : INavigationService
             _frame.Content = page;
             _navigated.OnNext(
                 new NavigationEvent(entry.PageKey, page.GetType(), page, entry.Parameters));
+
             return;
         }
     }

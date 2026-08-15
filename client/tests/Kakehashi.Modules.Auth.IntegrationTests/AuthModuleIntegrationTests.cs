@@ -31,6 +31,7 @@ public sealed class AuthModuleIntegrationTests
         services.AddSingleton(authenticator);
         services.AddSingleton(tokenStore);
         services.AddSingleton<IAuthSessionAccessor, InMemoryAuthSessionAccessor>();
+
         return services.BuildServiceProvider();
     }
 
@@ -118,6 +119,7 @@ public sealed class AuthModuleIntegrationTests
         {
             var session = AuthSession.Create(
                 "access-token", "id-token", refreshToken, DateTimeOffset.UtcNow.AddMinutes(5), displayName).Value;
+
             return new FakeAuthenticator(session);
         }
 
@@ -160,12 +162,14 @@ public sealed class AuthModuleIntegrationTests
         public Task SaveRefreshTokenAsync(string refreshToken, CancellationToken cancellationToken)
         {
             _refreshToken = refreshToken;
+
             return Task.CompletedTask;
         }
 
         public Task ClearAsync(CancellationToken cancellationToken)
         {
             _refreshToken = null;
+
             return Task.CompletedTask;
         }
     }
@@ -196,6 +200,7 @@ public sealed class AuthModuleIntegrationTests
         public Task Handle(UserSignedOutNotification notification, CancellationToken cancellationToken)
         {
             HandledCount++;
+
             return Task.CompletedTask;
         }
     }

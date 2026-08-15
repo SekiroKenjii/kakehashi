@@ -55,6 +55,7 @@ public sealed partial class GrpcActivityGateway : IActivityGateway
         {
             request.From = Timestamp.FromDateTimeOffset(from);
         }
+
         if (filter.To is { } to)
         {
             request.To = Timestamp.FromDateTimeOffset(to);
@@ -97,8 +98,10 @@ public sealed partial class GrpcActivityGateway : IActivityGateway
             if (exception.StatusCode == StatusCode.InvalidArgument)
             {
                 LogFailed(exception.StatusCode, exception);
+
                 return Result.Failure<ActivityPageDto>(ActivityErrors.PageLost);
             }
+
             return Result.Failure<ActivityPageDto>(Translate(exception));
         }
     }
@@ -114,6 +117,7 @@ public sealed partial class GrpcActivityGateway : IActivityGateway
                     cancellationToken: cancellationToken)
                 .ResponseAsync
                 .ConfigureAwait(false);
+
             return Result.Success();
         }
         catch (RpcException exception)
@@ -123,8 +127,10 @@ public sealed partial class GrpcActivityGateway : IActivityGateway
             if (exception.StatusCode == StatusCode.InvalidArgument)
             {
                 LogFailed(exception.StatusCode, exception);
+
                 return Result.Failure(ActivityErrors.ReportRefused);
             }
+
             return Result.Failure(Translate(exception));
         }
     }
@@ -179,6 +185,7 @@ public sealed partial class GrpcActivityGateway : IActivityGateway
         // Everything else is the network, the server, or a bug — none of which the user can act on
         // beyond trying again. The detail goes to the log, not the screen.
         LogFailed(exception.StatusCode, exception);
+
         return ActivityErrors.RequestFailed;
     }
 

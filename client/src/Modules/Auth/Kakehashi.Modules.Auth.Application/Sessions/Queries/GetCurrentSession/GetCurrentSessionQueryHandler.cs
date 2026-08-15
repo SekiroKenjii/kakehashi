@@ -33,6 +33,7 @@ public sealed class GetCurrentSessionQueryHandler
                 current.ExpiresAtUtc,
                 _session.SignedInAtUtc,
                 current.Roles);
+
         return Task.FromResult(dto);
     }
 }

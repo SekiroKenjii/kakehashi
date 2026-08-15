@@ -29,6 +29,7 @@ public sealed class SignInCommandHandler : IRequestHandler<SignInCommand, Result
         ArgumentNullException.ThrowIfNull(request);
 
         var result = await _authenticator.LoginAsync(request.Credentials, cancellationToken);
+
         if (result.IsFailure)
         {
             return Result.Failure(result.Error);
@@ -36,6 +37,7 @@ public sealed class SignInCommandHandler : IRequestHandler<SignInCommand, Result
 
         var session = result.Value;
         _session.Set(session);
+
         if (session.HasRefreshToken)
         {
             await _tokenStore.SaveRefreshTokenAsync(session.RefreshToken!, cancellationToken);

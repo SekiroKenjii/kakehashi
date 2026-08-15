@@ -32,6 +32,7 @@ public sealed class LoggingBehavior<TRequest, TResponse>
         {
             var response = await next();
             _logger.LogInformation("Handled {RequestName}", requestName);
+
             return response;
         }
         catch (Exception exception)

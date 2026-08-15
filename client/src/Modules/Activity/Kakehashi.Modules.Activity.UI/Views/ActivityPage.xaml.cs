@@ -73,6 +73,7 @@ public sealed partial class ActivityPage : Page
         {
             return brush;
         }
+
         return new SolidColorBrush(Colors.Transparent);
     }
 

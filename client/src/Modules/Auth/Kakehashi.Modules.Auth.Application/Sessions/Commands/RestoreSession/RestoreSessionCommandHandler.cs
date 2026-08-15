@@ -30,20 +30,24 @@ public sealed class RestoreSessionCommandHandler : IRequestHandler<RestoreSessio
         ArgumentNullException.ThrowIfNull(request);
 
         var refreshToken = await _tokenStore.LoadRefreshTokenAsync(cancellationToken);
+
         if (string.IsNullOrEmpty(refreshToken))
         {
             return Result.Failure(AuthErrors.NoStoredSession);
         }
 
         var result = await _authenticator.RefreshAsync(refreshToken, cancellationToken);
+
         if (result.IsFailure)
         {
             await _tokenStore.ClearAsync(cancellationToken);
+
             return Result.Failure(result.Error);
         }
 
         var session = result.Value;
         _session.Set(session);
+
         if (session.HasRefreshToken)
         {
             await _tokenStore.SaveRefreshTokenAsync(session.RefreshToken!, cancellationToken);

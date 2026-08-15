@@ -93,6 +93,7 @@ public sealed class DialogService : IDialogService
                 _ => string.Empty,
             });
         }
+
         return values;
     }
 }

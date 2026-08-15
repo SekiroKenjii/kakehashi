@@ -147,6 +147,7 @@ public class NavigationViewHeaderBehavior : Behavior<NavigationView>
         }
 
         var headerMode = GetHeaderMode(_currentPage);
+
         if (headerMode == NavigationViewHeaderMode.Never)
         {
             AssociatedObject.Header = null;

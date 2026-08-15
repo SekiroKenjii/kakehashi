@@ -29,6 +29,7 @@ internal sealed class RequestHandlerWrapperImpl<TRequest, TResponse>
         Task<TResponse> HandlerCall()
         {
             var handler = services.GetRequiredService<IRequestHandler<TRequest, TResponse>>();
+
             return handler.Handle(typedRequest, cancellationToken);
         }
 
@@ -42,6 +43,7 @@ internal sealed class RequestHandlerWrapperImpl<TRequest, TResponse>
             var nextStep = next;
             next = () => behavior.Handle(typedRequest, nextStep, cancellationToken);
         }
+
         return next();
     }
 }

@@ -33,6 +33,7 @@ public sealed partial class AccountFlyoutView : UserControl
     public Brush StatusBrush(bool isAuthenticated)
     {
         string key = isAuthenticated ? "SystemFillColorSuccessBrush" : "SystemFillColorNeutralBrush";
+
         // Fully qualified because Kakehashi.Modules.Auth.Application shadows the XAML type name.
         return (Brush)Microsoft.UI.Xaml.Application.Current.Resources[key];
     }

@@ -25,6 +25,7 @@ public sealed class ThemeOrchestrator : IStartupOrchestrator
     public Task ExecuteAsync(CancellationToken cancellationToken)
     {
         _themeService.Initialize();
+
         return Task.CompletedTask;
     }
 }

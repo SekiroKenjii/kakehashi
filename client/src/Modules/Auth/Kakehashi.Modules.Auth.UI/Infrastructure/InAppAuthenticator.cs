@@ -65,6 +65,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
     {
         var version = Assembly.GetEntryAssembly()?.GetName().Version;
         var number = version is null ? "0.0.0" : $"{version.Major}.{version.Minor}.{version.Build}";
+
         return $"Kakehashi-Desktop/{number} ({Environment.MachineName})";
     }
 
@@ -75,6 +76,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
         {
             return SharedKernelResult.Failure<AuthSession>(AuthErrors.NotConfigured);
         }
+
         if (credentials is null)
         {
             // Nothing to send. This is a wiring mistake, not a user one, so it does not get a
@@ -94,6 +96,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
             if (!response.IsSuccessStatusCode)
             {
                 LogSignInFailed((int)response.StatusCode);
+
                 // The server answers a wrong password and an unknown address identically so the form
                 // reveals no addresses. Passing its message through keeps that; inventing one loses it.
                 return SharedKernelResult.Failure<AuthSession>(
@@ -102,6 +105,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
 
             var tokens = await response.Content
                 .ReadFromJsonAsync<TokenResponse>(_json, cancellationToken).ConfigureAwait(false);
+
             if (tokens is null || string.IsNullOrEmpty(tokens.AccessToken))
             {
                 return SharedKernelResult.Failure<AuthSession>(AuthErrors.LoginFailed);
@@ -109,6 +113,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
 
             var (displayName, email, roles) = await _oidc
                 .FetchIdentityAsync(tokens.AccessToken, cancellationToken).ConfigureAwait(false);
+
             return AuthSession.Create(
                 tokens.AccessToken,
                 tokens.IdToken,
@@ -121,6 +126,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
         catch (Exception ex) when (ex is HttpRequestException or JsonException)
         {
             LogSignInException(ex);
+
             return SharedKernelResult.Failure<AuthSession>(AuthErrors.AccountRequestFailed);
         }
         catch (TaskCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -130,6 +136,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
         catch (TaskCanceledException ex)
         {
             LogSignInException(ex);
+
             return SharedKernelResult.Failure<AuthSession>(AuthErrors.AccountRequestFailed);
         }
     }
@@ -163,6 +170,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
 
             using var response = await _http.SendAsync(request, cancellationToken)
                 .ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
                 LogSignOutFailed((int)response.StatusCode);
@@ -193,6 +201,7 @@ public sealed partial class InAppAuthenticator : IInteractiveAuthenticator, IDis
         {
             var payload = await response.Content
                 .ReadFromJsonAsync<ServerError>(_json, cancellationToken).ConfigureAwait(false);
+
             return string.IsNullOrWhiteSpace(payload?.Message)
                 ? AuthErrors.LoginFailed
                 : new Error(AuthErrors.LoginFailed.Code, payload.Message);

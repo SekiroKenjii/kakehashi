@@ -16,6 +16,4 @@ public interface IRequestHandler<in TRequest, TResponse>
 /// <summary>Handles a request that produces no value.</summary>
 /// <typeparam name="TRequest">The request type.</typeparam>
 public interface IRequestHandler<in TRequest> : IRequestHandler<TRequest, Unit>
-    where TRequest : IRequest
-{
-}
+    where TRequest : IRequest;

@@ -160,6 +160,7 @@ public sealed partial class AccountFlyoutViewModel : ViewModel
         }
 
         var result = await _sender.Send(new GetRemoteSessionsQuery());
+
         if (result is null || result.IsFailure)
         {
             // A count that could not be fetched is left blank rather than shown as zero, which would
@@ -168,6 +169,7 @@ public sealed partial class AccountFlyoutViewModel : ViewModel
         }
 
         var sessions = result.Value;
+
         if (sessions.Count == 0)
         {
             return "no other devices";
@@ -175,6 +177,7 @@ public sealed partial class AccountFlyoutViewModel : ViewModel
 
         var others = sessions.Count - 1;
         var devices = sessions.Count == 1 ? "1 device" : $"{sessions.Count} devices";
+
         return others <= 0 ? $"{devices} · this device" : $"{devices} · this + {others} other";
     }
 
@@ -214,18 +217,22 @@ public sealed partial class AccountFlyoutViewModel : ViewModel
         }
 
         var elapsed = _clock.UtcNow - signedInAt;
+
         if (elapsed < TimeSpan.FromMinutes(1))
         {
             return "just now";
         }
+
         if (elapsed < TimeSpan.FromHours(1))
         {
             return $"{(int)elapsed.TotalMinutes}m ago";
         }
+
         if (elapsed < TimeSpan.FromHours(24))
         {
             return $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m ago";
         }
+
         return $"{(int)elapsed.TotalDays}d ago";
     }
 }

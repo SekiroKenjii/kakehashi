@@ -23,14 +23,19 @@ public static class AdminFormat
     public static string Initials(string name)
     {
         var parts = name.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
         if (parts.Length == 0)
         {
             return "?";
         }
+
         if (parts.Length == 1)
         {
-            return char.ToUpperInvariant(parts[0][0]).ToString();
+            return char
+                .ToUpperInvariant(parts[0][0])
+                .ToString();
         }
+
         return $"{char.ToUpperInvariant(parts[0][0])}{char.ToUpperInvariant(parts[^1][0])}";
     }
 
@@ -41,30 +46,37 @@ public static class AdminFormat
     public static string Relative(DateTimeOffset at)
     {
         var age = DateTimeOffset.Now - at;
+
         if (age < TimeSpan.FromMinutes(2))
         {
             return "Just now";
         }
+
         if (age < TimeSpan.FromHours(1))
         {
             return $"{(int)age.TotalMinutes} min ago";
         }
+
         if (age < TimeSpan.FromHours(2))
         {
             return "1 hour ago";
         }
+
         if (age < TimeSpan.FromHours(24))
         {
             return $"{(int)age.TotalHours} hours ago";
         }
+
         if (age < TimeSpan.FromHours(48))
         {
             return "Yesterday";
         }
+
         if (age < TimeSpan.FromDays(14))
         {
             return $"{(int)age.TotalDays} days ago";
         }
+
         return at.ToString("yyyy-MM-dd");
     }
 
@@ -105,6 +117,7 @@ public static class AdminFormat
             brush = new SolidColorBrush(make());
             _brushes[key] = brush;
         }
+
         return brush;
     }
 }

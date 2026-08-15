@@ -47,7 +47,9 @@ public sealed class AccountFlyoutViewModelTests
     {
         _theme.Theme.Returns(ElementTheme.Dark);
         _session = new SessionDto(
-            true, "Vo Thuong", "vo@example.com", null, _now.AddHours(-2).AddMinutes(-5), []);
+            true, "Vo Thuong", "vo@example.com", null, _now
+                .AddHours(-2)
+                .AddMinutes(-5), []);
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);

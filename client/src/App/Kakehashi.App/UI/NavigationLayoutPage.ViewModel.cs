@@ -151,16 +151,20 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         try
         {
             var groups = await _admin.ListGroupsAsync(cancellationToken);
+
             if (groups.IsFailure)
             {
                 _notifications.Show(groups.Error.Message, InfoBarSeverity.Error);
+
                 return;
             }
 
             var items = await _admin.ListItemsAsync(cancellationToken);
+
             if (items.IsFailure)
             {
                 _notifications.Show(items.Error.Message, InfoBarSeverity.Error);
+
                 return;
             }
 
@@ -174,6 +178,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
             PreviewRoles.Clear();
             PreviewRoles.Add(NavPreviewRole.Yourself);
             PreviewRoles.Add(NavPreviewRole.Nobody);
+
             if (roles.IsSuccess)
             {
                 foreach (var role in roles.Value)
@@ -230,6 +235,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
                     : $"It disappears from the pane when you apply, and the {affected} screen(s) under it "
                         + "become unfiled until somebody files them again.",
                 "Delete", "Cancel");
+
             if (!confirmed)
             {
                 return;
@@ -266,11 +272,13 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         {
             var applied = await _admin.ApplyLayoutAsync(
                 GroupSpecs(), ItemSpecs(), cancellationToken);
+
             if (applied.IsFailure)
             {
                 // Nothing was written — the server validates the whole arrangement before writing — so
                 // the staged edits stay on screen for another attempt.
                 _notifications.Show(applied.Error.Message, InfoBarSeverity.Error);
+
                 return;
             }
 
@@ -375,15 +383,18 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
             "This row is left over from a module this build no longer has. Removing it takes effect at "
                 + "once, and if that module comes back it will be filed wherever the code puts it.",
             "Remove", "Cancel");
+
         if (!confirmed)
         {
             return;
         }
 
         var removed = await _admin.DeleteItemAsync(screen.Id, CancellationToken.None);
+
         if (removed.IsFailure)
         {
             _notifications.Show(removed.Error.Message, InfoBarSeverity.Error);
+
             return;
         }
 
@@ -404,6 +415,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
     public void MoveHeading(NavHeadingNode heading, int index)
     {
         ArgumentNullException.ThrowIfNull(heading);
+
         if (heading.IsUnfiled)
         {
             return;
@@ -411,6 +423,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
 
         int from = Headings.IndexOf(heading);
         int to = Math.Clamp(index, 0, UnfiledIndex() - 1);
+
         if (from < 0 || from == to)
         {
             return;
@@ -486,7 +499,9 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
             }
             heading.SavedSequence = [.. heading.Screens.Select(screen => screen.Id)];
         }
-        _savedHeadingOrder = [.. Headings.Where(h => !h.IsUnfiled).Select(h => h.Id)];
+        _savedHeadingOrder = [.. Headings
+            .Where(h => !h.IsUnfiled)
+            .Select(h => h.Id)];
 
         RebuildChoices();
         SelectedScreen = Headings
@@ -513,7 +528,9 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         OnPropertyChanged(nameof(ChangeCountText));
         ChangeSummary = changes.Count == 0
             ? string.Empty
-            : string.Join(" · ", changes.Take(3).Select(change => $"{change.Subject} {change.What}"))
+            : string.Join(" · ", changes
+                .Take(3)
+                .Select(change => $"{change.Subject} {change.What}"))
                 + (changes.Count > 3
                     ? string.Format(
                         CultureInfo.CurrentCulture, " · and {0} more", changes.Count - 3)
@@ -542,6 +559,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
             .Where(heading => !heading.IsUnfiled && !heading.IsNew)
             .Select(heading => heading.Id)
             .ToList();
+
         if (!order.SequenceEqual(_savedHeadingOrder, StringComparer.Ordinal))
         {
             changes.Add(new NavChange("The headings", "were re-ordered"));
@@ -554,18 +572,23 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
                 changes.Add(new NavChange(screen.DisplayTitle, what));
             }
         }
+
         return changes;
     }
 
     /// <summary>The headings to post, with the orders worked out from their positions.</summary>
     private IReadOnlyList<NavGroupSpec> GroupSpecs()
     {
-        var headings = Headings.Where(heading => !heading.IsUnfiled).ToList();
+        var headings = Headings
+            .Where(heading => !heading.IsUnfiled)
+            .ToList();
 
         // Only when the order actually moved: renumbering always would rewrite untouched rows, and
         // on stored orders of 5 and 7 every apply would report this client's arithmetic as changes.
         bool renumber = headings.Any(heading => heading.IsNew)
-            || !headings.Where(heading => !heading.IsNew).Select(heading => heading.Id)
+            || !headings
+                .Where(heading => !heading.IsNew)
+                .Select(heading => heading.Id)
                 .SequenceEqual(_savedHeadingOrder, StringComparer.Ordinal);
 
         return [.. headings.Select((heading, index) => new NavGroupSpec(
@@ -579,7 +602,9 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
 
         foreach (var heading in Headings)
         {
-            var sequence = heading.Screens.Select(screen => screen.Id).ToList();
+            var sequence = heading.Screens
+                .Select(screen => screen.Id)
+                .ToList();
             bool renumber = !sequence.SequenceEqual(heading.SavedSequence, StringComparer.Ordinal);
 
             for (int i = 0; i < heading.Screens.Count; i++)
@@ -594,6 +619,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
                     screen.IsVisible));
             }
         }
+
         return specs;
     }
 
@@ -612,12 +638,14 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         {
             Draw(_planner.Plan(StagedLayout()));
             PreviewNote = "Your own pane, including anything not applied yet.";
+
             return;
         }
 
         // A role picked - "nobody" included, whose empty id is what the server reads as "no role". The
         // server answers from what is stored, so this cannot show staged edits and says so.
         var previewed = await _admin.PreviewLayoutAsync(PreviewRole.Id, CancellationToken.None);
+
         if (previewed.IsFailure)
         {
             _notifications.Show(previewed.Error.Message, InfoBarSeverity.Error);
@@ -625,6 +653,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
             // Back to the local preview rather than somebody else's pane. Assigning re-enters here
             // through the change hook, which is where the note is corrected.
             PreviewRole = NavPreviewRole.Yourself;
+
             return;
         }
 
@@ -647,7 +676,8 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
     {
         var unfiled = Unfiled();
         IReadOnlyList<NavigationPlacement> ungrouped = [
-          .. unfiled.Screens.Where(screen => screen.IsVisible)
+          .. unfiled.Screens
+              .Where(screen => screen.IsVisible)
         .Select(screen => new NavigationPlacement(
             screen.Id, screen.Title, screen.Icon, IsEnabled: true)),
   ];
@@ -657,7 +687,8 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         .Where(heading => !heading.IsUnfiled)
         .Select(heading => new NavigationGroup(
             heading.Title,
-            [.. heading.Screens.Where(screen => screen.IsVisible)
+            [.. heading.Screens
+                .Where(screen => screen.IsVisible)
                 .Select(screen => new NavigationPlacement(
                     screen.Id, screen.Title, screen.Icon, IsEnabled: true))]))
         .Where(group => group.Items.Count > 0),
@@ -674,6 +705,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
     private void RebuildCodeFacts(NavScreenNode? screen)
     {
         CodeFacts.Clear();
+
         if (screen is null)
         {
             return;
@@ -686,10 +718,12 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
             screen.RequiredPermission.Length > 0 ? screen.RequiredPermission : "none"));
 
         var item = _planner.Find(screen.Id);
+
         if (item is null)
         {
             CodeFacts.Add(new NavCodeFact("Route", "not in this build"));
             CodeFacts.Add(new NavCodeFact("Declared in", "not in this build"));
+
             return;
         }
 
@@ -708,6 +742,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
 
         int from = heading.Screens.IndexOf(screen);
         int to = from + direction;
+
         if (from < 0 || to < 0 || to >= heading.Screens.Count)
         {
             return;
@@ -763,7 +798,10 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
 
     private int NextHeadingOrder()
     {
-        var headings = Headings.Where(heading => !heading.IsUnfiled).ToList();
+        var headings = Headings
+            .Where(heading => !heading.IsUnfiled)
+            .ToList();
+
         return headings.Count == 0 ? 10 : headings.Max(heading => heading.SortOrder) + 10;
     }
 
@@ -780,6 +818,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         {
             string candidate = string.Format(
                 CultureInfo.CurrentCulture, "{0} {1}", wanted, suffix);
+
             if (Headings.All(heading => heading.Title != candidate))
             {
                 return candidate;
@@ -792,6 +831,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         for (int suffix = 1; ; suffix++)
         {
             string candidate = string.Format(CultureInfo.InvariantCulture, "heading-{0}", suffix);
+
             if (Headings.All(heading => heading.Id != candidate))
             {
                 return candidate;

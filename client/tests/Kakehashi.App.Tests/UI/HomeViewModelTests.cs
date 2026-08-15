@@ -275,12 +275,16 @@ public sealed class HomeViewModelTests
     private HomeViewModel CreateViewModel(bool backendConfigured = false)
     {
         var configData = new Dictionary<string, string?>();
+
         if (backendConfigured)
         {
             configData["Backend:BaseAddress"] = _backendOptions.BaseAddress;
         }
 
-        var configuration = new ConfigurationBuilder().AddInMemoryCollection(configData).Build();
+        var configuration = new ConfigurationBuilder()
+            .AddInMemoryCollection(configData)
+            .Build();
+
         return new HomeViewModel(
             _sender,
             _navigation,

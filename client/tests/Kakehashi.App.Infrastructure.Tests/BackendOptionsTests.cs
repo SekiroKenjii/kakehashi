@@ -16,7 +16,9 @@ public sealed class BackendOptionsTests
             ["Backend:TimeoutSeconds"] = "45",
         });
 
-        var options = configuration.GetSection(BackendOptions.SectionName).Get<BackendOptions>();
+        var options = configuration
+            .GetSection(BackendOptions.SectionName)
+            .Get<BackendOptions>();
 
         Assert.NotNull(options);
         Assert.Equal("https://api.example.com", options.BaseAddress);
@@ -31,7 +33,9 @@ public sealed class BackendOptionsTests
             ["Backend:BaseAddress"] = "https://api.example.com",
         });
 
-        var options = configuration.GetSection(BackendOptions.SectionName).Get<BackendOptions>()
+        var options = configuration
+            .GetSection(BackendOptions.SectionName)
+            .Get<BackendOptions>()
             ?? new BackendOptions();
 
         Assert.Equal(BackendProtocol.Http, options.Protocol);
@@ -39,6 +43,8 @@ public sealed class BackendOptionsTests
 
     private static IConfiguration BuildConfiguration(Dictionary<string, string?> values)
     {
-        return new ConfigurationBuilder().AddInMemoryCollection(values).Build();
+        return new ConfigurationBuilder()
+            .AddInMemoryCollection(values)
+            .Build();
     }
 }

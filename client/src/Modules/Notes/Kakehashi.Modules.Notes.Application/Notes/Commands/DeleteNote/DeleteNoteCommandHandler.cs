@@ -26,6 +26,7 @@ public sealed class DeleteNoteCommandHandler : IRequestHandler<DeleteNoteCommand
     public Task<Result> Handle(DeleteNoteCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
         return _notes.DeleteAsync(request.Id, cancellationToken);
     }
 }

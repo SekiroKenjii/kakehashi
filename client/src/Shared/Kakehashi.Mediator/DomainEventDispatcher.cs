@@ -31,6 +31,7 @@ public sealed class DomainEventDispatcher : IDomainEventDispatcher
                 domainEvent.GetType(),
                 eventType => {
                     var wrapperType = typeof(DomainEventHandlerWrapperImpl<>).MakeGenericType(eventType);
+
                     return (DomainEventHandlerWrapper)Activator.CreateInstance(wrapperType)!;
                 });
             await wrapper.Handle(domainEvent, _services, cancellationToken);

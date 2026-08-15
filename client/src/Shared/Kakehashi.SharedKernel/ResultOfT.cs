@@ -21,6 +21,7 @@ public sealed class Result<TValue> : Result
             {
                 throw new InvalidOperationException("The value of a failed result cannot be accessed.");
             }
+
             return _value!;
         }
     }

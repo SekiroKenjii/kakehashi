@@ -44,10 +44,12 @@ public static class InfrastructureServiceCollectionExtensions
 
             case BackendProtocol.Http:
             default:
-                services.AddHttpClient<IBackendClient, HttpBackendClient>(client => {
-                    client.BaseAddress = new Uri(options.BaseAddress);
-                    client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
-                }).AddHttpMessageHandler<BearerTokenHandler>();
+                services
+                    .AddHttpClient<IBackendClient, HttpBackendClient>(client => {
+                        client.BaseAddress = new Uri(options.BaseAddress);
+                        client.Timeout = TimeSpan.FromSeconds(options.TimeoutSeconds);
+                    })
+                    .AddHttpMessageHandler<BearerTokenHandler>();
                 break;
         }
 
@@ -82,6 +84,7 @@ public static class InfrastructureServiceCollectionExtensions
                 var token = await tokenProvider
               .GetAccessTokenAsync(context.CancellationToken)
               .ConfigureAwait(false);
+
                 if (!string.IsNullOrEmpty(token))
                 {
                     metadata.Add("Authorization", $"Bearer {token}");

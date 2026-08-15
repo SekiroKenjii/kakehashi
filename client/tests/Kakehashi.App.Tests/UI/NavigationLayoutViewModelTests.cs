@@ -81,6 +81,7 @@ public sealed class NavigationLayoutViewModelTests
     {
         var viewModel = Create(groups, items);
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
         return viewModel;
     }
 
@@ -96,7 +97,8 @@ public sealed class NavigationLayoutViewModelTests
 
     private static NavScreenNode Screen(NavigationLayoutViewModel viewModel, string id)
     {
-        return viewModel.Headings.SelectMany(heading => heading.Screens)
+        return viewModel.Headings
+            .SelectMany(heading => heading.Screens)
             .Single(screen => screen.Id == id);
     }
 

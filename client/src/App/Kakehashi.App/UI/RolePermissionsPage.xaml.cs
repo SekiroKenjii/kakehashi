@@ -51,6 +51,7 @@ public sealed partial class RolePermissionsPage : Page
             return string.Empty;
         }
         var users = role.AccountCount == 1 ? "1 user" : $"{role.AccountCount} users";
+
         return $"{role.PermissionCount}/{role.PermissionTotal} permissions · assigned to {users}";
     }
 
@@ -92,6 +93,7 @@ public sealed partial class RolePermissionsPage : Page
     public static string DescribeActor(string actorName, DateTimeOffset at, string detail)
     {
         var line = $"{actorName} · {AdminFormat.Relative(at)}";
+
         return detail.Length == 0 ? line : $"{line} · {detail}";
     }
 

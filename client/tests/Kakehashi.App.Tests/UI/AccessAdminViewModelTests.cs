@@ -155,13 +155,16 @@ public sealed class AccessAdminViewModelTests
                 Arg.Any<CancellationToken>())
             .Returns(call => {
                 sent = call.ArgAt<IReadOnlyCollection<GrantRow>>(1);
+
                 return Task.FromResult(Result.Success(new SaveOutcome(1, 1, 0)));
             });
 
         await sut.SaveCommand.ExecuteAsync(null);
 
         Assert.NotNull(sent);
-        Assert.Equal(["audit.view", "notes.access"], sent!.Select(g => g.PermissionKey).Order());
+        Assert.Equal(["audit.view", "notes.access"], sent!
+            .Select(g => g.PermissionKey)
+            .Order());
         Assert.DoesNotContain(sent, g => g.PermissionKey == "users.manage");
         Assert.Equal("team", sent.Single(g => g.PermissionKey == "notes.access").Scope);
     }
@@ -593,6 +596,8 @@ public sealed class AccessAdminViewModelTests
 
     private static GrantViewModel Grant(RolePermissionsViewModel sut, string key)
     {
-        return sut.Groups.SelectMany(group => group.All).Single(grant => grant.Key == key);
+        return sut.Groups
+            .SelectMany(group => group.All)
+            .Single(grant => grant.Key == key);
     }
 }

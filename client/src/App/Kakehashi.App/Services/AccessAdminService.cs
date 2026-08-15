@@ -144,6 +144,7 @@ public sealed class AccessAdminService : IAccessAdminService
             IReadOnlyList<RoleRow> rows = [.. reply.Roles.Select(r => new RoleRow(
           r.Id, r.Name, r.Description, r.IsSystem, r.PermissionCount, r.AccountCount,
           reply.PermissionTotal))];
+
             return rows;
         });
     }
@@ -157,6 +158,7 @@ public sealed class AccessAdminService : IAccessAdminService
 
             IReadOnlyList<PermissionRow> rows = [.. reply.Permissions.Select(p => new PermissionRow(
           p.Key, p.Name, p.Description, p.Category, p.IsHighRisk, p.IsScoped))];
+
             return rows;
         });
     }
@@ -172,6 +174,7 @@ public sealed class AccessAdminService : IAccessAdminService
 
             IReadOnlyList<GrantRow> rows =
                 [.. reply.Grants.Select(g => new GrantRow(g.PermissionKey, ScopeName(g.Scope)))];
+
             return rows;
         });
     }
@@ -191,6 +194,7 @@ public sealed class AccessAdminService : IAccessAdminService
 
             var reply = await _authz.SaveRoleGrantsAsync(request, cancellationToken: ct)
                 .ResponseAsync.ConfigureAwait(false);
+
             return new SaveOutcome(reply.Granted, reply.Revoked, reply.Rescoped);
         });
     }
@@ -208,6 +212,7 @@ public sealed class AccessAdminService : IAccessAdminService
                 cancellationToken: ct).ResponseAsync.ConfigureAwait(false);
 
             var role = reply.Role;
+
             return new RoleRow(role.Id, role.Name, role.Description, role.IsSystem,
                 role.PermissionCount, role.AccountCount);
         });
@@ -226,6 +231,7 @@ public sealed class AccessAdminService : IAccessAdminService
                 cancellationToken: ct).ResponseAsync.ConfigureAwait(false);
 
             var role = reply.Role;
+
             return new RoleRow(role.Id, role.Name, role.Description, role.IsSystem,
                 role.PermissionCount, role.AccountCount);
         });
@@ -260,8 +266,11 @@ public sealed class AccessAdminService : IAccessAdminService
                 .ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<AuditRow> rows = [.. reply.Entries.Select(e => new AuditRow(
-          e.OccurredAt.ToDateTimeOffset().ToLocalTime(), e.ActorName, e.Action, e.RoleName,
+          e.OccurredAt
+              .ToDateTimeOffset()
+              .ToLocalTime(), e.ActorName, e.Action, e.RoleName,
           e.PermissionKey, e.Detail))];
+
             return rows;
         });
     }
@@ -298,10 +307,15 @@ public sealed class AccessAdminService : IAccessAdminService
           a.Phone,
           a.TeamId,
           a.IsActive,
-          a.LastSignInAt is null ? null : a.LastSignInAt.ToDateTimeOffset().ToLocalTime(),
-          a.CreatedAt.ToDateTimeOffset().ToLocalTime(),
+          a.LastSignInAt is null ? null : a.LastSignInAt
+              .ToDateTimeOffset()
+              .ToLocalTime(),
+          a.CreatedAt
+              .ToDateTimeOffset()
+              .ToLocalTime(),
           a.ActiveSessionCount,
           byAccount.TryGetValue(a.Id, out var names) ? names : []))];
+
             return rows;
         });
     }
@@ -323,9 +337,14 @@ public sealed class AccessAdminService : IAccessAdminService
 
             IReadOnlyList<SessionRow> rows = [.. reply.Sessions.Select(s => new SessionRow(
           s.Id, s.Client, s.Device, s.IpAddress,
-          s.CreatedAt.ToDateTimeOffset().ToLocalTime(),
-          s.LastSeenAt.ToDateTimeOffset().ToLocalTime(),
+          s.CreatedAt
+              .ToDateTimeOffset()
+              .ToLocalTime(),
+          s.LastSeenAt
+              .ToDateTimeOffset()
+              .ToLocalTime(),
           s.IsCurrent))];
+
             return rows;
         });
     }
@@ -343,9 +362,14 @@ public sealed class AccessAdminService : IAccessAdminService
                 cancellationToken: ct).ResponseAsync.ConfigureAwait(false);
 
             var a = reply.Account;
+
             return new UserRow(a.Id, a.Email, a.DisplayName, a.Phone, a.TeamId, a.IsActive,
-                a.LastSignInAt is null ? null : a.LastSignInAt.ToDateTimeOffset().ToLocalTime(),
-                a.CreatedAt.ToDateTimeOffset().ToLocalTime(), a.ActiveSessionCount, []);
+                a.LastSignInAt is null ? null : a.LastSignInAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(),
+                a.CreatedAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(), a.ActiveSessionCount, []);
         });
     }
 
@@ -409,6 +433,7 @@ public sealed class AccessAdminService : IAccessAdminService
         try
         {
             await call().ConfigureAwait(false);
+
             return Result.Success();
         }
         catch (RpcException exception)

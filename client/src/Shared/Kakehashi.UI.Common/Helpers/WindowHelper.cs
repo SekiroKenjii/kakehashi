@@ -17,6 +17,7 @@ public static class WindowHelper
         ArgumentNullException.ThrowIfNull(window);
 
         string iconPath = Path.Combine(AppContext.BaseDirectory, "Assets", "app.ico");
+
         if (File.Exists(iconPath))
         {
             window.AppWindow.SetIcon(iconPath);
@@ -48,6 +49,7 @@ public static class WindowHelper
             ownerPosition.Y + ((ownerSize.Height - size.Height) / 2)));
 
         window.Activate();
+
         return new ModalSession(owner, hOwner);
     }
 

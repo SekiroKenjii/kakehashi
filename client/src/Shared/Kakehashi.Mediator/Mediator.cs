@@ -34,8 +34,10 @@ public sealed class Mediator : IMediator
             requestType => {
                 var wrapperType = typeof(RequestHandlerWrapperImpl<,>)
               .MakeGenericType(requestType, typeof(TResponse));
+
                 return (RequestHandlerWrapperBase)Activator.CreateInstance(wrapperType)!;
             });
+
         return wrapper.Handle(request, _services, cancellationToken);
     }
 
@@ -47,8 +49,10 @@ public sealed class Mediator : IMediator
             notificationType => {
                 var wrapperType = typeof(NotificationHandlerWrapperImpl<>)
               .MakeGenericType(notificationType);
+
                 return (NotificationHandlerWrapper)Activator.CreateInstance(wrapperType)!;
             });
+
         return wrapper.Handle(notification, _services, cancellationToken);
     }
 }

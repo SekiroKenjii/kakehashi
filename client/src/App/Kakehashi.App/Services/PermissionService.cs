@@ -123,6 +123,7 @@ public sealed partial class PermissionService : IPermissionService
             foreach (var module in _registry.All)
             {
                 var serverId = module.Descriptor.AssignmentId;
+
                 if (serverId is not null && !grants.ContainsKey($"{serverId}.access"))
                 {
                     withheld.Add(serverId);

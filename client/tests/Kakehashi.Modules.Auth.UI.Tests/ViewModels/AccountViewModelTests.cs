@@ -107,7 +107,8 @@ public sealed class AccountViewModelTests
     public async Task Load_WhenSignedIn_PagesSessionsFivePerPage()
     {
         _session = SignedIn();
-        var sessions = Enumerable.Range(0, 7)
+        var sessions = Enumerable
+            .Range(0, 7)
             .Select(i => new RemoteSessionDto(
                 $"s{i}", "Edge", "Windows", null, Now(), Now(), IsCurrent: false))
             .ToList();
@@ -334,6 +335,7 @@ public sealed class AccountViewModelTests
         dialogs.ShowConfirmAsync(
                 Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(Task.FromResult(true));
+
         return dialogs;
     }
 }

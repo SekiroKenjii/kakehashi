@@ -21,6 +21,7 @@ public sealed class NavigationServiceTests
     private NavigationService CreateService()
     {
         _moduleRegistry.All.Returns([]);
+
         return new NavigationService(_services, _moduleRegistry);
     }
 

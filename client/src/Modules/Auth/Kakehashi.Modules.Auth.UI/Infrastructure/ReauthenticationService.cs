@@ -46,6 +46,7 @@ public sealed class ReauthenticationService
         {
             return;
         }
+
         if (_mainWindowProvider.MainWindow is not { } owner)
         {
             return;
@@ -63,9 +64,11 @@ public sealed class ReauthenticationService
             owner.AppWindow.Hide();
 
             bool didSignIn = await window.Outcome;
+
             if (!didSignIn)
             {
                 Microsoft.UI.Xaml.Application.Current.Exit();
+
                 return;
             }
             owner.AppWindow.Show();

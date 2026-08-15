@@ -27,6 +27,7 @@ public sealed class GetActivityQueryHandler
         GetActivityQuery request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
         return _activity.ListAsync(request.Filter, cancellationToken);
     }
 }

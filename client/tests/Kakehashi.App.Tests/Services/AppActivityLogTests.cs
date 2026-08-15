@@ -218,6 +218,7 @@ public sealed class AppActivityLogTests : IDisposable
         var log = new AppActivityLog(settings);
         log.Initialize(new StubProvider(theme, accessor));
         _initialized.Add(log);
+
         return log;
     }
 
@@ -230,6 +231,7 @@ public sealed class AppActivityLogTests : IDisposable
     private static string CurrentVersionText()
     {
         var version = typeof(AppActivityLog).Assembly.GetName().Version;
+
         return version is null ? "v1.0.0" : $"v{version.ToString(3)}";
     }
 
@@ -243,10 +245,12 @@ public sealed class AppActivityLogTests : IDisposable
             {
                 return theme;
             }
+
             if (serviceType == typeof(IAuthSessionAccessor))
             {
                 return accessor;
             }
+
             return null;
         }
     }

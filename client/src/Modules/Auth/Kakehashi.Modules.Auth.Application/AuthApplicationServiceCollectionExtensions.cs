@@ -15,6 +15,7 @@ public static class AuthApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddMediator(Assembly);
+
         return services;
     }
 }

@@ -41,10 +41,12 @@ public abstract class Entity<TId> : IEquatable<Entity<TId>>
         {
             return false;
         }
+
         if (ReferenceEquals(this, other))
         {
             return true;
         }
+
         return GetType() == other.GetType()
             && EqualityComparer<TId>.Default.Equals(Id, other.Id);
     }

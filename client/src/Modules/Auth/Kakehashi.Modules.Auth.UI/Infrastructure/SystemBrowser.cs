@@ -40,6 +40,7 @@ public sealed class SystemBrowser : IBrowser
 
             HttpListenerContext context;
             using var timeoutCts = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken);
+
             if (options.Timeout > TimeSpan.Zero)
             {
                 timeoutCts.CancelAfter(options.Timeout);
@@ -70,11 +71,13 @@ public sealed class SystemBrowser : IBrowser
                 : new BrowserResult { ResultType = BrowserResultType.UnknownError, Error = "Missing redirect URL." };
 
             await WriteClosePageAsync(context).ConfigureAwait(false);
+
             return result;
         }
         finally
         {
             _currentStartUrl = null;
+
             if (listener.IsListening)
             {
                 listener.Stop();
@@ -94,6 +97,7 @@ public sealed class SystemBrowser : IBrowser
         }
 
         LaunchSystemBrowser(url);
+
         return true;
     }
 

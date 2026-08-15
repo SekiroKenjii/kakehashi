@@ -28,6 +28,7 @@ public sealed class CreateNoteCommandHandler
         // Fail here and the user sees the problem immediately, on the keystroke rather than after a
         // round trip. The server checks again regardless — this is a courtesy, not a gate.
         var draft = NoteDraft.Create(request.Title, request.Body);
+
         if (draft.IsFailure)
         {
             return Result.Failure<NoteDto>(draft.Error);

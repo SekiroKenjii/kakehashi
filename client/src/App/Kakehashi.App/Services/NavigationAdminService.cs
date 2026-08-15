@@ -135,6 +135,7 @@ public sealed class NavigationAdminService : INavigationAdminService
                 .ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<NavGroupRow> rows = [.. reply.Groups.Select(ToRow)];
+
             return rows;
         });
     }
@@ -147,6 +148,7 @@ public sealed class NavigationAdminService : INavigationAdminService
                 .ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<NavItemRow> rows = [.. reply.Items.Select(ToRow)];
+
             return rows;
         });
     }
@@ -327,6 +329,7 @@ public sealed class NavigationAdminService : INavigationAdminService
         try
         {
             await call().ConfigureAwait(false);
+
             return Result.Success();
         }
         catch (RpcException exception)

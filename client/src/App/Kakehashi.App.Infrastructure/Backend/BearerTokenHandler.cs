@@ -28,6 +28,7 @@ public sealed class BearerTokenHandler : DelegatingHandler
         ArgumentNullException.ThrowIfNull(request);
 
         var token = await _tokenProvider.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+
         if (!string.IsNullOrEmpty(token))
         {
             request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);

@@ -130,6 +130,7 @@ public sealed partial class NavigationLayoutService : INavigationLayoutService
         {
             placements.Add(new NavigationPlacement(item.Id, item.Title, item.Icon, item.Enabled));
         }
+
         return placements;
     }
 

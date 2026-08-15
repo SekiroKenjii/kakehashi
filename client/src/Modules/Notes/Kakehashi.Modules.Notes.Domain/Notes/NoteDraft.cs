@@ -51,6 +51,7 @@ public sealed record NoteDraft
         // Text elements, not chars: an emoji or a Vietnamese letter with a stacked diacritic can be
         // several UTF-16 chars, and counting those would reject a title the server accepts.
         var elements = new StringInfo(trimmed).LengthInTextElements;
+
         if (elements > MaxTitleLength)
         {
             return Result.Failure<NoteDraft>(NotesErrors.TitleTooLong);

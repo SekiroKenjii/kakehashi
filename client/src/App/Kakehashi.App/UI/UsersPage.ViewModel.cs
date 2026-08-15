@@ -210,9 +210,11 @@ public sealed partial class UsersViewModel : ViewModel
         try
         {
             var users = await _admin.ListUsersAsync(cancellationToken);
+
             if (users.IsFailure)
             {
                 Notify(users.Error);
+
                 return;
             }
             _all = users.Value;
@@ -237,6 +239,7 @@ public sealed partial class UsersViewModel : ViewModel
             if (CanManageRoles && Roles.Count == 0)
             {
                 var roles = await _admin.ListRolesAsync(cancellationToken);
+
                 if (roles.IsSuccess)
                 {
                     foreach (var role in roles.Value)
@@ -264,6 +267,7 @@ public sealed partial class UsersViewModel : ViewModel
             ("Email", string.Empty, false),
             ("Display name", string.Empty, false),
             ("Temporary password (at least 12 characters)", string.Empty, true));
+
         if (values is null || string.IsNullOrWhiteSpace(values[0]))
         {
             return;
@@ -271,9 +275,11 @@ public sealed partial class UsersViewModel : ViewModel
 
         var result = await _admin.CreateUserAsync(
             values[0], values[1], values[2], cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -293,11 +299,13 @@ public sealed partial class UsersViewModel : ViewModel
         if (Users.Count == 0)
         {
             _notifications.Show("There is nothing to export.", InfoBarSeverity.Informational);
+
             return;
         }
 
         var path = await _files.PickSaveLocationAsync(
             $"users-{DateTime.Now:yyyyMMdd-HHmmss}.csv", "CSV file", ".csv");
+
         if (path is null)
         {
             return;
@@ -306,12 +314,19 @@ public sealed partial class UsersViewModel : ViewModel
         var csv = new StringBuilder("Name,Email,Roles,Status,Last sign-in,Created\n");
         foreach (var user in Users)
         {
-            csv.Append(Csv(user.DisplayName)).Append(',')
-                .Append(Csv(user.Email)).Append(',')
-                .Append(Csv(string.Join("; ", user.RoleNames))).Append(',')
-                .Append(user.IsActive ? "Active" : "Inactive").Append(',')
-                .Append(user.LastSignInAt?.ToString("u") ?? "never").Append(',')
-                .Append(user.CreatedAt.ToString("u")).Append('\n');
+            csv
+                .Append(Csv(user.DisplayName))
+                .Append(',')
+                .Append(Csv(user.Email))
+                .Append(',')
+                .Append(Csv(string.Join("; ", user.RoleNames)))
+                .Append(',')
+                .Append(user.IsActive ? "Active" : "Inactive")
+                .Append(',')
+                .Append(user.LastSignInAt?.ToString("u") ?? "never")
+                .Append(',')
+                .Append(user.CreatedAt.ToString("u"))
+                .Append('\n');
         }
 
         try
@@ -321,11 +336,13 @@ public sealed partial class UsersViewModel : ViewModel
         catch (IOException exception)
         {
             _notifications.Show($"Could not write the file: {exception.Message}", InfoBarSeverity.Error);
+
             return;
         }
         catch (UnauthorizedAccessException exception)
         {
             _notifications.Show($"Could not write the file: {exception.Message}", InfoBarSeverity.Error);
+
             return;
         }
 
@@ -345,6 +362,7 @@ public sealed partial class UsersViewModel : ViewModel
             ("Display name", user.DisplayName, false),
             ("Phone", user.Phone, false),
             ("Team", user.TeamId, false));
+
         if (values is null)
         {
             return;
@@ -352,9 +370,11 @@ public sealed partial class UsersViewModel : ViewModel
 
         var result = await _admin.UpdateUserAsync(
             user.Id, values[0], values[1], values[2], cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -383,9 +403,11 @@ public sealed partial class UsersViewModel : ViewModel
         }
 
         var result = await _admin.ResetPasswordAsync(user.Id, values[0], cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -404,9 +426,11 @@ public sealed partial class UsersViewModel : ViewModel
         }
 
         var result = await _admin.RevokeSessionAsync(user.Id, sessionId, CancellationToken.None);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
         await ReloadKeepingSelectionAsync(CancellationToken.None);
@@ -423,15 +447,19 @@ public sealed partial class UsersViewModel : ViewModel
         // From the server, never the panel's cache: it holds the newest three and is empty until
         // its load completes, so a count from it could revoke nothing and report success.
         var live = await _admin.ListUserSessionsAsync(user.Id, cancellationToken);
+
         if (live.IsFailure)
         {
             Notify(live.Error);
+
             return;
         }
+
         if (live.Value.Count == 0)
         {
             _notifications.Show(
                 $"{user.DisplayName} has no active sessions.", InfoBarSeverity.Informational);
+
             return;
         }
 
@@ -440,6 +468,7 @@ public sealed partial class UsersViewModel : ViewModel
             $"All {live.Value.Count} session(s) end immediately, including this one if the account "
             + "is yours. They can sign in again.",
             "Sign out", "Cancel");
+
         if (!confirmed)
         {
             return;
@@ -448,9 +477,11 @@ public sealed partial class UsersViewModel : ViewModel
         foreach (var session in live.Value)
         {
             var result = await _admin.RevokeSessionAsync(user.Id, session.Id, cancellationToken);
+
             if (result.IsFailure)
             {
                 Notify(result.Error);
+
                 return;
             }
         }
@@ -458,9 +489,11 @@ public sealed partial class UsersViewModel : ViewModel
         // When the account is the caller's own, sign this client out too: the server has already
         // revoked the token, so the shell cannot talk to it.
         var current = await _sender.Send(new GetCurrentSessionQuery());
+
         if (string.Equals(current.Email, user.Email, StringComparison.OrdinalIgnoreCase))
         {
             await _sender.Send(new SignOutCommand());
+
             return;
         }
 
@@ -509,9 +542,11 @@ public sealed partial class UsersViewModel : ViewModel
         RoleToAssign = null;
 
         var result = await _admin.AssignRoleAsync(email, role.Id, cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -529,6 +564,7 @@ public sealed partial class UsersViewModel : ViewModel
         }
 
         var role = Roles.FirstOrDefault(candidate => candidate.Name == roleName);
+
         if (role is null)
         {
             return;
@@ -536,9 +572,11 @@ public sealed partial class UsersViewModel : ViewModel
 
         var email = SelectedUser.Email;
         var result = await _admin.UnassignRoleAsync(email, role.Id, CancellationToken.None);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
         await ReloadKeepingSelectionAsync(CancellationToken.None);
@@ -553,6 +591,7 @@ public sealed partial class UsersViewModel : ViewModel
         }
 
         var user = SelectedUser;
+
         if (user.IsActive)
         {
             var confirmed = await _dialogs.ShowConfirmAsync(
@@ -560,6 +599,7 @@ public sealed partial class UsersViewModel : ViewModel
                 "They will be signed out everywhere and cannot sign in until reactivated. Nothing "
                 + "they did is deleted.",
                 "Deactivate", "Cancel");
+
             if (!confirmed)
             {
                 return;
@@ -567,9 +607,11 @@ public sealed partial class UsersViewModel : ViewModel
         }
 
         var result = await _admin.SetUserActiveAsync(user.Id, !user.IsActive, cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
         await ReloadKeepingSelectionAsync(cancellationToken);
@@ -589,15 +631,18 @@ public sealed partial class UsersViewModel : ViewModel
             $"This permanently removes {user.Email}, their sessions and their history. It cannot "
             + "be undone. Deactivating instead keeps the record.",
             "Delete permanently", "Cancel");
+
         if (!confirmed)
         {
             return;
         }
 
         var result = await _admin.DeleteUserAsync(user.Id, cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -667,6 +712,7 @@ public sealed partial class UsersViewModel : ViewModel
     private async Task LoadSessionsAsync(string accountId)
     {
         var result = await _admin.ListUserSessionsAsync(accountId, CancellationToken.None);
+
         // The administrator may have moved on while the call was in flight; a reply for somebody
         // who is not the selected user must not be drawn under the person who is.
         if (result.IsFailure || SelectedUser?.Id != accountId)
@@ -734,6 +780,7 @@ public sealed partial class UsersViewModel : ViewModel
         {
             RoleFilters.Add(name);
         }
+
         if (!RoleFilters.Contains(RoleFilter))
         {
             RoleFilter = AllRoles;
@@ -757,10 +804,12 @@ public sealed partial class UsersViewModel : ViewModel
             {
                 continue;
             }
+
             if (RoleFilter != AllRoles && !user.RoleNames.Contains(RoleFilter))
             {
                 continue;
             }
+
             if (!MatchesStatus(user))
             {
                 continue;
@@ -796,6 +845,7 @@ public sealed partial class UsersViewModel : ViewModel
     private void Notify(Error error)
     {
         _notifications.Show(error.Message, InfoBarSeverity.Error);
+
         if (error.Code == nameof(StatusCode.PermissionDenied))
         {
             _ = RefreshPermissionsAsync();

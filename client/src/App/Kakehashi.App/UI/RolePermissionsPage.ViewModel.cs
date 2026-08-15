@@ -258,16 +258,20 @@ public sealed partial class RolePermissionsViewModel : ViewModel
             var keepId = SelectedRole?.Id;
 
             var roles = await _admin.ListRolesAsync(cancellationToken);
+
             if (roles.IsFailure)
             {
                 Notify(roles.Error);
+
                 return;
             }
 
             var catalogue = await _admin.ListPermissionsAsync(cancellationToken);
+
             if (catalogue.IsFailure)
             {
                 Notify(catalogue.Error);
+
                 return;
             }
             _catalogue = catalogue.Value;
@@ -309,9 +313,11 @@ public sealed partial class RolePermissionsViewModel : ViewModel
         try
         {
             var result = await _admin.SaveGrantsAsync(SelectedRole.Id, wanted, cancellationToken);
+
             if (result.IsFailure)
             {
                 Notify(result.Error);
+
                 return;
             }
 
@@ -351,6 +357,7 @@ public sealed partial class RolePermissionsViewModel : ViewModel
 
         var name = await _dialogs.ShowPromptAsync(
             "Clone role", $"Name for the copy of {SelectedRole.Name}", $"{SelectedRole.Name} copy");
+
         if (string.IsNullOrWhiteSpace(name))
         {
             return;
@@ -358,9 +365,11 @@ public sealed partial class RolePermissionsViewModel : ViewModel
 
         var result = await _admin.CreateRoleAsync(
             name, SelectedRole.Description, SelectedRole.Id, cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -373,6 +382,7 @@ public sealed partial class RolePermissionsViewModel : ViewModel
         var values = await _dialogs.ShowInputsAsync(
             "New role", "Create",
             ("Name", string.Empty, false), ("Description", string.Empty, false));
+
         if (values is null || string.IsNullOrWhiteSpace(values[0]))
         {
             return;
@@ -380,9 +390,11 @@ public sealed partial class RolePermissionsViewModel : ViewModel
 
         var result = await _admin.CreateRoleAsync(values[0], values[1], string.Empty,
             cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -400,6 +412,7 @@ public sealed partial class RolePermissionsViewModel : ViewModel
         var values = await _dialogs.ShowInputsAsync(
             "Edit details", "Save",
             ("Name", SelectedRole.Name, false), ("Description", SelectedRole.Description, false));
+
         if (values is null)
         {
             return;
@@ -407,9 +420,11 @@ public sealed partial class RolePermissionsViewModel : ViewModel
 
         var result = await _admin.UpdateRoleAsync(
             SelectedRole.Id, values[0], values[1], cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -429,15 +444,18 @@ public sealed partial class RolePermissionsViewModel : ViewModel
             $"{SelectedRole.AccountCount} account(s) hold this role and will lose everything it "
             + "grants. This cannot be undone.",
             "Delete", "Cancel");
+
         if (!confirmed)
         {
             return;
         }
 
         var result = await _admin.DeleteRoleAsync(SelectedRole.Id, cancellationToken);
+
         if (result.IsFailure)
         {
             Notify(result.Error);
+
             return;
         }
 
@@ -455,6 +473,7 @@ public sealed partial class RolePermissionsViewModel : ViewModel
     private async Task ToggleAuditAsync(CancellationToken cancellationToken)
     {
         IsAuditOpen = !IsAuditOpen;
+
         if (!IsAuditOpen || !CanViewAudit || AuditEntries.Count > 0 || _auditLoading)
         {
             return;
@@ -464,11 +483,14 @@ public sealed partial class RolePermissionsViewModel : ViewModel
         try
         {
             var result = await _admin.ListAuditAsync(50, cancellationToken);
+
             if (result.IsFailure)
             {
                 Notify(result.Error);
+
                 return;
             }
+
             if (!IsAuditOpen)
             {
                 // Closed while the reply was in flight. Dropping it costs one refetch on the next open
@@ -564,6 +586,7 @@ public sealed partial class RolePermissionsViewModel : ViewModel
         foreach (var group in _allGroups)
         {
             group.ApplyFilter(grant => Matches(grant, needle));
+
             if (group.Visible.Count > 0)
             {
                 Groups.Add(group);
@@ -600,6 +623,7 @@ public sealed partial class RolePermissionsViewModel : ViewModel
     private void Notify(Error error)
     {
         _notifications.Show(error.Message, InfoBarSeverity.Error);
+
         if (error.Code == nameof(StatusCode.PermissionDenied))
         {
             _ = RefreshPermissionsAsync();
@@ -615,7 +639,9 @@ public sealed partial class RolePermissionsViewModel : ViewModel
 
     private void RecountChanges()
     {
-        var all = _allGroups.SelectMany(group => group.All).ToList();
+        var all = _allGroups
+            .SelectMany(group => group.All)
+            .ToList();
         ChangedCount = all.Count(grant => grant.IsChanged);
         GrantSummary = $"{all.Count(grant => grant.IsEnabled)} of {all.Count} enabled";
 

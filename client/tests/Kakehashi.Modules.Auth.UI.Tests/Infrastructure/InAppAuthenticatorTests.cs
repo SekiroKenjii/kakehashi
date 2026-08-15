@@ -26,6 +26,8 @@ public sealed class InAppAuthenticatorTests
         // The header is added without validation so a hostile machine name cannot break sign-in, so
         // the ordinary case is worth proving still parses as something a proxy or log understands.
         Assert.True(ProductInfoHeaderValue.TryParse(
-            InAppAuthenticator.DeviceLabel().Split(' ')[0], out _));
+            InAppAuthenticator
+                .DeviceLabel()
+                .Split(' ')[0], out _));
     }
 }

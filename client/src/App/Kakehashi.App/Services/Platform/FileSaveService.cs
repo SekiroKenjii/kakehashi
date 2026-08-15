@@ -40,6 +40,7 @@ public sealed class FileSaveService : IFileSaveService
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
 
         var file = await picker.PickSaveFileAsync();
+
         return file?.Path;
     }
 }

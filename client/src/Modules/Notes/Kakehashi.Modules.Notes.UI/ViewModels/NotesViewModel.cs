@@ -108,9 +108,11 @@ public sealed partial class NotesViewModel : ViewModel
             ErrorMessage = null;
 
             var result = await _sender.Send(new GetNotesQuery());
+
             if (result.IsFailure)
             {
                 ErrorMessage = result.Error.Message;
+
                 // Leave whatever is on screen alone. A backend that blinked should not also wipe the
                 // list the user was reading.
                 return;
@@ -162,9 +164,11 @@ public sealed partial class NotesViewModel : ViewModel
         // The row only carries a preview, so the body comes from the list the server last gave us.
         // Re-fetching keeps the dialog honest when another device changed the note in between.
         var result = await _sender.Send(new GetNotesQuery());
+
         if (result.IsSuccess)
         {
             var current = result.Value.FirstOrDefault(note => note.Id == item.Id);
+
             if (current is not null)
             {
                 EditTitle = current.Title;
@@ -188,6 +192,7 @@ public sealed partial class NotesViewModel : ViewModel
         if (result.IsFailure)
         {
             DialogError = result.Error.Message;
+
             return false;
         }
 
@@ -197,6 +202,7 @@ public sealed partial class NotesViewModel : ViewModel
             _page = 1;
         }
         await LoadAsync();
+
         return true;
     }
 
@@ -218,13 +224,16 @@ public sealed partial class NotesViewModel : ViewModel
         _pendingDelete = null;
 
         var result = await _sender.Send(new DeleteNoteCommand(item.Id));
+
         if (result.IsFailure)
         {
             ErrorMessage = result.Error.Message;
+
             return false;
         }
 
         await LoadAsync();
+
         return true;
     }
 
@@ -241,12 +250,14 @@ public sealed partial class NotesViewModel : ViewModel
         // as it pages.
         var line = string.Join(' ', body.Split(
             (char[]?)null, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries));
+
         if (line.Length == 0)
         {
             return string.Empty;
         }
 
         var elements = new StringInfo(line);
+
         return elements.LengthInTextElements <= _previewLength
             ? line
             : elements.SubstringByTextElements(0, _previewLength) + "…";
@@ -261,19 +272,25 @@ public sealed partial class NotesViewModel : ViewModel
         {
             return "now";
         }
+
         if (elapsed < TimeSpan.FromHours(1))
         {
             return $"{(int)elapsed.TotalMinutes}m ago";
         }
+
         if (elapsed < TimeSpan.FromDays(1))
         {
             return $"{(int)elapsed.TotalHours}h ago";
         }
+
         if (elapsed < TimeSpan.FromDays(7))
         {
             return $"{(int)elapsed.TotalDays}d ago";
         }
-        return moment.ToLocalTime().ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
+
+        return moment
+            .ToLocalTime()
+            .ToString("MMM d, yyyy", CultureInfo.CurrentCulture);
     }
 
     private void ShowPage(int page)
@@ -282,7 +299,9 @@ public sealed partial class NotesViewModel : ViewModel
         _page = Math.Clamp(page, 1, pageCount);
 
         Notes.Clear();
-        foreach (var item in _allNotes.Skip((_page - 1) * _pageSize).Take(_pageSize))
+        foreach (var item in _allNotes
+            .Skip((_page - 1) * _pageSize)
+            .Take(_pageSize))
         {
             Notes.Add(item);
         }

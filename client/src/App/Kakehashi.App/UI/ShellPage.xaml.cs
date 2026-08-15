@@ -116,6 +116,7 @@ public sealed partial class ShellPage : Page
         {
             NavView.MenuItems.Remove(existing);
             NavView.FooterMenuItems.Remove(existing);
+
             if (existing.Tag is string existingKey)
             {
                 _navItemsByKey.Remove(existingKey);
@@ -160,6 +161,7 @@ public sealed partial class ShellPage : Page
             }
 
             navItem.IsEnabled = isEnabled;
+
             if (!isEnabled)
             {
                 ToolTipService.SetToolTip(navItem, "You do not have access to this.");
@@ -167,6 +169,7 @@ public sealed partial class ShellPage : Page
 
             _moduleNavItems.Add(navItem);
             _navItemsByKey[pageKey] = navItem;
+
             if (item.Placement == NavigationItemPlacement.Footer)
             {
                 NavView.FooterMenuItems.Add(navItem);
@@ -192,6 +195,7 @@ public sealed partial class ShellPage : Page
         if (group.Length == 0)
         {
             NavView.MenuItems.Add(navItem);
+
             return;
         }
 
@@ -201,6 +205,7 @@ public sealed partial class ShellPage : Page
             _groupHeaders[group] = header;
             NavView.MenuItems.Add(header);
             NavView.MenuItems.Add(navItem);
+
             return;
         }
 
@@ -258,6 +263,7 @@ public sealed partial class ShellPage : Page
         if (args.IsSettingsSelected)
         {
             _navigationService.NavigateTo(_settingsPageKey);
+
             return;
         }
 
@@ -273,6 +279,7 @@ public sealed partial class ShellPage : Page
         var container = e.PageKey == _settingsPageKey
             ? NavView.SettingsItem as NavigationViewItem
             : _navItemsByKey.GetValueOrDefault(e.PageKey);
+
         if (container is null)
         {
             return;
@@ -328,6 +335,7 @@ public sealed partial class ShellPage : Page
     private void OnShellPageUnloaded(object sender, RoutedEventArgs e)
     {
         _layout.Changed -= OnLayoutChanged;
+
         if (!_subscription.Unsubscribed)
         {
             _subscription.Unsubscribe();

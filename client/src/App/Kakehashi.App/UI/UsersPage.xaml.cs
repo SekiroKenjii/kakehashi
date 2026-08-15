@@ -72,6 +72,7 @@ public sealed partial class UsersPage : Page
         {
             return "Inactive";
         }
+
         return lastSignIn is null ? "Never signed in" : "Active";
     }
 
@@ -198,14 +199,17 @@ public sealed partial class UsersPage : Page
     private static string Age(DateTimeOffset created)
     {
         var age = DateTimeOffset.Now - created;
+
         if (age.TotalDays >= 365)
         {
             return $"{(int)(age.TotalDays / 365)}y ago";
         }
+
         if (age.TotalDays >= 30)
         {
             return $"{(int)(age.TotalDays / 30)}mo ago";
         }
+
         return $"{Math.Max(0, (int)age.TotalDays)}d ago";
     }
 

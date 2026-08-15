@@ -75,6 +75,7 @@ public sealed partial class HomePage : Page
 
         ViewModel.PrepareDetach(module);
         var result = await DetachModuleDialog.ShowAsync();
+
         if (result == ContentDialogResult.Primary)
         {
             ViewModel.ConfirmDetach();

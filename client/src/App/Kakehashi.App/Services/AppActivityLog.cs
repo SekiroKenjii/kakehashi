@@ -85,6 +85,7 @@ public sealed class AppActivityLog : IAwakeOnStartup
     public void Record(string kind, string title, string detail)
     {
         _entries.Insert(0, new AppActivityEntry(kind, title, detail, DateTimeOffset.UtcNow));
+
         if (_entries.Count > _maxEntries)
         {
             _entries.RemoveRange(_maxEntries, _entries.Count - _maxEntries);
@@ -123,6 +124,7 @@ public sealed class AppActivityLog : IAwakeOnStartup
     private void OnAuthSessionChanged()
     {
         bool isAuthenticated = _sessionAccessor?.Current is not null;
+
         if (isAuthenticated == _wasAuthenticated)
         {
             return;
@@ -130,6 +132,7 @@ public sealed class AppActivityLog : IAwakeOnStartup
 
         _wasAuthenticated = isAuthenticated;
         string detail = $"Windows · {Environment.MachineName}";
+
         if (isAuthenticated)
         {
             Record(SignedInKind, "Signed in · this device", detail);
@@ -155,6 +158,7 @@ public sealed class AppActivityLog : IAwakeOnStartup
     {
         string current = VersionText();
         string? previous = _localSettings.Read<string>(_lastVersionKey);
+
         if (previous is not null && previous != current)
         {
             Record(AppUpdatedKind, "App updated", $"{previous} → {current}");
@@ -178,6 +182,7 @@ public sealed class AppActivityLog : IAwakeOnStartup
     private static string VersionText()
     {
         var version = typeof(AppActivityLog).Assembly.GetName().Version;
+
         return version is null ? "v1.0.0" : $"v{version.ToString(3)}";
     }
 }

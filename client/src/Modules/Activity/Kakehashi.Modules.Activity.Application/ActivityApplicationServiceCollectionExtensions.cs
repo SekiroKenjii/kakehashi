@@ -16,6 +16,7 @@ public static class ActivityApplicationServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.AddMediator(Assembly);
+
         return services;
     }
 }

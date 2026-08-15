@@ -22,6 +22,7 @@ public sealed class RecordClientEventCommandHandler
         RecordClientEventCommand request, CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
+
         return _activity.RecordAsync(request.Kind, cancellationToken);
     }
 }

@@ -98,6 +98,7 @@ public sealed partial class App : Microsoft.UI.Xaml.Application
     public static async Task ShutdownAsync()
     {
         var host = Current._host;
+
         if (host is null)
         {
             return;
@@ -136,7 +137,9 @@ public sealed partial class App : Microsoft.UI.Xaml.Application
             await _host.StartAsync();
 
             var awakeOnStartupServices = _host.Services.GetServices<IAwakeOnStartup>();
-            await _host.Services.GetRequiredService<AppOrchestrator>().StartAsync(awakeOnStartupServices);
+            await _host.Services
+                .GetRequiredService<AppOrchestrator>()
+                .StartAsync(awakeOnStartupServices);
         }
         catch (OperationCanceledException)
         {

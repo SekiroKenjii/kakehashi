@@ -23,10 +23,12 @@ public abstract class ValueObject : IEquatable<ValueObject>
         {
             return false;
         }
+
         if (ReferenceEquals(this, other))
         {
             return true;
         }
+
         return GetType() == other.GetType()
             && GetEqualityComponents().SequenceEqual(other.GetEqualityComponents());
     }
@@ -43,6 +45,7 @@ public abstract class ValueObject : IEquatable<ValueObject>
         {
             hash.Add(component);
         }
+
         return hash.ToHashCode();
     }
 

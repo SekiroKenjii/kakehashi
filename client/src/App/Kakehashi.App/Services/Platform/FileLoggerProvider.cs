@@ -120,7 +120,9 @@ public sealed class FileLoggerProvider : ILoggerProvider
 
             var line = new StringBuilder()
                 .Append(DateTimeOffset.Now.ToString("yyyy-MM-dd HH:mm:ss.fff"))
-                .Append(" [").Append(Level(logLevel)).Append("] ")
+                .Append(" [")
+                .Append(Level(logLevel))
+                .Append("] ")
                 .Append(_category)
                 .Append(": ")
                 .Append(formatter(state, exception))

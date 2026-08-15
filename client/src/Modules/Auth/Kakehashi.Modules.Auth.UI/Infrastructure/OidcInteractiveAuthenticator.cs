@@ -59,9 +59,11 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
             var login = await GetClient()
                 .LoginAsync(new LoginRequest { BrowserTimeout = 120 }, cancellationToken)
                 .ConfigureAwait(false);
+
             if (login.IsError)
             {
                 LogFlowError("login", login.Error);
+
                 // The browser adapter reports failures as BrowserResultType names.
                 return SharedKernelResult.Failure<AuthSession>(login.Error switch {
                     "UserCancel" => AuthErrors.LoginCancelled,
@@ -82,6 +84,7 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
         catch (Exception ex)
         {
             LogFlowException("login", ex);
+
             return SharedKernelResult.Failure<AuthSession>(AuthErrors.LoginFailed);
         }
     }
@@ -100,14 +103,17 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
             var refresh = await GetClient()
                 .RefreshTokenAsync(refreshToken, cancellationToken: cancellationToken)
                 .ConfigureAwait(false);
+
             if (refresh.IsError)
             {
                 LogFlowError("refresh", refresh.Error);
+
                 return SharedKernelResult.Failure<AuthSession>(AuthErrors.RefreshFailed);
             }
 
             var (displayName, email, roles) =
                 await FetchIdentityAsync(refresh.AccessToken, cancellationToken).ConfigureAwait(false);
+
             return AuthSession.Create(
                 refresh.AccessToken,
                 refresh.IdentityToken,
@@ -120,6 +126,7 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
         catch (Exception ex)
         {
             LogFlowException("refresh", ex);
+
             return SharedKernelResult.Failure<AuthSession>(AuthErrors.RefreshFailed);
         }
     }
@@ -129,6 +136,7 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
         if (!_options.IsConfigured)
         {
             _client = null;
+
             return;
         }
 
@@ -183,19 +191,23 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
             var userInfo = await GetClient()
                 .GetUserInfoAsync(accessToken, cancellationToken)
                 .ConfigureAwait(false);
+
             if (userInfo.IsError)
             {
                 LogFlowError("userinfo", userInfo.Error);
+
                 return (null, null, []);
             }
 
             string? displayName =
                 FindClaim(userInfo.Claims, "name") ?? FindClaim(userInfo.Claims, "preferred_username");
+
             return (displayName, FindClaim(userInfo.Claims, "email"), ResolveRoles(userInfo.Claims));
         }
         catch (Exception ex)
         {
             LogFlowException("userinfo", ex);
+
             return (null, null, []);
         }
     }
@@ -214,7 +226,9 @@ public sealed partial class OidcInteractiveAuthenticator : IInteractiveAuthentic
     {
         return claims is null
             ? []
-            : [.. claims.Where(claim => claim.Type is "role" or "roles").Select(claim => claim.Value)];
+            : [.. claims
+                .Where(claim => claim.Type is "role" or "roles")
+                .Select(claim => claim.Value)];
     }
 
     private static string? ResolveDisplayName(ClaimsPrincipal? user)

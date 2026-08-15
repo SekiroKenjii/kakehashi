@@ -162,10 +162,12 @@ public sealed partial class NavScreenNode : ObservableObject
             {
                 return true;
             }
+
             if (!ReferenceEquals(Heading, SavedHeading))
             {
                 return true;
             }
+
             return Index != SavedIndex;
         }
     }
@@ -181,6 +183,7 @@ public sealed partial class NavScreenNode : ObservableObject
             {
                 return string.Empty;
             }
+
             return string.Format(
                 CultureInfo.CurrentCulture, "{0} of {1}",
                 heading.Screens.IndexOf(this) + 1, heading.Screens.Count);
@@ -197,10 +200,12 @@ public sealed partial class NavScreenNode : ObservableObject
     {
         get {
             var changes = new List<string>(4);
+
             if (IsVisible != _savedVisible)
             {
                 changes.Add(IsVisible ? "shown" : "hidden");
             }
+
             if (!ReferenceEquals(Heading, SavedHeading))
             {
                 changes.Add(Heading is { IsUnfiled: false } heading
@@ -211,14 +216,17 @@ public sealed partial class NavScreenNode : ObservableObject
             {
                 changes.Add("reordered");
             }
+
             if (Title != _savedTitle)
             {
                 changes.Add(Title.Length == 0 ? "name reset" : $"renamed to {Title}");
             }
+
             if (Icon != _savedIcon)
             {
                 changes.Add(Icon.Length == 0 ? "icon reset" : $"icon set to {Icon}");
             }
+
             return changes;
         }
     }
@@ -357,6 +365,7 @@ public sealed partial class NavHeadingNode : ObservableObject
             {
                 return [];
             }
+
             if (IsNew)
             {
                 return ["added"];

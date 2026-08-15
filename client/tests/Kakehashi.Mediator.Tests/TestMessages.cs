@@ -28,6 +28,7 @@ public sealed class AppendBehavior : IPipelineBehavior<Ping, string>
         Ping request, RequestHandlerDelegate<string> next, CancellationToken cancellationToken)
     {
         var response = await next();
+
         return response + "+wrapped";
     }
 }
@@ -46,6 +47,7 @@ public sealed class FirstPingedHandler : INotificationHandler<Pinged>
     public Task Handle(Pinged notification, CancellationToken cancellationToken)
     {
         _recorder.Calls.Add("first");
+
         return Task.CompletedTask;
     }
 }
@@ -62,6 +64,7 @@ public sealed class SecondPingedHandler : INotificationHandler<Pinged>
     public Task Handle(Pinged notification, CancellationToken cancellationToken)
     {
         _recorder.Calls.Add("second");
+
         return Task.CompletedTask;
     }
 }
@@ -80,6 +83,7 @@ public sealed class ThingHappenedHandler : IDomainEventHandler<ThingHappened>
     public Task Handle(ThingHappened domainEvent, CancellationToken cancellationToken)
     {
         _recorder.Calls.Add("thing:" + domainEvent.Id);
+
         return Task.CompletedTask;
     }
 }

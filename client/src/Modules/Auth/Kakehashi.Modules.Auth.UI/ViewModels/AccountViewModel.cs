@@ -154,6 +154,7 @@ public sealed partial class AccountViewModel : ViewModel
         Email = session.Email;
         RoleText = session.Roles.Count > 0 ? Title(session.Roles[0]) : null;
         ErrorMessage = null;
+
         if (IsAuthenticated)
         {
             await LoadRemoteAsync();
@@ -214,6 +215,7 @@ public sealed partial class AccountViewModel : ViewModel
             "Sign out of all devices?",
             "Every session ends immediately, including this one. You will have to sign in again.",
             "Sign out everywhere", "Cancel");
+
         if (!confirmed)
         {
             return;
@@ -227,9 +229,11 @@ public sealed partial class AccountViewModel : ViewModel
         try
         {
             var revoked = await _sender.Send(new RevokeAllSessionsCommand());
+
             if (revoked.IsFailure)
             {
                 ErrorMessage = revoked.Error.Message;
+
                 return;
             }
             await _sender.Send(new SignOutRequest());
@@ -251,9 +255,11 @@ public sealed partial class AccountViewModel : ViewModel
         try
         {
             var result = await _sender.Send(new RevokeRemoteSessionCommand(item.Id));
+
             if (result.IsFailure)
             {
                 ErrorMessage = result.Error.Message;
+
                 return;
             }
             await LoadRemoteAsync();
@@ -295,6 +301,7 @@ public sealed partial class AccountViewModel : ViewModel
         EditDisplayName = DisplayName ?? string.Empty;
         EditPhone = string.Empty;
         var profile = await _sender.Send(new GetRemoteProfileQuery());
+
         if (profile.IsSuccess)
         {
             EditDisplayName = profile.Value.DisplayName ?? string.Empty;
@@ -309,13 +316,16 @@ public sealed partial class AccountViewModel : ViewModel
         var result = await _sender.Send(new UpdateRemoteProfileCommand(
             string.IsNullOrWhiteSpace(EditDisplayName) ? null : EditDisplayName.Trim(),
             string.IsNullOrWhiteSpace(EditPhone) ? null : EditPhone.Trim()));
+
         if (result.IsFailure)
         {
             DialogError = result.Error.Message;
+
             return false;
         }
         DisplayName = string.IsNullOrWhiteSpace(EditDisplayName) ? DisplayName : EditDisplayName.Trim();
         await LoadRemoteAsync();
+
         return true;
     }
 
@@ -331,29 +341,37 @@ public sealed partial class AccountViewModel : ViewModel
     public async Task<bool> ChangePasswordAsync()
     {
         DialogError = null;
+
         if (string.IsNullOrEmpty(CurrentPassword) || string.IsNullOrEmpty(NewPassword))
         {
             DialogError = "Enter your current and new password.";
+
             return false;
         }
+
         if (NewPassword != ConfirmPassword)
         {
             DialogError = "The new password and its confirmation do not match.";
+
             return false;
         }
         var result = await _sender.Send(new ChangeRemotePasswordCommand(CurrentPassword, NewPassword));
+
         if (result.IsFailure)
         {
             DialogError = result.Error.Message;
+
             return false;
         }
         await LoadRemoteAsync();
+
         return true;
     }
 
     private async Task LoadRemoteAsync()
     {
         var sessions = await _sender.Send(new GetRemoteSessionsQuery());
+
         if (sessions.IsSuccess)
         {
             _allSessions = [.. sessions.Value.Select(session => new SessionItem(
@@ -371,6 +389,7 @@ public sealed partial class AccountViewModel : ViewModel
         ShowSessionsPage(1);
 
         var activity = await _sender.Send(new GetSecurityActivityQuery(Take: 50));
+
         if (activity.IsSuccess)
         {
             _allActivity = [.. activity.Value.Select(ToActivityItem)];
@@ -402,7 +421,9 @@ public sealed partial class AccountViewModel : ViewModel
         var pageCount = Math.Max(1, (int)Math.Ceiling(_allSessions.Count / (double)_pageSize));
         _sessionsPage = Math.Clamp(page, 1, pageCount);
         Sessions.Clear();
-        foreach (var item in _allSessions.Skip((_sessionsPage - 1) * _pageSize).Take(_pageSize))
+        foreach (var item in _allSessions
+            .Skip((_sessionsPage - 1) * _pageSize)
+            .Take(_pageSize))
         {
             Sessions.Add(item);
         }
@@ -417,7 +438,9 @@ public sealed partial class AccountViewModel : ViewModel
         var pageCount = Math.Max(1, (int)Math.Ceiling(_allActivity.Count / (double)_pageSize));
         _activityPage = Math.Clamp(page, 1, pageCount);
         Activity.Clear();
-        foreach (var item in _allActivity.Skip((_activityPage - 1) * _pageSize).Take(_pageSize))
+        foreach (var item in _allActivity
+            .Skip((_activityPage - 1) * _pageSize)
+            .Take(_pageSize))
         {
             Activity.Add(item);
         }
@@ -438,6 +461,7 @@ public sealed partial class AccountViewModel : ViewModel
             "SessionRevoked" => ("Session revoked", "", false),
             _ => (entry.Kind, "", false),
         };
+
         return new ActivityItem(
             title,
             JoinDetails(entry.Device, entry.IpAddress),
@@ -459,22 +483,29 @@ public sealed partial class AccountViewModel : ViewModel
     private static string FormatRelative(DateTimeOffset at)
     {
         var span = DateTimeOffset.UtcNow - at;
+
         if (span < TimeSpan.FromMinutes(1))
         {
             return "now";
         }
+
         if (span < TimeSpan.FromHours(1))
         {
             return $"{(int)span.TotalMinutes}m ago";
         }
+
         if (span < TimeSpan.FromDays(1))
         {
             return $"{(int)span.TotalHours}h ago";
         }
+
         if (span < TimeSpan.FromDays(30))
         {
             return $"{(int)span.TotalDays}d ago";
         }
-        return at.ToLocalTime().ToString("MMM d, yyyy");
+
+        return at
+            .ToLocalTime()
+            .ToString("MMM d, yyyy");
     }
 }

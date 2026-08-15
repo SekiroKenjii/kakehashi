@@ -30,12 +30,16 @@ public static class ObservabilityServiceCollectionExtensions
         services.Configure<ObservabilityOptions>(section);
         var options = section.Get<ObservabilityOptions>() ?? new ObservabilityOptions();
 
-        var resource = ResourceBuilder.CreateDefault().AddService(
+        var resource = ResourceBuilder
+            .CreateDefault()
+            .AddService(
             serviceName: options.ServiceName,
             serviceVersion: Telemetry.ServiceVersion,
             serviceInstanceId: Environment.MachineName);
 
-        var builder = services.AddOpenTelemetry().ConfigureResource(r => r.AddService(
+        var builder = services
+            .AddOpenTelemetry()
+            .ConfigureResource(r => r.AddService(
             serviceName: options.ServiceName,
             serviceVersion: Telemetry.ServiceVersion,
             serviceInstanceId: Environment.MachineName));
@@ -55,6 +59,7 @@ public static class ObservabilityServiceCollectionExtensions
                 {
                     tracing.AddConsoleExporter();
                 }
+
                 if (options.EnableOtlpExporter)
                 {
                     tracing.AddOtlpExporter(otlp => ApplyOtlpEndpoint(otlp, options.OtlpEndpoint));
@@ -74,6 +79,7 @@ public static class ObservabilityServiceCollectionExtensions
                 {
                     metrics.AddConsoleExporter();
                 }
+
                 if (options.EnableOtlpExporter)
                 {
                     metrics.AddOtlpExporter(otlp => ApplyOtlpEndpoint(otlp, options.OtlpEndpoint));
@@ -92,6 +98,7 @@ public static class ObservabilityServiceCollectionExtensions
                 {
                     otel.AddConsoleExporter();
                 }
+
                 if (options.EnableOtlpExporter)
                 {
                     otel.AddOtlpExporter(otlp => ApplyOtlpEndpoint(otlp, options.OtlpEndpoint));

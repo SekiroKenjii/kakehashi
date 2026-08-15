@@ -37,6 +37,7 @@ internal sealed class InMemoryNotesGateway : INotesGateway
         IReadOnlyList<NoteDto> ordered = [.. _notes.Values
       .OrderByDescending(note => note.UpdatedAt)
       .ThenByDescending(note => note.Id)];
+
         return Task.FromResult(Result.Success(ordered));
     }
 
@@ -50,6 +51,7 @@ internal sealed class InMemoryNotesGateway : INotesGateway
         var now = DateTimeOffset.UtcNow;
         var note = new NoteDto(_nextId++, draft.Title, draft.Body, now, now);
         _notes[note.Id] = note;
+
         return Task.FromResult(Result.Success(note));
     }
 
@@ -60,6 +62,7 @@ internal sealed class InMemoryNotesGateway : INotesGateway
         {
             return Task.FromResult(Result.Failure<NoteDto>(NotesErrors.RequestFailed));
         }
+
         if (!_notes.TryGetValue(id, out var existing))
         {
             return Task.FromResult(Result.Failure<NoteDto>(NotesErrors.NotFound));
@@ -71,6 +74,7 @@ internal sealed class InMemoryNotesGateway : INotesGateway
             UpdatedAt = DateTimeOffset.UtcNow,
         };
         _notes[id] = updated;
+
         return Task.FromResult(Result.Success(updated));
     }
 
@@ -83,6 +87,7 @@ internal sealed class InMemoryNotesGateway : INotesGateway
 
         // Succeeds whether or not the note was there, matching the server.
         _notes.Remove(id);
+
         return Task.FromResult(Result.Success());
     }
 }

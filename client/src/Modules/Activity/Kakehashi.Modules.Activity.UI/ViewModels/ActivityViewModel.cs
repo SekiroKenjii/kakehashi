@@ -200,9 +200,11 @@ public sealed partial class ActivityViewModel : ViewModel
         try
         {
             var result = await _sender.Send(new GetActivityQuery(Filter()), cancellationToken);
+
             if (result.IsFailure)
             {
                 Fail(result.Error);
+
                 return;
             }
 
@@ -240,9 +242,11 @@ public sealed partial class ActivityViewModel : ViewModel
         {
             var filter = Filter() with { PageToken = _nextPageToken };
             var result = await _sender.Send(new GetActivityQuery(filter), cancellationToken);
+
             if (result.IsFailure)
             {
                 Fail(result.Error);
+
                 return;
             }
 
@@ -268,6 +272,7 @@ public sealed partial class ActivityViewModel : ViewModel
     private Task SearchAsync(CancellationToken cancellationToken)
     {
         _appliedSearch = SearchText.Trim();
+
         return LoadAsync(cancellationToken);
     }
 
@@ -276,6 +281,7 @@ public sealed partial class ActivityViewModel : ViewModel
     private Task SelectCategoryAsync(ActivityChip chip)
     {
         ArgumentNullException.ThrowIfNull(chip);
+
         if (chip.IsSelected)
         {
             return Task.CompletedTask;
@@ -285,6 +291,7 @@ public sealed partial class ActivityViewModel : ViewModel
         {
             other.IsSelected = ReferenceEquals(other, chip);
         }
+
         return LoadAsync(CancellationToken.None);
     }
 
@@ -295,11 +302,17 @@ public sealed partial class ActivityViewModel : ViewModel
         ArgumentNullException.ThrowIfNull(row);
 
         var text = new StringBuilder();
-        text.Append(row.Title).Append(" · ")
+        text
+            .Append(row.Title)
+            .Append(" · ")
             .Append(row.Entries[0].OccurredAt.ToString("u", CultureInfo.InvariantCulture));
         foreach (var fact in row.Facts)
         {
-            text.Append('\n').Append(fact.Label).Append(": ").Append(fact.Value);
+            text
+                .Append('\n')
+                .Append(fact.Label)
+                .Append(": ")
+                .Append(fact.Value);
         }
 
         _clipboard.SetText(text.ToString());
@@ -334,11 +347,13 @@ public sealed partial class ActivityViewModel : ViewModel
         if (_entries.Count == 0)
         {
             _notifications.Show("There is nothing to export.", InfoBarSeverity.Informational);
+
             return;
         }
 
         string? path = await _files.PickSaveLocationAsync(
             $"activity-{DateTime.Now:yyyyMMdd-HHmmss}.csv", "CSV file", ".csv");
+
         if (path is null)
         {
             return;
@@ -347,13 +362,21 @@ public sealed partial class ActivityViewModel : ViewModel
         var csv = new StringBuilder("When,Kind,Category,Platform,Address,Session,Event\n");
         foreach (var entry in _entries)
         {
-            csv.Append(Csv(entry.OccurredAt.ToString("u", CultureInfo.InvariantCulture))).Append(',')
-                .Append(Csv(entry.Kind)).Append(',')
-                .Append(Csv(entry.Category)).Append(',')
-                .Append(Csv(entry.Platform)).Append(',')
-                .Append(Csv(entry.IPAddress)).Append(',')
-                .Append(Csv(entry.SessionId)).Append(',')
-                .Append(Csv(entry.Id)).Append('\n');
+            csv
+                .Append(Csv(entry.OccurredAt.ToString("u", CultureInfo.InvariantCulture)))
+                .Append(',')
+                .Append(Csv(entry.Kind))
+                .Append(',')
+                .Append(Csv(entry.Category))
+                .Append(',')
+                .Append(Csv(entry.Platform))
+                .Append(',')
+                .Append(Csv(entry.IPAddress))
+                .Append(',')
+                .Append(Csv(entry.SessionId))
+                .Append(',')
+                .Append(Csv(entry.Id))
+                .Append('\n');
         }
 
         try
@@ -363,6 +386,7 @@ public sealed partial class ActivityViewModel : ViewModel
         catch (IOException exception)
         {
             _notifications.Show($"Could not write the file: {exception.Message}", InfoBarSeverity.Error);
+
             return;
         }
 

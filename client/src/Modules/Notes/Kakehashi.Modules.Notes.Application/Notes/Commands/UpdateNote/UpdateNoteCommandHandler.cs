@@ -26,6 +26,7 @@ public sealed class UpdateNoteCommandHandler
         ArgumentNullException.ThrowIfNull(request);
 
         var draft = NoteDraft.Create(request.Title, request.Body);
+
         if (draft.IsFailure)
         {
             return Result.Failure<NoteDto>(draft.Error);

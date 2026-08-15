@@ -89,6 +89,7 @@ public sealed partial class LoginViewModel : ViewModel
                 Transport.Loopback => "TextFillColorTertiaryBrush",
                 _ => "SystemFillColorCautionBrush",
             };
+
             return (Brush)Microsoft.UI.Xaml.Application.Current.Resources[key];
         }
     }
@@ -106,10 +107,12 @@ public sealed partial class LoginViewModel : ViewModel
         {
             return Transport.Plain;
         }
+
         if (authority.Scheme == Uri.UriSchemeHttps)
         {
             return Transport.Tls;
         }
+
         return authority.IsLoopback ? Transport.Loopback : Transport.Plain;
     }
 
@@ -189,6 +192,7 @@ public sealed partial class LoginViewModel : ViewModel
         {
             var credentials = IsInAppMode ? new SignInCredentials(Email.Trim(), Password) : null;
             var result = await _sender.Send(new SignInRequest(credentials), cancellationToken);
+
             if (result.IsSuccess)
             {
                 // The password lives at most as long as the attempt that needed it.

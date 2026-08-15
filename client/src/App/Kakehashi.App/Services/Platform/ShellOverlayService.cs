@@ -39,6 +39,7 @@ public sealed class ShellOverlayService : IShellOverlay
             },
         };
         root.Children.Add(overlay);
+
         return new OverlayHandle(root, overlay);
     }
 

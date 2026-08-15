@@ -21,7 +21,9 @@ public sealed class ObservabilityTests
             .Build();
 
         var options =
-            configuration.GetSection(ObservabilityOptions.SectionName).Get<ObservabilityOptions>();
+            configuration
+                .GetSection(ObservabilityOptions.SectionName)
+                .Get<ObservabilityOptions>();
 
         Assert.NotNull(options);
         Assert.Equal("Test.Service", options.ServiceName);

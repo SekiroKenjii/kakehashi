@@ -104,6 +104,7 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
     {
         var request = await CreateRequestAsync(HttpMethod.Get, path, cancellationToken)
             .ConfigureAwait(false);
+
         if (request is null)
         {
             return Result.Failure<T>(AuthErrors.NotSignedIn);
@@ -111,13 +112,16 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
         try
         {
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
                 LogRequestFailed(path, (int)response.StatusCode);
+
                 return Result.Failure<T>(AuthErrors.AccountRequestFailed);
             }
             var payload = await response.Content
                 .ReadFromJsonAsync<T>(_json, cancellationToken).ConfigureAwait(false);
+
             return payload is null
                 ? Result.Failure<T>(AuthErrors.AccountRequestFailed)
                 : Result.Success(payload);
@@ -125,6 +129,7 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException or JsonException)
         {
             LogRequestException(path, ex);
+
             return Result.Failure<T>(AuthErrors.AccountRequestFailed);
         }
     }
@@ -139,10 +144,12 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
         HttpMethod method, string path, object? body, CancellationToken cancellationToken)
     {
         var request = await CreateRequestAsync(method, path, cancellationToken).ConfigureAwait(false);
+
         if (request is null)
         {
             return Result.Failure(AuthErrors.NotSignedIn);
         }
+
         if (body is not null)
         {
             request.Content = JsonContent.Create(body, options: _json);
@@ -150,16 +157,20 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
         try
         {
             using var response = await _http.SendAsync(request, cancellationToken).ConfigureAwait(false);
+
             if (!response.IsSuccessStatusCode)
             {
                 LogRequestFailed(path, (int)response.StatusCode);
+
                 return Result.Failure(await ReadErrorAsync(response, cancellationToken).ConfigureAwait(false));
             }
+
             return Result.Success();
         }
         catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException)
         {
             LogRequestException(path, ex);
+
             return Result.Failure(AuthErrors.AccountRequestFailed);
         }
     }
@@ -172,6 +183,7 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
         {
             var payload = await response.Content
                 .ReadFromJsonAsync<ServerError>(_json, cancellationToken).ConfigureAwait(false);
+
             return string.IsNullOrWhiteSpace(payload?.Message)
                 ? AuthErrors.AccountRequestFailed
                 : new Error(payload.Error ?? AuthErrors.AccountRequestFailed.Code, payload.Message);
@@ -192,6 +204,7 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
             return null;
         }
         var token = await _tokens.GetAccessTokenAsync(cancellationToken).ConfigureAwait(false);
+
         if (string.IsNullOrEmpty(token))
         {
             return null;
@@ -199,6 +212,7 @@ public sealed partial class AccountGateway : IAccountGateway, IDisposable
         var request = new HttpRequestMessage(
             method, $"{_options.Authority.TrimEnd('/')}/{path}");
         request.Headers.Authorization = new AuthenticationHeaderValue("Bearer", token);
+
         return request;
     }
 

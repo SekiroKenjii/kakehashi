@@ -38,6 +38,7 @@ public sealed class AuthenticationGate : IAuthenticationGate
 
         var sender = _services.GetRequiredService<ISender>();
         var restore = await sender.Send(new RestoreSessionCommand(), cancellationToken);
+
         if (restore.IsSuccess)
         {
             return;
@@ -54,6 +55,7 @@ public sealed class AuthenticationGate : IAuthenticationGate
         // The window confirms with the user before closing without a sign-in; a false outcome means
         // the user chose to quit. Surface that as cancellation so startup stops gracefully.
         bool didSignIn = await window.Outcome.WaitAsync(cancellationToken).ConfigureAwait(true);
+
         if (!didSignIn)
         {
             throw new OperationCanceledException(

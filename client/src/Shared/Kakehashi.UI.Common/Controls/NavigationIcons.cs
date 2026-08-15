@@ -77,7 +77,9 @@ public static class NavigationIcons
 
     /// <summary>Every name this build can draw, for an icon picker to offer.</summary>
     public static IReadOnlyList<string> Names { get; } =
-        _vocabulary.Select(entry => entry.Name).ToArray();
+        _vocabulary
+            .Select(entry => entry.Name)
+            .ToArray();
 
     /// <summary>The glyph for a name, or <paramref name="fallback"/> when there is nothing better.</summary>
     public static string Resolve(string name, string fallback)
@@ -86,6 +88,7 @@ public static class NavigationIcons
         {
             return fallback;
         }
+
         if (_glyphs.TryGetValue(name, out var glyph))
         {
             return glyph;
@@ -94,6 +97,7 @@ public static class NavigationIcons
         // Fall through to the full font catalogue: a name picked from it is still a real icon and is
         // honoured even though deployments are meant to use the short vocabulary above.
         string catalogued = SegoeFluentIcons.Glyph(name);
+
         return catalogued.Length > 0 ? catalogued : fallback;
     }
 

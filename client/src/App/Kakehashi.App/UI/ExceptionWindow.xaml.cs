@@ -39,6 +39,7 @@ public sealed partial class ExceptionWindow : WindowEx
         foreach (var stack in stacks)
         {
             builder.AppendLine($"{stack.ExceptionType}: {stack.Message}");
+
             if (!string.IsNullOrEmpty(stack.Detail.Method))
             {
                 builder.AppendLine($"  at {stack.Detail.Module} {stack.Detail.Method}");

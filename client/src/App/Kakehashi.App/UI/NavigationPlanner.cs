@@ -57,6 +57,7 @@ public sealed class NavigationPlanner
         ArgumentNullException.ThrowIfNull(layout);
 
         var available = Available();
+
         if (layout.IsEmpty)
         {
             return PlanLocally(available);
@@ -81,6 +82,7 @@ public sealed class NavigationPlanner
         {
             entries.Add(new NavigationEntry(item, isEnabled));
         }
+
         return entries;
     }
 
@@ -106,6 +108,7 @@ public sealed class NavigationPlanner
             }
             entries.Add(new NavigationEntry(item, isEnabled));
         }
+
         return entries;
     }
 
@@ -123,6 +126,7 @@ public sealed class NavigationPlanner
         {
             return null;
         }
+
         return Available().TryGetValue(id, out var entry) ? entry.Item : null;
     }
 
@@ -162,6 +166,7 @@ public sealed class NavigationPlanner
             // overwrite a module destination sharing the id.
             _ = available.TryAdd(KeyOf(item), new NavigationEntry(item, true));
         }
+
         return available;
     }
 

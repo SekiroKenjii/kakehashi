@@ -47,7 +47,9 @@ public sealed class AuthModule : IModule
     {
         ArgumentNullException.ThrowIfNull(services);
 
-        services.AddOptions<AuthOptions>().BindConfiguration(AuthOptions.SectionName);
+        services
+            .AddOptions<AuthOptions>()
+            .BindConfiguration(AuthOptions.SectionName);
         services.AddAuthApplication();
 
         // Concrete adapters for the application ports (adapters live in the UI layer).
@@ -94,6 +96,7 @@ public sealed class AuthModule : IModule
         // The avatar is shared between the item content and the flyout so the initials refresh
         // whenever the flyout opens (e.g. after re-signing in as a different user).
         PersonPicture? avatar = null;
+
         return [
           new NavigationItem("Account", "", typeof(AccountPage), NavigationItemPlacement.Footer) {
       ContentFactory = () => {
@@ -104,6 +107,7 @@ public sealed class AuthModule : IModule
           VerticalAlignment = VerticalAlignment.Center,
         };
         UpdateAvatar(avatar);
+
         return CreateAccountItemContent(avatar);
       },
       FlyoutFactory = () => CreateAccountFlyout(() => avatar),
@@ -146,6 +150,7 @@ public sealed class AuthModule : IModule
 
         panel.Children.Add(avatar);
         panel.Children.Add(label);
+
         return panel;
     }
 
@@ -153,10 +158,12 @@ public sealed class AuthModule : IModule
     private static string ResolveAccountLabel()
     {
         var session = ContractServices.Provider.GetRequiredService<IAuthSessionAccessor>().Current;
+
         if (!string.IsNullOrWhiteSpace(session?.DisplayName))
         {
             return session.DisplayName;
         }
+
         return string.IsNullOrWhiteSpace(session?.Email) ? "Account" : session.Email;
     }
 
@@ -167,12 +174,14 @@ public sealed class AuthModule : IModule
 
         flyout.Opening += async (_, _) => {
             await view.ViewModel.LoadCommand.ExecuteAsync(null);
+
             if (avatarAccessor() is { } avatar)
             {
                 avatar.DisplayName = view.ViewModel.AvatarName;
             }
         };
         view.CloseRequested += flyout.Hide;
+
         return flyout;
     }
 

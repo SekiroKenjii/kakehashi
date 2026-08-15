@@ -71,6 +71,7 @@ public sealed class BearerTokenHandlerTests
             HttpRequestMessage request, CancellationToken cancellationToken)
         {
             Request = request;
+
             return Task.FromResult(new HttpResponseMessage(HttpStatusCode.OK));
         }
     }

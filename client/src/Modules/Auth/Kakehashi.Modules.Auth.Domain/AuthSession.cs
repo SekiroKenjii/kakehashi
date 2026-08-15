@@ -60,6 +60,7 @@ public sealed class AuthSession
         {
             return Result.Failure<AuthSession>(AuthErrors.AccessTokenRequired);
         }
+
         return new AuthSession(
             accessToken, idToken, refreshToken, expiresAtUtc, displayName, email, roles ?? []);
     }

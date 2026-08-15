@@ -33,6 +33,7 @@ public sealed class LoginViewModelTests
     private LoginViewModel CreateViewModel(AuthMode mode)
     {
         var options = Options(mode);
+
         return new LoginViewModel(
             _sender, new SystemBrowser(options.RedirectUri), Microsoft.Extensions.Options.Options
                 .Create(options));

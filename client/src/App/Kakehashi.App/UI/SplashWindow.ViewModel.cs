@@ -71,16 +71,19 @@ public sealed partial class SplashViewModel : ViewModel
             ?.GetCustomAttribute<AssemblyInformationalVersionAttribute>()
             ?.InformationalVersion;
         int metadataStart = informational?.IndexOf('+') ?? -1;
+
         if (metadataStart < 0)
         {
             return versionText;
         }
 
         string commit = informational![(metadataStart + 1)..];
+
         if (commit.Length > 7)
         {
             commit = commit[..7];
         }
+
         return $"{versionText} · build {commit}";
     }
 }
