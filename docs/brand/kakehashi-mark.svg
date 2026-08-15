@@ -1,27 +1,93 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-label="Kakehashi">
-  <title>Kakehashi</title>
-  <desc>A bridge in three brush strokes: the span, the arch beneath it, and the water it crosses.</desc>
-
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 492 490" width="492" height="490">
   <defs>
-    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#22242A" />
-      <stop offset="1" stop-color="#131519" />
-    </linearGradient>
-    <linearGradient id="span" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#FFFFFF" />
-      <stop offset="1" stop-color="#E9E7E3" />
-    </linearGradient>
+    <clipPath id="icon"><rect x="13" y="11" width="466" height="468" rx="88"/></clipPath>
+    <path id="shimakiShape" d="M 104 148 L 400 148 Q 405 148 404 156 L 397 181
+             Q 395 187 389 187 L 115 187 Q 109 187 107 181
+             L 100 156 Q 99 148 104 148 Z"/>
+    <clipPath id="shimakiClip"><use href="#shimakiShape"/></clipPath>
+    <filter id="grain" x="0" y="0" width="100%" height="100%">
+      <feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" result="n"/>
+      <feColorMatrix in="n" type="matrix" values="0 0 0 0 0  0 0 0 0 0  0 0 0 0 0  0.6 0.6 0.6 0 0"/>
+      <feComposite operator="in" in2="SourceGraphic"/>
+    </filter>
   </defs>
 
-  <rect width="256" height="256" rx="58" fill="url(#plate)" />
-  <rect x="1.5" y="1.5" width="253" height="253" rx="56.5" fill="none" stroke="#33363D" stroke-width="3" />
+  <!-- dark frame -->
+  <rect x="0" y="0" width="492" height="490" rx="102" fill="#0B0B0F"/>
 
-  <!-- The span. The longest stroke, and the one the name is about. -->
-  <rect x="40" y="78" width="176" height="16" rx="8" fill="url(#span)" />
+  <g clip-path="url(#icon)">
+    <!-- cream background -->
+    <rect x="0" y="0" width="492" height="490" fill="#F4EADB"/>
 
-  <!-- The arch. Tapered to nothing at both ends, the way a brush leaves the paper. -->
-  <path d="M48 148 Q128 58 208 148 Q128 90 48 148 Z" fill="#E0503A" />
+    <!-- clouds -->
+    <g fill="#ECDECA">
+      <g><!-- top-left -->
+        <circle cx="97" cy="106" r="19"/><circle cx="124" cy="92" r="25"/><circle cx="152" cy="105" r="18"/>
+        <rect x="75" y="99" width="100" height="23" rx="11"/>
+      </g>
+      <g><!-- top-right -->
+        <circle cx="338" cy="107" r="17"/><circle cx="370" cy="93" r="25"/><circle cx="404" cy="101" r="22"/>
+        <rect x="319" y="99" width="106" height="23" rx="11"/>
+      </g>
+      <g><!-- mid-left small -->
+        <circle cx="57" cy="245" r="10"/><circle cx="71" cy="239" r="13"/><circle cx="86" cy="245" r="9"/>
+        <rect x="45" y="242" width="51" height="13" rx="6.5"/>
+      </g>
+      <g><!-- mid-right small -->
+        <circle cx="415" cy="245" r="10"/><circle cx="430" cy="238" r="13"/><circle cx="445" cy="245" r="9"/>
+        <rect x="404" y="242" width="51" height="13" rx="6.5"/>
+      </g>
+    </g>
 
-  <!-- The water it crosses. -->
-  <rect x="88" y="164" width="80" height="14" rx="7" fill="#8A8D95" />
+    <!-- rising sun -->
+    <path d="M 60 408 A 186 152 0 0 1 432 408 Z" fill="#E7D1B9"/>
+
+    <!-- ground shadow -->
+    <ellipse cx="250" cy="424" rx="150" ry="14" fill="#E4D4BF"/>
+
+    <!-- dark mound -->
+    <path d="M 61 406 A 185 84 0 0 1 431 406 Z" fill="#17181B"/>
+
+    <!-- torii -->
+    <g>
+      <!-- pillars -->
+      <polygon points="140,186 167,186 167,389 133,389" fill="#C4513C"/>
+      <polygon points="336,186 365,186 371,389 336,389" fill="#C4513C"/>
+
+      <!-- gakuzuka -->
+      <rect x="238" y="185" width="26" height="36" fill="#BD4D38"/>
+
+      <!-- cast shadows: shimaki onto pillar tops & gakuzuka (layer depth) -->
+      <rect x="140" y="187" width="27" height="7" fill="#A34131"/>
+      <rect x="336" y="187" width="29" height="7" fill="#A34131"/>
+      <rect x="238" y="185" width="26" height="14" fill="#A54334"/>
+
+      <!-- nuki -->
+      <rect x="116" y="215" width="272" height="28" rx="7" fill="#C7533E"/>
+
+      <!-- cast shadow: nuki onto pillars (subtle) -->
+      <rect x="135" y="243" width="32" height="6" fill="#8F3A2B" opacity="0.35"/>
+      <rect x="336" y="243" width="33" height="6" fill="#8F3A2B" opacity="0.35"/>
+
+      <!-- side shading on pillars (light from the left) -->
+      <polygon points="163,193 167,193 167,389 163,389" fill="#8F3A2B" opacity="0.22"/>
+      <polygon points="361,193 365,193 371,389 367,389" fill="#8F3A2B" opacity="0.25"/>
+
+      <!-- shimaki -->
+      <use href="#shimakiShape" fill="#C4513C"/>
+
+      <!-- cast shadow: kasagi onto shimaki (curved band, clipped to shimaki) -->
+      <g clip-path="url(#shimakiClip)">
+        <path d="M 92 156 C 166 168, 326 168, 410 156
+                 L 410 164 C 326 176, 166 176, 92 164 Z" fill="#A34131"/>
+      </g>
+
+      <!-- kasagi -->
+      <path d="M 84 131 C 168 147, 324 147, 418 131
+               L 410 156 C 326 168, 166 168, 92 156 Z" fill="#1C1E20"/>
+    </g>
+
+    <!-- subtle paper grain -->
+    <rect x="0" y="0" width="492" height="490" fill="#000" opacity="0.045" filter="url(#grain)"/>
+  </g>
 </svg>

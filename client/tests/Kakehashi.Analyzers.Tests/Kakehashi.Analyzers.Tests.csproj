@@ -17,7 +17,10 @@
 
   <!-- Referenced as a library, not as an analyzer: these tests drive the analyzers directly. -->
   <ItemGroup>
-    <ProjectReference Include="..\..\tools\Kakehashi.Analyzers\Kakehashi.Analyzers.csproj" />
+    <ProjectReference
+        Include="..\..\tools\Kakehashi.Analyzers\Kakehashi.Analyzers.csproj"
+        UndefineProperties="RuntimeIdentifier"
+        AdditionalProperties="Platform=AnyCPU" />
   </ItemGroup>
 
 </Project>

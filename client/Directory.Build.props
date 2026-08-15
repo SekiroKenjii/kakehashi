@@ -31,10 +31,15 @@
   </PropertyGroup>
 
   <!--
-    The five layout rules `dotnet format` has no option for (KH0001-KH0006), applied to every
-    project but the two that define them. OutputItemType=Analyzer with ReferenceOutputAssembly
-    false loads them into the compiler without putting them on anybody's reference list;
-    Platform is undefined so the x64 WinUI projects do not ask an AnyCPU analyzer to be x64.
+    The layout rules `dotnet format` has no option for (KH0001-KH0007), applied to every project
+    but the two that define them. OutputItemType=Analyzer with ReferenceOutputAssembly false
+    loads them into the compiler without putting them on anybody's reference list.
+
+    Platform is PINNED to AnyCPU on every reference to these projects, here and in the two
+    csproj-level references. Pinning, not undefining: an undefined Platform and the solution's
+    explicit Platform=AnyCPU are different global-property sets, so MSBuild would build the same
+    project twice into the same obj\ - and the second compile races the compiler server that
+    already holds the first DLL open as an analyzer, failing with CS2012 on its own output.
   -->
   <ItemGroup Condition="'$(MSBuildProjectName)' != 'Kakehashi.Analyzers'
                         AND '$(MSBuildProjectName)' != 'Kakehashi.Analyzers.CodeFixes'">
@@ -42,12 +47,14 @@
         Include="$(MSBuildThisFileDirectory)tools\Kakehashi.Analyzers\Kakehashi.Analyzers.csproj"
         OutputItemType="Analyzer"
         ReferenceOutputAssembly="false"
-        UndefineProperties="TargetFramework;Platform;RuntimeIdentifier" />
+        UndefineProperties="TargetFramework;RuntimeIdentifier"
+        AdditionalProperties="Platform=AnyCPU" />
     <ProjectReference
         Include="$(MSBuildThisFileDirectory)tools\Kakehashi.Analyzers.CodeFixes\Kakehashi.Analyzers.CodeFixes.csproj"
         OutputItemType="Analyzer"
         ReferenceOutputAssembly="false"
-        UndefineProperties="TargetFramework;Platform;RuntimeIdentifier" />
+        UndefineProperties="TargetFramework;RuntimeIdentifier"
+        AdditionalProperties="Platform=AnyCPU" />
   </ItemGroup>
 
   <!-- Versions derived from Version.props (the SSOT). AssemblyVersion stays major.minor.0.0 so a

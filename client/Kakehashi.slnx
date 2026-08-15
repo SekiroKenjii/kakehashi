@@ -5,7 +5,6 @@
   </Configurations>
   <Folder Name="/scripts/">
     <File Path="scripts/configure-auth.ps1" />
-    <File Path="scripts/generate-icons.ps1" />
     <File Path="scripts/version.ps1" />
   </Folder>
   <Folder Name="/Solution Items/">

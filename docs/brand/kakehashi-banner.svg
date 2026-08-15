@@ -3,81 +3,92 @@
   <desc>架け橋 — the bridge you build across. A WinUI 3 client, a Go backend, and one contract checked against both halves.</desc>
 
   <defs>
-    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#08090C" />
-      <stop offset="1" stop-color="#060709" />
-    </linearGradient>
+    <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
+      <stop offset="0" stop-color="#E7D1B9" stop-opacity="0.85" />
+      <stop offset="1" stop-color="#E7D1B9" stop-opacity="0" />
+    </radialGradient>
     <radialGradient id="shu" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#E0503A" stop-opacity="0.24" />
-      <stop offset="0.5" stop-color="#A83A2C" stop-opacity="0.09" />
-      <stop offset="1" stop-color="#E0503A" stop-opacity="0" />
+      <stop offset="0" stop-color="#C4513C" stop-opacity="0.10" />
+      <stop offset="1" stop-color="#C4513C" stop-opacity="0" />
     </radialGradient>
-    <radialGradient id="spill" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#B23A2C" stop-opacity="0.10" />
-      <stop offset="1" stop-color="#B23A2C" stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.09" />
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
-    </radialGradient>
-    <linearGradient id="span" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#FFFFFF" />
-      <stop offset="1" stop-color="#E9E7E3" />
-    </linearGradient>
     <linearGradient id="num" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#F5A54A" />
-      <stop offset="1" stop-color="#E0503A" />
+      <stop offset="0" stop-color="#E0A24A" />
+      <stop offset="1" stop-color="#C4513C" />
     </linearGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#17191F" />
-      <stop offset="1" stop-color="#111318" />
-    </linearGradient>
-    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#22242A" />
-      <stop offset="1" stop-color="#131519" />
+      <stop offset="0" stop-color="#1B1C20" />
+      <stop offset="1" stop-color="#131418" />
     </linearGradient>
     <pattern id="dotgrid" width="30" height="30" patternUnits="userSpaceOnUse">
-      <circle cx="1.5" cy="1.5" r="1.4" fill="#23252C" />
+      <circle cx="1.5" cy="1.5" r="1.4" fill="#E4D3B9" />
     </pattern>
+    <clipPath id="tileclip"><rect x="13" y="11" width="466" height="468" rx="88"/></clipPath>
+    <path id="shimaki" d="M 104 148 L 400 148 Q 405 148 404 156 L 397 181 Q 395 187 389 187 L 115 187 Q 109 187 107 181 L 100 156 Q 99 148 104 148 Z"/>
+    <clipPath id="shimakiclip"><use href="#shimaki"/></clipPath>
+    <g id="tile">
+      <rect x="0" y="0" width="492" height="490" rx="102" fill="#0B0B0F"/>
+      <g clip-path="url(#tileclip)">
+        <rect x="0" y="0" width="492" height="490" fill="#F4EADB"/>
+        <g fill="#ECDECA">
+          <g><circle cx="97" cy="106" r="19"/><circle cx="124" cy="92" r="25"/><circle cx="152" cy="105" r="18"/><rect x="75" y="99" width="100" height="23" rx="11"/></g>
+          <g><circle cx="338" cy="107" r="17"/><circle cx="370" cy="93" r="25"/><circle cx="404" cy="101" r="22"/><rect x="319" y="99" width="106" height="23" rx="11"/></g>
+          <g><circle cx="57" cy="245" r="10"/><circle cx="71" cy="239" r="13"/><circle cx="86" cy="245" r="9"/><rect x="45" y="242" width="51" height="13" rx="6.5"/></g>
+          <g><circle cx="415" cy="245" r="10"/><circle cx="430" cy="238" r="13"/><circle cx="445" cy="245" r="9"/><rect x="404" y="242" width="51" height="13" rx="6.5"/></g>
+        </g>
+        <path d="M 60 408 A 186 152 0 0 1 432 408 Z" fill="#E7D1B9"/>
+        <ellipse cx="250" cy="424" rx="150" ry="14" fill="#E4D4BF"/>
+        <path d="M 61 406 A 185 84 0 0 1 431 406 Z" fill="#17181B"/>
+        <g>
+          <polygon points="140,186 167,186 167,389 133,389" fill="#C4513C"/>
+          <polygon points="336,186 365,186 371,389 336,389" fill="#C4513C"/>
+          <rect x="238" y="185" width="26" height="36" fill="#BD4D38"/>
+          <rect x="140" y="187" width="27" height="7" fill="#A34131"/>
+          <rect x="336" y="187" width="29" height="7" fill="#A34131"/>
+          <rect x="238" y="185" width="26" height="14" fill="#A54334"/>
+          <rect x="116" y="215" width="272" height="28" rx="7" fill="#C7533E"/>
+          <rect x="135" y="243" width="32" height="6" fill="#8F3A2B" opacity="0.35"/>
+          <rect x="336" y="243" width="33" height="6" fill="#8F3A2B" opacity="0.35"/>
+          <polygon points="163,193 167,193 167,389 163,389" fill="#8F3A2B" opacity="0.22"/>
+          <polygon points="361,193 365,193 371,389 367,389" fill="#8F3A2B" opacity="0.25"/>
+          <use href="#shimaki" fill="#C4513C"/>
+          <g clip-path="url(#shimakiclip)">
+            <path d="M 92 156 C 166 168, 326 168, 410 156 L 410 164 C 326 176, 166 176, 92 164 Z" fill="#A34131"/>
+          </g>
+          <path d="M 84 131 C 168 147, 324 147, 418 131 L 410 156 C 326 168, 166 168, 92 156 Z" fill="#1C1E20"/>
+        </g>
+      </g>
+    </g>
   </defs>
 
-  <!-- ground -->
-  <rect width="2000" height="1080" fill="url(#night)" />
-  <rect width="2000" height="1080" fill="url(#dotgrid)" opacity="0.55" />
-  <ellipse cx="1000" cy="310" rx="820" ry="410" fill="url(#shu)" />
-  <ellipse cx="1000" cy="640" rx="1120" ry="480" fill="url(#spill)" />
-  <ellipse cx="1000" cy="240" rx="500" ry="190" fill="url(#halo)" />
+  <!-- paper -->
+  <rect width="2000" height="1080" fill="#F4EADB" />
+  <rect width="2000" height="1080" fill="url(#dotgrid)" opacity="0.5" />
+  <ellipse cx="1000" cy="300" rx="860" ry="420" fill="url(#sun)" />
+  <ellipse cx="1000" cy="640" rx="1120" ry="480" fill="url(#shu)" />
 
-  <!-- the quiet squares the reference scatters for depth -->
-  <g fill="none" stroke="#1B1D24">
-    <rect x="70" y="240" width="84" height="84" rx="10" />
-    <rect x="352" y="428" width="112" height="112" rx="12" />
-    <rect x="1830" y="150" width="92" height="92" rx="10" />
-    <rect x="1524" y="428" width="108" height="108" rx="12" />
-    <rect x="1896" y="560" width="80" height="80" rx="10" />
+  <!-- clouds where the reference scatters squares -->
+  <g fill="#ECDECA">
+    <g><circle cx="150" cy="150" r="24"/><circle cx="186" cy="132" r="32"/><circle cx="224" cy="148" r="23"/><rect x="122" y="141" width="130" height="29" rx="14"/></g>
+    <g><circle cx="1806" cy="188" r="20"/><circle cx="1842" cy="172" r="28"/><circle cx="1878" cy="182" r="24"/><rect x="1784" y="180" width="120" height="26" rx="13"/></g>
+    <g><circle cx="322" cy="392" r="12"/><circle cx="339" cy="384" r="15"/><circle cx="356" cy="392" r="11"/><rect x="308" y="388" width="62" height="15" rx="7.5"/></g>
+    <g><circle cx="1666" cy="368" r="12"/><circle cx="1683" cy="360" r="15"/><circle cx="1700" cy="368" r="11"/><rect x="1652" y="364" width="62" height="15" rx="7.5"/></g>
   </g>
 
   <!-- ── lockup: the badge, the tile, the name in both scripts, the claim ───────────────── -->
   <g>
-    <rect x="896" y="72" width="208" height="40" rx="20" fill="#170E0D" stroke="#5C2A22" />
-    <circle cx="922" cy="92" r="5" fill="#4EC77B" />
-    <text x="941" y="98" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="4.5" fill="#E4E6EA">SEKIROKENJII</text>
+    <rect x="896" y="72" width="208" height="40" rx="20" fill="#EFE2CE" stroke="#D9C6AA" />
+    <circle cx="922" cy="92" r="5" fill="#3E9E63" />
+    <text x="941" y="98" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="4.5" fill="#5B5346">SEKIROKENJII</text>
   </g>
-  <g transform="translate(432,163) scale(0.42)">
-    <rect width="256" height="256" rx="58" fill="url(#plate)" />
-    <rect x="1.5" y="1.5" width="253" height="253" rx="56.5" fill="none" stroke="#33363D" stroke-width="3" />
-    <rect x="40" y="78" width="176" height="16" rx="8" fill="url(#span)" />
-    <path d="M48 148 Q128 58 208 148 Q128 90 48 148 Z" fill="#E0503A" />
-    <rect x="88" y="164" width="80" height="14" rx="7" fill="#8A8D95" />
-  </g>
-  <text x="575" y="259" font-weight="700" font-size="128" fill="#F7F6F4"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="4">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-3">&#160;Kakehashi</tspan></text>
-  <text x="1000" y="342" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="27" fill="#9BA0AA">The High-Performance bridge you build across</text>
+  <use href="#tile" transform="translate(468,148) scale(0.29)" />
+  <text x="648" y="259" font-weight="700" font-size="128" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="4">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-3">&#160;Kakehashi</tspan></text>
+  <text x="1000" y="342" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="27" fill="#8B7B66">The High-Performance bridge you build across</text>
 
   <!-- ── the editor window, cropped by the bottom edge like the reference ───────────────── -->
   <g>
-    <rect x="392" y="446" width="1216" height="700" rx="24" fill="#000000" opacity="0.20" />
-    <rect x="384" y="454" width="1232" height="700" rx="30" fill="#000000" opacity="0.12" />
-    <rect x="400" y="440" width="1200" height="700" rx="18" fill="#15171C" stroke="#26282F" />
+    <rect x="392" y="446" width="1216" height="700" rx="24" fill="#3A2F21" opacity="0.16" />
+    <rect x="384" y="454" width="1232" height="700" rx="30" fill="#3A2F21" opacity="0.10" />
+    <rect x="400" y="440" width="1200" height="700" rx="18" fill="#15171C" stroke="#2B2824" />
     <!-- chrome -->
     <circle cx="436" cy="470" r="6.5" fill="#3A3E46" />
     <circle cx="460" cy="470" r="6.5" fill="#3A3E46" />
@@ -93,7 +104,7 @@
       <rect x="420" y="518" width="14" height="18" rx="2" />
       <rect x="426" y="513" width="14" height="18" rx="2" />
     </g>
-    <circle cx="446" cy="536" r="8.5" fill="#E0503A" />
+    <circle cx="446" cy="536" r="8.5" fill="#C4513C" />
     <text x="446" y="540.5" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-weight="700" font-size="11" fill="#FFFFFF">1</text>
     <g stroke="#6E7480" stroke-width="2" fill="none">
       <circle cx="427" cy="578" r="8" />
@@ -121,7 +132,7 @@
       <path d="M508 647 L516 647 L512 653 Z" fill="#8F939B" />
       <text x="526" y="655" fill="#AEB2B9">kakehashi/activity/v1</text>
       <rect x="460" y="664" width="262" height="32" rx="6" fill="#1D2026" />
-      <rect x="542" y="672" width="12" height="14" rx="2" fill="none" stroke="#E0503A" stroke-width="1.6" />
+      <rect x="542" y="672" width="12" height="14" rx="2" fill="none" stroke="#C4513C" stroke-width="1.6" />
       <text x="564" y="686" fill="#E8E9EB">activity.proto</text>
       <rect x="542" y="704" width="12" height="14" rx="2" fill="none" stroke="#5A5F68" stroke-width="1.6" />
       <text x="564" y="718" fill="#8F939B">navigation.proto</text>
@@ -140,7 +151,7 @@
     <!-- tabs -->
     <rect x="726" y="500" width="874" height="46" fill="#101216" />
     <rect x="726" y="500" width="220" height="46" fill="#16181E" />
-    <circle cx="750" cy="523" r="5" fill="#E0503A" />
+    <circle cx="750" cy="523" r="5" fill="#C4513C" />
     <text x="766" y="529" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="15" fill="#E6E7E9">activity.proto</text>
     <text x="968" y="529" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="15" fill="#7C818A"><tspan fill="#4EC9B0">{}</tspan>&#160;&#160;module.go</text>
 
@@ -171,17 +182,17 @@
 
   <!-- ── floating cards, left column ─────────────────────────────────────────────────────── -->
   <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif">
-    <rect x="154" y="478" width="320" height="174" rx="20" fill="#000000" opacity="0.22" />
-    <rect x="148" y="486" width="332" height="174" rx="26" fill="#000000" opacity="0.12" />
-    <rect x="158" y="470" width="312" height="174" rx="16" fill="url(#card)" stroke="#24272E" />
+    <rect x="154" y="478" width="320" height="174" rx="20" fill="#3A2F21" opacity="0.18" />
+    <rect x="148" y="486" width="332" height="174" rx="26" fill="#3A2F21" opacity="0.10" />
+    <rect x="158" y="470" width="312" height="174" rx="16" fill="url(#card)" stroke="#2B2824" />
     <text x="184" y="512" font-size="18" fill="#9BA0AA">One repository</text>
     <text x="184" y="586" font-weight="700" font-size="72" fill="url(#num)">2</text>
     <text x="238" y="586" font-size="26" fill="#C9CBCF">halves</text>
     <text x="184" y="622" font-size="15" fill="#767B84">WinUI 3 client · Go server</text>
 
     <!-- the little debug toolbar -->
-    <rect x="154" y="684" width="260" height="52" rx="14" fill="#000000" opacity="0.22" />
-    <rect x="158" y="676" width="252" height="52" rx="12" fill="#14161B" stroke="#24272E" />
+    <rect x="154" y="684" width="260" height="52" rx="14" fill="#3A2F21" opacity="0.18" />
+    <rect x="158" y="676" width="252" height="52" rx="12" fill="#14161B" stroke="#2B2824" />
     <g stroke="#7C818A" stroke-width="2.4" fill="none">
       <path d="M186 692 L186 712 M195 692 L195 712" />
       <path d="M230 694 L246 702 L230 710 Z" />
@@ -189,11 +200,11 @@
       <path d="M322 710 L322 694 M316 700 L322 693 L328 700" />
       <circle cx="358" cy="702" r="9" stroke="#7BC97C" />
     </g>
-    <rect x="382" y="695" width="14" height="14" rx="3" fill="#E0503A" />
+    <rect x="382" y="695" width="14" height="14" rx="3" fill="#C4513C" />
 
     <!-- server console, cropped by the bottom like the reference's debug console -->
-    <rect x="86" y="788" width="380" height="360" rx="20" fill="#000000" opacity="0.25" />
-    <rect x="90" y="780" width="372" height="360" rx="16" fill="#101216" stroke="#24272E" />
+    <rect x="86" y="788" width="380" height="360" rx="20" fill="#3A2F21" opacity="0.20" />
+    <rect x="90" y="780" width="372" height="360" rx="16" fill="#101216" stroke="#2B2824" />
     <text x="116" y="818" font-size="13" letter-spacing="1.8" fill="#8B909A">SERVER CONSOLE</text>
     <g font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-size="15">
       <text x="116" y="854" xml:space="preserve"><tspan fill="#8A8D95">$ </tspan><tspan fill="#C9CBD1">docker compose up -d</tspan></text>
@@ -202,23 +213,23 @@
       <text x="116" y="944" xml:space="preserve" fill="#6E7480">grpc · grpc-web · json, one port</text>
       <text x="116" y="974" xml:space="preserve" fill="#6E7480">oidc issuer ready · in-app sign-in</text>
       <text x="116" y="1004" xml:space="preserve" fill="#6E7480">activity retention · 90 days</text>
-      <rect x="116" y="1022" width="9" height="18" fill="#E0503A" />
+      <rect x="116" y="1022" width="9" height="18" fill="#C4513C" />
     </g>
   </g>
 
   <!-- ── floating cards, right column ────────────────────────────────────────────────────── -->
   <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif">
-    <rect x="1526" y="478" width="320" height="174" rx="20" fill="#000000" opacity="0.22" />
-    <rect x="1520" y="486" width="332" height="174" rx="26" fill="#000000" opacity="0.12" />
-    <rect x="1530" y="470" width="312" height="174" rx="16" fill="url(#card)" stroke="#24272E" />
+    <rect x="1526" y="478" width="320" height="174" rx="20" fill="#3A2F21" opacity="0.18" />
+    <rect x="1520" y="486" width="332" height="174" rx="26" fill="#3A2F21" opacity="0.10" />
+    <rect x="1530" y="470" width="312" height="174" rx="16" fill="url(#card)" stroke="#2B2824" />
     <text x="1556" y="512" font-size="18" fill="#9BA0AA">Green before merge</text>
     <text x="1556" y="586" font-weight="700" font-size="72" fill="url(#num)">3</text>
     <text x="1610" y="586" font-size="26" fill="#C9CBCF">gates</text>
     <text x="1556" y="622" font-size="15" fill="#767B84">archlint · arch-tests · buf breaking</text>
 
     <!-- the gates panel, where the reference lists branches -->
-    <rect x="1556" y="704" width="360" height="310" rx="20" fill="#000000" opacity="0.25" />
-    <rect x="1560" y="696" width="352" height="310" rx="16" fill="#111318" stroke="#24272E" />
+    <rect x="1556" y="704" width="360" height="310" rx="20" fill="#3A2F21" opacity="0.20" />
+    <rect x="1560" y="696" width="352" height="310" rx="16" fill="#131418" stroke="#2B2824" />
     <g stroke="#7C818A" stroke-width="1.8" fill="none">
       <circle cx="1590" cy="734" r="4" /><circle cx="1590" cy="752" r="4" /><path d="M1590 738 L1590 748" />
       <circle cx="1590" cy="830" r="4" /><circle cx="1590" cy="848" r="4" /><path d="M1590 834 L1590 844" />
@@ -227,7 +238,7 @@
     <g font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace">
       <rect x="1612" y="726" width="98" height="30" rx="7" fill="#1D2026" />
       <text x="1626" y="747" font-size="15" fill="#D3D5D9">archlint</text>
-      <text x="1612" y="786" font-size="13" xml:space="preserve"><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#767B84"> 60 packages, no violations</tspan></text>
+      <text x="1612" y="786" font-size="13" xml:space="preserve"><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#767B84"> 61 packages, no violations</tspan></text>
 
       <rect x="1612" y="822" width="188" height="30" rx="7" fill="#1D2026" />
       <text x="1626" y="843" font-size="15" fill="#D3D5D9">architecture-tests</text>

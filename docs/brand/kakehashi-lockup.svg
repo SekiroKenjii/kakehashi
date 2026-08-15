@@ -1,57 +1,68 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 630" width="1200" height="630" role="img" aria-label="Kakehashi — 架け橋, the bridge you build across">
   <title>Kakehashi</title>
-  <desc>The Kakehashi lockup: the bridge mark and the wordmark.</desc>
+  <desc>The Kakehashi lockup: the torii mark and the wordmark on paper.</desc>
   <defs>
-    <linearGradient id="night" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#08090C" />
-      <stop offset="1" stop-color="#060709" />
-    </linearGradient>
-    <radialGradient id="shu" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#E0503A" stop-opacity="0.26" />
-      <stop offset="0.5" stop-color="#A83A2C" stop-opacity="0.10" />
-      <stop offset="1" stop-color="#E0503A" stop-opacity="0" />
-    </radialGradient>
-    <radialGradient id="halo" cx="0.5" cy="0.5" r="0.5">
-      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.09" />
-      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0" />
-    </radialGradient>
-    <linearGradient id="span" x1="0" y1="0" x2="1" y2="0">
-      <stop offset="0" stop-color="#FFFFFF" />
-      <stop offset="1" stop-color="#E9E7E3" />
-    </linearGradient>
-    <linearGradient id="plate" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#22242A" />
-      <stop offset="1" stop-color="#131519" />
-    </linearGradient>
-    <pattern id="dotgrid" width="30" height="30" patternUnits="userSpaceOnUse">
-      <circle cx="1.5" cy="1.5" r="1.4" fill="#23252C" />
-    </pattern>
+    <clipPath id="tileclip"><rect x="13" y="11" width="466" height="468" rx="88"/></clipPath>
+    <path id="shimaki" d="M 104 148 L 400 148 Q 405 148 404 156 L 397 181 Q 395 187 389 187 L 115 187 Q 109 187 107 181 L 100 156 Q 99 148 104 148 Z"/>
+    <clipPath id="shimakiclip"><use href="#shimaki"/></clipPath>
+    <g id="tile">
+      <rect x="0" y="0" width="492" height="490" rx="102" fill="#0B0B0F"/>
+      <g clip-path="url(#tileclip)">
+        <rect x="0" y="0" width="492" height="490" fill="#F4EADB"/>
+        <g fill="#ECDECA">
+          <g><circle cx="97" cy="106" r="19"/><circle cx="124" cy="92" r="25"/><circle cx="152" cy="105" r="18"/><rect x="75" y="99" width="100" height="23" rx="11"/></g>
+          <g><circle cx="338" cy="107" r="17"/><circle cx="370" cy="93" r="25"/><circle cx="404" cy="101" r="22"/><rect x="319" y="99" width="106" height="23" rx="11"/></g>
+          <g><circle cx="57" cy="245" r="10"/><circle cx="71" cy="239" r="13"/><circle cx="86" cy="245" r="9"/><rect x="45" y="242" width="51" height="13" rx="6.5"/></g>
+          <g><circle cx="415" cy="245" r="10"/><circle cx="430" cy="238" r="13"/><circle cx="445" cy="245" r="9"/><rect x="404" y="242" width="51" height="13" rx="6.5"/></g>
+        </g>
+        <path d="M 60 408 A 186 152 0 0 1 432 408 Z" fill="#E7D1B9"/>
+        <ellipse cx="250" cy="424" rx="150" ry="14" fill="#E4D4BF"/>
+        <path d="M 61 406 A 185 84 0 0 1 431 406 Z" fill="#17181B"/>
+        <g>
+          <polygon points="140,186 167,186 167,389 133,389" fill="#C4513C"/>
+          <polygon points="336,186 365,186 371,389 336,389" fill="#C4513C"/>
+          <rect x="238" y="185" width="26" height="36" fill="#BD4D38"/>
+          <rect x="140" y="187" width="27" height="7" fill="#A34131"/>
+          <rect x="336" y="187" width="29" height="7" fill="#A34131"/>
+          <rect x="238" y="185" width="26" height="14" fill="#A54334"/>
+          <rect x="116" y="215" width="272" height="28" rx="7" fill="#C7533E"/>
+          <rect x="135" y="243" width="32" height="6" fill="#8F3A2B" opacity="0.35"/>
+          <rect x="336" y="243" width="33" height="6" fill="#8F3A2B" opacity="0.35"/>
+          <polygon points="163,193 167,193 167,389 163,389" fill="#8F3A2B" opacity="0.22"/>
+          <polygon points="361,193 365,193 371,389 367,389" fill="#8F3A2B" opacity="0.25"/>
+          <use href="#shimaki" fill="#C4513C"/>
+          <g clip-path="url(#shimakiclip)">
+            <path d="M 92 156 C 166 168, 326 168, 410 156 L 410 164 C 326 176, 166 176, 92 164 Z" fill="#A34131"/>
+          </g>
+          <path d="M 84 131 C 168 147, 324 147, 418 131 L 410 156 C 326 168, 166 168, 92 156 Z" fill="#1C1E20"/>
+        </g>
+      </g>
+    </g>
   </defs>
 
-  <rect width="1200" height="630" fill="url(#night)" />
-  <rect width="1200" height="630" fill="url(#dotgrid)" opacity="0.55" />
-  <ellipse cx="600" cy="300" rx="560" ry="300" fill="url(#shu)" />
-  <ellipse cx="600" cy="270" rx="340" ry="160" fill="url(#halo)" />
+  <!-- paper -->
+  <rect width="1200" height="630" fill="#F4EADB"/>
 
-  <g fill="none" stroke="#1B1D24">
-    <rect x="86" y="96" width="72" height="72" rx="10" />
-    <rect x="1042" y="120" width="88" height="88" rx="10" />
-    <rect x="150" y="452" width="96" height="96" rx="12" />
-    <rect x="1010" y="440" width="72" height="72" rx="10" />
+  <!-- the icon's world, widened: clouds high, the sun rising behind the ink ground -->
+  <g fill="#ECDECA">
+    <g><circle cx="150" cy="120" r="22"/><circle cx="183" cy="103" r="30"/><circle cx="218" cy="118" r="21"/><rect x="124" y="112" width="120" height="27" rx="13"/></g>
+    <g><circle cx="1010" cy="96" r="19"/><circle cx="1045" cy="81" r="27"/><circle cx="1082" cy="90" r="24"/><rect x="989" y="88" width="118" height="25" rx="12"/></g>
+    <g><circle cx="1088" cy="330" r="11"/><circle cx="1103" cy="323" r="14"/><circle cx="1119" cy="330" r="10"/><rect x="1075" y="326" width="56" height="14" rx="7"/></g>
   </g>
+  <path d="M 140 660 A 470 150 0 0 1 1060 660 Z" fill="#E7D1B9"/>
+  <path d="M 160 655 A 450 88 0 0 1 1050 655 Z" fill="#17181B"/>
 
+  <!-- badge -->
   <g>
-    <rect x="512" y="118" width="176" height="36" rx="18" fill="#170E0D" stroke="#5C2A22" />
-    <circle cx="534" cy="136" r="4.5" fill="#4EC77B" />
-    <text x="550" y="141" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="13" letter-spacing="4" fill="#E4E6EA">SEKIROKENJII</text>
+    <rect x="496" y="88" width="208" height="40" rx="20" fill="#EFE2CE" stroke="#D9C6AA"/>
+    <circle cx="522" cy="108" r="5" fill="#3E9E63"/>
+    <text x="541" y="114" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="4.5" fill="#5B5346">SEKIROKENJII</text>
   </g>
-  <g transform="translate(234,248) scale(0.273)">
-    <rect width="256" height="256" rx="58" fill="url(#plate)" />
-    <rect x="1.5" y="1.5" width="253" height="253" rx="56.5" fill="none" stroke="#33363D" stroke-width="3" />
-    <rect x="40" y="78" width="176" height="16" rx="8" fill="url(#span)" />
-    <path d="M48 148 Q128 58 208 148 Q128 90 48 148 Z" fill="#E0503A" />
-    <rect x="88" y="164" width="80" height="14" rx="7" fill="#8A8D95" />
-  </g>
-  <text x="328" y="309" font-weight="700" font-size="82" fill="#F7F6F4"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="3">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-2">&#160;Kakehashi</tspan></text>
-  <text x="600" y="384" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="22" fill="#9BA0AA">The High-Performance bridge you build across</text>
+
+  <!-- tile + name -->
+  <use href="#tile" transform="translate(140,196) scale(0.36)"/>
+  <text x="356" y="316" font-weight="700" font-size="86" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="3">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-2">&#160;Kakehashi</tspan></text>
+
+  <!-- claim -->
+  <text x="600" y="430" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="24" fill="#8B7B66">The High-Performance bridge you build across</text>
 </svg>

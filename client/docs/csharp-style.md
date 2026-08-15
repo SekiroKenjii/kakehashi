@@ -131,17 +131,24 @@ dotnet format analyzers Kakehashi.slnx --diagnostics KH0001 KH0002 KH0003 KH0004
 
 Run it more than once if a file is heavily affected, then `dotnet format whitespace Kakehashi.slnx`.
 
-### Building after running dotnet format
+### CS2012 on the analyzers' own DLLs
 
-`dotnet format` leaves a compiler server holding the analyzer assemblies open, and a build that has
-to rewrite them fails with `CS2012: Cannot open ... Kakehashi.Analyzers.dll for writing`. Release
-them first:
+Two separate causes, both handled:
 
-```bash
-dotnet build-server shutdown
-```
+1. **A stale compiler server.** `dotnet format` (or a previous build) leaves a compiler server
+   holding the analyzer assemblies open, and the next build has to rewrite them. Release it first —
+   CI does this between its format and build steps:
 
-CI does this between its format and build steps for the same reason.
+   ```bash
+   dotnet build-server shutdown
+   ```
+
+2. **The same project built twice in one invocation.** Every reference to the analyzer projects
+   pins `Platform=AnyCPU` (see `Directory.Build.props`). An undefined Platform and the solution's
+   explicit `Platform=AnyCPU` are different global-property sets, so MSBuild used to build the same
+   csproj twice into the same `obj\` — and the second compile raced the compiler server already
+   holding the first DLL, failing a clean build nondeterministically. Keep the pin on any new
+   reference to `client/tools`.
 
 ## What enforces what
 
