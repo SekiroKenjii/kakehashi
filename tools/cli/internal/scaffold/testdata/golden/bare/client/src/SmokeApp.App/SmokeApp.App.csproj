@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>SmokeApp.App</RootNamespace>
+    <AssemblyName>SmokeApp.App</AssemblyName>
+    <Authors>Smoke</Authors>
+  </PropertyGroup>
+</Project>

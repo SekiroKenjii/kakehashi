@@ -1,0 +1,7 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <RootNamespace>__ROOT_NAMESPACE__.App</RootNamespace>
+    <AssemblyName>__APP_NAME__.App</AssemblyName>
+    <Authors>__AUTHOR__</Authors>
+  </PropertyGroup>
+</Project>

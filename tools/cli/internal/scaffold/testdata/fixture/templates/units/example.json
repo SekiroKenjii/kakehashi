@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "example",
+  "title": "Example — the reference feature module",
+  "description": "One vertical slice across both halves. Removing it leaves the frame with no feature module.",
+  "paths": [
+    "proto/__PROTO_PACKAGE__/example/",
+    "server/internal/modules/example/",
+    "client/src/Modules/Example/"
+  ],
+  "markers": [
+    {
+      "file": "server/cmd/server/main.go",
+      "sections": ["module-imports", "module-registrations"]
+    },
+    {
+      "file": "client/__APP_NAME__.slnx",
+      "sections": ["module-projects"]
+    }
+  ]
+}

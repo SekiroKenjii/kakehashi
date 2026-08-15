@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/__APP_NAME__.App/__APP_NAME__.App.csproj" />
+  <!-- kakehashi:unit-example:begin -->
+  <Project Path="src/Modules/Example/__APP_NAME__.Modules.Example.UI/__APP_NAME__.Modules.Example.UI.csproj" />
+  <!-- kakehashi:unit-example:end -->
+</Solution>

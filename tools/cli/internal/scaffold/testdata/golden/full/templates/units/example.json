@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "example",
+  "title": "Example — the reference feature module",
+  "description": "One vertical slice across both halves. Removing it leaves the frame with no feature module.",
+  "paths": [
+    "proto/smokeapp/example/",
+    "server/internal/modules/example/",
+    "client/src/Modules/Example/"
+  ],
+  "markers": [
+    {
+      "file": "server/cmd/server/main.go",
+      "sections": ["module-imports", "module-registrations"]
+    },
+    {
+      "file": "client/SmokeApp.slnx",
+      "sections": ["module-projects"]
+    }
+  ]
+}
