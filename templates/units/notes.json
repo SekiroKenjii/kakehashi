@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "id": "notes",
+  "title": "Notes — the reference feature module",
+  "description": "One vertical slice across both halves: proto contract, server api/domain/store/service/rpc, client Domain/Application/UI, one CRUD page. Removing it leaves the frame with no feature module.",
+  "paths": [
+    "proto/kakehashi/notes/v1/",
+    "server/internal/gen/kakehashi/notes/v1/",
+    "server/internal/modules/notes/",
+    "client/src/Modules/Notes/",
+    "client/tests/Kakehashi.ArchitectureTests/NotesLayeringTests.cs",
+    "client/tests/Kakehashi.Modules.Notes.Application.Tests/",
+    "client/tests/Kakehashi.Modules.Notes.Domain.Tests/",
+    "client/tests/Kakehashi.Modules.Notes.IntegrationTests/",
+    "client/tests/Kakehashi.Modules.Notes.UI.Tests/"
+  ],
+  "markers": [
+    {
+      "file": "server/cmd/server/main.go",
+      "sections": ["module-imports", "module-registrations"]
+    },
+    {
+      "file": "server/cmd/server/main_test.go",
+      "sections": ["module-ids"]
+    },
+    {
+      "file": "client/Kakehashi.slnx",
+      "sections": ["module-projects", "module-test-projects"]
+    },
+    {
+      "file": "client/src/App/Kakehashi.App/Composition/ModuleCatalog.cs",
+      "sections": ["module-imports", "module-registrations"]
+    },
+    {
+      "file": "client/src/App/Kakehashi.App/Kakehashi.App.csproj",
+      "sections": ["module-projects"]
+    },
+    {
+      "file": "client/tests/Kakehashi.ArchitectureTests/Kakehashi.ArchitectureTests.csproj",
+      "sections": ["module-projects"]
+    }
+  ]
+}

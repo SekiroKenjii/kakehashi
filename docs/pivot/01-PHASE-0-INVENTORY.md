@@ -139,9 +139,15 @@ Ghi các quyết định vào `docs/adr/` (mỗi quyết định một ADR ngắ
 
 ## 5. Acceptance criteria Phase 0
 
-- [ ] `docs/BOILERPLATE.md` phủ 100% file trong repo (script kiểm chứng: mọi path
+- [x] `docs/BOILERPLATE.md` phủ 100% file trong repo (script kiểm chứng: mọi path
       trong git ls-files đều có dòng tương ứng hoặc thuộc thư mục đã phân loại).
-- [ ] Mọi file lai đã có marker chuẩn `kakehashi:<section>:begin/end`.
-- [ ] Branch nháp "bare" build xanh + 3 gate chạy được.
-- [ ] 5 quyết định D1–D5 có ADR.
-- [ ] Danh sách removable unit `notes` đầy đủ và đã kiểm chứng bằng branch nháp.
+      `cd tools/inventory && go run . -coverage` — xanh, và fail cả hai chiều.
+- [x] Mọi file lai đã có marker chuẩn `kakehashi:<section>:begin/end`.
+      Sáu file, năm section — bảng trong `docs/BOILERPLATE.md`.
+- [~] Branch nháp "bare" build xanh + 3 gate chạy được.
+      Gate 1 (`archlint`) và gate 3 (`buf lint`) xanh, cùng build/vet/test/gofmt.
+      Gate 2 (`Kakehashi.ArchitectureTests`) **chưa chạy** — cần Windows + .NET SDK.
+- [x] 5 quyết định D1–D5 có ADR: `docs/adr/0016`–`0020`. D3 ghi rõ là **lệch**
+      khuyến nghị, kèm lý do (import graph).
+- [x] Danh sách removable unit `notes` đầy đủ và đã kiểm chứng bằng branch nháp.
+      Phần dư sau khi gỡ (không làm hỏng gate nào) liệt kê ở mục Residue.

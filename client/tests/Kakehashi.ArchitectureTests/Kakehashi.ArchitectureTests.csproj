@@ -16,11 +16,17 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Shared\Kakehashi.SharedKernel\Kakehashi.SharedKernel.csproj" />
+    <!-- kakehashi:module-projects:begin -->
     <ProjectReference Include="..\..\src\Modules\Auth\Kakehashi.Modules.Auth.Domain\Kakehashi.Modules.Auth.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Auth\Kakehashi.Modules.Auth.Application\Kakehashi.Modules.Auth.Application.csproj" />
+    <!-- kakehashi:unit-activity:begin -->
     <ProjectReference Include="..\..\src\Modules\Activity\Kakehashi.Modules.Activity.Application\Kakehashi.Modules.Activity.Application.csproj" />
+    <!-- kakehashi:unit-activity:end -->
+    <!-- kakehashi:unit-notes:begin -->
     <ProjectReference Include="..\..\src\Modules\Notes\Kakehashi.Modules.Notes.Domain\Kakehashi.Modules.Notes.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Notes\Kakehashi.Modules.Notes.Application\Kakehashi.Modules.Notes.Application.csproj" />
+    <!-- kakehashi:unit-notes:end -->
+    <!-- kakehashi:module-projects:end -->
   </ItemGroup>
 
 </Project>
