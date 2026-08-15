@@ -96,6 +96,7 @@ $templateOnly = @(
     'docs/adr/0019-cli-lives-in-the-monorepo.md'
     'docs/adr/0020-no-second-example-module.md'
     'tools/inventory'
+    'tools/units'
     '.github/workflows/scaffold-smoke.yml'
 )
 foreach ($path in $templateOnly) {
@@ -157,7 +158,20 @@ foreach ($path in $targets) {
 }
 Write-Host "rename: renamed $renamed paths"
 
-# ── 5. clean ───────────────────────────────────────────────────────────────────────────────────
+# ── 5. regenerate the contract ─────────────────────────────────────────────────────────────────
+# Substituting the committed generated code is not the same as generating it. protoc derives Go
+# symbol names and the per-language namespace options from the proto package, and it collapses the
+# placeholder's underscores on the way: a renamed file says file__smokeapp_… where a generated one
+# says file_smokeapp_…. Only regeneration produces the tree buf generate will next be checked
+# against.
+if (Get-Command buf -ErrorAction SilentlyContinue) {
+    buf generate
+    Write-Host 'rename: regenerated the contract'
+} else {
+    Write-Warning "rename: buf is not installed — run 'buf generate' before the first build"
+}
+
+# ── 6. clean ───────────────────────────────────────────────────────────────────────────────────
 # XamlCompiler caches the old namespaces under obj/, and a stale cache fails the next build with an
 # error naming a type nobody wrote.
 Get-ChildItem -Recurse -Force -Directory |
@@ -165,7 +179,7 @@ Get-ChildItem -Recurse -Force -Directory |
     ForEach-Object { Remove-Item -Recurse -Force $_.FullName -ErrorAction SilentlyContinue }
 if (Test-Path '.buf-cache') { Remove-Item -Recurse -Force '.buf-cache' }
 
-# ── 6. self-check ──────────────────────────────────────────────────────────────────────────────
+# ── 7. self-check ──────────────────────────────────────────────────────────────────────────────
 # The paths renamed above are untracked until the next commit, so this walks the working tree
 # rather than asking git what it knows about.
 #
@@ -188,7 +202,7 @@ if ($leftovers) {
 Remove-Item -Recurse -Force 'tools/rename'
 Write-Host 'rename: self-check clean'
 
-# ── 7. next ────────────────────────────────────────────────────────────────────────────────────
+# ── 8. next ────────────────────────────────────────────────────────────────────────────────────
 Write-Host @"
 
   $AppName is ready.

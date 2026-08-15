@@ -154,8 +154,37 @@ Nguyên tắc: **template không bao giờ được merge nếu bản rename kh�
 
 ## 6. Acceptance criteria Phase 1
 
-- [ ] Không còn identity hardcode ngoài placeholder (grep gate trong CI).
-- [ ] `rename.ps1` trên máy Windows sạch: rename → build client + server → 3 gate xanh.
-- [ ] CI có `scaffold-smoke-server` (Linux) và `scaffold-smoke-client` (Windows), chạy mỗi push.
-- [ ] `templates/units/notes.json` tồn tại; xóa theo nó + rename → vẫn build xanh (bare mode chứng minh được).
-- [ ] README template / README scaffold tách đôi.
+- [x] Không còn identity hardcode ngoài placeholder (grep gate trong CI).
+      Self-check của `rename.sh` chạy trong `scaffold-smoke`, exit non-zero nếu còn sót.
+      Hai ngoại lệ duy nhất, cố ý: marker `kakehashi:<section>:begin` và `.kakehashi.json`
+      — đó là namespace của generator, không phải của app.
+- [~] `rename.ps1` trên máy Windows sạch: rename → build client + server → 3 gate xanh.
+      `rename.sh` đã chạy thật: rename → buf lint + buf generate (diff sạch) + go
+      build/vet/test + archlint (61 packages) + comment checks — **tất cả xanh**.
+      `rename.ps1` **chưa chạy** (không có Windows/.NET ở đây); client được kiểm bằng
+      structural check (17 x:Class, 59 project reference, 34 project — nhất quán).
+- [x] CI có `scaffold-smoke-server` (Linux) và `scaffold-smoke-client` (Windows), chạy mỗi push.
+      Thêm `scaffold-smoke-bare` (Linux) cho bare mode. File `.github/workflows/scaffold-smoke.yml`
+      bị chính rename xóa, nên project sinh ra chỉ còn `ci.yml`.
+- [x] `templates/units/notes.json` tồn tại; xóa theo nó + rename → vẫn build xanh.
+      Đã chạy thật: gỡ unit (9 path, 6 file unwire) → rename → buf lint + generate + go
+      build/vet/test + archlint (53 packages) xanh; client structure 27 project nhất quán.
+- [x] README template / README scaffold tách đôi.
+      `README.md` nói về boilerplate; `templates/README.scaffold.md` thành README của project.
+
+### Điều phát sinh, không có trong spec
+
+1. **`buf lint` không thể chạy trên template.** `PACKAGE_LOWER_SNAKE_CASE` từ chối mọi tên
+   package có hai dấu gạch dưới, nên không có cách viết `__X__` nào qua được. Đã kiểm 5 biến
+   thể. Giải: `ci.yml` bỏ qua bước này khi thư mục placeholder còn tồn tại, và
+   `scaffold-smoke` lint cây đã rename. Gate 3 vẫn chạy mỗi push.
+2. **Go bỏ qua thư mục bắt đầu bằng `_` khi mở rộng `./...`**, nên trong template archlint
+   thấy 49 package thay vì 61. 12 package thiếu đều là generated; rule 6 vẫn chặn chúng ở
+   phía import. Sau rename: đủ 61.
+3. **Rename không thể chỉ thay chữ trong generated code.** protoc suy ra tên symbol Go và các
+   option namespace từ proto package, và gộp dấu gạch dưới trên đường đi: bản thay chữ ra
+   `file__smokeapp_…`, bản generate ra `file_smokeapp_…`. `rename` giờ chạy `buf generate`.
+4. **Thêm 2 placeholder ngoài bảng §1**: `__APP_NAME_UPPER__` (tiền tố biến môi trường) và
+   `__YEAR__` (LICENSE).
+5. **`option csharp_namespace` giờ được khai báo** thay vì để protoc suy ra — nếu để suy ra,
+   namespace C# sẽ bám theo proto package placeholder và alias bên client không gọi tên được.

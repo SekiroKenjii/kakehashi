@@ -35,7 +35,12 @@ jobs:
         with:
           version: 1.72.0
 
+      # Skipped in the template, which carries a placeholder proto package: buf's
+      # PACKAGE_LOWER_SNAKE_CASE refuses a double underscore, so no placeholder spelling passes. The
+      # scaffold-smoke workflow lints the renamed tree instead. The condition is the placeholder
+      # directory itself, so this step turns itself back on the moment a project is scaffolded.
       - name: Lint the schema
+        if: ${{ hashFiles('proto/__PROTO_PACKAGE__/**') == '' }}
         run: buf lint
 
       # Only on pull requests: on a push to main the comparison is against the commit that was

@@ -106,6 +106,7 @@ for path in \
     docs/adr/0019-cli-lives-in-the-monorepo.md \
     docs/adr/0020-no-second-example-module.md \
     tools/inventory \
+    tools/units \
     .github/workflows/scaffold-smoke.yml
 do
     rm -rf "$path"
@@ -151,20 +152,37 @@ echo "rename: substituted $substituted files"
 
 # ── 4. paths ───────────────────────────────────────────────────────────────────────────────────
 # Deepest first, so renaming a directory never invalidates a path still queued beneath it.
+# Only the leaf is substituted. The ancestors in the path are still placeholders at this point —
+# they are renamed on a later, shallower iteration — so substituting the whole path would name a
+# destination directory that does not exist yet.
 renamed=0
 while IFS= read -r path; do
-    new="$path"
+    leaf=$(basename "$path")
+    new="$leaf"
     for i in "${!placeholder_names[@]}"; do
         new="${new//${placeholder_names[$i]}/${placeholder_values[$i]}}"
     done
-    [ "$new" = "$path" ] && continue
-    mv "$path" "$new"
+    [ "$new" = "$leaf" ] && continue
+    mv "$path" "$(dirname "$path")/$new"
     renamed=$((renamed + 1))
 done < <(find . -path ./.git -prune -o -name '*__*__*' -print |
     awk -F/ '{print NF"\t"$0}' | sort -rn | cut -f2-)
 echo "rename: renamed $renamed paths"
 
-# ── 5. clean ───────────────────────────────────────────────────────────────────────────────────
+# ── 5. regenerate the contract ─────────────────────────────────────────────────────────────────
+# Substituting the committed generated code is not the same as generating it. protoc derives Go
+# symbol names and the per-language namespace options from the proto package, and it collapses the
+# placeholder's underscores on the way: a renamed file says file__smokeapp_… where a generated one
+# says file_smokeapp_…. Only regeneration produces the tree buf generate will next be checked
+# against.
+if command -v buf >/dev/null 2>&1; then
+    buf generate
+    echo "rename: regenerated the contract"
+else
+    echo "rename: buf is not installed — run 'buf generate' before the first build" >&2
+fi
+
+# ── 6. clean ───────────────────────────────────────────────────────────────────────────────────
 # XamlCompiler caches the old namespaces under obj/, and a stale cache fails the next build with an
 # error naming a type nobody wrote.
 find . -path ./.git -prune -o -type d \( -name obj -o -name bin \) -print0 |
@@ -173,7 +191,7 @@ rm -rf .buf-cache
 # Unlinking the running script is safe: the shell keeps its descriptor until it exits.
 rm -rf tools/rename
 
-# ── 6. self-check ──────────────────────────────────────────────────────────────────────────────
+# ── 7. self-check ──────────────────────────────────────────────────────────────────────────────
 # grep rather than git grep: the paths renamed above are untracked until the next commit, and
 # git grep would not look at them.
 #
@@ -190,7 +208,7 @@ if [ -n "$leftovers" ]; then
 fi
 echo "rename: self-check clean"
 
-# ── 7. next ────────────────────────────────────────────────────────────────────────────────────
+# ── 8. next ────────────────────────────────────────────────────────────────────────────────────
 cat <<NEXT
 
   $app_name is ready.

@@ -1,0 +1,197 @@
+name: Scaffold smoke
+
+# This workflow belongs to the template and to nothing else: it renames the tree and runs the gates
+# on the result, which is the only shape the code is ever compiled in for real. tools/rename deletes
+# this file, so a scaffolded project keeps ci.yml and not this.
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+
+permissions:
+  contents: read
+
+jobs:
+  scaffold-smoke-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      # The rename's own self-check runs here: it exits non-zero if any placeholder or identity
+      # string survives, so this step is a gate before the gates.
+      - name: Scaffold
+        run: |
+          git config user.email smoke@example.com
+          git config user.name Smoke
+          tools/rename/rename.sh \
+            --app-name SmokeApp \
+            --go-module example.com/smokeapp \
+            --author Smoke
+          git add -A
+          git commit -q -m "chore: scaffold from the template"
+
+      # Gate 3, on the tree that can carry it.
+      - name: Lint the schema
+        run: buf lint
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      # The rename moves the generated tree with the proto package. Regenerating has to reproduce
+      # it byte for byte, or the substitution reached the schema and the output differently.
+      - name: Verify the generated code survived the rename
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+
+      - name: Build
+        working-directory: server
+        run: go build ./...
+
+      - name: Vet
+        working-directory: server
+        run: go vet ./...
+
+      - name: Test
+        working-directory: server
+        run: go test ./...
+
+      # Gate 1. It sees the generated packages only here: in the template their directory begins
+      # with an underscore, which the go tool skips when expanding ./...
+      - name: Check module boundaries
+        working-directory: server
+        run: go run ./tools/archlint
+
+      - name: Verify formatting
+        working-directory: server
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal ./tools)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt would change:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  scaffold-smoke-client:
+    # WinUI 3 (Windows App SDK) requires Windows to build.
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: client/global.json
+
+      - name: Scaffold
+        run: |
+          git config user.email smoke@example.com
+          git config user.name Smoke
+          ./tools/rename/rename.ps1 -AppName SmokeApp -GoModule example.com/smokeapp -Author Smoke
+
+      - name: Restore
+        working-directory: client
+        run: dotnet restore SmokeApp.slnx
+
+      - name: Verify formatting
+        working-directory: client
+        run: dotnet format SmokeApp.slnx --verify-no-changes --severity warn --no-restore
+
+      # The step above leaves a compiler server holding client/tools' analyzer assemblies open,
+      # and the build below has to write them: without this it fails with CS2012 on its own DLL.
+      - name: Release the analyzer assemblies
+        working-directory: client
+        run: dotnet build-server shutdown
+
+      - name: Build
+        working-directory: client
+        run: dotnet build SmokeApp.slnx -c Release --no-restore
+
+      # The test projects are unpackaged WinUI executables, so the SDK compiles its bootstrapper
+      # into them as a module initializer, and with no matching runtime installed it calls
+      # Environment.Exit before the first test runs.
+      - name: Install the Windows App Runtime
+        working-directory: client
+        run: |
+          $props = [xml](Get-Content Directory.Packages.props)
+          $node = $props.SelectSingleNode("//PackageVersion[@Include='Microsoft.WindowsAppSDK']")
+          $version = $node.Version
+          $channel = ($version -split '\.')[0..1] -join '.'
+          $url = "https://aka.ms/windowsappsdk/$channel/$version/windowsappruntimeinstall-x64.exe"
+          $installer = Join-Path $env:RUNNER_TEMP 'WindowsAppRuntimeInstall.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          & $installer --quiet
+          if ($LASTEXITCODE -ne 0) { throw "the runtime installer exited $LASTEXITCODE" }
+
+      # Gate 2 is inside this run: SmokeApp.ArchitectureTests is one of the suites.
+      - name: Test
+        working-directory: client
+        run: dotnet test SmokeApp.slnx -c Release --no-build --verbosity normal
+
+  # Removing the example module has to leave a tree that still builds, or --bare is a promise the
+  # template cannot keep.
+  scaffold-smoke-bare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      # Before the rename, which is the order the CLI uses: the unit file and the tree agree on
+      # placeholder paths, and neither has to know what the project will be called.
+      - name: Remove the notes unit
+        working-directory: tools/units
+        run: go run . ../../templates/units/notes.json
+
+      - name: Scaffold
+        run: |
+          git config user.email smoke@example.com
+          git config user.name Smoke
+          tools/rename/rename.sh \
+            --app-name SmokeApp \
+            --go-module example.com/smokeapp \
+            --author Smoke
+          git add -A
+          git commit -q -m "chore: scaffold from the template"
+
+      - name: Lint the schema
+        run: buf lint
+
+      - name: Build
+        working-directory: server
+        run: go build ./...
+
+      - name: Test
+        working-directory: server
+        run: go test ./...
+
+      - name: Check module boundaries
+        working-directory: server
+        run: go run ./tools/archlint
