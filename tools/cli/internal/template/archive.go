@@ -7,7 +7,6 @@ import (
 	"io"
 	"os"
 	"path/filepath"
-	"strings"
 )
 
 // maxArchiveBytes bounds both the download and what it expands to. A template is a few megabytes;
@@ -64,6 +63,12 @@ func unpack(archive, into string) error {
 			return err
 		}
 
+		// git archive writes one of these ahead of the tree, and Go hands it to the caller rather
+		// than consuming it. It carries no path and no content.
+		if header.Typeflag == tar.TypeXGlobalHeader {
+			continue
+		}
+
 		path, err := safeJoin(into, header.Name)
 		if err != nil {
 			return err
@@ -113,10 +118,12 @@ func mode(header *tar.Header) os.FileMode {
 	return 0o644
 }
 
-// safeJoin refuses any entry that would land outside the directory being unpacked into.
+// safeJoin refuses any entry that would land outside the directory being unpacked into. IsLocal is
+// the predicate rather than IsAbs and a ".." test: on Windows "C:evil" is drive-relative rather
+// than absolute, and a name carrying a colon addresses an alternate data stream on another file.
 func safeJoin(root, name string) (string, error) {
 	cleaned := filepath.Clean(filepath.FromSlash(name))
-	if filepath.IsAbs(cleaned) || cleaned == ".." || strings.HasPrefix(cleaned, ".."+string(filepath.Separator)) {
+	if !filepath.IsLocal(cleaned) {
 		return "", fmt.Errorf("archive entry %q escapes the directory it unpacks into", name)
 	}
 	return filepath.Join(root, cleaned), nil

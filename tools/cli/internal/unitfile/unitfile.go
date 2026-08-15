@@ -9,6 +9,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strings"
 )
 
 // SchemaVersion is the unit format this package understands.
@@ -60,15 +61,25 @@ func Load(path string) (*Unit, error) {
 
 // LoadDir reads every unit file in a directory, ordered by id. A directory that does not exist
 // holds no units, which is what a template with nothing removable looks like.
+//
+// It reads the directory rather than globbing it: the caller's own path is part of dir, and a
+// bracket in a directory name is a character class to a glob, which would report a template with
+// units as a template with none.
 func LoadDir(dir string) ([]*Unit, error) {
-	matches, err := filepath.Glob(filepath.Join(dir, "*.json"))
+	entries, err := os.ReadDir(dir)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	units := make([]*Unit, 0, len(matches))
-	for _, path := range matches {
-		u, err := Load(path)
+	units := make([]*Unit, 0, len(entries))
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".json") {
+			continue
+		}
+		u, err := Load(filepath.Join(dir, entry.Name()))
 		if err != nil {
 			return nil, err
 		}

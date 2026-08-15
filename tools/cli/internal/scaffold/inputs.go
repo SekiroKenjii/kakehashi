@@ -48,6 +48,11 @@ var (
 // looks for afterwards.
 var placeholderPattern = regexp.MustCompile(`__[A-Z][A-Z0-9_]*__`)
 
+// markupPattern is what a free-text value may not contain. Substitution is literal, and the same
+// value lands in a Go string literal, an XML attribute and a JSON string — each of which escapes
+// these differently. Refusing is the only answer that is correct in all three.
+var markupPattern = regexp.MustCompile(`["&<>\\]|[\x00-\x1f]`)
+
 // Derive fills in every value that has a default in terms of another. It leaves Author alone: the
 // default for that one is read out of git, which is the caller's business.
 func (in *Inputs) Derive(now time.Time) {
@@ -94,11 +99,17 @@ func (in Inputs) Validate() error {
 		}
 	}
 
-	if strings.TrimSpace(in.AppTitle) == "" {
-		return fmt.Errorf("--title must not be empty")
-	}
-	if strings.TrimSpace(in.Author) == "" {
-		return fmt.Errorf("--author must not be empty")
+	for _, text := range []struct {
+		flag  string
+		value string
+	}{{"--title", in.AppTitle}, {"--author", in.Author}} {
+		if strings.TrimSpace(text.value) == "" {
+			return fmt.Errorf("%s must not be empty", text.flag)
+		}
+		if found := markupPattern.FindString(text.value); found != "" {
+			return fmt.Errorf("%s may not contain %q: it is substituted into XML, JSON and source "+
+				"code, which escape it three different ways", text.flag, found)
+		}
 	}
 	switch in.Auth {
 	case AuthInApp, AuthBrowser:

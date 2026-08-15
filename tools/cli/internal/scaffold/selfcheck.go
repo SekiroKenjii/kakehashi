@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"path/filepath"
 	"regexp"
-	"sort"
 	"strings"
 
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/manifest"
@@ -23,19 +22,13 @@ var markerPattern = regexp.MustCompile(`kakehashi:[a-z0-9-]+:(begin|end)`)
 // hundreds of places, and the first few are enough to find the cause.
 const reported = 20
 
-// selfCheck refuses to hand over a tree that still names the template. Values the caller chose are
-// redacted first: a project whose own module path is github.com/SekiroKenjii/orders is allowed to
-// say so, and the check would otherwise refuse the one name it cannot object to.
+// selfCheck refuses to hand over a tree that still names the template.
+//
+// A match inside one of the caller's own values is allowed: a project whose module path is
+// github.com/SekiroKenjii/orders is entitled to say so, and the check would otherwise refuse the
+// one name it cannot object to.
 func selfCheck(root string, in Inputs) error {
-	redactions := make([]string, 0, len(in.replacements()))
-	for _, r := range in.replacements() {
-		if r.value != "" {
-			redactions = append(redactions, r.value)
-		}
-	}
-	// Longest first: the app name is a substring of the module path that contains it, and removing
-	// the short one first leaves the rest of the long one behind for the pattern to find.
-	sort.Slice(redactions, func(i, j int) bool { return len(redactions[i]) > len(redactions[j]) })
+	claimed := claims(in)
 
 	var hits []string
 	err := walkTextFiles(root, func(rel string, body []byte) error {
@@ -46,11 +39,11 @@ func selfCheck(root string, in Inputs) error {
 			if markerPattern.MatchString(line) {
 				continue
 			}
-			for _, value := range redactions {
-				line = strings.ReplaceAll(line, value, "")
-			}
-			if match := identityPattern.FindString(line); match != "" {
-				hits = append(hits, fmt.Sprintf("%s:%d: %s", filepath.ToSlash(rel), i+1, match))
+			for _, match := range identityPattern.FindAllStringIndex(line, -1) {
+				if covered(line, match, claimed) {
+					continue
+				}
+				hits = append(hits, fmt.Sprintf("%s:%d: %s", filepath.ToSlash(rel), i+1, line[match[0]:match[1]]))
 			}
 		}
 		return nil
@@ -71,4 +64,36 @@ func selfCheck(root string, in Inputs) error {
 		more = fmt.Sprintf("\n  ... and %d more", len(hits)-len(shown))
 	}
 	return fmt.Errorf("the tree still names the template:\n  %s%s", strings.Join(shown, "\n  "), more)
+}
+
+// claims is the input values that carry the template's name themselves, and only those: a value
+// the pattern would not object to cannot excuse a match, and one that is a substring of the name —
+// a single-letter proto package, say — would erase it from every line if this deleted text instead
+// of comparing positions.
+func claims(in Inputs) []string {
+	var claimed []string
+	for _, r := range in.replacements() {
+		if r.value != "" && identityPattern.MatchString(r.value) {
+			claimed = append(claimed, r.value)
+		}
+	}
+	return claimed
+}
+
+// covered reports whether the match sits inside an occurrence of one of the caller's values.
+func covered(line string, match []int, claimed []string) bool {
+	for _, value := range claimed {
+		for at := 0; ; {
+			index := strings.Index(line[at:], value)
+			if index < 0 {
+				break
+			}
+			start := at + index
+			if start <= match[0] && match[1] <= start+len(value) {
+				return true
+			}
+			at = start + 1
+		}
+	}
+	return false
 }

@@ -195,6 +195,12 @@ Kiểm tra môi trường, in bảng ✅/⚠️/❌ + hướng khắc phục (wi
    reports what is on PATH, and since 1.21 an older Go fetches the toolchain a module asks for
    unless `GOTOOLCHAIN=local` forbids it. Failing on the banner alone would refuse machines that
    build the project fine.
-9. **Left alone, mentioned here:** `server/cmd/server/main.go` and the client's `ModuleCatalog.cs`
+9. **`--title` and `--author` are free text minus five characters.** 02-PHASE-1 §1 calls both free,
+   and they are, except that the same value is substituted literally into a Go string literal, an
+   XML attribute and a JSON string — which escape `"`, `&`, `<`, `>` and `\` three different ways.
+   A title of `Ben & Jerry` produced a project whose client half was not well-formed XML, so those
+   five are refused with a message that says why. `--author` defaults to `git config user.name`,
+   which is not a value the caller necessarily typed.
+10. **Left alone, mentioned here:** `server/cmd/server/main.go` and the client's `ModuleCatalog.cs`
    both point a reader at `docs/BOILERPLATE.md`, which no scaffolded project has. Pre-existing from
    Phase 1, and fixing it is a comment change in two files nobody asked for.

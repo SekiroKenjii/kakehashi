@@ -2,9 +2,11 @@ package scaffold
 
 import (
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strings"
 )
 
 // regenerate re-runs the code generator over the substituted schema, and reports whether it ran.
@@ -33,22 +35,68 @@ func regenerate(work string, log func(string, ...any)) (bool, error) {
 // this runs — which needs the .NET SDK, and on Windows for a WinUI solution. A machine without it
 // gets a warning naming the one command to run, rather than a failed scaffold.
 func reformat(work string, log func(string, ...any)) bool {
-	solutions, err := filepath.Glob(filepath.Join(work, "client", "*.slnx"))
-	if err != nil || len(solutions) == 0 {
+	client := filepath.Join(work, "client")
+	solution := solutionIn(client)
+	if solution == "" {
 		return false
 	}
-	solution := filepath.Base(solutions[0])
-
 	if _, err := exec.LookPath("dotnet"); err != nil {
 		log("the .NET SDK is not installed — run 'dotnet format %s' in client/ before committing, "+
 			"or the format check will fail on import ordering", solution)
 		return false
 	}
-	if out, err := run(filepath.Join(work, "client"), "dotnet", "format", solution, "--severity", "warn"); err != nil {
+
+	// MSBuild worker nodes outlive the command by fifteen minutes and inherit its directory, and on
+	// Windows a directory cannot be renamed while a process is sitting in it. This tree is renamed
+	// as soon as the scaffold finishes, so the nodes have to go before it does.
+	out, err := runWith(client, []string{"MSBUILDDISABLENODEREUSE=1"}, "dotnet", "format", solution, "--severity", "warn")
+	if _, shutdown := run(client, "dotnet", "build-server", "shutdown"); shutdown != nil {
+		log("could not stop the .NET build servers: %v", shutdown)
+	}
+	if err != nil {
 		log("could not reformat the client — run 'dotnet format %s' in client/ before committing:\n%s",
 			solution, out)
 		return false
 	}
 	log("reformatted the client")
 	return true
+}
+
+// solutionIn names the solution file in a directory, or nothing when the tree has no client. It
+// reads the directory rather than globbing it: the working directory is built from a path the
+// caller chose, and a bracket in that path is a character class to a glob.
+func solutionIn(dir string) string {
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return ""
+	}
+	for _, entry := range entries {
+		if !entry.IsDir() && strings.HasSuffix(entry.Name(), ".slnx") {
+			return entry.Name()
+		}
+	}
+	return ""
+}
+
+// buildOutput is what a restore and a compile leave in a tree. XamlCompiler caches namespaces
+// under obj/, and a cache pointing at the working directory fails the next build with an error
+// naming a path that no longer exists.
+var buildOutput = map[string]bool{"obj": true, "bin": true, ".buf-cache": true}
+
+// cleanBuildOutput deletes what the two steps above produced. It runs before the self-check, which
+// reads every text file: a restore writes the working directory's absolute path into
+// obj/project.assets.json, and that path names the generator.
+func cleanBuildOutput(work string) error {
+	return filepath.WalkDir(work, func(path string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !entry.IsDir() || !buildOutput[entry.Name()] {
+			return nil
+		}
+		if err := os.RemoveAll(path); err != nil {
+			return err
+		}
+		return fs.SkipDir
+	})
 }

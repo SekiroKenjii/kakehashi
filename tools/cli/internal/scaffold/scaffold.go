@@ -7,6 +7,7 @@
 package scaffold
 
 import (
+	"context"
 	"fmt"
 	"os"
 	"os/exec"
@@ -59,12 +60,23 @@ func Run(opts Options) (*Result, error) {
 	}
 
 	parent := filepath.Dir(opts.Dest)
-	if err := os.MkdirAll(parent, 0o755); err != nil {
+	created, err := ensureParent(parent)
+	if err != nil {
 		return nil, err
 	}
+
+	// Anything this run brought into being goes away unless the run finishes: the working
+	// directory always, and the destination's parents when they were not there to begin with.
+	handedOver := false
+	defer func() {
+		if !handedOver && created != "" {
+			os.RemoveAll(created)
+		}
+	}()
+
 	// Beside the destination rather than in the system temp directory: the last step is a rename,
 	// and a rename across filesystems fails.
-	work, err := os.MkdirTemp(parent, ".kakehashi-")
+	work, err := os.MkdirTemp(parent, workPrefix)
 	if err != nil {
 		return nil, err
 	}
@@ -88,7 +100,30 @@ func Run(opts Options) (*Result, error) {
 	if err := os.Rename(work, opts.Dest); err != nil {
 		return nil, err
 	}
+	handedOver = true
 	return result, nil
+}
+
+// ensureParent creates the destination's parent directories and returns the topmost one it had to
+// create, which is what an abandoned run has to take back with it.
+func ensureParent(dir string) (string, error) {
+	created := ""
+	for path := dir; ; {
+		if _, err := os.Stat(path); err == nil {
+			break
+		}
+		created = path
+
+		up := filepath.Dir(path)
+		if up == path {
+			break
+		}
+		path = up
+	}
+	if created == "" {
+		return "", nil
+	}
+	return created, os.MkdirAll(dir, 0o755)
 }
 
 // build is the pipeline, in the order of docs/pivot/03-PHASE-2-CLI.md §2. Unit removal precedes
@@ -136,6 +171,9 @@ func build(work string, opts Options) (*Result, error) {
 	}
 	result.Formatted = reformat(work, opts.Log)
 
+	if err := cleanBuildOutput(work); err != nil {
+		return nil, err
+	}
 	if err := selfCheck(work, opts.Inputs); err != nil {
 		return nil, err
 	}
@@ -198,14 +236,46 @@ func writeManifest(work string, opts Options, result *Result) error {
 // units reads the template's unit files out of the staged tree, where trim has already had its say
 // about which of them ship.
 func units(work string, d *template.Descriptor) ([]*unitfile.Unit, error) {
-	return unitfile.LoadDir(filepath.Join(work, filepath.FromSlash(d.Units)))
+	dir, err := under(work, d.Units)
+	if err != nil {
+		return nil, err
+	}
+	return unitfile.LoadDir(dir)
 }
+
+// under resolves a path the template named against the working directory, and refuses one that
+// would land outside it. Every path in a descriptor or a unit file passes through here: they are
+// removed and renamed, and a template fetched over the network is not the authority on which of
+// the caller's directories it may reach.
+func under(work, path string) (string, error) {
+	cleaned := filepath.Clean(filepath.FromSlash(path))
+	if !filepath.IsLocal(cleaned) {
+		return "", fmt.Errorf("%q is not a path inside the template", path)
+	}
+	return filepath.Join(work, cleaned), nil
+}
+
+// toolTimeout bounds a build tool. A restore on a cold machine is minutes; a hung one is forever,
+// and the scaffold holds a terminal while it waits.
+const toolTimeout = 20 * time.Minute
 
 // run executes a command in a directory and returns its combined output, which is the only useful
 // thing to say about a build tool that failed.
 func run(dir, name string, args ...string) (string, error) {
-	cmd := exec.Command(name, args...)
+	return runWith(dir, nil, name, args...)
+}
+
+// runWith is run with additional environment variables, on top of the ones this process has.
+func runWith(dir string, env []string, name string, args ...string) (string, error) {
+	ctx, cancel := context.WithTimeout(context.Background(), toolTimeout)
+	defer cancel()
+
+	cmd := exec.CommandContext(ctx, name, args...)
 	cmd.Dir = dir
+	if len(env) > 0 {
+		cmd.Env = append(os.Environ(), env...)
+	}
+
 	out, err := cmd.CombinedOutput()
 	if err != nil {
 		return strings.TrimSpace(string(out)), fmt.Errorf("%s %s: %w", name, strings.Join(args, " "), err)

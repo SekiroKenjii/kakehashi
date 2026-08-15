@@ -29,6 +29,14 @@ func tarball(t *testing.T, entries []entry) []byte {
 		if kind == 0 {
 			kind = tar.TypeReg
 		}
+		// A global header carries records and nothing else; the writer refuses any other field.
+		if kind == tar.TypeXGlobalHeader {
+			records := &tar.Header{Typeflag: kind, PAXRecords: map[string]string{"comment": e.body}}
+			if err := writer.WriteHeader(records); err != nil {
+				t.Fatal(err)
+			}
+			continue
+		}
 		mode := e.mode
 		if mode == 0 {
 			mode = 0o644
@@ -108,6 +116,25 @@ func TestExtractStripsASingleRootDirectory(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(target, "README.md")); err != nil {
 		t.Errorf("the wrapping directory was not stripped: %v", err)
+	}
+}
+
+// `git archive` writes one of these ahead of the tree, and it is the obvious way to pack a tag.
+func TestExtractSkipsAPaxGlobalHeader(t *testing.T) {
+	archive := write(t, tarball(t, []entry{
+		{name: "pax_global_header", body: "0000000000000000000000000000000000000000", kind: tar.TypeXGlobalHeader},
+		{name: "README.md", body: "hello\n"},
+	}))
+	target := filepath.Join(t.TempDir(), "extracted")
+
+	if err := extract(archive, target); err != nil {
+		t.Fatalf("extract: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(target, "README.md")); err != nil {
+		t.Errorf("the archive did not unpack: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(target, "pax_global_header")); !os.IsNotExist(err) {
+		t.Error("the pax header was unpacked as a file")
 	}
 }
 

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/template"
 )
@@ -29,7 +28,10 @@ func setAuthMode(root string, d *template.Descriptor, in Inputs) error {
 		return fmt.Errorf("%s: the auth setting names no key", template.DescriptorName)
 	}
 
-	path := filepath.Join(root, filepath.FromSlash(d.Auth.File))
+	path, err := under(root, d.Auth.File)
+	if err != nil {
+		return err
+	}
 	body, err := os.ReadFile(path)
 	if err != nil {
 		return err

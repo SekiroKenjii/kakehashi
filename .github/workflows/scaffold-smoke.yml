@@ -19,9 +19,15 @@ env:
   PROJECT_MODULE: example.com/smokeapp
 
 jobs:
-  # The CLI is its own Go module and gets its own job, per docs/adr/0019.
+  # The CLI is its own Go module and gets its own job, per docs/adr/0019. It runs on both operating
+  # systems because it scaffolds on both: a path or process bug specific to Windows should fail here
+  # by name, not three steps into scaffold-client after a NuGet restore.
   cli:
-    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
     defaults:
       run:
         working-directory: tools/cli
@@ -44,7 +50,9 @@ jobs:
       - name: Vet
         run: go vet ./...
 
+      # Formatting and doc comments are a property of the source, so once is enough.
       - name: Verify formatting
+        if: runner.os == 'Linux'
         run: |
           unformatted=$(gofmt -l ./cmd ./internal)
           if [ -n "$unformatted" ]; then
@@ -56,6 +64,7 @@ jobs:
       # Godoc shape for exported identifiers and package comments, per docs/COMMENTS.md — the same
       # rules and the same pinned version as the server job.
       - name: Lint doc comments
+        if: runner.os == 'Linux'
         uses: golangci/golangci-lint-action@v8
         with:
           version: v2.12.2
@@ -106,9 +115,17 @@ jobs:
             --no-input
 
       # The template it read has to come out of the run unchanged: the scaffold works in a
-      # temporary directory beside the destination and never in the source.
+      # temporary directory beside the destination and never in the source. --porcelain rather than
+      # `git diff`, because the regression this guards against — a working directory, a cache, a
+      # build output left behind — is untracked, and a diff cannot see it.
       - name: Verify the template was not modified
-        run: git diff --exit-code
+        run: |
+          dirty=$(git status --porcelain)
+          if [ -n "$dirty" ]; then
+            echo "the scaffold changed the template it read:"
+            echo "$dirty"
+            exit 1
+          fi
 
       # Gate 3, on the tree that can carry it.
       - name: Lint the schema

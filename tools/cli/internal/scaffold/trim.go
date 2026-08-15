@@ -14,20 +14,34 @@ import (
 // paths, index entries pointing at them, and the README swap that gives the project its own.
 func trim(root string, d *template.Descriptor) error {
 	for _, path := range d.Exclude {
-		if err := os.RemoveAll(filepath.Join(root, filepath.FromSlash(path))); err != nil {
+		target, err := under(root, path)
+		if err != nil {
+			return fmt.Errorf("exclude: %w", err)
+		}
+		if err := os.RemoveAll(target); err != nil {
 			return err
 		}
 	}
 
 	for _, exclusion := range d.ExcludeLines {
-		if err := dropLines(filepath.Join(root, filepath.FromSlash(exclusion.File)), exclusion.Match); err != nil {
+		target, err := under(root, exclusion.File)
+		if err != nil {
+			return fmt.Errorf("excludeLines: %w", err)
+		}
+		if err := dropLines(target, exclusion.Match); err != nil {
 			return fmt.Errorf("excludeLines %s: %w", exclusion.File, err)
 		}
 	}
 
 	for _, move := range d.Move {
-		from := filepath.Join(root, filepath.FromSlash(move.From))
-		to := filepath.Join(root, filepath.FromSlash(move.To))
+		from, err := under(root, move.From)
+		if err != nil {
+			return fmt.Errorf("move: %w", err)
+		}
+		to, err := under(root, move.To)
+		if err != nil {
+			return fmt.Errorf("move: %w", err)
+		}
 		if err := os.MkdirAll(filepath.Dir(to), 0o755); err != nil {
 			return err
 		}

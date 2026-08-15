@@ -70,6 +70,15 @@ func TestValidate(t *testing.T) {
 		{"auth none, which is not built yet", func(in *Inputs) { in.Auth = AuthNone }, true},
 		{"an auth mode that is not a mode", func(in *Inputs) { in.Auth = "saml" }, true},
 		{"a title that is a placeholder", func(in *Inputs) { in.AppTitle = "__APP_TITLE__" }, true},
+
+		// Free text, but it is substituted into XML attributes, JSON strings and source code.
+		{"a title with an ampersand", func(in *Inputs) { in.AppTitle = "Ben & Jerry" }, true},
+		{"a title with a quote", func(in *Inputs) { in.AppTitle = `Order "Desk"` }, true},
+		{"a title with an angle bracket", func(in *Inputs) { in.AppTitle = "Order <Desk>" }, true},
+		{"an author with a backslash", func(in *Inputs) { in.Author = `ACME\Jane` }, true},
+		{"an author with an ampersand", func(in *Inputs) { in.Author = "Smith & Co" }, true},
+		{"an author with an apostrophe", func(in *Inputs) { in.Author = "Jane O'Brien" }, false},
+		{"a title with a space and a dash", func(in *Inputs) { in.AppTitle = "Order Desk — beta" }, false},
 	}
 	for _, c := range cases {
 		t.Run(c.name, func(t *testing.T) {

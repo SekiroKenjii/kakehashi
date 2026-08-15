@@ -70,6 +70,25 @@ func TestLoadDirReadsTheTemplatesOwnUnits(t *testing.T) {
 	}
 }
 
+// The scaffold reads its units out of a working directory built inside a path the caller chose,
+// and a bracket in a directory name is a character class to a glob.
+func TestLoadDirFindsUnitsUnderAPathWithGlobCharacters(t *testing.T) {
+	dir := filepath.Join(t.TempDir(), "pro[jects]", "units")
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	write(t, dir, "notes.json", notes)
+	write(t, dir, "README.md", "not a unit file")
+
+	units, err := unitfile.LoadDir(dir)
+	if err != nil {
+		t.Fatalf("LoadDir: %v", err)
+	}
+	if len(units) != 1 || units[0].ID != "notes" {
+		t.Errorf("units = %v, want the one unit under a bracketed path", units)
+	}
+}
+
 func TestLoadDirIsEmptyWhenTheDirectoryIsMissing(t *testing.T) {
 	units, err := unitfile.LoadDir(filepath.Join(t.TempDir(), "nothing-here"))
 	if err != nil {

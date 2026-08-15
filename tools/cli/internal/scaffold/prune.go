@@ -3,7 +3,7 @@ package scaffold
 import (
 	"fmt"
 	"os"
-	"path/filepath"
+	"path"
 	"regexp"
 	"sort"
 	"strings"
@@ -56,7 +56,10 @@ func prune(work string, opts Options) (applied, removed []string, err error) {
 // which is worth stopping for: the alternative is a project missing wiring nobody removed.
 func removeUnit(work string, u *unitfile.Unit, unitsDir string) error {
 	for _, path := range u.Paths {
-		target := filepath.Join(work, filepath.FromSlash(path))
+		target, err := under(work, path)
+		if err != nil {
+			return err
+		}
 		if _, err := os.Stat(target); err != nil {
 			return fmt.Errorf("path does not exist: %s", path)
 		}
@@ -67,7 +70,11 @@ func removeUnit(work string, u *unitfile.Unit, unitsDir string) error {
 
 	begin, end := u.Region()
 	for _, marker := range u.Markers {
-		if err := stripRegion(filepath.Join(work, filepath.FromSlash(marker.File)), begin, end); err != nil {
+		file, err := under(work, marker.File)
+		if err != nil {
+			return err
+		}
+		if err := stripRegion(file, begin, end); err != nil {
 			return err
 		}
 	}
@@ -80,16 +87,21 @@ func removeUnit(work string, u *unitfile.Unit, unitsDir string) error {
 	if len(left) > 0 {
 		return fmt.Errorf("markers left behind in %s", strings.Join(left, ", "))
 	}
-	return os.Remove(filepath.Join(work, filepath.FromSlash(unitsDir), u.ID+".json"))
-}
 
-// stripRegion removes the lines between the unit's markers, and the markers themselves.
-func stripRegion(path string, begin, end *regexp.Regexp) error {
-	body, err := os.ReadFile(path)
+	file, err := under(work, path.Join(unitsDir, u.ID+".json"))
 	if err != nil {
 		return err
 	}
-	info, err := os.Stat(path)
+	return os.Remove(file)
+}
+
+// stripRegion removes the lines between the unit's markers, and the markers themselves.
+func stripRegion(file string, begin, end *regexp.Regexp) error {
+	body, err := os.ReadFile(file)
+	if err != nil {
+		return err
+	}
+	info, err := os.Stat(file)
 	if err != nil {
 		return err
 	}
@@ -102,14 +114,19 @@ func stripRegion(path string, begin, end *regexp.Regexp) error {
 			depth++
 		case end.MatchString(line):
 			depth--
+			// An end before its begin would otherwise take everything between the two out and
+			// leave a balanced count behind to say nothing happened.
+			if depth < 0 {
+				return fmt.Errorf("an end marker precedes its begin in %s", file)
+			}
 		case depth == 0:
 			kept = append(kept, line)
 		}
 	}
 	if depth != 0 {
-		return fmt.Errorf("unbalanced markers in %s", path)
+		return fmt.Errorf("unbalanced markers in %s", file)
 	}
-	return os.WriteFile(path, []byte(strings.Join(kept, "\n")), info.Mode().Perm())
+	return os.WriteFile(file, []byte(strings.Join(kept, "\n")), info.Mode().Perm())
 }
 
 func markerSurvivors(root string, begin, end *regexp.Regexp) ([]string, error) {

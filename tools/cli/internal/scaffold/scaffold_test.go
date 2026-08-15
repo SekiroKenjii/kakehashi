@@ -35,14 +35,21 @@ func inputs() scaffold.Inputs {
 // lines, and none of them is what the test is about.
 func options(t *testing.T, in scaffold.Inputs) scaffold.Options {
 	t.Helper()
+	return optionsFrom(t, in, fixture)
+}
+
+// optionsFrom is options against a copy of the fixture, for the tests that break something in it
+// first. The descriptor has to come from the same tree, or the test edits a file nobody reads.
+func optionsFrom(t *testing.T, in scaffold.Inputs, source string) scaffold.Options {
+	t.Helper()
 	in.Derive(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC))
 
-	descriptor, err := template.LoadDescriptor(fixture, "0.1.0")
+	descriptor, err := template.LoadDescriptor(source, "0.1.0")
 	if err != nil {
 		t.Fatalf("LoadDescriptor: %v", err)
 	}
 	return scaffold.Options{
-		Source:     fixture,
+		Source:     source,
 		Dest:       filepath.Join(t.TempDir(), "project"),
 		Descriptor: descriptor,
 		Inputs:     in,
@@ -192,8 +199,7 @@ func TestAFailureLeavesNothingBehind(t *testing.T) {
 
 	in := inputs()
 	in.WithExample = false
-	opts := options(t, in)
-	opts.Source = source
+	opts := optionsFrom(t, in, source)
 
 	if _, err := scaffold.Run(opts); err == nil {
 		t.Fatal("Run finished with a unit file that disagrees with the tree")
@@ -208,8 +214,7 @@ func TestSelfCheckCatchesASurvivingPlaceholder(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	opts := options(t, inputs())
-	opts.Source = source
+	opts := optionsFrom(t, inputs(), source)
 
 	_, err := scaffold.Run(opts)
 	if err == nil {
@@ -219,6 +224,29 @@ func TestSelfCheckCatchesASurvivingPlaceholder(t *testing.T) {
 		t.Errorf("the refusal does not name the file: %v", err)
 	}
 	assertNothingBehind(t, opts.Dest)
+}
+
+// The redaction that lets an input carry the template's name must not be able to erase the name
+// from lines that have nothing to do with it. A one-letter proto package is the shortest lever.
+func TestSelfCheckSurvivesAShortInputValue(t *testing.T) {
+	source := copyTree(t, fixture)
+	leak := filepath.Join(source, "docs", "leak.md")
+	if err := os.WriteFile(leak, []byte("Built with the Kakehashi template.\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	in := inputs()
+	in.ProtoPackage = "a"
+
+	opts := optionsFrom(t, in, source)
+
+	_, err := scaffold.Run(opts)
+	if err == nil {
+		t.Fatal("a one-letter input turned the identity check off")
+	}
+	if !strings.Contains(err.Error(), "leak.md") {
+		t.Errorf("the refusal does not name the file: %v", err)
+	}
 }
 
 // A project whose own module path contains the template's owner is allowed to say so.
@@ -259,6 +287,87 @@ func TestAuthBrowserRewritesTheSetting(t *testing.T) {
 	// The rest of the file has to survive the edit, numbers included.
 	if !strings.Contains(string(body), `"TimeoutSeconds": 30`) {
 		t.Errorf("the edit changed a setting it was not asked about:\n%s", body)
+	}
+}
+
+// A descriptor is data the scaffold acts on with RemoveAll and Rename, and a template comes over
+// the network. A path that climbs out of the tree is refused whether it is hostile or a typo.
+func TestDescriptorPathsCannotReachOutsideTheTemplate(t *testing.T) {
+	source := copyTree(t, fixture)
+	descriptor := filepath.Join(source, filepath.FromSlash(template.DescriptorName))
+	body, err := os.ReadFile(descriptor)
+	if err != nil {
+		t.Fatal(err)
+	}
+	escaped := strings.Replace(string(body), `"TEMPLATE-ONLY.md"`, `"../precious"`, 1)
+	if escaped == string(body) {
+		t.Fatal("the fixture descriptor changed shape; this test edits its exclude list")
+	}
+	if err := os.WriteFile(descriptor, []byte(escaped), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	opts := optionsFrom(t, inputs(), source)
+
+	precious := filepath.Join(filepath.Dir(opts.Dest), "precious")
+	if err := os.MkdirAll(precious, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(precious, "data.txt"), []byte("keep me"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	if _, err := scaffold.Run(opts); err == nil {
+		t.Fatal("Run accepted a descriptor path that leaves the template")
+	}
+	if _, err := os.Stat(filepath.Join(precious, "data.txt")); err != nil {
+		t.Errorf("a file outside the scaffold was removed: %v", err)
+	}
+}
+
+// An end marker before its begin balances the count, so nothing catches it downstream.
+func TestATransposedMarkerPairIsRefused(t *testing.T) {
+	source := copyTree(t, fixture)
+	marker := filepath.Join(source, "server", "cmd", "server", "main.go")
+	body, err := os.ReadFile(marker)
+	if err != nil {
+		t.Fatal(err)
+	}
+	transposed := strings.Replace(string(body),
+		"// kakehashi:unit-example:begin\n\tkernel.Mount(example.New())\n\t// kakehashi:unit-example:end",
+		"// kakehashi:unit-example:end\n\tkernel.Mount(example.New())\n\t// kakehashi:unit-example:begin", 1)
+	if transposed == string(body) {
+		t.Fatal("the fixture changed shape; this test transposes a marker pair")
+	}
+	if err := os.WriteFile(marker, []byte(transposed), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	in := inputs()
+	in.WithExample = false
+	opts := optionsFrom(t, in, source)
+
+	_, err = scaffold.Run(opts)
+	if err == nil {
+		t.Fatal("Run removed a region between a transposed marker pair without saying so")
+	}
+	if !strings.Contains(err.Error(), "precedes") {
+		t.Errorf("the refusal does not say what is wrong: %v", err)
+	}
+}
+
+// The destination is ./<name> by default, but --dir can name a path several levels deep.
+func TestARunThatDoesNotFinishTakesItsDirectoriesWithIt(t *testing.T) {
+	root := t.TempDir()
+	opts := options(t, inputs())
+	opts.Dest = filepath.Join(root, "deep", "nested", "project")
+	opts.DryRun = true
+
+	if _, err := scaffold.Run(opts); err != nil {
+		t.Fatalf("Run: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(root, "deep")); !os.IsNotExist(err) {
+		t.Errorf("a dry run left the destination's parents behind: %v", err)
 	}
 }
 
