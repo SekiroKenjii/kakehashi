@@ -13,9 +13,9 @@ not justify a logging-package dependency.
 
 ## Decision
 
-`FileLoggerProvider` (client/src/App/Kakehashi.App/Services/Platform/FileLoggerProvider.cs) is a
+`FileLoggerProvider` (client/src/App/__APP_NAME__.App/Services/Platform/FileLoggerProvider.cs) is a
 hand-rolled `ILoggerProvider`. It appends to one file per day under
-`%LOCALAPPDATA%\Kakehashi\logs` and never deletes old files. Lines enter a bounded queue (4096)
+`%LOCALAPPDATA%\__APP_NAME__\logs` and never deletes old files. Lines enter a bounded queue (4096)
 drained by a single background thread; `TryAdd` drops lines when the queue is full, and write
 failures (`IOException`, `UnauthorizedAccessException`) are swallowed. Exceptions are logged in
 full, inner exceptions included, not message-only.

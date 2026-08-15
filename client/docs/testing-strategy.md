@@ -15,7 +15,7 @@
 >
 > `LiveNotesGatewayTests` (3) is the exception to everything else here: it drives the real
 > `GrpcNotesGateway` over real gRPC into real SQL Server, and is skipped unless
-> `KAKEHASHI_TEST_BACKEND` names a running server. It is the only test that would notice a broken
+> `__APP_NAME_UPPER___TEST_BACKEND` names a running server. It is the only test that would notice a broken
 > migration or a status code the client maps wrongly; the price is that it cannot run on a laptop
 > with nothing started, and a suite that fails when the stack is down trains everyone to ignore it.
 >

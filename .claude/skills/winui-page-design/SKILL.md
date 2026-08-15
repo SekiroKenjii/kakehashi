@@ -6,8 +6,8 @@ description: XAML/UX conventions for pages in this WinUI 3 app — breadcrumb he
 # WinUI page design conventions
 
 The reference implementation is
-[AccountPage.xaml](../../../src/Modules/Auth/Kakehashi.Modules.Auth.UI/Views/AccountPage.xaml) +
-[AccountViewModel.cs](../../../src/Modules/Auth/Kakehashi.Modules.Auth.UI/ViewModels/AccountViewModel.cs).
+[AccountPage.xaml](../../../src/Modules/Auth/__APP_NAME__.Modules.Auth.UI/Views/AccountPage.xaml) +
+[AccountViewModel.cs](../../../src/Modules/Auth/__APP_NAME__.Modules.Auth.UI/ViewModels/AccountViewModel.cs).
 Copy its patterns rather than inventing new ones.
 
 ## Page skeleton
@@ -32,11 +32,11 @@ Copy its patterns rather than inventing new ones.
 
 ## Header: breadcrumb, not a title
 
-Pages show a breadcrumb trail ("Kakehashi › PageName"), not a lone `TitleTextBlockStyle` title:
+Pages show a breadcrumb trail ("__APP_TITLE__ › PageName"), not a lone `TitleTextBlockStyle` title:
 
 ```xml
 <StackPanel Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
-    <TextBlock Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="Kakehashi" />
+    <TextBlock Foreground="{ThemeResource TextFillColorTertiaryBrush}" Text="__APP_TITLE__" />
     <FontIcon FontSize="12" Foreground="{ThemeResource TextFillColorTertiaryBrush}" Glyph="&#xE76C;" />
     <TextBlock FontWeight="SemiBold" Text="PageName" />
 </StackPanel>

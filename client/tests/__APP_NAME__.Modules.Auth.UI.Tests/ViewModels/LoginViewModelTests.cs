@@ -25,7 +25,7 @@ public sealed class LoginViewModelTests
     {
         return new AuthOptions {
             Authority = "http://localhost:8080",
-            ClientId = "kakehashi-desktop",
+            ClientId = "__APP_NAME_LOWER__-desktop",
             Mode = mode,
         };
     }
@@ -71,7 +71,7 @@ public sealed class LoginViewModelTests
         var viewModel = CreateViewModel(AuthMode.InApp);
         Assert.False(viewModel.SignInCommand.CanExecute(null));
 
-        viewModel.Email = "dev@kakehashi.local";
+        viewModel.Email = "dev@__APP_NAME_LOWER__.local";
         Assert.False(viewModel.SignInCommand.CanExecute(null));
 
         viewModel.Password = "passphrase";
@@ -90,8 +90,8 @@ public sealed class LoginViewModelTests
     {
         SendReturns(Result.Success());
         var viewModel = CreateViewModel(AuthMode.InApp);
-        viewModel.Email = "  dev@kakehashi.local  ";
-        viewModel.Password = "kakehashi dev passphrase";
+        viewModel.Email = "  dev@__APP_NAME_LOWER__.local  ";
+        viewModel.Password = "__APP_NAME_LOWER__ dev passphrase";
 
         await viewModel.SignInCommand.ExecuteAsync(null);
 
@@ -99,8 +99,8 @@ public sealed class LoginViewModelTests
             Arg.Is<SignInCommand>(command =>
                 command != null
                 && command.Credentials != null
-                && command.Credentials.Email == "dev@kakehashi.local"
-                && command.Credentials.Password == "kakehashi dev passphrase"),
+                && command.Credentials.Email == "dev@__APP_NAME_LOWER__.local"
+                && command.Credentials.Password == "__APP_NAME_LOWER__ dev passphrase"),
             Arg.Any<CancellationToken>());
     }
 
@@ -121,8 +121,8 @@ public sealed class LoginViewModelTests
     {
         SendReturns(Result.Success());
         var viewModel = CreateViewModel(AuthMode.InApp);
-        viewModel.Email = "dev@kakehashi.local";
-        viewModel.Password = "kakehashi dev passphrase";
+        viewModel.Email = "dev@__APP_NAME_LOWER__.local";
+        viewModel.Password = "__APP_NAME_LOWER__ dev passphrase";
         bool raised = false;
         viewModel.SignInSucceeded += (_, _) => raised = true;
 
@@ -137,7 +137,7 @@ public sealed class LoginViewModelTests
     {
         SendReturns(Result.Failure(AuthErrors.LoginFailed));
         var viewModel = CreateViewModel(AuthMode.InApp);
-        viewModel.Email = "dev@kakehashi.local";
+        viewModel.Email = "dev@__APP_NAME_LOWER__.local";
         viewModel.Password = "wrong";
 
         await viewModel.SignInCommand.ExecuteAsync(null);
@@ -146,7 +146,7 @@ public sealed class LoginViewModelTests
         Assert.Equal(AuthErrors.LoginFailed.Message, viewModel.ErrorMessage);
         // The form stays put so the user can correct one field rather than retype both.
         Assert.True(viewModel.ShowsCredentialForm);
-        Assert.Equal("dev@kakehashi.local", viewModel.Email);
+        Assert.Equal("dev@__APP_NAME_LOWER__.local", viewModel.Email);
     }
 
     [Fact]

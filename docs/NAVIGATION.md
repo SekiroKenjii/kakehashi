@@ -16,7 +16,7 @@ administrator safe — the worst a mistake there can do is hide something.
 
 ## The contract
 
-`proto/kakehashi/navigation/v1/navigation.proto`, two services:
+`proto/__APP_NAME_LOWER__/navigation/v1/navigation.proto`, two services:
 
 - **`NavigationService.GetNavigation`** — the caller's own pane. Open to any signed-in caller, and it
   has to be: a client needs its pane before it can draw anything, so an account with no grants must
@@ -91,7 +91,7 @@ for a module whose routes are never checked against it, and an empty one there w
 disabled forever.
 
 **`DefaultIcon` is a semantic name** — `note`, `people` — never a glyph. Which code point draws a note
-is a fact about the font a client ships with; `NavigationIcons` (in `Kakehashi.UI.Common`) maps the
+is a fact about the font a client ships with; `NavigationIcons` (in `__APP_NAME__.UI.Common`) maps the
 name, and an unknown name falls back to whatever the page already declared.
 
 ## Reconciliation

@@ -1,13 +1,13 @@
 # Architecture
 
-Kakehashi is two modular monoliths with a contract between them. Each half is one deployable made
+__APP_TITLE__ is two modular monoliths with a contract between them. Each half is one deployable made
 of modules that are as separate as if they were services; the contract is the one place they are
 allowed to know anything about each other.
 
 ## Why the shape changed, and what stayed
 
-The Go half descends from [gtk-boilerplate](https://github.com/SekiroKenjii/gtk-boilerplate), where
-the whole application was a single process: UI, services and database compiled together, and a
+The Go half descends from a single-process GTK boilerplate, where
+the whole application was one binary: UI, services and database compiled together, and a
 module reached another module through its `api` package — a Go interface, resolved at compile time,
 checked by `tools/archlint`.
 
@@ -26,7 +26,7 @@ different, because the boundary is.
 | Boundary | Contract | Guard |
 | --- | --- | --- |
 | Between two server modules | the module's `api` package | `archlint` |
-| Between two client modules | mediator notifications | `Kakehashi.ArchitectureTests` |
+| Between two client modules | mediator notifications | `__APP_NAME__.ArchitectureTests` |
 | Between client and server | `proto/` | `buf lint` + `buf breaking` |
 
 None of the three is a convention. All three fail the build.
@@ -244,8 +244,8 @@ mechanism for everything above.
 
 ## Page chrome
 
-Styles live in `Kakehashi.UI.Common/Styles` and are merged once in `App.xaml` through
-`ms-appx:///Kakehashi.UI.Common/Styles/…`. They are there rather than in the host because feature
+Styles live in `__APP_NAME__.UI.Common/Styles` and are merged once in `App.xaml` through
+`ms-appx:///__APP_NAME__.UI.Common/Styles/…`. They are there rather than in the host because feature
 modules have pages too, and a page compiled into a module's own assembly cannot reach a dictionary
 only the host has.
 

@@ -20,7 +20,8 @@ param(
     [string]$ProtoPackage,
     [string]$RootNamespace,
     [string]$Accent = '#E34234',
-    [string]$Author
+    [string]$Author,
+    [string]$Year
 )
 
 $ErrorActionPreference = 'Stop'
@@ -51,6 +52,7 @@ if (-not $Author) {
     $Author = (git config user.name 2>$null)
     if (-not $Author) { $Author = $AppName }
 }
+if (-not $Year) { $Year = (Get-Date).ToUniversalTime().Year.ToString() }
 
 if ($ProtoPackage -cnotmatch '^[a-z][a-z0-9_]*$') {
     Die "-ProtoPackage must match ^[a-z][a-z0-9_]*$, got '$ProtoPackage'"
@@ -61,6 +63,7 @@ if ($Accent -notmatch '^#[0-9A-Fa-f]{6}$') {
 if ($RootNamespace -cnotmatch '^[A-Z][A-Za-z0-9.]*$') {
     Die "-RootNamespace is not a valid C# namespace: '$RootNamespace'"
 }
+if ($Year -notmatch '^[0-9]{4}$') { Die "-Year must be four digits, got '$Year'" }
 
 # Longest placeholder first: __APP_NAME_LOWER__ starts with __APP_NAME_, so substituting the short
 # one first would leave "OrderDeskLOWER__" behind. An ordered list, not a hashtable, because a
@@ -75,6 +78,7 @@ $placeholders = @(
     @{ Name = '__GO_MODULE__'; Value = $GoModule }
     @{ Name = '__ACCENT__'; Value = $Accent }
     @{ Name = '__AUTHOR__'; Value = $Author }
+    @{ Name = '__YEAR__'; Value = $Year }
 )
 
 Write-Host "rename: $AppName <$GoModule>"

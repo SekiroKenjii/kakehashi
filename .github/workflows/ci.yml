@@ -171,11 +171,11 @@ jobs:
       # Restores, and generates the typed gRPC client from proto/ — the same schema the server
       # compiles against, read straight from the repository rather than from a copy.
       - name: Restore
-        run: dotnet restore Kakehashi.slnx
+        run: dotnet restore __APP_NAME__.slnx
 
       # Hard gate: every file must already match the style .editorconfig.
       - name: Verify formatting
-        run: dotnet format Kakehashi.slnx --verify-no-changes --severity warn --no-restore
+        run: dotnet format __APP_NAME__.slnx --verify-no-changes --severity warn --no-restore
 
       # The step above leaves a compiler server holding client/tools' analyzer assemblies open,
       # and the build below has to write them: without this it fails with CS2012 on its own DLL.
@@ -184,7 +184,7 @@ jobs:
 
       # Compiler + analyzer warnings fail the build (TreatWarningsAsErrors).
       - name: Build
-        run: dotnet build Kakehashi.slnx -c Release --no-restore
+        run: dotnet build __APP_NAME__.slnx -c Release --no-restore
 
       # The test projects are unpackaged WinUI executables, so the SDK compiles its bootstrapper
       # into them as a module initializer — and when no matching runtime is installed it calls
@@ -204,4 +204,4 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "the runtime installer exited $LASTEXITCODE" }
 
       - name: Test
-        run: dotnet test Kakehashi.slnx -c Release --no-build --verbosity normal
+        run: dotnet test __APP_NAME__.slnx -c Release --no-build --verbosity normal

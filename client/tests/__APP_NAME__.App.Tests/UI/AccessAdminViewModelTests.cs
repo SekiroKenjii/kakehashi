@@ -447,7 +447,7 @@ public sealed class AccessAdminViewModelTests
             ]));
         _admins.ListUserSessionsAsync("1", Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([
-                new SessionRow("s1", "kakehashi-desktop", "Windows", "10.0.0.1", now, now, true),
+                new SessionRow("s1", "__APP_NAME_LOWER__-desktop", "Windows", "10.0.0.1", now, now, true),
             ]));
 
         var sut = CreateUsers();

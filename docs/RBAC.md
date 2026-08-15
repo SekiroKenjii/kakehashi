@@ -131,7 +131,7 @@ and gives the audit log eight entries for one act.
 
 ## What shipped
 
-The contract is `proto/kakehashi/authz/v1/authz.proto` plus `proto/kakehashi/account/v1/account.proto`,
+The contract is `proto/__APP_NAME_LOWER__/authz/v1/authz.proto` plus `proto/__APP_NAME_LOWER__/account/v1/account.proto`,
 and the split between them is the module boundary: the account module owns people, the authorization
 module owns what they may do. Nothing carries a copy of the other's fact, so the two cannot
 disagree — the users screen calls both and joins by id.
@@ -176,7 +176,7 @@ decide that, not a caller.
 An administrator could switch `roles.manage` off on the role they themselves held, press Save, and
 be refused by their very next request — including every request the screen that did it makes. There
 is no way back through the product: putting it back needs the permission that was just removed. The
-only recovery is `KAKEHASHI_AUTHZ_BOOTSTRAP_ADMIN`, i.e. a redeploy.
+only recovery is `__APP_NAME_UPPER___AUTHZ_BOOTSTRAP_ADMIN`, i.e. a redeploy.
 
 `Service.ensureActorKeepsControl` now refuses it, and refuses the two other routes to the same
 place: deleting a role that is the actor's only source of `roles.manage`, and unassigning it from

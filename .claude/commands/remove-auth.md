@@ -1,10 +1,10 @@
 # /remove-auth
 
-Remove the optional **Auth (OpenID Connect)** module from the Kakehashi client during project setup,
+Remove the optional **Auth (OpenID Connect)** module from the __APP_TITLE__ client during project setup,
 for projects that do not need user sign-in.
 
 The module ships enabled but **inert** — it does nothing until `Auth:Authority` is configured in
-`client/src/App/Kakehashi.App/appsettings.json`. Removing it deletes the module and unwires it; the
+`client/src/App/__APP_NAME__.App/appsettings.json`. Removing it deletes the module and unwires it; the
 host's authentication seams stay in place but are harmless.
 
 > This removes the **client** half only. The server's `account` module is what issues the tokens; if
@@ -19,16 +19,16 @@ pwsh client/scripts/configure-auth.ps1 -Remove
 ## What it removes
 
 - The three source projects (`client/src/Modules/Auth/...`) and four test projects
-  (`client/tests/Kakehashi.Modules.Auth.*`).
-- `client/tests/Kakehashi.ArchitectureTests/AuthLayeringTests.cs`.
-- The Auth entries in `client/Kakehashi.slnx`.
-- The `Kakehashi.Modules.Auth.UI` project reference and the `new AuthModule()` registration in the
+  (`client/tests/__APP_NAME__.Modules.Auth.*`).
+- `client/tests/__APP_NAME__.ArchitectureTests/AuthLayeringTests.cs`.
+- The Auth entries in `client/__APP_NAME__.slnx`.
+- The `__APP_NAME__.Modules.Auth.UI` project reference and the `new AuthModule()` registration in the
   host.
-- The Auth project references in `Kakehashi.ArchitectureTests`.
+- The Auth project references in `__APP_NAME__.ArchitectureTests`.
 - The OIDC/DPAPI package pins in `client/Directory.Packages.props`.
 - The `Auth` section in `appsettings.json`.
 
-Then it runs `dotnet build Kakehashi.slnx` to confirm the result is green (pass `-SkipBuild` to
+Then it runs `dotnet build __APP_NAME__.slnx` to confirm the result is green (pass `-SkipBuild` to
 skip).
 
 ## What it intentionally keeps

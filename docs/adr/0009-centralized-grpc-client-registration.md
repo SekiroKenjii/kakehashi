@@ -11,7 +11,7 @@ hazard: an address captured at registration time would be stale or missing if a 
 its client before `AddBackendInfrastructure` had bound `BackendOptions`.
 
 ## Decision
-`AddBackendGrpcClient<TClient>` in `Kakehashi.App.Infrastructure` is the single way to register a
+`AddBackendGrpcClient<TClient>` in `__APP_NAME__.App.Infrastructure` is the single way to register a
 generated gRPC client; feature modules call it from `IModule.RegisterServices` instead of building
 a channel themselves. It reads the backend address from `IOptions<BackendOptions>` at resolve time,
 attaches the `IAccessTokenProvider` token to every call via call credentials, and sets

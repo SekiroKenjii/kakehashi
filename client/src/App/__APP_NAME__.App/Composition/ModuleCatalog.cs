@@ -17,8 +17,8 @@ namespace __ROOT_NAMESPACE__.App.Composition;
 /// referencing its UI project and adding its <see cref="IModule"/> here.
 /// </summary>
 /// <remarks>
-/// The kakehashi: markers delimit the wiring a generator writes and a removable unit takes back:
-/// docs/BOILERPLATE.md.
+/// The markers below — kakehashi:module-imports:begin and its kind — delimit the wiring a
+/// generator writes and a removable unit takes back: docs/BOILERPLATE.md.
 /// </remarks>
 internal static class ModuleCatalog
 {

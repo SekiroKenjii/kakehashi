@@ -1,8 +1,8 @@
-# Kakehashi pre-release UI regression, driven through UI Automation.
+# __APP_TITLE__ pre-release UI regression, driven through UI Automation.
 #
 # Run it against a running build:
-#   dotnet build client\src\App\Kakehashi.App\Kakehashi.App.csproj -c Release -p:Platform=x64
-#   $exe = "client\src\App\Kakehashi.App\bin\x64\Release\net10.0-windows10.0.19041.0\Kakehashi.App.exe"
+#   dotnet build client\src\App\__APP_NAME__.App\__APP_NAME__.App.csproj -c Release -p:Platform=x64
+#   $exe = "client\src\App\__APP_NAME__.App\bin\x64\Release\net10.0-windows10.0.19041.0\__APP_NAME__.App.exe"
 #   $p = Start-Process $exe -PassThru
 #   .\.claude\skills\ui-testing\ui-tests.ps1 -AppPid $p.Id
 #
@@ -13,7 +13,7 @@
 param(
     [Parameter(Mandatory)][int]$AppPid,
     # Outside the repo on purpose: screenshots and results are evidence of one run, not source.
-    [string]$ShotDir = (Join-Path $env:TEMP 'kakehashi-ui')
+    [string]$ShotDir = (Join-Path $env:TEMP '__APP_NAME_LOWER__-ui')
 )
 
 $ErrorActionPreference = 'Continue'

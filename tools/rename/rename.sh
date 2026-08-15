@@ -21,6 +21,7 @@ tools/rename/rename.sh --app-name <PascalCase> --go-module <path> [options]
   --root-namespace  C# root namespace                           default: --app-name
   --accent          six-digit hex colour                        default: #E34234
   --author          LICENSE and package author                  default: git config user.name
+  --year            LICENSE copyright year                      default: this year
 USAGE
     exit 2
 }
@@ -28,7 +29,7 @@ USAGE
 die() { echo "rename: $*" >&2; exit 1; }
 
 app_name=""; go_module=""; app_title=""; proto_package=""; root_namespace=""
-accent="#E34234"; author=""
+accent="#E34234"; author=""; year=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
@@ -39,6 +40,7 @@ while [ $# -gt 0 ]; do
         --root-namespace) root_namespace="${2:-}"; shift 2 ;;
         --accent) accent="${2:-}"; shift 2 ;;
         --author) author="${2:-}"; shift 2 ;;
+        --year) year="${2:-}"; shift 2 ;;
         -h|--help) usage ;;
         *) echo "rename: unknown argument $1" >&2; usage ;;
     esac
@@ -60,6 +62,7 @@ app_name_upper=$(echo "$app_name" | tr '[:lower:]' '[:upper:]')
 : "${proto_package:=$app_name_lower}"
 : "${root_namespace:=$app_name}"
 : "${author:=$(git config user.name 2>/dev/null || echo "$app_name")}"
+: "${year:=$(date -u +%Y)}"
 
 echo "$proto_package" | grep -qE '^[a-z][a-z0-9_]*$' ||
     die "--proto-package must match ^[a-z][a-z0-9_]*\$, got '$proto_package'"
@@ -67,16 +70,17 @@ echo "$accent" | grep -qE '^#[0-9A-Fa-f]{6}$' ||
     die "--accent must be a six-digit hex colour, got '$accent'"
 echo "$root_namespace" | grep -qE '^[A-Z][A-Za-z0-9.]*$' ||
     die "--root-namespace is not a valid C# namespace: '$root_namespace'"
+echo "$year" | grep -qE '^[0-9]{4}$' || die "--year must be four digits, got '$year'"
 
 # Longest placeholder first: __APP_NAME_LOWER__ starts with __APP_NAME_, so substituting the short
 # one first would leave "OrderDeskLOWER__" behind.
 placeholder_names=(
     __APP_NAME_LOWER__ __APP_NAME_UPPER__ __APP_NAME__ __APP_TITLE__
-    __ROOT_NAMESPACE__ __PROTO_PACKAGE__ __GO_MODULE__ __ACCENT__ __AUTHOR__
+    __ROOT_NAMESPACE__ __PROTO_PACKAGE__ __GO_MODULE__ __ACCENT__ __AUTHOR__ __YEAR__
 )
 placeholder_values=(
     "$app_name_lower" "$app_name_upper" "$app_name" "$app_title"
-    "$root_namespace" "$proto_package" "$go_module" "$accent" "$author"
+    "$root_namespace" "$proto_package" "$go_module" "$accent" "$author" "$year"
 )
 
 # sed reads | as the delimiter, & as the whole match and \ as an escape. A value carrying one of

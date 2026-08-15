@@ -17,11 +17,11 @@ namespace __ROOT_NAMESPACE__.Modules.Notes.UI.Tests.Infrastructure;
 /// would notice a schema change, a broken migration, or a status code the client maps wrongly.
 /// </summary>
 /// <remarks>
-/// Skipped unless <c>KAKEHASHI_TEST_BACKEND</c> names a server, so a plain <c>dotnet test</c> on
+/// Skipped unless <c>__APP_NAME_UPPER___TEST_BACKEND</c> names a server, so a plain <c>dotnet test</c> on
 /// a laptop with nothing running still passes. Start the stack and point it at the server:
 /// <code>
 /// docker compose up -d
-/// $env:KAKEHASHI_TEST_BACKEND = "http://localhost:8080"
+/// $env:__APP_NAME_UPPER___TEST_BACKEND = "http://localhost:8080"
 /// dotnet test tests/__APP_NAME__.Modules.Notes.UI.Tests
 /// </code>
 /// The alternative — failing when no backend is present — would train everyone to ignore a red
@@ -29,7 +29,7 @@ namespace __ROOT_NAMESPACE__.Modules.Notes.UI.Tests.Infrastructure;
 /// </remarks>
 public sealed class LiveNotesGatewayTests
 {
-    private const string _addressVariable = "KAKEHASHI_TEST_BACKEND";
+    private const string _addressVariable = "__APP_NAME_UPPER___TEST_BACKEND";
 
     private static string? Address()
     {
