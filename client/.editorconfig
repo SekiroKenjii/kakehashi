@@ -204,6 +204,7 @@ dotnet_diagnostic.KH0003.severity = warning
 dotnet_diagnostic.KH0004.severity = warning
 dotnet_diagnostic.KH0005.severity = warning
 dotnet_diagnostic.KH0006.severity = warning
+dotnet_diagnostic.KH0007.severity = warning
 
 # ============================================================================
 #  Naming rules

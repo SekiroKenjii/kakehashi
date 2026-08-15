@@ -72,6 +72,19 @@ These are Roslyn analyzers in `client/tools/Kakehashi.Analyzers`, each with a fi
 | KH0004 | A blank line after the namespace declaration |
 | KH0005 | An interface with no members ends with `;`, not `{ }` |
 | KH0006 | Two or more chained calls go one per line, the dot leading |
+| KH0007 | Every line is indented by whole units of four spaces |
+
+### Why KH0007 exists
+
+`dotnet format` re-indents the lines it breaks and leaves every other line where it found it. A
+continuation line inside an expression — an element of a collection expression, an argument on its
+own line, the tail of a chain — can therefore sit at any column, and
+`dotnet format --verify-no-changes` will still call the file clean. Verified by stripping the
+indentation off such a file entirely: the formatter put back four spaces on the first element and
+left the rest at column zero.
+
+KH0007 is the only rule here that reads a line rather than a syntax node. It skips the inside of a
+raw string, a verbatim string and a block comment, where leading spaces are the token's value.
 
 ### What the blank-line rules do not ask for
 

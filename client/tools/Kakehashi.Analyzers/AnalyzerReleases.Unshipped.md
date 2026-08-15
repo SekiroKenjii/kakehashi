@@ -11,3 +11,4 @@ KH0003 | Kakehashi.Layout | Warning | BlankLineAnalyzer
 KH0004 | Kakehashi.Layout | Warning | BlankLineAnalyzer
 KH0005 | Kakehashi.Layout | Warning | EmptyInterfaceBodyAnalyzer
 KH0006 | Kakehashi.Layout | Warning | ChainedCallsAnalyzer
+KH0007 | Kakehashi.Layout | Warning | IndentationAnalyzer

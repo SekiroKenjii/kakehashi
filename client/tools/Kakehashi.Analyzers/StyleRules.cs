@@ -61,6 +61,18 @@ public static class StyleRules
         isEnabledByDefault: true,
         description: "An empty body is two lines that say nothing a semicolon does not.");
 
+    /// <summary>Every line is indented by whole units of four spaces.</summary>
+    public static readonly DiagnosticDescriptor IndentationOffGrid = new(
+        id: "KH0007",
+        title: "Indentation is not a multiple of four",
+        messageFormat: "This line is indented {0} spaces, which is not a whole number of levels",
+        category: Category,
+        defaultSeverity: DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description:
+            "dotnet format does not own the indentation of a line it did not break, so a "
+                + "continuation line can sit at any column and no other check will notice.");
+
     /// <summary>Two or more chained calls are written one per line, the dot leading.</summary>
     public static readonly DiagnosticDescriptor ChainedCallsOnePerLine = new(
         id: "KH0006",
