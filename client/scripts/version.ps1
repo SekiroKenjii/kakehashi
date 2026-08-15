@@ -47,7 +47,7 @@ $ErrorActionPreference = 'Stop'
 
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $versionPropsPath = Join-Path $repoRoot 'Version.props'
-$manifestPath = Join-Path $repoRoot 'src/App/Kakehashi.App/Package.appxmanifest'
+$manifestPath = Join-Path $repoRoot 'src/App/__APP_NAME__.App/Package.appxmanifest'
 
 function Get-CurrentVersion {
   [xml]$xml = Get-Content -LiteralPath $versionPropsPath -Raw
@@ -114,7 +114,7 @@ Write-Host "  updated Package.appxmanifest"
 
 # 3) Optionally commit the version files.
 if ($Commit) {
-  & git -C $repoRoot add -- 'Version.props' 'src/App/Kakehashi.App/Package.appxmanifest'
+  & git -C $repoRoot add -- 'Version.props' 'src/App/__APP_NAME__.App/Package.appxmanifest'
   if ($LASTEXITCODE -ne 0) { throw "git add failed." }
   & git -C $repoRoot commit -m "Release $tagName" | Out-Host
   if ($LASTEXITCODE -ne 0) { throw "git commit failed." }

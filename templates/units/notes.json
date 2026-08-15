@@ -4,15 +4,15 @@
   "title": "Notes — the reference feature module",
   "description": "One vertical slice across both halves: proto contract, server api/domain/store/service/rpc, client Domain/Application/UI, one CRUD page. Removing it leaves the frame with no feature module.",
   "paths": [
-    "proto/kakehashi/notes/v1/",
-    "server/internal/gen/kakehashi/notes/v1/",
+    "proto/__PROTO_PACKAGE__/notes/v1/",
+    "server/internal/gen/__PROTO_PACKAGE__/notes/v1/",
     "server/internal/modules/notes/",
     "client/src/Modules/Notes/",
-    "client/tests/Kakehashi.ArchitectureTests/NotesLayeringTests.cs",
-    "client/tests/Kakehashi.Modules.Notes.Application.Tests/",
-    "client/tests/Kakehashi.Modules.Notes.Domain.Tests/",
-    "client/tests/Kakehashi.Modules.Notes.IntegrationTests/",
-    "client/tests/Kakehashi.Modules.Notes.UI.Tests/"
+    "client/tests/__APP_NAME__.ArchitectureTests/NotesLayeringTests.cs",
+    "client/tests/__APP_NAME__.Modules.Notes.Application.Tests/",
+    "client/tests/__APP_NAME__.Modules.Notes.Domain.Tests/",
+    "client/tests/__APP_NAME__.Modules.Notes.IntegrationTests/",
+    "client/tests/__APP_NAME__.Modules.Notes.UI.Tests/"
   ],
   "markers": [
     {
@@ -24,19 +24,19 @@
       "sections": ["module-ids"]
     },
     {
-      "file": "client/Kakehashi.slnx",
+      "file": "client/__APP_NAME__.slnx",
       "sections": ["module-projects", "module-test-projects"]
     },
     {
-      "file": "client/src/App/Kakehashi.App/Composition/ModuleCatalog.cs",
+      "file": "client/src/App/__APP_NAME__.App/Composition/ModuleCatalog.cs",
       "sections": ["module-imports", "module-registrations"]
     },
     {
-      "file": "client/src/App/Kakehashi.App/Kakehashi.App.csproj",
+      "file": "client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj",
       "sections": ["module-projects"]
     },
     {
-      "file": "client/tests/Kakehashi.ArchitectureTests/Kakehashi.ArchitectureTests.csproj",
+      "file": "client/tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj",
       "sections": ["module-projects"]
     }
   ]

@@ -1,0 +1,308 @@
+<?xml version="1.0" encoding="utf-8" ?>
+<UserControl
+    x:Class="__ROOT_NAMESPACE__.Modules.Auth.UI.Views.AccountFlyoutView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <UserControl.Resources>
+        <Style x:Key="MenuRowButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="BorderThickness" Value="0" />
+            <Setter Property="HorizontalAlignment" Value="Stretch" />
+            <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+            <Setter Property="Padding" Value="10,9" />
+        </Style>
+        <Style x:Key="MenuRowIconStyle" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="16" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="MenuRowChevronStyle" TargetType="FontIcon">
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+        </Style>
+        <Style x:Key="CaptionLabelStyle" TargetType="TextBlock">
+            <Setter Property="FontSize" Value="11" />
+            <Setter Property="CharacterSpacing" Value="50" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+        </Style>
+        <Style x:Key="DividerStyle" TargetType="Border">
+            <Setter Property="Height" Value="1" />
+            <Setter Property="Margin" Value="0,10" />
+            <Setter Property="Background" Value="{ThemeResource DividerStrokeColorDefaultBrush}" />
+        </Style>
+        <Style x:Key="ThemeToggleStyle" TargetType="ToggleButton">
+            <Setter Property="Padding" Value="8,5" />
+        </Style>
+    </UserControl.Resources>
+
+    <StackPanel Width="300">
+
+        <!--  Identity header  -->
+        <Grid ColumnSpacing="14">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <PersonPicture
+                Width="52"
+                Height="52"
+                Background="{ThemeResource AccentFillColorDefaultBrush}"
+                DisplayName="{x:Bind ViewModel.AvatarName, Mode=OneWay}"
+                Foreground="{ThemeResource TextOnAccentFillColorDefaultBrush}" />
+            <StackPanel
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Spacing="2">
+                <TextBlock
+                    FontSize="16"
+                    FontWeight="SemiBold"
+                    Text="{x:Bind ViewModel.DisplayName, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis" />
+                <TextBlock
+                    FontFamily="Cascadia Mono,Consolas"
+                    FontSize="12"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.Email, Mode=OneWay}"
+                    TextTrimming="CharacterEllipsis"
+                    Visibility="{x:Bind ViewModel.HasEmail, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
+        <Border Style="{StaticResource DividerStyle}" />
+
+        <!--  Session status  -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+            <StackPanel Spacing="4">
+                <TextBlock Style="{StaticResource CaptionLabelStyle}" Text="STATUS" />
+                <StackPanel Orientation="Horizontal" Spacing="6">
+                    <Ellipse
+                        Width="8"
+                        Height="8"
+                        VerticalAlignment="Center"
+                        Fill="{x:Bind StatusBrush(ViewModel.IsAuthenticated), Mode=OneWay}" />
+                    <TextBlock
+                        FontWeight="SemiBold"
+                        Foreground="{x:Bind StatusBrush(ViewModel.IsAuthenticated), Mode=OneWay}"
+                        Text="{x:Bind ViewModel.StatusText, Mode=OneWay}" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="4">
+                <TextBlock Style="{StaticResource CaptionLabelStyle}" Text="SIGNED IN" />
+                <TextBlock FontWeight="SemiBold" Text="{x:Bind ViewModel.SignedInText, Mode=OneWay}" />
+            </StackPanel>
+        </Grid>
+
+        <Border Style="{StaticResource DividerStyle}" />
+
+        <!--  Account actions  -->
+        <Button
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.ViewProfileCommand}"
+            Style="{StaticResource MenuRowButtonStyle}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE77B;" Style="{StaticResource MenuRowIconStyle}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="View profile" />
+                <FontIcon
+                    Grid.Column="2"
+                    Glyph="&#xE76C;"
+                    Style="{StaticResource MenuRowChevronStyle}" />
+            </Grid>
+        </Button>
+
+        <Button
+            AutomationProperties.Name="Change password"
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.ChangePasswordCommand}"
+            Style="{StaticResource MenuRowButtonStyle}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE8D7;" Style="{StaticResource MenuRowIconStyle}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="Change password" />
+                <FontIcon
+                    Grid.Column="2"
+                    Glyph="&#xE76C;"
+                    Style="{StaticResource MenuRowChevronStyle}" />
+            </Grid>
+        </Button>
+        <Button
+            AutomationProperties.Name="Active sessions"
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.ViewSessionsCommand}"
+            Style="{StaticResource MenuRowButtonStyle}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE7F8;" Style="{StaticResource MenuRowIconStyle}" />
+                <StackPanel Grid.Column="1" VerticalAlignment="Center">
+                    <TextBlock Text="Active sessions" />
+                    <TextBlock
+                        FontSize="12"
+                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                        Text="{x:Bind ViewModel.SessionSummary, Mode=OneWay}" />
+                </StackPanel>
+                <FontIcon
+                    Grid.Column="2"
+                    Glyph="&#xE76C;"
+                    Style="{StaticResource MenuRowChevronStyle}" />
+            </Grid>
+        </Button>
+        <Button
+            AutomationProperties.Name="My activity log"
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.ViewActivityCommand}"
+            Style="{StaticResource MenuRowButtonStyle}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE81C;" Style="{StaticResource MenuRowIconStyle}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="My activity log" />
+                <FontIcon
+                    Grid.Column="2"
+                    Glyph="&#xE76C;"
+                    Style="{StaticResource MenuRowChevronStyle}" />
+            </Grid>
+        </Button>
+
+        <Border Style="{StaticResource DividerStyle}" />
+
+        <!--  Appearance  -->
+        <Grid Padding="10,4" ColumnSpacing="12">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <FontIcon Glyph="&#xE790;" Style="{StaticResource MenuRowIconStyle}" />
+            <TextBlock
+                Grid.Column="1"
+                VerticalAlignment="Center"
+                Text="Appearance" />
+            <StackPanel
+                Grid.Column="2"
+                Orientation="Horizontal"
+                Spacing="4">
+                <ToggleButton
+                    x:Name="LightThemeButton"
+                    Click="OnThemeButtonClick"
+                    Style="{StaticResource ThemeToggleStyle}"
+                    Tag="1"
+                    ToolTipService.ToolTip="Light">
+                    <FontIcon FontSize="14" Glyph="&#xE706;" />
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="DarkThemeButton"
+                    Click="OnThemeButtonClick"
+                    Style="{StaticResource ThemeToggleStyle}"
+                    Tag="2"
+                    ToolTipService.ToolTip="Dark">
+                    <FontIcon FontSize="14" Glyph="&#xE708;" />
+                </ToggleButton>
+                <ToggleButton
+                    x:Name="SystemThemeButton"
+                    Click="OnThemeButtonClick"
+                    Style="{StaticResource ThemeToggleStyle}"
+                    Tag="0"
+                    ToolTipService.ToolTip="Use system setting">
+                    <FontIcon FontSize="14" Glyph="&#xE7F8;" />
+                </ToggleButton>
+            </StackPanel>
+        </Grid>
+
+        <Button
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.OpenSettingsCommand}"
+            Style="{StaticResource MenuRowButtonStyle}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE713;" Style="{StaticResource MenuRowIconStyle}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="Settings" />
+                <FontIcon
+                    Grid.Column="2"
+                    Glyph="&#xE76C;"
+                    Style="{StaticResource MenuRowChevronStyle}" />
+            </Grid>
+        </Button>
+        <Button
+            AutomationProperties.Name="Help and support"
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.OpenSupportCommand}"
+            Style="{StaticResource MenuRowButtonStyle}"
+            Visibility="{x:Bind ViewModel.HasSupport}">
+            <Grid ColumnSpacing="12">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+                <FontIcon Glyph="&#xE897;" Style="{StaticResource MenuRowIconStyle}" />
+                <TextBlock
+                    Grid.Column="1"
+                    VerticalAlignment="Center"
+                    Text="Help &amp; support" />
+                <FontIcon
+                    Grid.Column="2"
+                    Glyph="&#xE76C;"
+                    Style="{StaticResource MenuRowChevronStyle}" />
+            </Grid>
+        </Button>
+
+        <Border Style="{StaticResource DividerStyle}" />
+
+        <!--  Sign out  -->
+        <Button
+            HorizontalAlignment="Stretch"
+            HorizontalContentAlignment="Center"
+            BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
+            Click="OnActionButtonClick"
+            Command="{x:Bind ViewModel.SignOutCommand}"
+            Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+            IsEnabled="{x:Bind ViewModel.IsAuthenticated, Mode=OneWay}">
+            <StackPanel Orientation="Horizontal" Spacing="10">
+                <FontIcon
+                    FontSize="16"
+                    Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                    Glyph="&#xEE35;" />
+                <TextBlock FontWeight="SemiBold" Text="Sign out" />
+            </StackPanel>
+        </Button>
+    </StackPanel>
+</UserControl>

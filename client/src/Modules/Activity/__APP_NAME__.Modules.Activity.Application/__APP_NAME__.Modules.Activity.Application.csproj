@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>__ROOT_NAMESPACE__.Modules.Activity.Application</RootNamespace>
+    <AssemblyName>__APP_NAME__.Modules.Activity.Application</AssemblyName>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+  </ItemGroup>
+
+  <!-- No Domain project, unlike Notes and Auth. A domain layer exists to hold invariants that must
+       hold before something is written, and this module never writes: the feed is read-only, and
+       the server is the only thing that appends to it. An empty Domain assembly would be a layer
+       added to match a diagram rather than to enforce anything. -->
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.Application.Abstractions\__APP_NAME__.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.Mediator\__APP_NAME__.Mediator.csproj" />
+  </ItemGroup>
+
+</Project>

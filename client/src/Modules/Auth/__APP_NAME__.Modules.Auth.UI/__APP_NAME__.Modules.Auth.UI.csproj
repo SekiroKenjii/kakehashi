@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>__ROOT_NAMESPACE__.Modules.Auth.UI</RootNamespace>
+    <AssemblyName>__APP_NAME__.Modules.Auth.UI</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Platforms>x64;ARM64</Platforms>
+    <!-- Obsolete-API warnings, suppressed because the offender is generated code. The XAML type
+         generator enumerates every property of every type reachable from the markup, including
+         Window.Icon, which the Windows App SDK deprecated in 2.3. Nothing here uses it, and there
+         is no way to tell the generator to leave it out. The cost of the blanket suppression is
+         that a genuinely obsolete call in this project would also go unreported. -->
+    <NoWarn>CS0612;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Duende.IdentityModel.OidcClient" />
+    <PackageReference Include="Microsoft.Extensions.Options.ConfigurationExtensions" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" />
+    <PackageReference Include="WinUIEx" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.UI.Common\__APP_NAME__.UI.Common.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.UI.Contracts\__APP_NAME__.UI.Contracts.csproj" />
+    <ProjectReference Include="..\__APP_NAME__.Modules.Auth.Application\__APP_NAME__.Modules.Auth.Application.csproj" />
+  </ItemGroup>
+
+</Project>

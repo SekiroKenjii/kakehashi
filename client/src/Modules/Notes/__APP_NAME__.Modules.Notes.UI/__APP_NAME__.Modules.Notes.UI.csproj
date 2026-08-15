@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>__ROOT_NAMESPACE__.Modules.Notes.UI</RootNamespace>
+    <AssemblyName>__APP_NAME__.Modules.Notes.UI</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Platforms>x64;ARM64</Platforms>
+    <!-- See __APP_NAME__.Modules.Auth.UI for why CS0618 is here: the XAML type generator emits a
+         reference to a property the Windows App SDK deprecated, in a file nobody writes. -->
+    <NoWarn>CS0612;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Grpc.Net.ClientFactory" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\..\src\App\__APP_NAME__.App.Infrastructure\__APP_NAME__.App.Infrastructure.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.Contracts\__APP_NAME__.Contracts.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.UI.Common\__APP_NAME__.UI.Common.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.UI.Contracts\__APP_NAME__.UI.Contracts.csproj" />
+    <ProjectReference Include="..\__APP_NAME__.Modules.Notes.Application\__APP_NAME__.Modules.Notes.Application.csproj" />
+  </ItemGroup>
+
+</Project>

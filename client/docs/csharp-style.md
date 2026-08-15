@@ -61,8 +61,8 @@ is K&R" rather than as an error.
 
 ## The five rules with no `.editorconfig` option
 
-These are Roslyn analyzers in `client/tools/Kakehashi.Analyzers`, each with a fixer in
-`Kakehashi.Analyzers.CodeFixes`. `TreatWarningsAsErrors` makes every one of them a build error.
+These are Roslyn analyzers in `client/tools/__APP_NAME__.Analyzers`, each with a fixer in
+`__APP_NAME__.Analyzers.CodeFixes`. `TreatWarningsAsErrors` makes every one of them a build error.
 
 | ID | Rule |
 | --- | --- |
@@ -126,10 +126,10 @@ _admins.ListUsersAsync(Arg.Any<CancellationToken>())
 ## Applying the rules to existing code
 
 ```bash
-dotnet format analyzers Kakehashi.slnx --diagnostics KH0001 KH0002 KH0003 KH0004 KH0005 KH0006 --severity info
+dotnet format analyzers __APP_NAME__.slnx --diagnostics KH0001 KH0002 KH0003 KH0004 KH0005 KH0006 --severity info
 ```
 
-Run it more than once if a file is heavily affected, then `dotnet format whitespace Kakehashi.slnx`.
+Run it more than once if a file is heavily affected, then `dotnet format whitespace __APP_NAME__.slnx`.
 
 ### CS2012 on the analyzers' own DLLs
 
@@ -158,7 +158,7 @@ Two separate causes, both handled:
 | File-scoped namespaces | IDE0161 |
 | Naming | IDE1006 |
 | XML docs on the contract assemblies | CS1591 + `GenerateDocumentationFile` |
-| KH0001–KH0006 | `client/tools/Kakehashi.Analyzers`, tested in `tests/Kakehashi.Analyzers.Tests` |
+| KH0001–KH0006 | `client/tools/__APP_NAME__.Analyzers`, tested in `tests/__APP_NAME__.Analyzers.Tests` |
 | Comment shape and length | `docs/COMMENTS.md` and the three checks in the `architecture` CI job |
 
 Member order is a review convention, not tool-enforced: nested types → static/const/readonly

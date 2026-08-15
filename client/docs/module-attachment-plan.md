@@ -24,7 +24,7 @@ attach its own modules.
 
 ## Phase 1 — local attach/detach (no backend)
 
-1. **Module metadata.** Add a descriptor to `Kakehashi.UI.Contracts` (as shipped — `Name` stays
+1. **Module metadata.** Add a descriptor to `__APP_NAME__.UI.Contracts` (as shipped — `Name` stays
    the single identity on `IModule`, so the descriptor does not duplicate it):
 
    ```csharp
@@ -68,7 +68,7 @@ attach its own modules.
      button per row. When nothing is detachable it stays the current inert hint.
    - Tiles and the getting-started "register" step rebuild on `ModuleSetChangedMessage`.
 
-7. **Tests.** ✅ Done — `Kakehashi.App.Tests` covers attach/detach round-trip, required-module
+7. **Tests.** ✅ Done — `__APP_NAME__.App.Tests` covers attach/detach round-trip, required-module
    rejection, persistence of the detached set, default-attached semantics, unknown-name failure,
    and the change broadcast (T1 in [testing-strategy.md](testing-strategy.md), which also opened the
    path for the wider host/UI test gap). Architecture tests are untouched (no new cross-module
