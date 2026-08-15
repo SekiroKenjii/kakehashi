@@ -11,11 +11,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	navigationv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/navigation/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/navigation/v1/navigationv1connect"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	navigationv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/navigation/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/navigation/v1/navigationv1connect"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // NewRoute builds the Connect handler for NavigationService — the caller's own pane.

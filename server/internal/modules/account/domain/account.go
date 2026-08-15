@@ -5,9 +5,9 @@ import (
 	"time"
 	"unicode/utf8"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/passwords"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/text"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/passwords"
+	"__GO_MODULE__/server/internal/platform/text"
 )
 
 // Limits on the fields a user controls. All of them are about the interface rather than the

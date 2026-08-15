@@ -1,6 +1,6 @@
 package store
 
-import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
+import "__GO_MODULE__/server/internal/platform/database"
 
 // The schema history, whole, because its value is its order.
 

@@ -13,7 +13,7 @@ package domain
 import (
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Retention is how long an entry is kept before the store deletes it.

@@ -167,8 +167,13 @@ rm -rf tools/rename
 # ── 6. self-check ──────────────────────────────────────────────────────────────────────────────
 # grep rather than git grep: the paths renamed above are untracked until the next commit, and
 # git grep would not look at them.
+#
+# "kakehashi:" and ".kakehashi.json" are exempt, and are the only two things that are. They are the
+# generator's namespace, not the application's: the CLI reads them in the scaffolded project to add
+# and remove modules, and renaming them would break the tool rather than finish the rename.
 leftovers=$(grep -rInE '__[A-Z][A-Z0-9_]*__|Kakehashi|kakehashi|KAKEHASHI|SekiroKenjii|架け橋' \
-    . --exclude-dir=.git 2>/dev/null || true)
+    . --exclude-dir=.git 2>/dev/null |
+    grep -vE 'kakehashi:[a-z0-9-]+:(begin|end)|\.kakehashi\.json' || true)
 if [ -n "$leftovers" ]; then
     echo "rename: the tree still names the template:" >&2
     echo "$leftovers" >&2

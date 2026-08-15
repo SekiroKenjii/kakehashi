@@ -16,7 +16,7 @@ package authzapi
 import (
 	"context"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // Scope names mirror platform/auth's, as plain strings.

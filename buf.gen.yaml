@@ -15,7 +15,7 @@ managed:
   enabled: true
   override:
     - file_option: go_package_prefix
-      value: github.com/SekiroKenjii/kakehashi/server/internal/gen
+      value: __GO_MODULE__/server/internal/gen
 
 plugins:
   - local: protoc-gen-go

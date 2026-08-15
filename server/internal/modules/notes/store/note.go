@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/notes/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Every query against notes.Note. One file per table is the store package's unit, and this module

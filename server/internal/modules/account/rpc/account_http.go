@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"time"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
 )
 
 // accountHandler serves the JSON endpoints behind the desktop client's account page.

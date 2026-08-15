@@ -162,11 +162,17 @@ if (Test-Path '.buf-cache') { Remove-Item -Recurse -Force '.buf-cache' }
 # ── 6. self-check ──────────────────────────────────────────────────────────────────────────────
 # The paths renamed above are untracked until the next commit, so this walks the working tree
 # rather than asking git what it knows about.
+#
+# "kakehashi:" and ".kakehashi.json" are exempt, and are the only two things that are. They are the
+# generator's namespace, not the application's: the CLI reads them in the scaffolded project to add
+# and remove modules, and renaming them would break the tool rather than finish the rename.
 $pattern = '__[A-Z][A-Z0-9_]*__|Kakehashi|kakehashi|KAKEHASHI|SekiroKenjii|架け橋'
+$exempt = 'kakehashi:[a-z0-9-]+:(begin|end)|\.kakehashi\.json'
 $leftovers = Get-ChildItem -Recurse -File -Force |
     Where-Object { $_.FullName -notlike '*\.git\*' -and $_.FullName -notlike "*$([IO.Path]::DirectorySeparatorChar)tools$([IO.Path]::DirectorySeparatorChar)rename*" } |
     Where-Object { [Array]::IndexOf([System.IO.File]::ReadAllBytes($_.FullName), [byte]0) -lt 0 } |
-    Select-String -Pattern $pattern -CaseSensitive
+    Select-String -Pattern $pattern -CaseSensitive |
+    Where-Object { $_.Line -cnotmatch $exempt }
 
 if ($leftovers) {
     Write-Host 'rename: the tree still names the template:' -ForegroundColor Red

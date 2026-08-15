@@ -17,9 +17,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/notes/domain"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // SQLServer stores notes in the shared database.

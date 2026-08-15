@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The trail. Append-only: there is an insert and a read, and no update or delete, which is what

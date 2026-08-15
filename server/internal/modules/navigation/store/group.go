@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/navigation/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The headings.

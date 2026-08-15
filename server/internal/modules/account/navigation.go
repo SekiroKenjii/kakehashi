@@ -1,8 +1,8 @@
 package account
 
 import (
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
 )
 
 // The screen this module owns is the administrative user directory. The caller's own Account page

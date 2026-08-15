@@ -6,8 +6,8 @@ import (
 	"errors"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Roles, and the grants inside them. One file because they are one aggregate: the grants have no

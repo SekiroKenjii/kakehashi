@@ -16,11 +16,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/config"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/mongodb"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/rpc"
+	"__GO_MODULE__/server/internal/platform/config"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/eventbus"
+	"__GO_MODULE__/server/internal/platform/mongodb"
+	"__GO_MODULE__/server/internal/platform/rpc"
 )
 
 // Kernel owns the platform services every module is allowed to reach for directly, plus the

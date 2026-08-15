@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	"__GO_MODULE__/server/internal/app"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/activity/domain"
+	"__GO_MODULE__/server/internal/modules/activity/service"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 var happenedAt = time.Date(2026, time.August, 6, 9, 30, 0, 0, time.UTC)

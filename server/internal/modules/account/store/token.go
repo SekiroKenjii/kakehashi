@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // InsertToken records an issued token.

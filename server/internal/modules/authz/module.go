@@ -28,14 +28,14 @@ package authz
 import (
 	"context"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/app"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/modules/authz/rpc"
+	"__GO_MODULE__/server/internal/modules/authz/service"
+	"__GO_MODULE__/server/internal/modules/authz/store"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // Module is the authorization feature.
@@ -99,7 +99,7 @@ func (m *Module) Finalize(ctx context.Context, k *app.Kernel) error {
 	admin := k.Cfg.Module(m.ID()).String("BOOTSTRAP_ADMIN", "")
 	if admin == "" {
 		k.Log.WarnContext(ctx,
-			"KAKEHASHI_AUTHZ_BOOTSTRAP_ADMIN is not set; no account holds the Admin role, so "+
+			"__APP_NAME_UPPER___AUTHZ_BOOTSTRAP_ADMIN is not set; no account holds the Admin role, so "+
 				"every gated module refuses everyone. Set it to an existing account's email.")
 		return nil
 	}

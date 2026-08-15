@@ -5,7 +5,7 @@ import (
 	"context"
 	"time"
 
-	healthapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/health/api"
+	healthapi "__GO_MODULE__/server/internal/modules/health/api"
 )
 
 // Clock hands the service the current time.

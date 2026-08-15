@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 func TestAuthenticateAcceptsTheRightPassword(t *testing.T) {
@@ -72,7 +72,7 @@ func TestStartSessionRecordsAndAnnounces(t *testing.T) {
 	})
 
 	session, err := svc.StartSession(
-		context.Background(), account, "kakehashi-desktop", "laptop", "10.0.0.1")
+		context.Background(), account, "__APP_NAME_LOWER__-desktop", "laptop", "10.0.0.1")
 
 	if err != nil {
 		t.Fatalf("StartSession returned an error: %v", err)
@@ -100,11 +100,11 @@ func TestStartSessionOnAKnownDeviceIsAPlainSignIn(t *testing.T) {
 	svc := newService(store)
 
 	if _, err := svc.StartSession(
-		context.Background(), account, "kakehashi-desktop", "laptop", "10.0.0.1"); err != nil {
+		context.Background(), account, "__APP_NAME_LOWER__-desktop", "laptop", "10.0.0.1"); err != nil {
 		t.Fatalf("first StartSession returned an error: %v", err)
 	}
 	if _, err := svc.StartSession(
-		context.Background(), account, "kakehashi-desktop", "laptop", "10.0.0.2"); err != nil {
+		context.Background(), account, "__APP_NAME_LOWER__-desktop", "laptop", "10.0.0.2"); err != nil {
 		t.Fatalf("second StartSession returned an error: %v", err)
 	}
 

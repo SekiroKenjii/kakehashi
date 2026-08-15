@@ -7,12 +7,12 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	authzv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/authz/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/authz/v1/authzv1connect"
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	authzv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/authz/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/authz/v1/authzv1connect"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	"__GO_MODULE__/server/internal/modules/authz/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The administrator's surface. A separate route from the one above, because the module wraps this

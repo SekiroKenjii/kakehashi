@@ -1,8 +1,8 @@
 package account
 
 import (
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
 )
 
 // The permissions this module enforces in its own handlers.

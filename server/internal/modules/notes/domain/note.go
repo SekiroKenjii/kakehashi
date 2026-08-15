@@ -9,8 +9,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/text"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/text"
 )
 
 // MaxTitleLength caps a note's title.

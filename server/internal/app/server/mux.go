@@ -16,14 +16,14 @@ import (
 	"golang.org/x/net/http2"
 	"golang.org/x/net/http2/h2c"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/app"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // New builds the server's handler from the kernel's routes.
 //
 // Connect services and OIDC endpoints share one net/http mux; net/http resolves between them by
-// path specificity, so a catch-all at "/" and a service at "/kakehashi.notes.v1.NotesService/"
+// path specificity, so a catch-all at "/" and a service at "/__PROTO_PACKAGE__.notes.v1.NotesService/"
 // coexist.
 //
 // Every route carries its own policy and this enforces it: the kernel refuses at boot a route
@@ -80,7 +80,7 @@ func New(k *app.Kernel) *Server {
 		handler = authenticate(verifier, handler)
 	}
 	handler = logRequests(k.Log, handler)
-	handler = otelhttp.NewHandler(handler, "kakehashi",
+	handler = otelhttp.NewHandler(handler, app.ID,
 		// Without this every span is named after the handler pattern, so all of Connect's traffic
 		// collapses into one span name and the traces stop distinguishing procedures.
 		otelhttp.WithSpanNameFormatter(func(_ string, r *http.Request) string {

@@ -16,11 +16,11 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/op"
 	"golang.org/x/text/language"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/app"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/account/service"
+	"__GO_MODULE__/server/internal/modules/account/store"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // Options is everything the wire layer needs to stand up the provider.

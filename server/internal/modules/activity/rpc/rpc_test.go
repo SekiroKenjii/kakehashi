@@ -8,10 +8,10 @@ import (
 
 	"connectrpc.com/connect"
 
-	activityv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/activity/v1"
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	activityv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/activity/v1"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // recorded is one call to the service, kept so a test can assert what the wire layer decided rather
@@ -180,7 +180,7 @@ func TestTheDeviceAndAddressComeOffTheConnection(t *testing.T) {
 	req := connect.NewRequest(&activityv1.RecordClientEventRequest{
 		Kind: activityapi.KindThemeChanged,
 	})
-	req.Header().Set("User-Agent", "Kakehashi/1.1.2 (Windows NT 10.0; Win64)")
+	req.Header().Set("User-Agent", "__APP_NAME__/1.1.2 (Windows NT 10.0; Win64)")
 	// Two hops. The first value is the client; everything after it was added by hops we trust less.
 	req.Header().Set("X-Forwarded-For", "203.0.113.42, 10.0.0.1")
 
@@ -189,7 +189,7 @@ func TestTheDeviceAndAddressComeOffTheConnection(t *testing.T) {
 	}
 
 	got := feed.calls[0]
-	if got.device != "Kakehashi/1.1.2 (Windows NT 10.0; Win64)" {
+	if got.device != "__APP_NAME__/1.1.2 (Windows NT 10.0; Win64)" {
 		t.Errorf("device = %q, want the user agent header", got.device)
 	}
 	if got.ip != "203.0.113.42" {

@@ -13,9 +13,9 @@ import (
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/op"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/modules/account/store"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The provider's token-signing key: minted on first boot, parsed on every boot after, and

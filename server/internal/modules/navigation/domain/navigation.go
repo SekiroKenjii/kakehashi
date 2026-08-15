@@ -13,8 +13,8 @@ import (
 	"strings"
 	"unicode"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/text"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/text"
 )
 
 // MaxTitle is the longest a heading or an override may be. It matches the column, so a title that

@@ -13,7 +13,7 @@ func TestPlatformOfReadsTheFamilyOutOfAUserAgent(t *testing.T) {
 	}{
 		{
 			"this app on windows",
-			"Kakehashi/1.1.2 (Windows NT 10.0; Win64)",
+			"__APP_NAME__/1.1.2 (Windows NT 10.0; Win64)",
 			"Windows",
 		},
 		{
@@ -44,7 +44,7 @@ func TestPlatformOfReadsTheFamilyOutOfAUserAgent(t *testing.T) {
 		{
 			// Case is not something a user agent promises.
 			"lower case still resolves",
-			"kakehashi/1.1.2 (windows nt 10.0)",
+			"__APP_NAME_LOWER__/1.1.2 (windows nt 10.0)",
 			"Windows",
 		},
 		{
