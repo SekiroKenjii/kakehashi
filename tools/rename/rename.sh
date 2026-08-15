@@ -175,11 +175,25 @@ echo "rename: renamed $renamed paths"
 # placeholder's underscores on the way: a renamed file says file__smokeapp_… where a generated one
 # says file_smokeapp_…. Only regeneration produces the tree buf generate will next be checked
 # against.
-if command -v buf >/dev/null 2>&1; then
-    buf generate
+#
+# Not fatal. By this point the tree has already been substituted and renamed, and abandoning it
+# half-done is worse than a tree whose generated code is a rename behind — that still compiles,
+# because the substituted symbols are consistent with each other. It is the next buf generate that
+# would show a diff, so say so.
+regenerate() {
+    if ! command -v buf >/dev/null 2>&1; then
+        echo "buf is not installed"
+        return 1
+    fi
+    buf generate 2>&1 || return 1
+}
+
+if regenerate >/dev/null 2>&1; then
     echo "rename: regenerated the contract"
 else
-    echo "rename: buf is not installed — run 'buf generate' before the first build" >&2
+    echo "rename: could not regenerate the contract — buf and its protoc-gen-go and" >&2
+    echo "        protoc-gen-connect-go plugins have to be on PATH. Run 'buf generate'" >&2
+    echo "        before committing, or the next run of it will show a diff." >&2
 fi
 
 # ── 6. clean ───────────────────────────────────────────────────────────────────────────────────

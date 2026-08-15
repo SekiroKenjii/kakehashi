@@ -30,6 +30,15 @@ jobs:
         with:
           version: 1.72.0
 
+      # Before the scaffold, not after: the rename regenerates the contract, and buf shells out to
+      # these two. Reading the versions from go.mod works on the placeholder tree — the main
+      # module's own path is not what is being queried.
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
       # The rename's own self-check runs here: it exits non-zero if any placeholder or identity
       # string survives, so this step is a gate before the gates.
       - name: Scaffold
@@ -46,12 +55,6 @@ jobs:
       # Gate 3, on the tree that can carry it.
       - name: Lint the schema
         run: buf lint
-
-      - name: Install the code generators
-        working-directory: server
-        run: |
-          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
-          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
       # The rename moves the generated tree with the proto package. Regenerating has to reproduce
       # it byte for byte, or the substitution reached the schema and the output differently.
@@ -163,6 +166,15 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+
+      # Before the scaffold, not after: the rename regenerates the contract, and buf shells out to
+      # these two. Reading the versions from go.mod works on the placeholder tree — the main
+      # module's own path is not what is being queried.
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
       # Before the rename, which is the order the CLI uses: the unit file and the tree agree on
       # placeholder paths, and neither has to know what the project will be called.

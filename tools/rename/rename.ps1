@@ -164,11 +164,22 @@ Write-Host "rename: renamed $renamed paths"
 # placeholder's underscores on the way: a renamed file says file__smokeapp_… where a generated one
 # says file_smokeapp_…. Only regeneration produces the tree buf generate will next be checked
 # against.
+#
+# Not fatal. By this point the tree has already been substituted and renamed, and abandoning it
+# half-done is worse than a tree whose generated code is a rename behind — that still compiles,
+# because the substituted symbols are consistent with each other. It is the next buf generate that
+# would show a diff, so say so.
+$regenerated = $false
 if (Get-Command buf -ErrorAction SilentlyContinue) {
-    buf generate
+    buf generate 2>&1 | Out-Null
+    $regenerated = $LASTEXITCODE -eq 0
+}
+if ($regenerated) {
     Write-Host 'rename: regenerated the contract'
 } else {
-    Write-Warning "rename: buf is not installed — run 'buf generate' before the first build"
+    Write-Warning ("rename: could not regenerate the contract — buf and its protoc-gen-go and " +
+        "protoc-gen-connect-go plugins have to be on PATH. Run 'buf generate' before committing, " +
+        "or the next run of it will show a diff.")
 }
 
 # ── 6. clean ───────────────────────────────────────────────────────────────────────────────────
