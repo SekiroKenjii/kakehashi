@@ -18,7 +18,20 @@ tree into your project.
 
 ## Five minutes
 
-Use this repository as a GitHub template (or clone it), then name it:
+```sh
+go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@latest
+kakehashi new OrderDesk --module github.com/me/orderdesk
+cd orderdesk
+```
+
+`kakehashi new` fetches a template release, verifies its checksum, substitutes every placeholder,
+renames every path that holds one, removes the template's own documentation, and **fails if
+anything is left behind** — in a temporary directory, so a failure leaves nothing to clean up.
+`kakehashi doctor` says what the machine is missing first, `--bare` leaves the example module out,
+and `--dry-run` does the whole thing without writing the project.
+
+Starting from the GitHub "Use this template" button instead? The rename scripts are the same
+algorithm, run in place:
 
 ```sh
 tools/rename/rename.sh --app-name OrderDesk --go-module github.com/me/orderdesk
@@ -28,8 +41,7 @@ tools/rename/rename.sh --app-name OrderDesk --go-module github.com/me/orderdesk
 ./tools/rename/rename.ps1 -AppName OrderDesk -GoModule github.com/me/orderdesk
 ```
 
-The rename substitutes every placeholder, renames every path that holds one, removes the template's
-own documentation, and **fails if anything is left behind**. Then:
+Either way:
 
 ```sh
 docker compose up -d          # SQL Server, MongoDB, and the server

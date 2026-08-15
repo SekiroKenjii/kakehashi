@@ -134,10 +134,67 @@ Kiểm tra môi trường, in bảng ✅/⚠️/❌ + hướng khắc phục (wi
 
 ## 7. Acceptance criteria Phase 2
 
-- [ ] `kakehashi new demo --module example.com/demo` trên máy sạch có prerequisites
+- [~] `kakehashi new demo --module example.com/demo` trên máy sạch có prerequisites
       → project build xanh hai đầu, 3 gate xanh, < 10 phút.
-- [ ] `--bare` cho skeleton xanh không Notes.
-- [ ] `.kakehashi.json` đúng schema; không còn chuỗi identity nào khác trong project.
-- [ ] `doctor` phát hiện đúng khi gỡ từng prerequisite.
-- [ ] Fail atomic: giả lập lỗi giữa chừng → không để lại thư mục rác.
-- [ ] CI integration job (Linux + Windows) xanh, chạy mỗi push.
+      Server half verified for real: scaffold in ~1s, then `buf lint`, `buf generate` (diff clean),
+      `go build`, `go vet`, `go test`, archlint (61 packages) and `gofmt` — all green. The client
+      half is unverified here for the same reason as Phase 1 (no Windows, no .NET SDK);
+      `scaffold-client` is what proves it.
+- [x] `--bare` cho skeleton xanh không Notes.
+      Scaffolded and run: `buf lint`, `go build`, `go test`, archlint (53 packages) green, no
+      `Notes` module on either half.
+- [x] `.kakehashi.json` đúng schema; không còn chuỗi identity nào khác trong project.
+      The manifest round-trips against the documented shape byte for byte, and a test walks the
+      scaffolded tree asserting the manifest is the only file that names the generator. Stronger:
+      the CLI's output tree and `rename.sh`'s differ by exactly one file — the manifest.
+- [~] `doctor` phát hiện đúng khi gỡ từng prerequisite.
+      Verified for Go, .NET, buf, the protoc plugins, docker and git. The two Windows probes
+      (App Runtime, Developer Mode) have never run on Windows.
+- [x] Fail atomic: giả lập lỗi giữa chừng → không để lại thư mục rác.
+      Three failure points are tested — a unit file that disagrees with the tree, a surviving
+      placeholder, a destination that is not empty — and each leaves neither the destination nor a
+      working directory behind. Everything happens in a temp dir beside the destination, which is
+      also why the final move is a rename and not a copy.
+- [~] CI integration job (Linux + Windows) xanh, chạy mỗi push.
+      `scaffold-smoke.yml` now builds and tests the CLI, scaffolds with it on both operating
+      systems, and keeps a `rename-fallback` job. Written and locally rehearsed command by command;
+      the run itself is what the first push proves.
+
+### Điều phát sinh, không có trong spec
+
+1. **`templates/template.json` exists now, not in Phase 5.** The CLI needs to know which paths
+   belong to the template repository rather than to a project, and a list compiled into the binary
+   would leak a new template-only directory into every project until the CLI shipped again. The
+   descriptor holds that list, the `requiresCli` range 06-PHASE-5 §1.2 already specifies, and the
+   name of the setting `--auth` writes to. The rename scripts keep their own copy of the drop list;
+   that duplication ends when they do.
+2. **`new` regenerates the contract, and cannot be talked out of it.** A `.pb.go` embeds the file
+   descriptor as a string with byte-length prefixes, so substituting a shorter package name into it
+   leaves lengths that no longer match and the server fails to parse its own descriptor at startup.
+   protoc also derives Go symbol names and the per-language namespace options from the proto
+   package. `rename.sh` warns here; the CLI fails, and the failure is atomic.
+3. **The `new` preflight is a subset of the ❌ checks, not all of them.** Scaffolding needs buf and
+   the two protoc plugins. Building the result also needs Go and the .NET SDK — but a server-only
+   workflow on Linux creates projects perfectly well without .NET, and refusing there would be a
+   check that is wrong more often than it is right. `doctor` still reports the whole table.
+4. **`--auth none` is refused rather than ignored**, as §2 step 4 anticipated: Phase 1 did not
+   split auth into a unit. `inapp` and `browser` write `Auth:Mode` through the descriptor. The
+   rewrite goes through a JSON decode, so the settings file comes back with its keys in
+   alphabetical order — only when the mode actually changes.
+5. **Two packages beside the seven in §1.** `internal/semver`, because doctor's minimum versions
+   and the template's compatibility range are the same comparison written twice otherwise; and
+   `internal/tui`, which §1 asks for — it holds the wizard's refusal, and `new` with no arguments
+   calls it and turns that refusal into exit code 2.
+6. **`--root-namespace` and `--year` are not flags.** §2's table has neither and both derive
+   (from the app name and from the clock). The manifest records them anyway: an upgrade that cannot
+   reproduce the inputs cannot diff anything.
+7. **`version` does not reach the network.** §4 wants the newest remote version in it. That, and
+   `cache list|clean`, wait for the release channel to exist — until a `template/vX.Y.Z` tag is
+   published there is nothing to ask about. It prints the CLI version and what is cached.
+8. **Go ≥ 1.26 is a warning, not a failure, when the toolchain can download itself.** `go version`
+   reports what is on PATH, and since 1.21 an older Go fetches the toolchain a module asks for
+   unless `GOTOOLCHAIN=local` forbids it. Failing on the banner alone would refuse machines that
+   build the project fine.
+9. **Left alone, mentioned here:** `server/cmd/server/main.go` and the client's `ModuleCatalog.cs`
+   both point a reader at `docs/BOILERPLATE.md`, which no scaffolded project has. Pre-existing from
+   Phase 1, and fixing it is a comment change in two files nobody asked for.
