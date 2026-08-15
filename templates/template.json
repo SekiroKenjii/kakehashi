@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "templateVersion": "0.1.0",
+  "requiresCli": ">=0.1.0 <0.2.0",
+  "markersSchema": 1,
+  "unitsSchema": 1,
+  "units": "templates/units",
+  "exampleUnits": ["notes"],
+  "exclude": [
+    "docs/BOILERPLATE.md",
+    "docs/pivot",
+    "docs/brand",
+    "docs/adr/0016-one-example-module-in-the-template.md",
+    "docs/adr/0017-oidc-provider-is-core.md",
+    "docs/adr/0018-database-driven-navigation-stays.md",
+    "docs/adr/0019-cli-lives-in-the-monorepo.md",
+    "docs/adr/0020-no-second-example-module.md",
+    "tools/cli",
+    "tools/inventory",
+    "tools/rename",
+    "tools/units",
+    "templates/template.json",
+    ".github/workflows/scaffold-smoke.yml"
+  ],
+  "excludeLines": [
+    {
+      "file": "docs/adr/README.md",
+      "match": [
+        "0016-one-example-module",
+        "0017-oidc-provider",
+        "0018-database-driven-navigation",
+        "0019-cli-lives-in-the-monorepo",
+        "0020-no-second-example-module"
+      ]
+    }
+  ],
+  "move": [
+    { "from": "templates/README.scaffold.md", "to": "README.md" }
+  ],
+  "auth": {
+    "file": "client/src/App/__APP_NAME__.App/appsettings.json",
+    "path": ["Auth", "Mode"],
+    "modes": { "inapp": "InApp", "browser": "Browser" }
+  }
+}

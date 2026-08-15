@@ -85,7 +85,8 @@ Write-Host "rename: $AppName <$GoModule>"
 
 # ── 2. drop what belongs to the template ───────────────────────────────────────────────────────
 # These document the boilerplate and name it on every page. templates/units survives: the
-# scaffolded project reads it to remove the example module later.
+# scaffolded project reads it to remove the example module later. The list is the `exclude` array
+# of templates/template.json, which is what the CLI reads instead of this.
 $templateOnly = @(
     'docs/BOILERPLATE.md'
     'docs/pivot'
@@ -95,8 +96,10 @@ $templateOnly = @(
     'docs/adr/0018-database-driven-navigation-stays.md'
     'docs/adr/0019-cli-lives-in-the-monorepo.md'
     'docs/adr/0020-no-second-example-module.md'
+    'tools/cli'
     'tools/inventory'
     'tools/units'
+    'templates/template.json'
     '.github/workflows/scaffold-smoke.yml'
 )
 foreach ($path in $templateOnly) {
