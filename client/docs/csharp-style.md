@@ -118,6 +118,18 @@ dotnet format analyzers Kakehashi.slnx --diagnostics KH0001 KH0002 KH0003 KH0004
 
 Run it more than once if a file is heavily affected, then `dotnet format whitespace Kakehashi.slnx`.
 
+### Building after running dotnet format
+
+`dotnet format` leaves a compiler server holding the analyzer assemblies open, and a build that has
+to rewrite them fails with `CS2012: Cannot open ... Kakehashi.Analyzers.dll for writing`. Release
+them first:
+
+```bash
+dotnet build-server shutdown
+```
+
+CI does this between its format and build steps for the same reason.
+
 ## What enforces what
 
 | Rule | Enforced by |
