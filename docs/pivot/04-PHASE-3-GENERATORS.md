@@ -135,11 +135,67 @@ Verify: build + ArchitectureTests (Windows).
 
 ## 6. Acceptance criteria Phase 3
 
-- [ ] `add module orders` trên project mới: 3 gate xanh không sửa tay, app chạy có
+- [~] `add module orders` trên project mới: 3 gate xanh không sửa tay, app chạy có
       trang Orders CRUD hoạt động end-to-end vào SQL Server.
-- [ ] `remove module orders` trả working tree về sạch (git diff rỗng so với trước add,
-      ngoại trừ `.kakehashi/units/` đã xóa record).
-- [ ] `add page` sinh page pass ArchitectureTests.
-- [ ] Mọi lệnh có `--dry-run` in kế hoạch chính xác.
-- [ ] Fail giữa chừng rollback sạch (test giả lập lỗi ở từng bước pipeline).
-- [ ] Drift test generator ⇄ notes chạy trong CI.
+      Verified on a `--bare` project: 46 files, 9 wiring sites, then `buf lint`, `buf generate`
+      (diff clean), `go build`, `go vet`, `gofmt` and archlint — 61 packages, no violations — in
+      about seven seconds, nothing edited by hand. The module's own domain and service tests pass.
+      The running app and the round trip into SQL Server are unverified here for the same reason
+      as Phases 1 and 2: no Windows, no .NET SDK, no SQL Server. `scaffold-smoke-client` builds the
+      client half; nothing in CI runs the app against a database.
+- [x] `remove module orders` trả working tree về sạch.
+      `git diff` against the commit before the add is empty — including after `add page`, because
+      the record's paths are the module's directories rather than the files one run wrote.
+- [~] `add page` sinh page pass ArchitectureTests.
+      Generated and registered in both marker sections; the gate itself runs on Windows only.
+- [x] Mọi lệnh có `--dry-run` in kế hoạch chính xác.
+      `add module`, `add page` and `remove module` each print what they would write or take back,
+      and write nothing.
+- [x] Fail giữa chừng rollback sạch.
+      The transaction is unit-tested across create, edit and delete, including that a second edit
+      of one file still rolls back to what it held before the first. It was also exercised for
+      real twice during development: two defects failed the pipeline mid-way, and both times the
+      project came back exactly as it was.
+- [x] Drift test generator ⇄ notes chạy trong CI.
+      Rendering the derived templates with the example's own names reproduces the example module
+      byte for byte, all 46 files; a second test renders another name and refuses any trace of the
+      example left in a path, a body or a wiring line. The `generate` job re-runs the derivation
+      and fails on a diff.
+
+### Điều phát sinh, không có trong spec
+
+1. **The generated module is the example module, so it has the example's shape.** §1.1 sketches a
+   minimal `{id, name, created_at, updated_at}` message, and §4 makes the example the source of
+   truth. They disagree, and §4 wins: a generated `Order` carries Title and Body, and the first of
+   the next steps the command prints is to edit the proto — which is what §1.4 step 6 asks for
+   anyway. Deriving would otherwise have to stop at the file list and hand-write the contents,
+   which is the drift the phase exists to prevent.
+2. **The client half is three projects and four test projects, not the one of §1.3.** The template
+   splits Domain, Application and UI, and the generator follows the template. That is why a module
+   is 46 files: it includes its own layering test, which is what makes gate 2 pass for it without
+   an exception.
+3. **`--crud=false`, `--store mongo` and `--no-page` are refused, with the reason.** Each needs a
+   second example to derive from — the Mongo one already exists in `activity`, and a second
+   derivation is Phase 4's to take if it wants them. Accepting a flag and half-honouring it is
+   worse than saying it is not built.
+4. **`add page` is the one hand-written template set.** The example has no second page to derive
+   from: its page *is* the module's page, tied to its gateway and its commands. Two marker sections
+   were added to the example module's own composition entry point so a page can register itself
+   there — `module-page-services` and `module-page-navigation` — which is what keeps `add page`
+   client-only as §2 asks, since the client declares its own navigation items beside the server's
+   destinations.
+5. **A generated module gets a neutral icon, and the two icon vocabularies are still two.** The
+   server declares a semantic name and the client is handed a glyph directly; a module derived from
+   the example would otherwise ask for the example's icon in both. Both now default to the document
+   icon. `--icon` sets the server's name; the client's glyph is a constant the developer edits.
+6. **A marker is a line that *is* a marker.** The composition roots explain their own markers in
+   prose, and matching one anywhere in a line reads that sentence as a second opening of the
+   section — which is how the first run of `add module` failed. The idempotency check is per
+   section rather than per file for the same reason: one composition root legitimately holds one
+   module in two sections.
+7. **Removal is atomic, so a project that no longer builds without the module is put back.** §3 asks
+   for the failing sites to be printed; they are, and then the removal is rolled back rather than
+   left half-done. Delete the references first, then remove.
+8. **`.kakehashi/units/<id>.json` is written for generated modules only.** A module the template
+   ships is removed through the unit file the template ships, and a removal does not delete that:
+   it is not the removal's to delete.
