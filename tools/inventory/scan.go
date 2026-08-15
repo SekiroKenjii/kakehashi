@@ -3,8 +3,10 @@ package main
 import (
 	"bytes"
 	"encoding/csv"
+	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -69,6 +71,11 @@ func scan(root string, files []string, w io.Writer) error {
 		}
 
 		body, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(path)))
+		// A tracked file can be absent from the working tree — a unit applied but not yet
+		// committed. The path still scans; there is no content to.
+		if errors.Is(err, fs.ErrNotExist) {
+			continue
+		}
 		if err != nil {
 			return fmt.Errorf("read %s: %w", path, err)
 		}

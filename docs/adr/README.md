@@ -22,3 +22,8 @@ that supersedes the old one.
 | [0013](0013-client-owned-icon-vocabulary.md) | The server sends icon names; each client owns its glyph mapping |
 | [0014](0014-issuedtoken-is-not-an-aggregate-root.md) | `IssuedToken` lives inside `UserSession`, not as its own root |
 | [0015](0015-module-attachment-is-not-a-security-boundary.md) | Attach/detach is composition preference; the server enforces access |
+| [0016](0016-one-example-module-in-the-template.md) | The template ships one example module, and it is Notes |
+| [0017](0017-oidc-provider-is-core.md) | The OpenID Connect provider is CORE; its seed values are configuration |
+| [0018](0018-database-driven-navigation-stays.md) | Database-driven navigation stays CORE; only its editor leaves |
+| [0019](0019-cli-lives-in-the-monorepo.md) | The CLI lives in this repository, versioned by tag prefix |
+| [0020](0020-no-second-example-module.md) | No second example module; Notes already touches the event bus |

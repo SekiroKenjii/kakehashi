@@ -57,8 +57,9 @@ func coverage(root string, files []string, w io.Writer) (bool, error) {
 	return false, nil
 }
 
-// mapEntries reads the paths in the first column of the map's table rows. A row whose path ends in
-// "/" classifies a directory; anything else classifies exactly one file.
+// mapEntries reads the paths in the first column of the table rows under "## Map", and only there:
+// the document's other tables are a legend and a report, and their first column is prose. A row
+// whose path ends in "/" classifies a directory; anything else classifies exactly one file.
 func mapEntries(root string) ([]string, error) {
 	body, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(boilerplateMap)))
 	if err != nil {
@@ -66,9 +67,14 @@ func mapEntries(root string) ([]string, error) {
 	}
 
 	var entries []string
+	inMap := false
 	for _, line := range strings.Split(string(body), "\n") {
 		line = strings.TrimSpace(line)
-		if !strings.HasPrefix(line, "|") {
+		if strings.HasPrefix(line, "## ") {
+			inMap = line == "## Map"
+			continue
+		}
+		if !inMap || !strings.HasPrefix(line, "|") {
 			continue
 		}
 
