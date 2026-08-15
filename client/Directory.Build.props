@@ -30,6 +30,26 @@
     <AccelerateBuildsInVisualStudio>true</AccelerateBuildsInVisualStudio>
   </PropertyGroup>
 
+  <!--
+    The five layout rules `dotnet format` has no option for (KH0001-KH0006), applied to every
+    project but the two that define them. OutputItemType=Analyzer with ReferenceOutputAssembly
+    false loads them into the compiler without putting them on anybody's reference list;
+    Platform is undefined so the x64 WinUI projects do not ask an AnyCPU analyzer to be x64.
+  -->
+  <ItemGroup Condition="'$(MSBuildProjectName)' != 'Kakehashi.Analyzers'
+                        AND '$(MSBuildProjectName)' != 'Kakehashi.Analyzers.CodeFixes'">
+    <ProjectReference
+        Include="$(MSBuildThisFileDirectory)tools\Kakehashi.Analyzers\Kakehashi.Analyzers.csproj"
+        OutputItemType="Analyzer"
+        ReferenceOutputAssembly="false"
+        UndefineProperties="TargetFramework;Platform;RuntimeIdentifier" />
+    <ProjectReference
+        Include="$(MSBuildThisFileDirectory)tools\Kakehashi.Analyzers.CodeFixes\Kakehashi.Analyzers.CodeFixes.csproj"
+        OutputItemType="Analyzer"
+        ReferenceOutputAssembly="false"
+        UndefineProperties="TargetFramework;Platform;RuntimeIdentifier" />
+  </ItemGroup>
+
   <!-- Versions derived from Version.props (the SSOT). AssemblyVersion stays major.minor.0.0 so a
        patch bump does not break binding redirects; File/Informational carry the full version. -->
   <PropertyGroup>

@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The fixers for Kakehashi.Analyzers, in their own assembly because a code fix references the
+    workspace layer and an analyzer loaded by the compiler must not.
+
+    These are what makes the rules bulk-applicable: `dotnet format analyzers` fixes a whole
+    solution from them, which is how the rules were first applied.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp.Workspaces" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\Kakehashi.Analyzers\Kakehashi.Analyzers.csproj" />
+  </ItemGroup>
+
+</Project>
