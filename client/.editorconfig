@@ -198,12 +198,12 @@ dotnet_diagnostic.IDE2003.severity = suggestion
 #  Warnings, so TreatWarningsAsErrors makes them build errors. Each ships a
 #  fixer: `dotnet format analyzers` applies them across the solution.
 # ---------------------------------------------------------------------------
-dotnet_diagnostic.KH0001.severity = suggestion
-dotnet_diagnostic.KH0002.severity = suggestion
-dotnet_diagnostic.KH0003.severity = suggestion
-dotnet_diagnostic.KH0004.severity = suggestion
-dotnet_diagnostic.KH0005.severity = suggestion
-dotnet_diagnostic.KH0006.severity = suggestion
+dotnet_diagnostic.KH0001.severity = warning
+dotnet_diagnostic.KH0002.severity = warning
+dotnet_diagnostic.KH0003.severity = warning
+dotnet_diagnostic.KH0004.severity = warning
+dotnet_diagnostic.KH0005.severity = warning
+dotnet_diagnostic.KH0006.severity = warning
 
 # ============================================================================
 #  Naming rules

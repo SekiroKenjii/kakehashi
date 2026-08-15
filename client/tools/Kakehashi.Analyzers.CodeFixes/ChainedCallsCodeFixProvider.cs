@@ -8,7 +8,6 @@ using Microsoft.CodeAnalysis.CodeActions;
 using Microsoft.CodeAnalysis.CodeFixes;
 using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.CodeAnalysis.CSharp.Syntax;
-using Microsoft.CodeAnalysis.Formatting;
 
 namespace Kakehashi.Analyzers.CodeFixes;
 
@@ -16,14 +15,18 @@ namespace Kakehashi.Analyzers.CodeFixes;
 /// Breaks a chain of calls onto one line each (KH0006).
 /// </summary>
 /// <remarks>
-/// Only the line breaks are inserted here; the indentation of the new lines is left to the
-/// formatter, which is the thing that knows what a continuation line is indented by.
+/// The indentation is computed here rather than left to the formatter: a line break inside an
+/// expression is one the formatter preserves without owning, so an un-indented dot would survive
+/// `dotnet format` untouched.
 /// </remarks>
 [ExportCodeFixProvider(LanguageNames.CSharp, Name = nameof(ChainedCallsCodeFixProvider))]
 [Shared]
 public sealed class ChainedCallsCodeFixProvider : CodeFixProvider
 {
     private const string _title = "Put each call on its own line";
+
+    /// <summary>What a continuation line is indented by, matching .editorconfig indent_size.</summary>
+    private const string _indentUnit = "    ";
 
     /// <inheritdoc/>
     public override ImmutableArray<string> FixableDiagnosticIds { get; } =
@@ -97,12 +100,17 @@ public sealed class ChainedCallsCodeFixProvider : CodeFixProvider
             return document;
         }
 
-        var updated = chain
-            .ReplaceTokens(
-                dots,
-                (original, rewritten) => rewritten.WithLeadingTrivia(
-                    rewritten.LeadingTrivia.Insert(0, SyntaxFactory.LineFeed)))
-            .WithAdditionalAnnotations(Formatter.Annotation);
+        // The indentation is computed rather than left to the formatter: a line break inside an
+        // expression is one the formatter preserves without owning, so an un-indented dot survives
+        // `dotnet format` unchanged.
+        var text = await document.GetTextAsync(cancellationToken).ConfigureAwait(false);
+        var line = text.Lines.GetLineFromPosition(chain.SpanStart).ToString();
+        var indent = line.Substring(0, line.Length - line.TrimStart().Length) + _indentUnit;
+
+        var updated = chain.ReplaceTokens(
+            dots,
+            (original, rewritten) => rewritten.WithLeadingTrivia(
+                SyntaxFactory.LineFeed, SyntaxFactory.Whitespace(indent)));
 
         return document.WithSyntaxRoot(root.ReplaceNode(chain, updated));
     }
