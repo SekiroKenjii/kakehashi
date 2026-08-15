@@ -78,16 +78,16 @@ public static class TitleBarHelper
         if (hWnd == WindowInterop.GetActiveWindow())
         {
             WindowInterop.SendMessage(
-              hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.InActive, nint.Zero);
+                hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.InActive, nint.Zero);
             WindowInterop.SendMessage(
-              hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.Active, nint.Zero);
+                hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.Active, nint.Zero);
         }
         else
         {
             WindowInterop.SendMessage(
-              hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.Active, nint.Zero);
+                hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.Active, nint.Zero);
             WindowInterop.SendMessage(
-              hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.InActive, nint.Zero);
+                hWnd, WindowInterop.WindowMessage.Activate, WindowInterop.WindowActivation.InActive, nint.Zero);
         }
     }
 }

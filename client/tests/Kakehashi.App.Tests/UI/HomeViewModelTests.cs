@@ -213,7 +213,7 @@ public sealed class HomeViewModelTests
     public async Task Load_RequiredModuleTile_CannotDetach()
     {
         _attached = [Module(
-      "Auth", isRequired: true, navItem: new NavigationItem("Account", "", typeof(HomePage)))];
+            "Auth", isRequired: true, navItem: new NavigationItem("Account", "", typeof(HomePage)))];
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);

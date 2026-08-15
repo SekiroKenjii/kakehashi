@@ -61,7 +61,7 @@ public sealed class SystemBrowser : IBrowser
                     return new BrowserResult {
                         ResultType = BrowserResultType.Timeout,
                         Error = $"authentication timed out after {options.Timeout.TotalSeconds:F0}s; "
-                          + "the callback was not received",
+                            + "the callback was not received",
                     };
                 }
             }

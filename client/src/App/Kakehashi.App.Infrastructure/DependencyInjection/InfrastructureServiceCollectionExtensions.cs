@@ -82,8 +82,8 @@ public static class InfrastructureServiceCollectionExtensions
             .AddCallCredentials(async (context, metadata, serviceProvider) => {
                 var tokenProvider = serviceProvider.GetRequiredService<IAccessTokenProvider>();
                 var token = await tokenProvider
-              .GetAccessTokenAsync(context.CancellationToken)
-              .ConfigureAwait(false);
+                    .GetAccessTokenAsync(context.CancellationToken)
+                    .ConfigureAwait(false);
 
                 if (!string.IsNullOrEmpty(token))
                 {

@@ -551,16 +551,16 @@ public sealed partial class RolePermissionsViewModel : ViewModel
             grant => grant.PermissionKey, grant => grant.Scope, StringComparer.Ordinal);
 
         _allGroups = [.. _catalogue
-      .GroupBy(permission => permission.Category)
-      .Select(category => new PermissionGroupViewModel(
-          category.Key,
-          [.. category.Select(permission => {
-            var row = new GrantViewModel(
-                permission,
-                byKey.TryGetValue(permission.Key, out var scope) ? scope : string.Empty);
-            row.PropertyChanged += (_, _) => RecountChanges();
-            return row;
-          })]))];
+            .GroupBy(permission => permission.Category)
+            .Select(category => new PermissionGroupViewModel(
+                category.Key,
+                [.. category.Select(permission => {
+                    var row = new GrantViewModel(
+                        permission,
+                        byKey.TryGetValue(permission.Key, out var scope) ? scope : string.Empty);
+                    row.PropertyChanged += (_, _) => RecountChanges();
+                    return row;
+                })]))];
 
         ApplyPermissionFilter();
         RecountChanges();

@@ -90,7 +90,7 @@ public sealed class AccountViewModelTests
         _session = SignedIn();
         _sender.Send(Arg.Is<GetRemoteSessionsQuery>(request => request != null)).Returns(Task.FromResult(
             Result.Success<IReadOnlyList<RemoteSessionDto>>([
-              new RemoteSessionDto("s1", "Edge", "Windows", "1.2.3.4", Now(), Now(), IsCurrent: true),
+                new RemoteSessionDto("s1", "Edge", "Windows", "1.2.3.4", Now(), Now(), IsCurrent: true),
             ])));
         var viewModel = CreateViewModel();
 
@@ -132,8 +132,8 @@ public sealed class AccountViewModelTests
         _session = SignedIn();
         _sender.Send(Arg.Is<GetSecurityActivityQuery>(request => request != null)).Returns(Task.FromResult(
             Result.Success<IReadOnlyList<SecurityEventDto>>([
-              new SecurityEventDto("FailedSignIn", "Windows", "1.2.3.4", Now()),
-        new SecurityEventDto("SignedIn", "Windows", "1.2.3.4", Now()),
+                new SecurityEventDto("FailedSignIn", "Windows", "1.2.3.4", Now()),
+                new SecurityEventDto("SignedIn", "Windows", "1.2.3.4", Now()),
             ])));
         var viewModel = CreateViewModel();
 

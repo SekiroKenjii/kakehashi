@@ -45,7 +45,7 @@ public sealed class NotesModule : IModule
     public IReadOnlyList<NavigationItem> GetNavigationItems()
     {
         return [
-          new NavigationItem("Notes", "\uE70B", typeof(NotesPage)) { Id = "notes", Group = "Utilities" },
-  ];
+            new NavigationItem("Notes", "\uE70B", typeof(NotesPage)) { Id = "notes", Group = "Utilities" },
+        ];
     }
 }

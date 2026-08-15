@@ -44,17 +44,17 @@ public class NavigationViewHeaderBehavior : Behavior<NavigationView>
 
     public static readonly DependencyProperty DefaultHeaderProperty =
         DependencyProperty.Register(
-          nameof(DefaultHeader),
-          typeof(object),
-          typeof(NavigationViewHeaderBehavior),
-          new PropertyMetadata(null, (d, e) => _current?.UpdateHeader()));
+            nameof(DefaultHeader),
+            typeof(object),
+            typeof(NavigationViewHeaderBehavior),
+            new PropertyMetadata(null, (d, e) => _current?.UpdateHeader()));
 
     public static readonly DependencyProperty HeaderTemplateProperty =
-      DependencyProperty.RegisterAttached(
-        "HeaderTemplate",
-        typeof(DataTemplate),
-        typeof(NavigationViewHeaderBehavior),
-        new PropertyMetadata(null, (d, e) => _current?.UpdateHeaderTemplate()));
+        DependencyProperty.RegisterAttached(
+            "HeaderTemplate",
+            typeof(DataTemplate),
+            typeof(NavigationViewHeaderBehavior),
+            new PropertyMetadata(null, (d, e) => _current?.UpdateHeaderTemplate()));
 
     public static DataTemplate GetHeaderTemplate(Page page)
     {
@@ -67,11 +67,11 @@ public class NavigationViewHeaderBehavior : Behavior<NavigationView>
     }
 
     public static readonly DependencyProperty HeaderModeProperty =
-      DependencyProperty.RegisterAttached(
-        "HeaderMode",
-        typeof(NavigationViewHeaderMode),
-        typeof(NavigationViewHeaderBehavior),
-        new PropertyMetadata(NavigationViewHeaderMode.Always, (d, e) => _current?.UpdateHeader()));
+        DependencyProperty.RegisterAttached(
+            "HeaderMode",
+            typeof(NavigationViewHeaderMode),
+            typeof(NavigationViewHeaderBehavior),
+            new PropertyMetadata(NavigationViewHeaderMode.Always, (d, e) => _current?.UpdateHeader()));
 
     public static NavigationViewHeaderMode GetHeaderMode(Page page)
     {
@@ -84,11 +84,11 @@ public class NavigationViewHeaderBehavior : Behavior<NavigationView>
     }
 
     public static readonly DependencyProperty HeaderContextProperty =
-      DependencyProperty.RegisterAttached(
-        "HeaderContext",
-        typeof(object),
-        typeof(NavigationViewHeaderBehavior),
-        new PropertyMetadata(null, (d, e) => _current?.UpdateHeader()));
+        DependencyProperty.RegisterAttached(
+            "HeaderContext",
+            typeof(object),
+            typeof(NavigationViewHeaderBehavior),
+            new PropertyMetadata(null, (d, e) => _current?.UpdateHeader()));
 
     public static object GetHeaderContext(Page page)
     {

@@ -27,39 +27,39 @@ public static class NavigationIcons
     /// disagree with what <see cref="Resolve"/> will accept.
     /// </remarks>
     private static readonly (string Name, string Glyph)[] _vocabulary = [
-      // The screens this product ships, first, so the common case is the short walk.
-      ("home", "\uE80F"),
-  ("note", "\uE70B"),
-  ("activity", "\uF463"),
-  ("people", "\uE716"),
-  ("account", "\uE77B"),
-  ("permissions", "\uE192"),
-  ("navigation", "\uE700"),
-  ("settings", "\uE713"),
+        // The screens this product ships, first, so the common case is the short walk.
+        ("home", "\uE80F"),
+        ("note", "\uE70B"),
+        ("activity", "\uF463"),
+        ("people", "\uE716"),
+        ("account", "\uE77B"),
+        ("permissions", "\uE192"),
+        ("navigation", "\uE700"),
+        ("settings", "\uE713"),
 
-  // What somebody else's module is likely to be about. Named for the subject, not the glyph:
-  // the name is what a deployment stores and what a client with another font must resolve.
-  ("dashboard", "\uF246"),
-  ("report", "\uE9D2"),
-  ("folder", "\uE8B7"),
-  ("document", "\uE8A5"),
-  ("calendar", "\uE787"),
-  ("mail", "\uE715"),
-  ("message", "\uE8BD"),
-  ("alerts", "\uEA8F"),
-  ("tasks", "\uE9D5"),
-  ("search", "\uE721"),
-  ("tag", "\uE8EC"),
-  ("favourite", "\uE734"),
-  ("history", "\uE81C"),
-  ("security", "\uE72E"),
-  ("database", "\uE964"),
-  ("cloud", "\uE753"),
-  ("device", "\uE770"),
-  ("integration", "\uE839"),
-  ("tools", "\uE90F"),
-  ("help", "\uE897"),
-];
+        // What somebody else's module is likely to be about. Named for the subject, not the glyph:
+        // the name is what a deployment stores and what a client with another font must resolve.
+        ("dashboard", "\uF246"),
+        ("report", "\uE9D2"),
+        ("folder", "\uE8B7"),
+        ("document", "\uE8A5"),
+        ("calendar", "\uE787"),
+        ("mail", "\uE715"),
+        ("message", "\uE8BD"),
+        ("alerts", "\uEA8F"),
+        ("tasks", "\uE9D5"),
+        ("search", "\uE721"),
+        ("tag", "\uE8EC"),
+        ("favourite", "\uE734"),
+        ("history", "\uE81C"),
+        ("security", "\uE72E"),
+        ("database", "\uE964"),
+        ("cloud", "\uE753"),
+        ("device", "\uE770"),
+        ("integration", "\uE839"),
+        ("tools", "\uE90F"),
+        ("help", "\uE897"),
+    ];
 
     private static readonly Dictionary<string, string> _glyphs =
         _vocabulary.ToDictionary(entry => entry.Name, entry => entry.Glyph, StringComparer.Ordinal);

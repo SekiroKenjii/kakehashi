@@ -148,19 +148,19 @@ public sealed partial class ActivityViewModel : ViewModel
     /// <summary>The category filters. "All" first, and it is this client's own idea — see
     /// <see cref="ActivityCategories.All"/>.</summary>
     public ObservableCollection<ActivityChip> Chips { get; } = [
-      new("All", ActivityCategories.All),
-  new("Sign-ins", ActivityCategories.SignIn),
-  new("Security", ActivityCategories.Security),
-  new("System", ActivityCategories.System),
-];
+        new("All", ActivityCategories.All),
+        new("Sign-ins", ActivityCategories.SignIn),
+        new("Security", ActivityCategories.Security),
+        new("System", ActivityCategories.System),
+    ];
 
     /// <summary>The ranges offered, none of them longer than the feed is kept.</summary>
     public IReadOnlyList<ActivityRange> Ranges { get; } = [
-      new("Last 24 hours", 1),
-  new("Last 7 days", 7),
-  new("Last 30 days", 30),
-  new("Last 90 days", 90),
-];
+        new("Last 24 hours", 1),
+        new("Last 7 days", 7),
+        new("Last 30 days", 30),
+        new("Last 90 days", 90),
+    ];
 
     [ObservableProperty]
     public partial string SearchText { get; set; } = string.Empty;

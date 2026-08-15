@@ -113,9 +113,9 @@ public sealed class NavigationLayoutViewModelTests
         var viewModel = await LoadedAsync(
             [Group("utilities", "Utilities", 10)],
             [
-              Item("notes", "utilities", 10),
-        Item("nowhere", string.Empty, 20),
-        Item("a-module-this-build-lost", string.Empty, 30, orphan: true),
+                Item("notes", "utilities", 10),
+                Item("nowhere", string.Empty, 20),
+                Item("a-module-this-build-lost", string.Empty, 30, orphan: true),
             ]);
 
         Assert.Single(Heading(viewModel, "utilities").Screens);
@@ -234,9 +234,9 @@ public sealed class NavigationLayoutViewModelTests
         var viewModel = await LoadedAsync(
             [Group("utilities", "Utilities", 10), Group("administration", "Administration", 20)],
             [
-              Item("notes", "utilities", 5),
-        Item("activity", "utilities", 7),
-        Item("users", "administration", 3),
+                Item("notes", "utilities", 5),
+                Item("activity", "utilities", 7),
+                Item("users", "administration", 3),
             ]);
 
         // One heading re-ordered; the other untouched.

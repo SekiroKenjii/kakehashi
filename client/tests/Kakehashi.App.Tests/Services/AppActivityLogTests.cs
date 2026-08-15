@@ -136,8 +136,8 @@ public sealed class AppActivityLogTests : IDisposable
     {
         var settings = new InMemoryLocalSettings();
         settings.Save(_entriesKey, new List<AppActivityEntry> {
-    new("K", "Seeded", "d", DateTimeOffset.UtcNow),
-  });
+            new("K", "Seeded", "d", DateTimeOffset.UtcNow),
+        });
 
         var log = new AppActivityLog(settings);
 

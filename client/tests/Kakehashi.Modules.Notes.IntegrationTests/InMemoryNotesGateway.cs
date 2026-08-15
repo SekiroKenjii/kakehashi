@@ -35,8 +35,8 @@ internal sealed class InMemoryNotesGateway : INotesGateway
         }
 
         IReadOnlyList<NoteDto> ordered = [.. _notes.Values
-      .OrderByDescending(note => note.UpdatedAt)
-      .ThenByDescending(note => note.Id)];
+            .OrderByDescending(note => note.UpdatedAt)
+            .ThenByDescending(note => note.Id)];
 
         return Task.FromResult(Result.Success(ordered));
     }

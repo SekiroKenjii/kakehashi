@@ -232,10 +232,10 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              // Active and never signed in: the case that made the detail exceed the number above it.
-              // The counts test below cannot catch it — its one such account is also its one inactive.
-              new UserRow("1", "new@x.test", "New", "", "", true, null, now, 0, []),
-        new UserRow("2", "gone@x.test", "Gone", "", "", false, null, now, 0, []),
+                // Active and never signed in: the case that made the detail exceed the number above it.
+                // The counts test below cannot catch it — its one such account is also its one inactive.
+                new UserRow("1", "new@x.test", "New", "", "", true, null, now, 0, []),
+                new UserRow("2", "gone@x.test", "Gone", "", "", false, null, now, 0, []),
             ]));
 
         var sut = CreateUsers();
@@ -255,9 +255,9 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now.AddMinutes(-5), now, 2, ["Admin"]),
-        new UserRow("2", "bob@x.test", "Bob", "", "", true, now.AddDays(-90), now, 0, []),
-        new UserRow("3", "cy@x.test", "Cy", "", "", false, null, now, 0, ["Viewer"]),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now.AddMinutes(-5), now, 2, ["Admin"]),
+                new UserRow("2", "bob@x.test", "Bob", "", "", true, now.AddDays(-90), now, 0, []),
+                new UserRow("3", "cy@x.test", "Cy", "", "", false, null, now, 0, ["Viewer"]),
             ]));
 
         var sut = CreateUsers();
@@ -286,7 +286,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin", "Viewer"]),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin", "Viewer"]),
             ]));
 
         var sut = CreateUsers();
@@ -303,7 +303,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, []),
             ]));
         _dialogs.ShowConfirmAsync(
                 Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
@@ -325,7 +325,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", false, now, now, 0, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", false, now, now, 0, []),
             ]));
         _admins.SetUserActiveAsync("1", true, Arg.Any<CancellationToken>())
             .Returns(Result.Success());
@@ -395,8 +395,8 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin"]),
-        new UserRow("2", "bob@x.test", "Bob", "", "", true, now, now, 0, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin"]),
+                new UserRow("2", "bob@x.test", "Bob", "", "", true, now, now, 0, []),
             ]));
         _admins.ListUserSessionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([]));
@@ -424,7 +424,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin"]),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin"]),
             ]));
         _admins.ListUserSessionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([]));
@@ -443,11 +443,11 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, []),
             ]));
         _admins.ListUserSessionsAsync("1", Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([
-              new SessionRow("s1", "kakehashi-desktop", "Windows", "10.0.0.1", now, now, true),
+                new SessionRow("s1", "kakehashi-desktop", "Windows", "10.0.0.1", now, now, true),
             ]));
 
         var sut = CreateUsers();
@@ -467,7 +467,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin"]),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 1, ["Admin"]),
             ]));
         _admins.ListUserSessionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([]));
@@ -487,15 +487,15 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 5, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 5, []),
             ]));
         _admins.ListUserSessionsAsync("1", Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([
-              new SessionRow("s1", "c", "d1", "1.1.1.1", now, now, true),
-        new SessionRow("s2", "c", "d2", "1.1.1.2", now, now, false),
-        new SessionRow("s3", "c", "d3", "1.1.1.3", now, now, false),
-        new SessionRow("s4", "c", "d4", "1.1.1.4", now, now, false),
-        new SessionRow("s5", "c", "d5", "1.1.1.5", now, now, false),
+                new SessionRow("s1", "c", "d1", "1.1.1.1", now, now, true),
+                new SessionRow("s2", "c", "d2", "1.1.1.2", now, now, false),
+                new SessionRow("s3", "c", "d3", "1.1.1.3", now, now, false),
+                new SessionRow("s4", "c", "d4", "1.1.1.4", now, now, false),
+                new SessionRow("s5", "c", "d5", "1.1.1.5", now, now, false),
             ]));
 
         var sut = CreateUsers();
@@ -514,14 +514,14 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 5, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 5, []),
             ]));
         _admins.ListUserSessionsAsync("1", Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([
-              new SessionRow("s1", "c", "d1", "1.1.1.1", now, now, true),
-        new SessionRow("s2", "c", "d2", "1.1.1.2", now, now, false),
-        new SessionRow("s3", "c", "d3", "1.1.1.3", now, now, false),
-        new SessionRow("s4", "c", "d4", "1.1.1.4", now, now, false),
+                new SessionRow("s1", "c", "d1", "1.1.1.1", now, now, true),
+                new SessionRow("s2", "c", "d2", "1.1.1.2", now, now, false),
+                new SessionRow("s3", "c", "d3", "1.1.1.3", now, now, false),
+                new SessionRow("s4", "c", "d4", "1.1.1.4", now, now, false),
             ]));
         _admins.RevokeSessionAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success());
@@ -550,7 +550,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 0, []),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 0, []),
             ]));
         _admins.ListUserSessionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([]));
@@ -570,7 +570,7 @@ public sealed class AccessAdminViewModelTests
         var now = DateTimeOffset.Now;
         _admins.ListUsersAsync(Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<UserRow>>([
-              new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 0, ["Admin"]),
+                new UserRow("1", "ada@x.test", "Ada", "", "", true, now, now, 0, ["Admin"]),
             ]));
         _admins.ListUserSessionsAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
             .Returns(Result.Success<IReadOnlyList<SessionRow>>([]));

@@ -24,20 +24,20 @@ public static class HostNavigation
     /// the fallback for a client that has not been able to ask.
     /// </remarks>
     public static IReadOnlyList<NavigationItem> Items { get; } = [
-      new NavigationItem("Users", "", typeof(UsersPage)) {
-    Id = "account.users",
-    Group = "Administration",
-    RequiredPermission = PermissionKeys.ManageUsers,
-  },
-  new NavigationItem("Role permissions", "", typeof(RolePermissionsPage)) {
-    Id = "authz.roles",
-    Group = "Administration",
-    RequiredPermission = PermissionKeys.ManageRoles,
-  },
-  new NavigationItem("Navigation", "", typeof(NavigationLayoutPage)) {
-    Id = "navigation.layout",
-    Group = "Administration",
-    RequiredPermission = PermissionKeys.ManageNavigation,
-  },
-];
+        new NavigationItem("Users", "", typeof(UsersPage)) {
+            Id = "account.users",
+            Group = "Administration",
+            RequiredPermission = PermissionKeys.ManageUsers,
+        },
+        new NavigationItem("Role permissions", "", typeof(RolePermissionsPage)) {
+            Id = "authz.roles",
+            Group = "Administration",
+            RequiredPermission = PermissionKeys.ManageRoles,
+        },
+        new NavigationItem("Navigation", "", typeof(NavigationLayoutPage)) {
+            Id = "navigation.layout",
+            Group = "Administration",
+            RequiredPermission = PermissionKeys.ManageNavigation,
+        },
+    ];
 }

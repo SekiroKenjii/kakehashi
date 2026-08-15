@@ -68,7 +68,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
         IconQuery = string.Empty;
 
         IconChoices = [.. NavigationIcons.Names.Select(
-      name => new NavIconChoice(name, NavigationIcons.Resolve(name, NavigationIcons.Unknown)))];
+            name => new NavIconChoice(name, NavigationIcons.Resolve(name, NavigationIcons.Unknown)))];
     }
 
     /// <summary>The headings, in the order the pane draws them, with the unfiled bucket last.</summary>
@@ -592,7 +592,7 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
                 .SequenceEqual(_savedHeadingOrder, StringComparer.Ordinal);
 
         return [.. headings.Select((heading, index) => new NavGroupSpec(
-      heading.Id, heading.Title, renumber ? (index + 1) * 10 : heading.SortOrder))];
+            heading.Id, heading.Title, renumber ? (index + 1) * 10 : heading.SortOrder))];
     }
 
     /// <summary>The screens to post, with the orders worked out per heading.</summary>
@@ -676,23 +676,23 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
     {
         var unfiled = Unfiled();
         IReadOnlyList<NavigationPlacement> ungrouped = [
-          .. unfiled.Screens
-              .Where(screen => screen.IsVisible)
-        .Select(screen => new NavigationPlacement(
-            screen.Id, screen.Title, screen.Icon, IsEnabled: true)),
-  ];
-
-        IReadOnlyList<NavigationGroup> groups = [
-          .. Headings
-        .Where(heading => !heading.IsUnfiled)
-        .Select(heading => new NavigationGroup(
-            heading.Title,
-            [.. heading.Screens
+            .. unfiled.Screens
                 .Where(screen => screen.IsVisible)
                 .Select(screen => new NavigationPlacement(
-                    screen.Id, screen.Title, screen.Icon, IsEnabled: true))]))
-        .Where(group => group.Items.Count > 0),
-  ];
+                    screen.Id, screen.Title, screen.Icon, IsEnabled: true)),
+        ];
+
+        IReadOnlyList<NavigationGroup> groups = [
+            .. Headings
+                .Where(heading => !heading.IsUnfiled)
+                .Select(heading => new NavigationGroup(
+                    heading.Title,
+                    [.. heading.Screens
+                        .Where(screen => screen.IsVisible)
+                        .Select(screen => new NavigationPlacement(
+                            screen.Id, screen.Title, screen.Icon, IsEnabled: true))]))
+                .Where(group => group.Items.Count > 0),
+        ];
 
         return new NavigationLayout(ungrouped, groups);
     }

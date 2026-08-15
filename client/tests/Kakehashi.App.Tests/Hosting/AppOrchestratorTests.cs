@@ -25,9 +25,11 @@ public sealed class AppOrchestratorTests
     {
         var executed = new List<string>();
         var orchestrator = new AppOrchestrator(
-            [RecordingOrchestrator(3, "C", executed),
-       RecordingOrchestrator(1, "A", executed),
-       RecordingOrchestrator(2, "B", executed)],
+            [
+                RecordingOrchestrator(3, "C", executed),
+                RecordingOrchestrator(1, "A", executed),
+                RecordingOrchestrator(2, "B", executed),
+            ],
             new StartupContext(),
             _logger);
 

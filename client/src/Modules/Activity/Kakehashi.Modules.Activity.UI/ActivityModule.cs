@@ -51,7 +51,7 @@ public sealed class ActivityModule : IModule
     public IReadOnlyList<NavigationItem> GetNavigationItems()
     {
         return [
-          new NavigationItem("Activity", "\uF463", typeof(ActivityPage)) { Id = "activity", Group = "Utilities" },
-  ];
+            new NavigationItem("Activity", "\uF463", typeof(ActivityPage)) { Id = "activity", Group = "Utilities" },
+        ];
     }
 }

@@ -121,11 +121,11 @@ public sealed class NotesModuleIntegrationTests
 
         var created = await sender.Send(new CreateNoteCommand("Title", string.Empty));
         IReadOnlyList<object?> answers = [
-          created,
-    await sender.Send(new UpdateNoteCommand(created.Value.Id, "Retitled", string.Empty)),
-    await sender.Send(new GetNotesQuery()),
-    await sender.Send(new DeleteNoteCommand(created.Value.Id)),
-  ];
+            created,
+            await sender.Send(new UpdateNoteCommand(created.Value.Id, "Retitled", string.Empty)),
+            await sender.Send(new GetNotesQuery()),
+            await sender.Send(new DeleteNoteCommand(created.Value.Id)),
+        ];
 
         Assert.All(answers, answer => Assert.NotNull(answer));
     }

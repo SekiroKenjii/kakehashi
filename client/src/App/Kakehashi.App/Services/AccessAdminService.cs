@@ -142,8 +142,8 @@ public sealed class AccessAdminService : IAccessAdminService
                 .ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<RoleRow> rows = [.. reply.Roles.Select(r => new RoleRow(
-          r.Id, r.Name, r.Description, r.IsSystem, r.PermissionCount, r.AccountCount,
-          reply.PermissionTotal))];
+                r.Id, r.Name, r.Description, r.IsSystem, r.PermissionCount, r.AccountCount,
+                reply.PermissionTotal))];
 
             return rows;
         });
@@ -157,7 +157,7 @@ public sealed class AccessAdminService : IAccessAdminService
                 .ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<PermissionRow> rows = [.. reply.Permissions.Select(p => new PermissionRow(
-          p.Key, p.Name, p.Description, p.Category, p.IsHighRisk, p.IsScoped))];
+                p.Key, p.Name, p.Description, p.Category, p.IsHighRisk, p.IsScoped))];
 
             return rows;
         });
@@ -240,22 +240,22 @@ public sealed class AccessAdminService : IAccessAdminService
     public Task<Result> DeleteRoleAsync(string roleId, CancellationToken ct)
     {
         return CallVoidAsync(() => _authz.DeleteRoleAsync(
-              new AuthzV1.DeleteRoleRequest { RoleId = roleId }, cancellationToken: ct)
-              .ResponseAsync);
+            new AuthzV1.DeleteRoleRequest { RoleId = roleId }, cancellationToken: ct)
+                .ResponseAsync);
     }
 
     public Task<Result> AssignRoleAsync(string email, string roleId, CancellationToken ct)
     {
         return CallVoidAsync(() => _authz.AssignRoleAsync(
-              new AuthzV1.AssignRoleRequest { Email = email, RoleId = roleId },
-              cancellationToken: ct).ResponseAsync);
+            new AuthzV1.AssignRoleRequest { Email = email, RoleId = roleId },
+            cancellationToken: ct).ResponseAsync);
     }
 
     public Task<Result> UnassignRoleAsync(string email, string roleId, CancellationToken ct)
     {
         return CallVoidAsync(() => _authz.UnassignRoleAsync(
-              new AuthzV1.UnassignRoleRequest { Email = email, RoleId = roleId },
-              cancellationToken: ct).ResponseAsync);
+            new AuthzV1.UnassignRoleRequest { Email = email, RoleId = roleId },
+            cancellationToken: ct).ResponseAsync);
     }
 
     public Task<Result<IReadOnlyList<AuditRow>>> ListAuditAsync(int take, CancellationToken ct)
@@ -266,10 +266,10 @@ public sealed class AccessAdminService : IAccessAdminService
                 .ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<AuditRow> rows = [.. reply.Entries.Select(e => new AuditRow(
-          e.OccurredAt
-              .ToDateTimeOffset()
-              .ToLocalTime(), e.ActorName, e.Action, e.RoleName,
-          e.PermissionKey, e.Detail))];
+                e.OccurredAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(), e.ActorName, e.Action, e.RoleName,
+                e.PermissionKey, e.Detail))];
 
             return rows;
         });
@@ -301,20 +301,20 @@ public sealed class AccessAdminService : IAccessAdminService
                 StringComparer.Ordinal);
 
             IReadOnlyList<UserRow> rows = [.. accounts.Accounts.Select(a => new UserRow(
-          a.Id,
-          a.Email,
-          a.DisplayName,
-          a.Phone,
-          a.TeamId,
-          a.IsActive,
-          a.LastSignInAt is null ? null : a.LastSignInAt
-              .ToDateTimeOffset()
-              .ToLocalTime(),
-          a.CreatedAt
-              .ToDateTimeOffset()
-              .ToLocalTime(),
-          a.ActiveSessionCount,
-          byAccount.TryGetValue(a.Id, out var names) ? names : []))];
+                a.Id,
+                a.Email,
+                a.DisplayName,
+                a.Phone,
+                a.TeamId,
+                a.IsActive,
+                a.LastSignInAt is null ? null : a.LastSignInAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(),
+                a.CreatedAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(),
+                a.ActiveSessionCount,
+                byAccount.TryGetValue(a.Id, out var names) ? names : []))];
 
             return rows;
         });
@@ -323,8 +323,8 @@ public sealed class AccessAdminService : IAccessAdminService
     public Task<Result> SetUserActiveAsync(string accountId, bool isActive, CancellationToken ct)
     {
         return CallVoidAsync(() => _accounts.SetAccountActiveAsync(
-              new AccountV1.SetAccountActiveRequest { AccountId = accountId, IsActive = isActive },
-              cancellationToken: ct).ResponseAsync);
+            new AccountV1.SetAccountActiveRequest { AccountId = accountId, IsActive = isActive },
+            cancellationToken: ct).ResponseAsync);
     }
 
     public Task<Result<IReadOnlyList<SessionRow>>> ListUserSessionsAsync(
@@ -336,14 +336,14 @@ public sealed class AccessAdminService : IAccessAdminService
                 cancellationToken: ct).ResponseAsync.ConfigureAwait(false);
 
             IReadOnlyList<SessionRow> rows = [.. reply.Sessions.Select(s => new SessionRow(
-          s.Id, s.Client, s.Device, s.IpAddress,
-          s.CreatedAt
-              .ToDateTimeOffset()
-              .ToLocalTime(),
-          s.LastSeenAt
-              .ToDateTimeOffset()
-              .ToLocalTime(),
-          s.IsCurrent))];
+                s.Id, s.Client, s.Device, s.IpAddress,
+                s.CreatedAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(),
+                s.LastSeenAt
+                    .ToDateTimeOffset()
+                    .ToLocalTime(),
+                s.IsCurrent))];
 
             return rows;
         });

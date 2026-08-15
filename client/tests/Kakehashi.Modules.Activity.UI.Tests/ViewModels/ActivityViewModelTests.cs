@@ -81,10 +81,10 @@ public sealed class ActivityViewModelTests
     public async Task Load_GroupsRowsByTheReadersOwnDay()
     {
         Returns(Result.Success(Page([
-          Entry(ActivityKinds.SignedIn, _noon),
-    Entry(ActivityKinds.PasswordChanged, _noon.AddHours(-2), session: ""),
-    Entry(ActivityKinds.SignedIn, _noon.AddDays(-1)),
-  ])));
+            Entry(ActivityKinds.SignedIn, _noon),
+            Entry(ActivityKinds.PasswordChanged, _noon.AddHours(-2), session: ""),
+            Entry(ActivityKinds.SignedIn, _noon.AddDays(-1)),
+        ])));
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
@@ -103,11 +103,11 @@ public sealed class ActivityViewModelTests
     public async Task Load_CollapsesAConsecutiveRunFromOneSession()
     {
         Returns(Result.Success(Page([
-          Entry(ActivityKinds.SignedOut, _noon),
-    Entry(ActivityKinds.SignedOut, _noon.AddMinutes(-2)),
-    Entry(ActivityKinds.SignedOut, _noon.AddMinutes(-4)),
-    Entry(ActivityKinds.SignedIn, _noon.AddMinutes(-6)),
-  ])));
+            Entry(ActivityKinds.SignedOut, _noon),
+            Entry(ActivityKinds.SignedOut, _noon.AddMinutes(-2)),
+            Entry(ActivityKinds.SignedOut, _noon.AddMinutes(-4)),
+            Entry(ActivityKinds.SignedIn, _noon.AddMinutes(-6)),
+        ])));
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
@@ -124,10 +124,10 @@ public sealed class ActivityViewModelTests
     public async Task Load_DoesNotCollapseAcrossSessionsOrAcrossTheWindow()
     {
         Returns(Result.Success(Page([
-          Entry(ActivityKinds.SignedOut, _noon, session: "session-1"),
-    Entry(ActivityKinds.SignedOut, _noon.AddMinutes(-1), session: "session-2"),
-    Entry(ActivityKinds.SignedOut, _noon.AddHours(-3), session: "session-2"),
-  ])));
+            Entry(ActivityKinds.SignedOut, _noon, session: "session-1"),
+            Entry(ActivityKinds.SignedOut, _noon.AddMinutes(-1), session: "session-2"),
+            Entry(ActivityKinds.SignedOut, _noon.AddHours(-3), session: "session-2"),
+        ])));
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
@@ -144,9 +144,9 @@ public sealed class ActivityViewModelTests
     public async Task Load_NeverCollapsesFactsThatHaveNoSession()
     {
         Returns(Result.Success(Page([
-          Entry(ActivityKinds.PasswordChanged, _noon, session: ""),
-    Entry(ActivityKinds.PasswordChanged, _noon.AddMinutes(-1), session: ""),
-  ])));
+            Entry(ActivityKinds.PasswordChanged, _noon, session: ""),
+            Entry(ActivityKinds.PasswordChanged, _noon.AddMinutes(-1), session: ""),
+        ])));
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);

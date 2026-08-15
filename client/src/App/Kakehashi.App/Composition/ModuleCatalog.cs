@@ -13,8 +13,8 @@ namespace Kakehashi.App.Composition;
 internal static class ModuleCatalog
 {
     public static IReadOnlyList<IModule> Modules { get; } = [
-      new NotesModule(),
-  new ActivityModule(),
-  new AuthModule(),
-];
+        new NotesModule(),
+        new ActivityModule(),
+        new AuthModule(),
+    ];
 }

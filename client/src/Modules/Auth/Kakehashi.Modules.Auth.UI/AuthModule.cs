@@ -98,21 +98,21 @@ public sealed class AuthModule : IModule
         PersonPicture? avatar = null;
 
         return [
-          new NavigationItem("Account", "", typeof(AccountPage), NavigationItemPlacement.Footer) {
-      ContentFactory = () => {
-        avatar = new PersonPicture {
-          Width = 28,
-          Height = 28,
-          HorizontalAlignment = HorizontalAlignment.Left,
-          VerticalAlignment = VerticalAlignment.Center,
-        };
-        UpdateAvatar(avatar);
+            new NavigationItem("Account", "", typeof(AccountPage), NavigationItemPlacement.Footer) {
+                ContentFactory = () => {
+                    avatar = new PersonPicture {
+                        Width = 28,
+                        Height = 28,
+                        HorizontalAlignment = HorizontalAlignment.Left,
+                        VerticalAlignment = VerticalAlignment.Center,
+                    };
+                    UpdateAvatar(avatar);
 
-        return CreateAccountItemContent(avatar);
-      },
-      FlyoutFactory = () => CreateAccountFlyout(() => avatar),
-    },
-  ];
+                    return CreateAccountItemContent(avatar);
+                },
+                FlyoutFactory = () => CreateAccountFlyout(() => avatar),
+            },
+        ];
     }
 
     /// <summary>
@@ -191,8 +191,8 @@ public sealed class AuthModule : IModule
         var session = ContractServices.Provider.GetRequiredService<IAuthSessionAccessor>().Current;
         avatar.DisplayName = session?.DisplayName;
         avatar.Foreground = Microsoft.UI.Xaml.Application
-          .Current.Resources["TextOnAccentFillColorPrimaryBrush"] as SolidColorBrush;
+            .Current.Resources["TextOnAccentFillColorPrimaryBrush"] as SolidColorBrush;
         avatar.Background = Microsoft.UI.Xaml.Application
-          .Current.Resources["AccentFillColorDefaultBrush"] as SolidColorBrush;
+            .Current.Resources["AccentFillColorDefaultBrush"] as SolidColorBrush;
     }
 }

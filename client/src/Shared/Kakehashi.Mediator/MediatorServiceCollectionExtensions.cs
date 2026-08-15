@@ -13,10 +13,10 @@ namespace Kakehashi.Mediator;
 public static class MediatorServiceCollectionExtensions
 {
     private static readonly Type[] _handlerInterfaces = {
-  typeof(IRequestHandler<,>),
-  typeof(INotificationHandler<>),
-  typeof(IDomainEventHandler<>),
-};
+        typeof(IRequestHandler<,>),
+        typeof(INotificationHandler<>),
+        typeof(IDomainEventHandler<>),
+    };
 
     /// <summary>
     /// Registers the mediator core services and every request, notification and domain-event
