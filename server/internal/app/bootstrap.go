@@ -7,11 +7,11 @@ import (
 	"log/slog"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/config"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/mongodb"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/telemetry"
+	"__GO_MODULE__/server/internal/platform/config"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/eventbus"
+	"__GO_MODULE__/server/internal/platform/mongodb"
+	"__GO_MODULE__/server/internal/platform/telemetry"
 )
 
 // BootOptions is what a caller must decide. Everything else comes from the environment.

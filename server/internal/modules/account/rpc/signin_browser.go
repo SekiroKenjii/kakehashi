@@ -5,7 +5,7 @@ import (
 	"html/template"
 	"net/http"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/service"
+	"__GO_MODULE__/server/internal/modules/account/service"
 )
 
 // browserSignInHandler serves the form the /authorize endpoint redirects to, and completes the
@@ -29,7 +29,7 @@ var browserSignInPage = template.Must(template.New("login").Parse(`<!DOCTYPE htm
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Sign in — Kakehashi</title>
+<title>Sign in — __APP_TITLE__</title>
 <style>
   :root { color-scheme: light dark; }
   body {
@@ -64,7 +64,7 @@ var browserSignInPage = template.Must(template.New("login").Parse(`<!DOCTYPE htm
 </head>
 <body>
 <main>
-  <h1>Sign in to Kakehashi</h1>
+  <h1>Sign in to __APP_TITLE__</h1>
   <p class="sub">The desktop app is waiting for you to finish here.</p>
   {{if .Error}}<p class="error">{{.Error}}</p>{{end}}
   <form method="post" action="/account/browser/sign-in">

@@ -1,7 +1,7 @@
 package store
 
 import (
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/database"
 )
 
 // Migrations is the module's append-only schema history. Never edit one that has shipped.

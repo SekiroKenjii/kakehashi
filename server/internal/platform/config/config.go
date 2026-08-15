@@ -2,22 +2,22 @@
 //
 // The variables, in one place:
 //
-//	KAKEHASHI_ADDR                  listen address, default :8080
-//	KAKEHASHI_PUBLIC_URL            externally reachable origin; becomes the OIDC issuer
-//	KAKEHASHI_SHUTDOWN_TIMEOUT      how long modules get to stop, default 15s
-//	KAKEHASHI_SQLSERVER_DSN         required
-//	KAKEHASHI_SQLSERVER_MAX_OPEN_CONNS
-//	KAKEHASHI_MONGO_URI             required
-//	KAKEHASHI_MONGO_DATABASE
-//	KAKEHASHI_LOG_LEVEL             debug|info|warn|error
-//	KAKEHASHI_LOG_FORMAT            text to turn off JSON logging
-//	KAKEHASHI_TELEMETRY_ENABLED     false to keep OpenTelemetry off entirely
+//	__APP_NAME_UPPER___ADDR                  listen address, default :8080
+//	__APP_NAME_UPPER___PUBLIC_URL            externally reachable origin; becomes the OIDC issuer
+//	__APP_NAME_UPPER___SHUTDOWN_TIMEOUT      how long modules get to stop, default 15s
+//	__APP_NAME_UPPER___SQLSERVER_DSN         required
+//	__APP_NAME_UPPER___SQLSERVER_MAX_OPEN_CONNS
+//	__APP_NAME_UPPER___MONGO_URI             required
+//	__APP_NAME_UPPER___MONGO_DATABASE
+//	__APP_NAME_UPPER___LOG_LEVEL             debug|info|warn|error
+//	__APP_NAME_UPPER___LOG_FORMAT            text to turn off JSON logging
+//	__APP_NAME_UPPER___TELEMETRY_ENABLED     false to keep OpenTelemetry off entirely
 //	OTEL_SERVICE_NAME               standard, not prefixed
 //	OTEL_EXPORTER_OTLP_ENDPOINT     standard; absent means telemetry stays off
 //
-// Modules add their own under KAKEHASHI_<MODULE>_*; see Config.Module.
+// Modules add their own under __APP_NAME_UPPER___<MODULE>_*; see Config.Module.
 //
-// Everything the server reads is prefixed KAKEHASHI_, with two deliberate exceptions:
+// Everything the server reads is prefixed __APP_NAME_UPPER___, with two deliberate exceptions:
 // OTEL_SERVICE_NAME and OTEL_EXPORTER_OTLP_ENDPOINT are spelled the way the OpenTelemetry
 // specification spells them, so operators and collectors that know the standard names find them.
 package config
@@ -32,7 +32,7 @@ import (
 )
 
 // EnvPrefix namespaces every variable this server owns.
-const EnvPrefix = "KAKEHASHI_"
+const EnvPrefix = "__APP_NAME_UPPER___"
 
 // Config is the process-wide configuration, resolved once at boot.
 type Config struct {
@@ -57,7 +57,7 @@ type Config struct {
 // SQLServer configures the transactional store.
 type SQLServer struct {
 	// DSN is a go-mssqldb connection URL, e.g.
-	// "sqlserver://sa:pass@localhost:1433?database=kakehashi".
+	// "sqlserver://sa:pass@localhost:1433?database=__APP_NAME_LOWER__".
 	DSN string
 
 	// MaxOpenConns caps the pool. Load rejects values below one.
@@ -77,7 +77,7 @@ type Telemetry struct {
 
 	// Enabled reports whether traces and metrics are exported.
 	//
-	// Off unless an OTLP endpoint is configured, and forced off by KAKEHASHI_TELEMETRY_ENABLED=false
+	// Off unless an OTLP endpoint is configured, and forced off by __APP_NAME_UPPER___TELEMETRY_ENABLED=false
 	// whatever else is set. Console logging is unaffected either way.
 	//
 	// The endpoint itself is not stored: the OTLP exporters read OTEL_EXPORTER_OTLP_ENDPOINT
@@ -102,11 +102,11 @@ func Load() (*Config, error) {
 
 		Mongo: Mongo{
 			URI:      l.required(EnvPrefix + "MONGO_URI"),
-			Database: l.str(EnvPrefix+"MONGO_DATABASE", "kakehashi"),
+			Database: l.str(EnvPrefix+"MONGO_DATABASE", "__APP_NAME_LOWER__"),
 		},
 
 		Telemetry: Telemetry{
-			ServiceName: l.str("OTEL_SERVICE_NAME", "kakehashi-server"),
+			ServiceName: l.str("OTEL_SERVICE_NAME", "__APP_NAME_LOWER__-server"),
 			Enabled: l.boolean(EnvPrefix+"TELEMETRY_ENABLED", true) &&
 				os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "",
 		},
@@ -128,7 +128,7 @@ func Load() (*Config, error) {
 
 // Module returns a module's namespaced view of the environment.
 //
-// A module with ID "notes" reading key "PAGE_SIZE" gets KAKEHASHI_NOTES_PAGE_SIZE. The namespace
+// A module with ID "notes" reading key "PAGE_SIZE" gets __APP_NAME_UPPER___NOTES_PAGE_SIZE. The namespace
 // is the module ID for the same reason its tables are prefixed with it: two modules must not be
 // able to collide on a name, and the ID is the one identifier that is already unique.
 //

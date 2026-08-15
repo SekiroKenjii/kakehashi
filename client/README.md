@@ -1,6 +1,6 @@
-# Kakehashi — WinUI 3 client
+# __APP_TITLE__ — WinUI 3 client
 
-The Windows half of [Kakehashi](../README.md), built with **WinUI 3 / Windows App SDK** on
+The Windows half of [__APP_TITLE__](../README.md), built with **WinUI 3 / Windows App SDK** on
 **.NET 10**. It is organized as a **modular monolith**: one deployable app composed of independent
 feature modules, each split into three layers — **UI (host) → Application (use cases) → Domain**.
 
@@ -38,17 +38,17 @@ See [docs/architecture.md](docs/architecture.md) for the design and the rules.
 
 ```pwsh
 # Restore + build everything (the solution maps the WinUI projects to a concrete platform for you)
-dotnet build Kakehashi.slnx
+dotnet build __APP_NAME__.slnx
 
 # Run every test suite (unit + integration + architecture)
-dotnet test Kakehashi.slnx
+dotnet test __APP_NAME__.slnx
 
 # Run the app (unpackaged). Requires the Windows App Runtime.
-dotnet run --project src/App/Kakehashi.App/Kakehashi.App.csproj -p:Platform=x64
+dotnet run --project src/App/__APP_NAME__.App/__APP_NAME__.App.csproj -p:Platform=x64
 ```
 
 > Building the **WinUI executable on its own** requires a concrete platform, e.g.
-> `dotnet build src/App/Kakehashi.App/Kakehashi.App.csproj -p:Platform=x64`.
+> `dotnet build src/App/__APP_NAME__.App/__APP_NAME__.App.csproj -p:Platform=x64`.
 > Building the **solution** does not, because the solution maps platforms automatically.
 
 ## Packaging
@@ -56,10 +56,10 @@ dotnet run --project src/App/Kakehashi.App/Kakehashi.App.csproj -p:Platform=x64
 The host defaults to **unpackaged** (a plain `.exe`). Build a **packaged (MSIX)** app with:
 
 ```pwsh
-dotnet build src/App/Kakehashi.App/Kakehashi.App.csproj -c Release -p:Platform=x64 -p:Packaged=true
+dotnet build src/App/__APP_NAME__.App/__APP_NAME__.App.csproj -c Release -p:Platform=x64 -p:Packaged=true
 ```
 
-A packaged build also needs image assets under `src/App/Kakehashi.App/Assets/` (Visual Studio adds
+A packaged build also needs image assets under `src/App/__APP_NAME__.App/Assets/` (Visual Studio adds
 these automatically when you add a packaging project). The default unpackaged build needs no assets.
 
 ## Code style & quality gates
@@ -69,15 +69,15 @@ Consistency is enforced automatically — see the [CI workflow](.github/workflow
 | Gate | Mechanism |
 | --- | --- |
 | Formatting & naming | `.editorconfig` + `dotnet format --verify-no-changes` |
-| Layout rules with no .editorconfig option | `client/tools/Kakehashi.Analyzers` (KH0001-KH0006), build errors |
+| Layout rules with no .editorconfig option | `client/tools/__APP_NAME__.Analyzers` (KH0001-KH0006), build errors |
 | Compiler/analyzer warnings | `TreatWarningsAsErrors` in `Directory.Build.props` |
-| Dependency rules | `Kakehashi.ArchitectureTests` (fails the build if a layer is crossed) |
+| Dependency rules | `__APP_NAME__.ArchitectureTests` (fails the build if a layer is crossed) |
 | Package versions | Central Package Management (`Directory.Packages.props`) |
 
 Run the style check locally before pushing:
 
 ```pwsh
-dotnet format Kakehashi.slnx --verify-no-changes --severity warn
+dotnet format __APP_NAME__.slnx --verify-no-changes --severity warn
 ```
 
 ## Adding a new module
@@ -89,7 +89,7 @@ calls it. Use `/new-module`, which walks all three. The client-side shape is:
    Domain`. Never reference another module's projects.
 2. Implement `IModule` in the UI project (register services, expose navigation items).
 3. Declare the gateway port in Application; implement it in UI with the generated gRPC client.
-4. Register the module in `src/App/Kakehashi.App/Composition/ModuleCatalog.cs`.
+4. Register the module in `src/App/__APP_NAME__.App/Composition/ModuleCatalog.cs`.
 5. Add `*.Domain.Tests`, `*.Application.Tests`, `*.IntegrationTests` and `*.UI.Tests`, plus a
    `<Name>LayeringTests.cs` mirroring `AuthLayeringTests`.
 
@@ -105,7 +105,7 @@ unauthenticated, exactly as if the module were absent.
 
 ### Configure
 
-Point the `Auth` section of `src/App/Kakehashi.App/appsettings.json` at your OIDC provider:
+Point the `Auth` section of `src/App/__APP_NAME__.App/appsettings.json` at your OIDC provider:
 
 ```json
 {
@@ -118,7 +118,7 @@ Point the `Auth` section of `src/App/Kakehashi.App/appsettings.json` at your OID
 }
 ```
 
-In Kakehashi the issuer is the Go server itself: point `Authority` at it (`http://localhost:8080` in
+In __APP_TITLE__ the issuer is the Go server itself: point `Authority` at it (`http://localhost:8080` in
 development) once the `identity` module is in place. Any other OIDC provider works too — Entra ID,
 Auth0, Keycloak, Okta, or the public `https://demo.duendesoftware.com` — because the module only
 speaks the standard. Register this app as a **public** (PKCE) client and allow the loopback redirect

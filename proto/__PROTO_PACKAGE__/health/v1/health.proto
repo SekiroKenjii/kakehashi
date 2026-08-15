@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+// Liveness and round-trip verification.
+//
+// This is the smallest possible contract, and it exists to prove the whole chain works before any
+// real feature depends on it: the schema generates, the server mounts it, the client's generated
+// stub reaches it, and the answer comes back with the shape both sides expected. When the client's
+// home page reports "Connected", this is what it called.
+package __PROTO_PACKAGE__.health.v1;
+
+option csharp_namespace = "__ROOT_NAMESPACE__.Health.V1";
+
+import "google/protobuf/timestamp.proto";
+
+// HealthService answers whether the server is up and able to respond.
+//
+// It deliberately touches no database. A health check that fails when the database is slow tells
+// you the database is slow, not whether the process is alive, and conflating the two makes both
+// signals useless. Storage readiness belongs in its own check.
+service HealthService {
+  // Ping echoes the caller's message back with the server's clock.
+  //
+  // The echo is not decoration. It proves the request body was actually parsed rather than a
+  // status code being returned by something in front of the server, which is exactly the failure a
+  // reverse proxy in the wrong mode produces.
+  rpc Ping(PingRequest) returns (PingResponse);
+}
+
+// PingRequest carries an arbitrary string for the server to echo.
+message PingRequest {
+  // Any value. The server returns it unchanged; an empty string is valid.
+  string message = 1;
+}
+
+// PingResponse carries the echoed message and the server's view of the current time.
+message PingResponse {
+  // The message from the request, unchanged.
+  string message = 1;
+
+  // The server's clock when it answered.
+  //
+  // No "utc" suffix: google.protobuf.Timestamp is defined as UTC since the Unix epoch, so the
+  // suffix would restate the type. Clients compare it against their own clock to surface the skew
+  // that otherwise shows up much later as tokens that expire early or refuse to validate.
+  google.protobuf.Timestamp server_time = 2;
+}

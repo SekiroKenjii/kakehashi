@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // The trap this file exists to keep shut.

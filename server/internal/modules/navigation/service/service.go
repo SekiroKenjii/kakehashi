@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
+	"__GO_MODULE__/server/internal/modules/navigation/domain"
 )
 
 // Store is the persistence these use cases need, declared here rather than in store/.

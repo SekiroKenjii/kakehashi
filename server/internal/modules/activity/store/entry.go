@@ -13,9 +13,9 @@ import (
 	"go.mongodb.org/mongo-driver/v2/mongo"
 	"go.mongodb.org/mongo-driver/v2/mongo/options"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/mongodb"
+	"__GO_MODULE__/server/internal/modules/activity/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/mongodb"
 )
 
 // collection must start with the module's ID and an underscore; EnsureIndexes fails the boot

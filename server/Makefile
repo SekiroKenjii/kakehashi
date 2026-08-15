@@ -1,11 +1,11 @@
-# Kakehashi server — build, test, lint.
+# __APP_NAME__ server — build, test, lint.
 #
 # Run `make` on its own to see what is available. Everything here is also a plain go command; the
 # targets exist so that CI and a developer run the identical thing, which is the only way the
 # "works on my machine" gap stays closed.
 
-BINARY  := kakehashi
-MODULE  := github.com/SekiroKenjii/kakehashi/server
+BINARY  := __APP_NAME_LOWER__
+MODULE  := __GO_MODULE__/server
 
 VERSION ?= $(shell git describe --tags --always --dirty 2>/dev/null || echo 0.1.0-dev)
 COMMIT  ?= $(shell git rev-parse --short HEAD 2>/dev/null || echo unknown)

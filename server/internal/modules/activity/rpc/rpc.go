@@ -23,11 +23,11 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	activityv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/activity/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/activity/v1/activityv1connect"
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	activityv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/activity/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/activity/v1/activityv1connect"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // feed is what this wire layer needs of the service.

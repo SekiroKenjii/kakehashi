@@ -3,7 +3,7 @@ package rpc
 import (
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/modules/account/domain"
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 )

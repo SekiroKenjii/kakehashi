@@ -41,20 +41,24 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `.claude/skills/ui-testing/ui-tests.ps1` | CORE | its page list names the example screens — Phase 1 derives it |
 | `.editorconfig` | CORE | |
 | `.gitattributes` | CORE | |
-| `.github/workflows/` | CORE | placeholders: `.slnx` and `.csproj` paths |
+| `.github/workflows/ci.yml` | CORE | placeholders: `.slnx` and `.csproj` paths |
+| `.github/workflows/scaffold-smoke.yml` | CORE | template repo only — renames the tree, then runs the gates |
 | `.gitignore` | CORE | |
 | `.vscode/` | CORE | placeholders: `KAKEHASHI_*` variable names, the development DSN |
 | `CLAUDE.md` | CORE | Phase 1 splits it: this repository's, and the scaffolded project's |
 | `CONTRIBUTING.md` | CORE | |
 | `LICENSE` | CORE | placeholders: `__AUTHOR__`, year |
-| `README.md` | IDENTITY | the template repository's own README; scaffolded projects get `templates/README.scaffold.md` (Phase 1) |
+| `README.md` | IDENTITY | the template repository's own README; the rename replaces it with `templates/README.scaffold.md` |
 | `buf.gen.yaml` | CORE | placeholder: `__GO_MODULE__` in `go_package_prefix` |
 | `buf.yaml` | CORE | |
 | `docker-compose.yml` | CORE | placeholders: project, database, container and `KAKEHASHI_*` names |
-| `templates/units/` | CORE | template repo only — the removable-unit files |
+| `templates/README.scaffold.md` | CORE | template repo only — becomes the scaffolded project's README |
+| `templates/units/` | CORE | the removable-unit files; these ship, so a project can still remove the example |
 | `tools/check-comment-length.sh` | CORE | |
 | `tools/check-doc-comments.sh` | CORE | |
 | `tools/inventory/` | CORE | template repo only — the scanner and the coverage check |
+| `tools/rename/` | CORE | template repo only — the rename scripts, which delete themselves |
+| `tools/units/` | CORE | template repo only — applies a removable unit before the rename |
 
 ### docs/
 
@@ -80,12 +84,12 @@ two drifting: a file added without a row fails it, and so does a row left behind
 
 | Path | Group | Notes |
 | --- | --- | --- |
-| `proto/kakehashi/account/v1/` | CORE | placeholders: directory name, `package`, `go_package`, `csharp_namespace` |
-| `proto/kakehashi/activity/v1/` | EXAMPLE | unit `activity` |
-| `proto/kakehashi/authz/v1/` | CORE | |
-| `proto/kakehashi/health/v1/` | CORE | |
-| `proto/kakehashi/navigation/v1/` | CORE | |
-| `proto/kakehashi/notes/v1/` | EXAMPLE | unit `notes` |
+| `proto/__PROTO_PACKAGE__/account/v1/` | CORE | placeholders: directory name, `package`, `go_package`, `csharp_namespace` |
+| `proto/__PROTO_PACKAGE__/activity/v1/` | EXAMPLE | unit `activity` |
+| `proto/__PROTO_PACKAGE__/authz/v1/` | CORE | |
+| `proto/__PROTO_PACKAGE__/health/v1/` | CORE | |
+| `proto/__PROTO_PACKAGE__/navigation/v1/` | CORE | |
+| `proto/__PROTO_PACKAGE__/notes/v1/` | EXAMPLE | unit `notes` |
 
 ### server/
 
@@ -100,12 +104,12 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `server/cmd/server/main.go` | CORE (M) | markers: `module-imports`, `module-registrations` |
 | `server/cmd/server/main_test.go` | CORE (M) | marker: `module-ids` |
 | `server/internal/app/` | CORE | the kernel |
-| `server/internal/gen/kakehashi/account/v1/` | CORE | generated; the `kakehashi` path segment is `__PROTO_PACKAGE__` |
-| `server/internal/gen/kakehashi/activity/v1/` | EXAMPLE | unit `activity` |
-| `server/internal/gen/kakehashi/authz/v1/` | CORE | |
-| `server/internal/gen/kakehashi/health/v1/` | CORE | |
-| `server/internal/gen/kakehashi/navigation/v1/` | CORE | |
-| `server/internal/gen/kakehashi/notes/v1/` | EXAMPLE | unit `notes` |
+| `server/internal/gen/__PROTO_PACKAGE__/account/v1/` | CORE | generated; the `kakehashi` path segment is `__PROTO_PACKAGE__` |
+| `server/internal/gen/__PROTO_PACKAGE__/activity/v1/` | EXAMPLE | unit `activity` |
+| `server/internal/gen/__PROTO_PACKAGE__/authz/v1/` | CORE | |
+| `server/internal/gen/__PROTO_PACKAGE__/health/v1/` | CORE | |
+| `server/internal/gen/__PROTO_PACKAGE__/navigation/v1/` | CORE | |
+| `server/internal/gen/__PROTO_PACKAGE__/notes/v1/` | EXAMPLE | unit `notes` |
 | `server/internal/modules/account/` | CORE | the OpenID Connect provider — D2 |
 | `server/internal/modules/activity/` | EXAMPLE | unit `activity` |
 | `server/internal/modules/authz/` | CORE | the permission mechanism — D2 |
@@ -122,7 +126,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/.editorconfig` | CORE | |
 | `client/Directory.Build.props` | CORE | |
 | `client/Directory.Packages.props` | CORE | |
-| `client/Kakehashi.slnx` | CORE (M) | file renamed by placeholder; markers: `module-projects`, `module-test-projects` |
+| `client/__APP_NAME__.slnx` | CORE (M) | file renamed by placeholder; markers: `module-projects`, `module-test-projects` |
 | `client/README.md` | CORE | |
 | `client/Version.props` | CORE | |
 | `client/global.json` | CORE | |
@@ -152,27 +156,27 @@ two drifting: a file added without a row fails it, and so does a row left behind
 
 | Path | Group | Notes |
 | --- | --- | --- |
-| `client/src/App/Kakehashi.App.Infrastructure/` | CORE | directory and project renamed by placeholder |
-| `client/src/App/Kakehashi.App/` | CORE | directory and project renamed by placeholder |
-| `client/src/App/Kakehashi.App/Assets/` | IDENTITY | the torii mark at every size; Phase 1 replaces it with neutral art |
-| `client/src/App/Kakehashi.App/Composition/ModuleCatalog.cs` | CORE (M) | markers: `module-imports`, `module-registrations` |
-| `client/src/App/Kakehashi.App/Kakehashi.App.csproj` | CORE (M) | marker: `module-projects` |
-| `client/src/App/Kakehashi.App/Package.appxmanifest` | CORE | placeholders: `Identity Name`, `Publisher`, `DisplayName`, `PublisherDisplayName` |
-| `client/src/App/Kakehashi.App/Services/AccessAdminService.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/Services/NavigationAdminService.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/AdminFormat.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/HomePage.ViewModel.cs` | CORE | `_shippedModuleCount` counts the shipped modules by hand; Phase 1 derives it from `ModuleCatalog` |
-| `client/src/App/Kakehashi.App/UI/HostNavigation.cs` | CORE | its three entries belong to unit `admin-ui`; marked in Phase 1 |
-| `client/src/App/Kakehashi.App/UI/NavigationLayoutPage.Nodes.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/NavigationLayoutPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/NavigationLayoutPage.xaml` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/NavigationLayoutPage.xaml.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/RolePermissionsPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/RolePermissionsPage.xaml` | EXAMPLE | unit `admin-ui`; hardcodes `#C42B1C` on the toggles |
-| `client/src/App/Kakehashi.App/UI/RolePermissionsPage.xaml.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/UsersPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/UsersPage.xaml` | EXAMPLE | unit `admin-ui` |
-| `client/src/App/Kakehashi.App/UI/UsersPage.xaml.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App.Infrastructure/` | CORE | directory and project renamed by placeholder |
+| `client/src/App/__APP_NAME__.App/` | CORE | directory and project renamed by placeholder |
+| `client/src/App/__APP_NAME__.App/Assets/` | IDENTITY | the torii mark at every size; Phase 1 replaces it with neutral art |
+| `client/src/App/__APP_NAME__.App/Composition/ModuleCatalog.cs` | CORE (M) | markers: `module-imports`, `module-registrations` |
+| `client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj` | CORE (M) | marker: `module-projects` |
+| `client/src/App/__APP_NAME__.App/Package.appxmanifest` | CORE | placeholders: `Identity Name`, `Publisher`, `DisplayName`, `PublisherDisplayName` |
+| `client/src/App/__APP_NAME__.App/Services/AccessAdminService.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/Services/NavigationAdminService.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/AdminFormat.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/HomePage.ViewModel.cs` | CORE | `_shippedModuleCount` counts the shipped modules by hand; Phase 1 derives it from `ModuleCatalog` |
+| `client/src/App/__APP_NAME__.App/UI/HostNavigation.cs` | CORE | its three entries belong to unit `admin-ui`; marked in Phase 1 |
+| `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.Nodes.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.xaml` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.xaml.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/RolePermissionsPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/RolePermissionsPage.xaml` | EXAMPLE | unit `admin-ui`; hardcodes `#C42B1C` on the toggles |
+| `client/src/App/__APP_NAME__.App/UI/RolePermissionsPage.xaml.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/UsersPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/UsersPage.xaml` | EXAMPLE | unit `admin-ui` |
+| `client/src/App/__APP_NAME__.App/UI/UsersPage.xaml.cs` | EXAMPLE | unit `admin-ui` |
 
 ### client/src/ — modules and shared
 
@@ -187,28 +191,28 @@ two drifting: a file added without a row fails it, and so does a row left behind
 
 | Path | Group | Notes |
 | --- | --- | --- |
-| `client/tests/Kakehashi.Analyzers.Tests/` | CORE | |
-| `client/tests/Kakehashi.App.Infrastructure.Tests/` | CORE | |
-| `client/tests/Kakehashi.App.Tests/` | CORE | `"Notes"` appears as a fake module name; it names no real assembly |
-| `client/tests/Kakehashi.App.Tests/UI/AccessAdminViewModelTests.cs` | EXAMPLE | unit `admin-ui` |
-| `client/tests/Kakehashi.App.Tests/UI/NavigationLayoutViewModelTests.cs` | EXAMPLE | unit `admin-ui` |
-| `client/tests/Kakehashi.ArchitectureTests/` | CORE | gate 2 |
-| `client/tests/Kakehashi.ArchitectureTests/ActivityLayeringTests.cs` | EXAMPLE | unit `activity` |
-| `client/tests/Kakehashi.ArchitectureTests/Kakehashi.ArchitectureTests.csproj` | CORE (M) | marker: `module-projects` |
-| `client/tests/Kakehashi.ArchitectureTests/NotesLayeringTests.cs` | EXAMPLE | unit `notes` |
-| `client/tests/Kakehashi.Mediator.Tests/` | CORE | |
-| `client/tests/Kakehashi.Modules.Activity.Application.Tests/` | EXAMPLE | unit `activity` |
-| `client/tests/Kakehashi.Modules.Activity.UI.Tests/` | EXAMPLE | unit `activity` |
-| `client/tests/Kakehashi.Modules.Auth.Application.Tests/` | CORE | |
-| `client/tests/Kakehashi.Modules.Auth.Domain.Tests/` | CORE | |
-| `client/tests/Kakehashi.Modules.Auth.IntegrationTests/` | CORE | |
-| `client/tests/Kakehashi.Modules.Auth.UI.Tests/` | CORE | |
-| `client/tests/Kakehashi.Modules.Notes.Application.Tests/` | EXAMPLE | unit `notes` |
-| `client/tests/Kakehashi.Modules.Notes.Domain.Tests/` | EXAMPLE | unit `notes` |
-| `client/tests/Kakehashi.Modules.Notes.IntegrationTests/` | EXAMPLE | unit `notes` |
-| `client/tests/Kakehashi.Modules.Notes.UI.Tests/` | EXAMPLE | unit `notes` |
-| `client/tools/Kakehashi.Analyzers/` | CORE | |
-| `client/tools/Kakehashi.Analyzers.CodeFixes/` | CORE | |
+| `client/tests/__APP_NAME__.Analyzers.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.App.Infrastructure.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.App.Tests/` | CORE | `"Notes"` appears as a fake module name; it names no real assembly |
+| `client/tests/__APP_NAME__.App.Tests/UI/AccessAdminViewModelTests.cs` | EXAMPLE | unit `admin-ui` |
+| `client/tests/__APP_NAME__.App.Tests/UI/NavigationLayoutViewModelTests.cs` | EXAMPLE | unit `admin-ui` |
+| `client/tests/__APP_NAME__.ArchitectureTests/` | CORE | gate 2 |
+| `client/tests/__APP_NAME__.ArchitectureTests/ActivityLayeringTests.cs` | EXAMPLE | unit `activity` |
+| `client/tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj` | CORE (M) | marker: `module-projects` |
+| `client/tests/__APP_NAME__.ArchitectureTests/NotesLayeringTests.cs` | EXAMPLE | unit `notes` |
+| `client/tests/__APP_NAME__.Mediator.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.Modules.Activity.Application.Tests/` | EXAMPLE | unit `activity` |
+| `client/tests/__APP_NAME__.Modules.Activity.UI.Tests/` | EXAMPLE | unit `activity` |
+| `client/tests/__APP_NAME__.Modules.Auth.Application.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.Modules.Auth.Domain.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.Modules.Auth.IntegrationTests/` | CORE | |
+| `client/tests/__APP_NAME__.Modules.Auth.UI.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.Modules.Notes.Application.Tests/` | EXAMPLE | unit `notes` |
+| `client/tests/__APP_NAME__.Modules.Notes.Domain.Tests/` | EXAMPLE | unit `notes` |
+| `client/tests/__APP_NAME__.Modules.Notes.IntegrationTests/` | EXAMPLE | unit `notes` |
+| `client/tests/__APP_NAME__.Modules.Notes.UI.Tests/` | EXAMPLE | unit `notes` |
+| `client/tools/__APP_NAME__.Analyzers/` | CORE | |
+| `client/tools/__APP_NAME__.Analyzers.CodeFixes/` | CORE | |
 
 ## Not copied into a scaffolded project
 
@@ -217,10 +221,17 @@ CORE to this repository, absent from what `kakehashi new` writes:
 ```text
 docs/BOILERPLATE.md
 docs/pivot/
+docs/brand/
 docs/adr/0016-…  through  docs/adr/0020-…
-templates/
+templates/README.scaffold.md   (moved to README.md)
 tools/inventory/
+tools/rename/
+tools/units/
+.github/workflows/scaffold-smoke.yml
 ```
+
+`tools/rename/rename.sh` deletes exactly this list, and its self-check fails if anything it left
+behind still names the template.
 
 Everything else marked IDENTITY is dropped or neutralised rather than merely skipped.
 
@@ -251,10 +262,10 @@ Where they are, today:
 | --- | --- |
 | `server/cmd/server/main.go` | `module-imports`, `module-registrations` |
 | `server/cmd/server/main_test.go` | `module-ids` |
-| `client/Kakehashi.slnx` | `module-projects`, `module-test-projects` |
-| `client/src/App/Kakehashi.App/Composition/ModuleCatalog.cs` | `module-imports`, `module-registrations` |
-| `client/src/App/Kakehashi.App/Kakehashi.App.csproj` | `module-projects` |
-| `client/tests/Kakehashi.ArchitectureTests/Kakehashi.ArchitectureTests.csproj` | `module-projects` |
+| `client/__APP_NAME__.slnx` | `module-projects`, `module-test-projects` |
+| `client/src/App/__APP_NAME__.App/Composition/ModuleCatalog.cs` | `module-imports`, `module-registrations` |
+| `client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj` | `module-projects` |
+| `client/tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj` | `module-projects` |
 
 Two facts a marker engine has to know:
 
@@ -275,22 +286,22 @@ tree that still passes every gate.
 --bare` takes back out.
 
 ```text
-paths    proto/kakehashi/notes/v1/
-         server/internal/gen/kakehashi/notes/v1/
+paths    proto/__PROTO_PACKAGE__/notes/v1/
+         server/internal/gen/__PROTO_PACKAGE__/notes/v1/
          server/internal/modules/notes/
          client/src/Modules/Notes/
-         client/tests/Kakehashi.ArchitectureTests/NotesLayeringTests.cs
-         client/tests/Kakehashi.Modules.Notes.Application.Tests/
-         client/tests/Kakehashi.Modules.Notes.Domain.Tests/
-         client/tests/Kakehashi.Modules.Notes.IntegrationTests/
-         client/tests/Kakehashi.Modules.Notes.UI.Tests/
+         client/tests/__APP_NAME__.ArchitectureTests/NotesLayeringTests.cs
+         client/tests/__APP_NAME__.Modules.Notes.Application.Tests/
+         client/tests/__APP_NAME__.Modules.Notes.Domain.Tests/
+         client/tests/__APP_NAME__.Modules.Notes.IntegrationTests/
+         client/tests/__APP_NAME__.Modules.Notes.UI.Tests/
 
 markers  server/cmd/server/main.go                     module-imports, module-registrations
          server/cmd/server/main_test.go                module-ids
-         client/Kakehashi.slnx                         module-projects, module-test-projects
+         client/__APP_NAME__.slnx                         module-projects, module-test-projects
          client/src/App/…/Composition/ModuleCatalog.cs  module-imports, module-registrations
-         client/src/App/…/Kakehashi.App.csproj          module-projects
-         client/tests/…/Kakehashi.ArchitectureTests.csproj  module-projects
+         client/src/App/…/__APP_NAME__.App.csproj          module-projects
+         client/tests/…/__APP_NAME__.ArchitectureTests.csproj  module-projects
 ```
 
 Nothing outside those paths references a Notes assembly or the `notes` Go packages. What remains
@@ -326,7 +337,7 @@ tracked files became 590.
 | `go test ./...` | pass |
 | `go run ./tools/archlint` | pass — 53 packages, no boundary violations (61 with notes) |
 | `tools/check-comment-length.sh`, `tools/check-doc-comments.sh` | pass |
-| `client` build, `dotnet format`, `Kakehashi.ArchitectureTests` | **not run** — needs Windows and the .NET SDK |
+| `client` build, `dotnet format`, `__APP_NAME__.ArchitectureTests` | **not run** — needs Windows and the .NET SDK |
 
 The client half of the proof is the marker edits plus deleting whole projects and their `.slnx`
 and `.csproj` references; it is checked on Windows before Phase 1 closes.
@@ -338,12 +349,12 @@ piece of behaviour:
 
 | Where | What |
 | --- | --- |
-| `client/src/App/Kakehashi.App/UI/HomePage.ViewModel.cs` | `_shippedModuleCount = 3` no longer matches the shipped modules, so the "register your first module" step misreports |
+| `client/src/App/__APP_NAME__.App/UI/HomePage.ViewModel.cs` | `_shippedModuleCount = 3` no longer matches the shipped modules, so the "register your first module" step misreports |
 | `.claude/skills/ui-testing/ui-tests.ps1` | walks a hardcoded page list containing `Notes` |
 | `server/internal/modules/health/module.go`, `server/internal/platform/*`, `server/internal/app/*` | comments citing `notes/` as the module to copy |
 | `server/tools/archlint/main.go`, `main_test.go` | `notes` as the fixture module name |
-| `client/src/Shared/Kakehashi.SharedKernel/Error.cs`, `client/src/Shared/Kakehashi.UI.Contracts/NavigationItem.cs`, `client/src/Shared/Kakehashi.Contracts/Kakehashi.Contracts.csproj` | `Notes` in doc-comment examples |
-| `client/tests/Kakehashi.App.Tests/` | `"Notes"` as a fake module name in fixtures |
+| `client/src/Shared/__APP_NAME__.SharedKernel/Error.cs`, `client/src/Shared/__APP_NAME__.UI.Contracts/NavigationItem.cs`, `client/src/Shared/__APP_NAME__.Contracts/__APP_NAME__.Contracts.csproj` | `Notes` in doc-comment examples |
+| `client/tests/__APP_NAME__.App.Tests/` | `"Notes"` as a fake module name in fixtures |
 | `docs/`, `CLAUDE.md`, `README.md` | prose |
 
 Phase 1 neutralises the first two, because they are wrong rather than merely stale. The rest is

@@ -14,7 +14,7 @@ breaking it, or a technical reason that cannot be read off the code. Nothing els
    *the old*, *until now* or *previously* fails CI. Never quote an old comment inside a new one.
 
 3. **Density follows danger.** Comment heavily where a mistake is expensive and invisible:
-   - `api/` packages and `Kakehashi.UI.Contracts` / `*.Application.Abstractions` — the contracts
+   - `api/` packages and `__APP_NAME__.UI.Contracts` / `*.Application.Abstractions` — the contracts
      other modules build against;
    - anything that crosses the wire (renaming breaks deployed clients — say so, in one sentence);
    - security decisions (allow-lists, policies): what is permitted, what the server decides,
@@ -116,7 +116,7 @@ Right — a wire contract, said once:
   already refused above; Go only inside a function body, because the same `//` above a top-level
   declaration is godoc.
 - CS1591 + `GenerateDocumentationFile` on the contract assemblies only:
-  `Kakehashi.UI.Contracts` and `Kakehashi.Application.Abstractions`. Not `Kakehashi.Contracts`,
+  `__APP_NAME__.UI.Contracts` and `__APP_NAME__.Application.Abstractions`. Not `__APP_NAME__.Contracts`,
   which holds generated code.
 - Everything else is review. When you touch a file for another reason, comments inside your
   change conform to this document; leave the rest alone.

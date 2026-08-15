@@ -1,6 +1,6 @@
 package app
 
-import "github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+import "__GO_MODULE__/server/internal/platform/auth"
 
 // PolicyKind is what a route checks before its handler runs.
 //

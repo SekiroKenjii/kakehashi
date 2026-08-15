@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
+	"__GO_MODULE__/server/internal/modules/navigation/domain"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // A fake store rather than a real database, because every rule worth testing here is a decision

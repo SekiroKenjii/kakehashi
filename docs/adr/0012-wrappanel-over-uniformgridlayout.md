@@ -15,7 +15,7 @@ individually rather than deciding one size for all of them.
 
 ## Decision
 
-`WrapPanel` (client/src/Shared/Kakehashi.UI.Common/Controls/WrapPanel.cs) is a custom `Panel`
+`WrapPanel` (client/src/Shared/__APP_NAME__.UI.Common/Controls/WrapPanel.cs) is a custom `Panel`
 that lays children left to right at their own desired width and wraps to the next line when the
 row runs out of room. `HorizontalSpacing` and `VerticalSpacing` dependency properties control the
 gaps. It deliberately does not virtualize: the lists it serves hold a handful of roles or tags,

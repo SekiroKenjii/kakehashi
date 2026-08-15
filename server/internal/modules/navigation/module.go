@@ -26,13 +26,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/app"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
+	"__GO_MODULE__/server/internal/modules/navigation/rpc"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/modules/navigation/store"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // systemGroups are the headings this product ships.

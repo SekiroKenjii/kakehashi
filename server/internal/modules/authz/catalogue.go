@@ -1,6 +1,6 @@
 package authz
 
-import authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
+import authzapi "__GO_MODULE__/server/internal/modules/authz/api"
 
 // The permissions this module enforces in its own handlers, beyond the .access every module gets.
 //

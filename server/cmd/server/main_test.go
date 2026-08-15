@@ -4,7 +4,7 @@ import (
 	"slices"
 	"testing"
 
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
 )
 
 // What the composition root claims has to agree with what the modules declare, and nothing else

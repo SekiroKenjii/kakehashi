@@ -1,6 +1,6 @@
 ---
 name: ui-testing
-description: Drive the built Kakehashi WinUI client through UI Automation with `winapp ui` — launch it against the live server, run the ui-tests.ps1 harness, read the results, and review the screenshots. Use before a release, after redesigning a page, or whenever a change needs proving in the running app rather than in a view-model test. Records the traps that cost a debugging session each.
+description: Drive the built __APP_TITLE__ WinUI client through UI Automation with `winapp ui` — launch it against the live server, run the ui-tests.ps1 harness, read the results, and review the screenshots. Use before a release, after redesigning a page, or whenever a change needs proving in the running app rather than in a view-model test. Records the traps that cost a debugging session each.
 ---
 
 # Driving the app through UI Automation
@@ -29,8 +29,8 @@ case and is fine.
 ## Build and launch
 
 ```powershell
-dotnet build client\src\App\Kakehashi.App\Kakehashi.App.csproj -c Release -p:Platform=x64
-Start-Process client\src\App\Kakehashi.App\bin\x64\Release\net10.0-windows10.0.19041.0\Kakehashi.App.exe
+dotnet build client\src\App\__APP_NAME__.App\__APP_NAME__.App.csproj -c Release -p:Platform=x64
+Start-Process client\src\App\__APP_NAME__.App\bin\x64\Release\net10.0-windows10.0.19041.0\__APP_NAME__.App.exe
 ```
 
 **Build the `.csproj` with `-p:Platform=x64`, not the solution.** The solution build writes
@@ -40,13 +40,13 @@ fix did nothing" and has cost a full cycle here already. Check the timestamp whe
 you:
 
 ```powershell
-(Get-Item ...\bin\x64\Release\net10.0-windows10.0.19041.0\Kakehashi.App.exe).LastWriteTime
+(Get-Item ...\bin\x64\Release\net10.0-windows10.0.19041.0\__APP_NAME__.App.exe).LastWriteTime
 ```
 
 A running instance holds a lock on that `.exe`, so stop it before rebuilding:
 
 ```powershell
-Get-Process -Name Kakehashi.App -ErrorAction SilentlyContinue | Stop-Process -Force
+Get-Process -Name __APP_NAME__.App -ErrorAction SilentlyContinue | Stop-Process -Force
 ```
 
 ## Run the harness
@@ -55,7 +55,7 @@ Get-Process -Name Kakehashi.App -ErrorAction SilentlyContinue | Stop-Process -Fo
 break. One pass, ~2 minutes.
 
 ```powershell
-$p = Start-Process ...\Kakehashi.App.exe -PassThru
+$p = Start-Process ...\__APP_NAME__.App.exe -PassThru
 .\.claude\skills\ui-testing\ui-tests.ps1 -AppPid $p.Id
 ```
 

@@ -13,10 +13,36 @@ permissions:
   contents: read
 
 jobs:
+  # Two things in this workflow cannot run against the template, because a placeholder is not a
+  # legal proto package or C# namespace. The answer has to come from a job that has checked out: a
+  # job-level `if` is evaluated before the workspace exists, and hashFiles there is not available.
+  #
+  # The probe asks whether any placeholder survives rather than naming one. A condition that named
+  # a placeholder would be substituted along with everything else and answer the opposite way
+  # forever after — silently skipping the check in every scaffolded project. '__*__' is not a
+  # placeholder the rename knows, so it survives into the project and answers "false" there.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      is_template: ${{ steps.probe.outputs.is_template }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Probe for placeholders
+        id: probe
+        run: |
+          if [ -n "$(find proto -maxdepth 1 -type d -name '__*__')" ]; then
+            echo "is_template=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_template=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # The contract between the two halves. This job is why they live in one repository: a change to
   # the schema is checked against both sides in the same run, so the two cannot drift.
   contract:
     runs-on: ubuntu-latest
+    needs: detect
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,7 +61,10 @@ jobs:
         with:
           version: 1.72.0
 
+      # buf's PACKAGE_LOWER_SNAKE_CASE refuses a double underscore, so the template's own package
+      # can never pass. scaffold-smoke lints the renamed tree instead.
       - name: Lint the schema
+        if: needs.detect.outputs.is_template == 'false'
         run: buf lint
 
       # Only on pull requests: on a push to main the comparison is against the commit that was
@@ -156,6 +185,11 @@ jobs:
   client:
     # WinUI 3 (Windows App SDK) requires Windows to build.
     runs-on: windows-latest
+    # Skipped in the template for the same reason buf lint is: a namespace spelled with a
+    # placeholder violates IDE1006, and an underscore sorts before every letter, so the import
+    # order is wrong by construction. scaffold-smoke-client builds the renamed tree instead.
+    needs: detect
+    if: needs.detect.outputs.is_template == 'false'
     defaults:
       run:
         working-directory: client
@@ -171,11 +205,11 @@ jobs:
       # Restores, and generates the typed gRPC client from proto/ — the same schema the server
       # compiles against, read straight from the repository rather than from a copy.
       - name: Restore
-        run: dotnet restore Kakehashi.slnx
+        run: dotnet restore __APP_NAME__.slnx
 
       # Hard gate: every file must already match the style .editorconfig.
       - name: Verify formatting
-        run: dotnet format Kakehashi.slnx --verify-no-changes --severity warn --no-restore
+        run: dotnet format __APP_NAME__.slnx --verify-no-changes --severity warn --no-restore
 
       # The step above leaves a compiler server holding client/tools' analyzer assemblies open,
       # and the build below has to write them: without this it fails with CS2012 on its own DLL.
@@ -184,7 +218,7 @@ jobs:
 
       # Compiler + analyzer warnings fail the build (TreatWarningsAsErrors).
       - name: Build
-        run: dotnet build Kakehashi.slnx -c Release --no-restore
+        run: dotnet build __APP_NAME__.slnx -c Release --no-restore
 
       # The test projects are unpackaged WinUI executables, so the SDK compiles its bootstrapper
       # into them as a module initializer — and when no matching runtime is installed it calls
@@ -204,4 +238,4 @@ jobs:
           if ($LASTEXITCODE -ne 0) { throw "the runtime installer exited $LASTEXITCODE" }
 
       - name: Test
-        run: dotnet test Kakehashi.slnx -c Release --no-build --verbosity normal
+        run: dotnet test __APP_NAME__.slnx -c Release --no-build --verbosity normal

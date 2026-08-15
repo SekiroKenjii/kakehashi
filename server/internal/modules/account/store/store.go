@@ -17,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // SQLServer stores account state in the shared database.

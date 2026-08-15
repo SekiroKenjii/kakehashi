@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>__ROOT_NAMESPACE__.Application.Abstractions</RootNamespace>
+    <AssemblyName>__APP_NAME__.Application.Abstractions</AssemblyName>
+
+    <!--
+      A contract assembly: docs/COMMENTS.md makes documentation mandatory here, and this is what
+      enforces it. With warnings as errors, CS1591 fails the build on an undocumented public
+      member. Deliberately not solution-wide - elsewhere a doc comment is earned, not required.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

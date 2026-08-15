@@ -9,8 +9,8 @@
 // when somebody decides to exempt a route from the permission check, which is a decision worth
 // seeing in a diff.
 //
-// The kakehashi: markers below delimit the wiring a generator writes and a removable unit takes
-// back: docs/BOILERPLATE.md.
+// The markers below — kakehashi:module-imports:begin and its kind — delimit the wiring a generator
+// writes and a removable unit takes back: docs/BOILERPLATE.md.
 package main
 
 import (
@@ -21,21 +21,21 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	"github.com/SekiroKenjii/kakehashi/server/internal/app/server"
+	"__GO_MODULE__/server/internal/app"
+	"__GO_MODULE__/server/internal/app/server"
 	// kakehashi:module-imports:begin
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account"
+	"__GO_MODULE__/server/internal/modules/account"
 	// kakehashi:unit-activity:begin
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity"
+	"__GO_MODULE__/server/internal/modules/activity"
 	// kakehashi:unit-activity:end
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/health"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation"
+	"__GO_MODULE__/server/internal/modules/authz"
+	"__GO_MODULE__/server/internal/modules/health"
+	"__GO_MODULE__/server/internal/modules/navigation"
 	// kakehashi:unit-notes:begin
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes"
+	"__GO_MODULE__/server/internal/modules/notes"
 	// kakehashi:unit-notes:end
 	// kakehashi:module-imports:end
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/logging"
+	"__GO_MODULE__/server/internal/platform/logging"
 )
 
 func main() {

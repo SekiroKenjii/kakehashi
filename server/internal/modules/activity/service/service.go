@@ -11,9 +11,9 @@ import (
 
 	"github.com/google/uuid"
 
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/modules/activity/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Store is the persistence these use cases need, declared here rather than in store/: the

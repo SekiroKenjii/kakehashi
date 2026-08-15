@@ -41,16 +41,16 @@
     project twice into the same obj\ - and the second compile races the compiler server that
     already holds the first DLL open as an analyzer, failing with CS2012 on its own output.
   -->
-  <ItemGroup Condition="'$(MSBuildProjectName)' != 'Kakehashi.Analyzers'
-                        AND '$(MSBuildProjectName)' != 'Kakehashi.Analyzers.CodeFixes'">
+  <ItemGroup Condition="'$(MSBuildProjectName)' != '__APP_NAME__.Analyzers'
+                        AND '$(MSBuildProjectName)' != '__APP_NAME__.Analyzers.CodeFixes'">
     <ProjectReference
-        Include="$(MSBuildThisFileDirectory)tools\Kakehashi.Analyzers\Kakehashi.Analyzers.csproj"
+        Include="$(MSBuildThisFileDirectory)tools\__APP_NAME__.Analyzers\__APP_NAME__.Analyzers.csproj"
         OutputItemType="Analyzer"
         ReferenceOutputAssembly="false"
         UndefineProperties="TargetFramework;RuntimeIdentifier"
         AdditionalProperties="Platform=AnyCPU" />
     <ProjectReference
-        Include="$(MSBuildThisFileDirectory)tools\Kakehashi.Analyzers.CodeFixes\Kakehashi.Analyzers.CodeFixes.csproj"
+        Include="$(MSBuildThisFileDirectory)tools\__APP_NAME__.Analyzers.CodeFixes\__APP_NAME__.Analyzers.CodeFixes.csproj"
         OutputItemType="Analyzer"
         ReferenceOutputAssembly="false"
         UndefineProperties="TargetFramework;RuntimeIdentifier"

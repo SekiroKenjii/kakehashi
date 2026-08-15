@@ -15,9 +15,9 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	healthv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/health/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/health/v1/healthv1connect"
-	healthapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/health/api"
+	healthv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/health/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/health/v1/healthv1connect"
+	healthapi "__GO_MODULE__/server/internal/modules/health/api"
 )
 
 // NewRoute builds the Connect handler for HealthService.

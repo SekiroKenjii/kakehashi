@@ -1,7 +1,7 @@
 package activity
 
 import (
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
 )
 
 // NavigationDestinations declares the Activity page, gated on this module's activity.access.

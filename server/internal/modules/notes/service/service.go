@@ -5,10 +5,10 @@ import (
 	"context"
 	"time"
 
-	notesapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	notesapi "__GO_MODULE__/server/internal/modules/notes/api"
+	"__GO_MODULE__/server/internal/modules/notes/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 // Store is the persistence this service needs, declared here rather than in store/.

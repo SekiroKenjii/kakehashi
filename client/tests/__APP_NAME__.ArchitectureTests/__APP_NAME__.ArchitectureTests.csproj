@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Shared\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+    <!-- kakehashi:module-projects:begin -->
+    <ProjectReference Include="..\..\src\Modules\Auth\__APP_NAME__.Modules.Auth.Domain\__APP_NAME__.Modules.Auth.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Auth\__APP_NAME__.Modules.Auth.Application\__APP_NAME__.Modules.Auth.Application.csproj" />
+    <!-- kakehashi:unit-activity:begin -->
+    <ProjectReference Include="..\..\src\Modules\Activity\__APP_NAME__.Modules.Activity.Application\__APP_NAME__.Modules.Activity.Application.csproj" />
+    <!-- kakehashi:unit-activity:end -->
+    <!-- kakehashi:unit-notes:begin -->
+    <ProjectReference Include="..\..\src\Modules\Notes\__APP_NAME__.Modules.Notes.Domain\__APP_NAME__.Modules.Notes.Domain.csproj" />
+    <ProjectReference Include="..\..\src\Modules\Notes\__APP_NAME__.Modules.Notes.Application\__APP_NAME__.Modules.Notes.Application.csproj" />
+    <!-- kakehashi:unit-notes:end -->
+    <!-- kakehashi:module-projects:end -->
+  </ItemGroup>
+
+</Project>

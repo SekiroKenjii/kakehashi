@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // What an administrator does. A different caller from the read in service.go, on a surface the

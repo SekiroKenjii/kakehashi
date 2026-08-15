@@ -12,11 +12,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	authzv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/authz/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/authz/v1/authzv1connect"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	authzv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/authz/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/authz/v1/authzv1connect"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // NewRoute builds the Connect handler for AuthzService — the caller's own view of their access.

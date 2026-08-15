@@ -1,4 +1,4 @@
-# Kakehashi — Claude Instructions
+# __APP_TITLE__ — Claude Instructions
 
 A WinUI 3 client and a Go backend in one repository, joined by contracts the build enforces. Both
 halves are modular monoliths. Read `docs/ARCHITECTURE.md` before making a structural change.
@@ -80,9 +80,9 @@ cd server && go build ./... && go test ./... && go vet ./... && go run ./tools/a
 ```pwsh
 # Client
 cd client
-dotnet build Kakehashi.slnx                                       # zero errors, zero warnings
-dotnet test  Kakehashi.slnx                                       # all suites incl. architecture
-dotnet format Kakehashi.slnx --verify-no-changes --severity warn  # no formatting drift
+dotnet build __APP_NAME__.slnx                                       # zero errors, zero warnings
+dotnet test  __APP_NAME__.slnx                                       # all suites incl. architecture
+dotnet format __APP_NAME__.slnx --verify-no-changes --severity warn  # no formatting drift
 ```
 
 ---
@@ -101,7 +101,7 @@ docs/           ARCHITECTURE.md, CONTRACTS.md, RBAC.md, NAVIGATION.md
 | Gate | Protects | Never skip because |
 | --- | --- | --- |
 | `archlint` | server module boundaries | it is the only thing standing between "modular monolith" and "monolith with directories in it" |
-| `Kakehashi.ArchitectureTests` | client layering | same, for the other half |
+| `__APP_NAME__.ArchitectureTests` | client layering | same, for the other half |
 | `buf breaking` | the wire contract | a desktop client runs the version the user installed, for as long as they like |
 
 ---
@@ -344,7 +344,7 @@ Constraint and index names: `PK_<Table><Column>`, `FK_<Table>_<ForeignTable><Col
 1. Copy `internal/modules/notes/` → `internal/modules/<id>/`, rename the package and the ID.
    (`health/` is the same shape minus `domain/` and `store/`, for a module that stores nothing;
    `activity/` is the one to copy for MongoDB, and for a module that reacts to another's events.)
-2. Add `proto/kakehashi/<id>/v1/<id>.proto`, run `buf generate`, commit the output.
+2. Add `proto/__APP_NAME_LOWER__/<id>/v1/<id>.proto`, run `buf generate`, commit the output.
 3. Mount it in `cmd/server/main.go` — one line, the only file that names it.
 4. **Name the units.** Before writing the second use case, list this module's aggregate roots, its
    tables and its use-case families, and give each one a file. `notes/` is a one-root module and
@@ -364,12 +364,12 @@ Constraint and index names: `PK_<Table><Column>`, `FK_<Table>_<ForeignTable><Col
 | Host | WinUI 3 / `Microsoft.WindowsAppSDK` 2.1.x, .NET 10, C# `latest` |
 | MVVM | `CommunityToolkit.Mvvm` 8.4.x — source generators **on** |
 | DI / hosting | `Microsoft.Extensions.Hosting` + `DependencyInjection` |
-| Mediator | custom in-process mediator (`Kakehashi.Mediator`) — **no MediatR** |
+| Mediator | custom in-process mediator (`__APP_NAME__.Mediator`) — **no MediatR** |
 | Backend transport | `Grpc.Net.Client` + `Grpc.Net.ClientFactory`, generated from `proto/` at build time |
 | Win32 interop | `Microsoft.Windows.CsWin32` via `NativeMethods.txt`, never `[DllImport]` |
 | Testing | **xUnit v3** + **NSubstitute** — no Fluent Assertions, no MediatR mocks |
 
-### Layering — enforced by `Kakehashi.ArchitectureTests`
+### Layering — enforced by `__APP_NAME__.ArchitectureTests`
 
 ```text
 Domain       →  SharedKernel only
@@ -382,7 +382,7 @@ UI (host)    →  Application + Domain + SharedKernel + WinUI/host libs
    `IModule.RegisterServices`.
 3. Domain never throws for expected failures — return `Result` / `Result<T>`.
 4. DTOs cross the Application boundary. Never return a domain entity to the UI.
-5. `SharedKernel` has no `Kakehashi.*` dependencies.
+5. `SharedKernel` has no `__APP_NAME__.*` dependencies.
 
 Per-module layering lives with its module (`AuthLayeringTests`), so adding or removing a module
 never means editing `LayeringTests`.

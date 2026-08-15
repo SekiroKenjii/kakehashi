@@ -1,7 +1,7 @@
 package notes
 
 import (
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
 )
 
 // The screen this module owns.

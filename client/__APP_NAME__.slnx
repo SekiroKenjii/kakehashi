@@ -1,0 +1,114 @@
+<Solution>
+  <Configurations>
+    <Platform Name="Any CPU" />
+    <Platform Name="x64" />
+  </Configurations>
+  <Folder Name="/scripts/">
+    <File Path="scripts/configure-auth.ps1" />
+    <File Path="scripts/version.ps1" />
+  </Folder>
+  <Folder Name="/Solution Items/">
+    <File Path=".editorconfig" />
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+    <File Path="global.json" />
+    <File Path="nuget.config" />
+    <File Path="README.md" />
+  </Folder>
+  <Folder Name="/src/" />
+  <Folder Name="/src/App/">
+    <Project Path="src/App/__APP_NAME__.App.Infrastructure/__APP_NAME__.App.Infrastructure.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/App/__APP_NAME__.App/__APP_NAME__.App.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/src/Modules/" />
+  <!-- kakehashi:module-projects:begin -->
+  <!-- kakehashi:unit-activity:begin -->
+  <Folder Name="/src/Modules/Activity/">
+    <Project Path="src/Modules/Activity/__APP_NAME__.Modules.Activity.Application/__APP_NAME__.Modules.Activity.Application.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Modules/Activity/__APP_NAME__.Modules.Activity.UI/__APP_NAME__.Modules.Activity.UI.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <!-- kakehashi:unit-activity:end -->
+  <!-- kakehashi:unit-notes:begin -->
+  <Folder Name="/src/Modules/Notes/">
+    <Project Path="src/Modules/Notes/__APP_NAME__.Modules.Notes.Application/__APP_NAME__.Modules.Notes.Application.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Modules/Notes/__APP_NAME__.Modules.Notes.Domain/__APP_NAME__.Modules.Notes.Domain.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Modules/Notes/__APP_NAME__.Modules.Notes.UI/__APP_NAME__.Modules.Notes.UI.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <!-- kakehashi:unit-notes:end -->
+  <Folder Name="/src/Modules/Auth/">
+    <Project Path="src/Modules/Auth/__APP_NAME__.Modules.Auth.Application/__APP_NAME__.Modules.Auth.Application.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Modules/Auth/__APP_NAME__.Modules.Auth.Domain/__APP_NAME__.Modules.Auth.Domain.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Modules/Auth/__APP_NAME__.Modules.Auth.UI/__APP_NAME__.Modules.Auth.UI.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <!-- kakehashi:module-projects:end -->
+  <Folder Name="/src/Shared/">
+    <Project Path="src/Shared/__APP_NAME__.Application.Abstractions/__APP_NAME__.Application.Abstractions.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.Contracts/__APP_NAME__.Contracts.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.Interoperability/__APP_NAME__.Interoperability.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Shared/__APP_NAME__.Mediator/__APP_NAME__.Mediator.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.SharedKernel/__APP_NAME__.SharedKernel.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.UI.Common/__APP_NAME__.UI.Common.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="src/Shared/__APP_NAME__.UI.Contracts/__APP_NAME__.UI.Contracts.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+  </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/__APP_NAME__.Analyzers/__APP_NAME__.Analyzers.csproj" />
+    <Project Path="tools/__APP_NAME__.Analyzers.CodeFixes/__APP_NAME__.Analyzers.CodeFixes.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/__APP_NAME__.Analyzers.Tests/__APP_NAME__.Analyzers.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.App.Infrastructure.Tests/__APP_NAME__.App.Infrastructure.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.App.Tests/__APP_NAME__.App.Tests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <Project Path="tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj" />
+    <Project Path="tests/__APP_NAME__.Mediator.Tests/__APP_NAME__.Mediator.Tests.csproj" />
+    <!-- kakehashi:module-test-projects:begin -->
+    <Project Path="tests/__APP_NAME__.Modules.Auth.Application.Tests/__APP_NAME__.Modules.Auth.Application.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Auth.Domain.Tests/__APP_NAME__.Modules.Auth.Domain.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Auth.IntegrationTests/__APP_NAME__.Modules.Auth.IntegrationTests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Auth.UI.Tests/__APP_NAME__.Modules.Auth.UI.Tests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <!-- kakehashi:unit-activity:begin -->
+    <Project Path="tests/__APP_NAME__.Modules.Activity.Application.Tests/__APP_NAME__.Modules.Activity.Application.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Activity.UI.Tests/__APP_NAME__.Modules.Activity.UI.Tests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <!-- kakehashi:unit-activity:end -->
+    <!-- kakehashi:unit-notes:begin -->
+    <Project Path="tests/__APP_NAME__.Modules.Notes.Application.Tests/__APP_NAME__.Modules.Notes.Application.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Notes.Domain.Tests/__APP_NAME__.Modules.Notes.Domain.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Notes.IntegrationTests/__APP_NAME__.Modules.Notes.IntegrationTests.csproj" />
+    <Project Path="tests/__APP_NAME__.Modules.Notes.UI.Tests/__APP_NAME__.Modules.Notes.UI.Tests.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
+    <!-- kakehashi:unit-notes:end -->
+    <!-- kakehashi:module-test-projects:end -->
+  </Folder>
+</Solution>

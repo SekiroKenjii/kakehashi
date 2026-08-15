@@ -225,7 +225,7 @@ func acquireMigrationLock(
             @Resource = @p1, @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 60000;
         SELECT @result;`
 
-	name := "kakehashi-migrate-" + module
+	name := "__APP_NAME_LOWER__-migrate-" + module
 
 	var result int
 	if err := conn.QueryRowContext(ctx, acquire, name).Scan(&result); err != nil {

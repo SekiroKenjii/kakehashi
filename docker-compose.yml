@@ -4,9 +4,9 @@
 # starts with one command. They are only ever reachable on localhost. Production reads the same
 # variables from somewhere that is not a git repository.
 
-name: kakehashi
+name: __APP_NAME_LOWER__
 
-x-mssql-password: &mssql-password ${MSSQL_SA_PASSWORD:-Kakehashi!Dev1}
+x-mssql-password: &mssql-password ${MSSQL_SA_PASSWORD:-__APP_NAME__!Dev1}
 
 services:
   mssql:
@@ -47,7 +47,7 @@ services:
       - -c
       - >
         /opt/mssql-tools18/bin/sqlcmd -S mssql -U sa -P "$$MSSQL_SA_PASSWORD" -C
-        -Q "IF DB_ID('kakehashi') IS NULL CREATE DATABASE kakehashi;"
+        -Q "IF DB_ID('__APP_NAME_LOWER__') IS NULL CREATE DATABASE __APP_NAME_LOWER__;"
     restart: "no"
 
   mongo:
@@ -74,30 +74,30 @@ services:
       mongo:
         condition: service_healthy
     environment:
-      KAKEHASHI_ADDR: ":8080"
+      __APP_NAME_UPPER___ADDR: ":8080"
       # The OpenID Connect issuer, and therefore the origin every client must dial. Testing from a
       # second machine needs a LAN address here and the identical value in that client's
       # Auth:Authority, or the token it receives is rejected on issuer mismatch. Overridable rather
       # than edited, so a single-machine clone still starts with one command and no LAN address is
       # ever committed.
-      KAKEHASHI_PUBLIC_URL: ${KAKEHASHI_PUBLIC_URL:-http://localhost:8080}
+      __APP_NAME_UPPER___PUBLIC_URL: ${__APP_NAME_UPPER___PUBLIC_URL:-http://localhost:8080}
       # encrypt=disable because the container's certificate is self-signed and nothing here leaves
       # the compose network. Never carry this setting into a deployment.
-      KAKEHASHI_SQLSERVER_DSN: >-
-        sqlserver://sa:${MSSQL_SA_PASSWORD:-Kakehashi!Dev1}@mssql:1433?database=kakehashi&encrypt=disable
-      KAKEHASHI_MONGO_URI: "mongodb://mongo:27017"
-      KAKEHASHI_MONGO_DATABASE: "kakehashi"
-      KAKEHASHI_LOG_LEVEL: "debug"
-      KAKEHASHI_LOG_FORMAT: "text"
+      __APP_NAME_UPPER___SQLSERVER_DSN: >-
+        sqlserver://sa:${MSSQL_SA_PASSWORD:-__APP_NAME__!Dev1}@mssql:1433?database=__APP_NAME_LOWER__&encrypt=disable
+      __APP_NAME_UPPER___MONGO_URI: "mongodb://mongo:27017"
+      __APP_NAME_UPPER___MONGO_DATABASE: "__APP_NAME_LOWER__"
+      __APP_NAME_UPPER___LOG_LEVEL: "debug"
+      __APP_NAME_UPPER___LOG_FORMAT: "text"
       # The development sign-in. Seeded on first boot, idempotent after; the WinUI client's
       # appsettings point at this account. Development-only, like the SA password above.
-      KAKEHASHI_ACCOUNT_SEED_EMAIL: "dev@kakehashi.local"
-      KAKEHASHI_ACCOUNT_SEED_PASSWORD: "kakehashi dev passphrase"
-      KAKEHASHI_ACCOUNT_SEED_NAME: "Kakehashi Developer"
+      __APP_NAME_UPPER___ACCOUNT_SEED_EMAIL: "dev@__APP_NAME_LOWER__.local"
+      __APP_NAME_UPPER___ACCOUNT_SEED_PASSWORD: "__APP_NAME_LOWER__ dev passphrase"
+      __APP_NAME_UPPER___ACCOUNT_SEED_NAME: "__APP_TITLE__ Developer"
       # The first administrator. Every module is gated and roles come from the database, so a
       # deployment with nobody holding Admin refuses everyone — including on the screen that would
       # fix it. This is the one grant configuration makes rather than the product.
-      KAKEHASHI_AUTHZ_BOOTSTRAP_ADMIN: "dev@kakehashi.local"
+      __APP_NAME_UPPER___AUTHZ_BOOTSTRAP_ADMIN: "dev@__APP_NAME_LOWER__.local"
     ports:
       - "8080:8080"
     restart: unless-stopped

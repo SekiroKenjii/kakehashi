@@ -34,14 +34,14 @@ func New(opts Options) *slog.Logger {
 	return slog.New(h)
 }
 
-// FromEnv builds a logger from KAKEHASHI_LOG_LEVEL and KAKEHASHI_LOG_FORMAT.
+// FromEnv builds a logger from __APP_NAME_UPPER___LOG_LEVEL and __APP_NAME_UPPER___LOG_FORMAT.
 //
 // It is called before configuration is loaded, because a configuration error is the first thing
 // that needs logging.
 func FromEnv() *slog.Logger {
 	return New(Options{
-		Level: os.Getenv("KAKEHASHI_LOG_LEVEL"),
-		JSON:  !strings.EqualFold(os.Getenv("KAKEHASHI_LOG_FORMAT"), "text"),
+		Level: os.Getenv("__APP_NAME_UPPER___LOG_LEVEL"),
+		JSON:  !strings.EqualFold(os.Getenv("__APP_NAME_UPPER___LOG_FORMAT"), "text"),
 	})
 }
 

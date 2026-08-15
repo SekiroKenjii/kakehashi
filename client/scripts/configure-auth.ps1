@@ -70,9 +70,9 @@ Write-Host 'Removing the Auth module...' -ForegroundColor Cyan
 # 1. Delete the module source and test projects.
 $directories = @(
   'src/Modules/Auth',
-  'tests/Kakehashi.Modules.Auth.Domain.Tests',
-  'tests/Kakehashi.Modules.Auth.Application.Tests',
-  'tests/Kakehashi.Modules.Auth.IntegrationTests'
+  'tests/__APP_NAME__.Modules.Auth.Domain.Tests',
+  'tests/__APP_NAME__.Modules.Auth.Application.Tests',
+  'tests/__APP_NAME__.Modules.Auth.IntegrationTests'
 )
 foreach ($directory in $directories) {
   $path = Join-Path $root $directory
@@ -83,34 +83,34 @@ foreach ($directory in $directories) {
 }
 
 # 2. Delete the Auth architecture-test coverage (kept in its own file for exactly this reason).
-$authLayering = Join-Path $root 'tests/Kakehashi.ArchitectureTests/AuthLayeringTests.cs'
+$authLayering = Join-Path $root 'tests/__APP_NAME__.ArchitectureTests/AuthLayeringTests.cs'
 if (Test-Path $authLayering) {
   Remove-Item -LiteralPath $authLayering -Force
-  Write-Host '  removed tests/Kakehashi.ArchitectureTests/AuthLayeringTests.cs'
+  Write-Host '  removed tests/__APP_NAME__.ArchitectureTests/AuthLayeringTests.cs'
 }
 
 # 3. Solution: remove the Auth source-folder block, then the Auth test-project entries.
-Remove-Block 'Kakehashi.slnx' '\s*<Folder Name="/src/Modules/Auth/">.*?</Folder>'
-Remove-MatchingLines 'Kakehashi.slnx' 'Kakehashi\.Modules\.Auth\.'
+Remove-Block '__APP_NAME__.slnx' '\s*<Folder Name="/src/Modules/Auth/">.*?</Folder>'
+Remove-MatchingLines '__APP_NAME__.slnx' '__APP_NAME__\.Modules\.Auth\.'
 
 # 4. Host: project reference + module registration.
-Remove-MatchingLines 'src/App/Kakehashi.App/Kakehashi.App.csproj' 'Kakehashi\.Modules\.Auth\.UI'
-Remove-MatchingLines 'src/App/Kakehashi.App/Composition/ModuleCatalog.cs' 'Kakehashi\.Modules\.Auth\.UI|new AuthModule\(\)'
+Remove-MatchingLines 'src/App/__APP_NAME__.App/__APP_NAME__.App.csproj' '__APP_NAME__\.Modules\.Auth\.UI'
+Remove-MatchingLines 'src/App/__APP_NAME__.App/Composition/ModuleCatalog.cs' '__APP_NAME__\.Modules\.Auth\.UI|new AuthModule\(\)'
 
 # 5. Architecture-test project references.
-Remove-MatchingLines 'tests/Kakehashi.ArchitectureTests/Kakehashi.ArchitectureTests.csproj' 'Kakehashi\.Modules\.Auth\.'
+Remove-MatchingLines 'tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj' '__APP_NAME__\.Modules\.Auth\.'
 
 # 6. Central Package Management entries for the OIDC client + DPAPI.
 Remove-Block 'Directory.Packages.props' '\s*<ItemGroup Label="Authentication[^"]*">.*?</ItemGroup>'
 
 # 7. appsettings: drop the Auth section.
-$settingsPath = Join-Path $root 'src/App/Kakehashi.App/appsettings.json'
+$settingsPath = Join-Path $root 'src/App/__APP_NAME__.App/appsettings.json'
 if (Test-Path $settingsPath) {
   $settings = Get-Content -LiteralPath $settingsPath -Raw | ConvertFrom-Json -AsHashtable
   if ($settings.ContainsKey('Auth')) {
     $settings.Remove('Auth')
     ($settings | ConvertTo-Json -Depth 10) | Set-Content -LiteralPath $settingsPath -Encoding utf8
-    Write-Host '  updated src/App/Kakehashi.App/appsettings.json'
+    Write-Host '  updated src/App/__APP_NAME__.App/appsettings.json'
   }
 }
 
@@ -118,5 +118,5 @@ Write-Host 'Auth module removed.' -ForegroundColor Green
 
 if (-not $SkipBuild) {
   Write-Host 'Verifying build...' -ForegroundColor Cyan
-  & dotnet build (Join-Path $root 'Kakehashi.slnx') --nologo
+  & dotnet build (Join-Path $root '__APP_NAME__.slnx') --nologo
 }

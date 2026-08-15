@@ -1,0 +1,31 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>__ROOT_NAMESPACE__.UI.Contracts</RootNamespace>
+    <AssemblyName>__APP_NAME__.UI.Contracts</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Platforms>x64;ARM64</Platforms>
+
+    <!--
+      A contract assembly: docs/COMMENTS.md makes documentation mandatory here, and this is what
+      enforces it. With warnings as errors, CS1591 fails the build on an undocumented public
+      member. Deliberately not solution-wide - elsewhere a doc comment is earned, not required.
+    -->
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+    <PackageReference Include="System.Reactive" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

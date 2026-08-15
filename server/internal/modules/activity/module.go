@@ -8,11 +8,11 @@ package activity
 import (
 	"log/slog"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/store"
+	"__GO_MODULE__/server/internal/app"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/modules/activity/rpc"
+	"__GO_MODULE__/server/internal/modules/activity/service"
+	"__GO_MODULE__/server/internal/modules/activity/store"
 )
 
 // Module is the activity feature.

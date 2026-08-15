@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 func TestSessionsMarksTheCaller(t *testing.T) {

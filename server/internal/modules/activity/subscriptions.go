@@ -4,9 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/app"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
 )
 
 // The module's entire foreign surface: this is the only file under internal/modules/activity/ that
