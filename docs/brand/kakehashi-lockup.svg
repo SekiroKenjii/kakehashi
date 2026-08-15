@@ -60,8 +60,8 @@
   </g>
 
   <!-- tile + name -->
-  <use href="#tile" transform="translate(140,196) scale(0.36)"/>
-  <text x="356" y="316" font-weight="700" font-size="86" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="3">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-2">&#160;Kakehashi</tspan></text>
+  <use href="#tile" transform="translate(164,196) scale(0.36)"/>
+  <text x="380" y="316" font-weight="700" font-size="86" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="3">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-2">&#160;Kakehashi</tspan></text>
 
   <!-- claim -->
   <text x="600" y="430" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="24" fill="#8B7B66">The High-Performance bridge you build across</text>

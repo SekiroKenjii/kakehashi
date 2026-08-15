@@ -80,8 +80,8 @@
     <circle cx="922" cy="92" r="5" fill="#3E9E63" />
     <text x="941" y="98" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="4.5" fill="#5B5346">SEKIROKENJII</text>
   </g>
-  <use href="#tile" transform="translate(468,148) scale(0.29)" />
-  <text x="648" y="259" font-weight="700" font-size="128" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="4">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-3">&#160;Kakehashi</tspan></text>
+  <use href="#tile" transform="translate(422,148) scale(0.29)" />
+  <text x="602" y="259" font-weight="700" font-size="128" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="4">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-3">&#160;Kakehashi</tspan></text>
   <text x="1000" y="342" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="27" fill="#8B7B66">The High-Performance bridge you build across</text>
 
   <!-- ── the editor window, cropped by the bottom edge like the reference ───────────────── -->
