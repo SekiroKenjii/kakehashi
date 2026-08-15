@@ -36,7 +36,7 @@ public sealed class NotesLayeringTests
         Assert.DoesNotContain(references, name => name.Contains(".UI", StringComparison.Ordinal));
         Assert.DoesNotContain(references, name => name.EndsWith(".App", StringComparison.Ordinal));
         Assert.DoesNotContain(
-            references, name => name.Equals("Kakehashi.Mediator", StringComparison.Ordinal));
+            references, name => name.Equals(TestConstants.MediatorAssembly, StringComparison.Ordinal));
     }
 
     [Fact]
@@ -55,9 +55,9 @@ public sealed class NotesLayeringTests
         {
             foreach (var name in ReferencedAssemblyNames(assembly))
             {
-                if (name.StartsWith("Kakehashi.Modules.", StringComparison.Ordinal))
+                if (name.StartsWith(TestConstants.ModulesPrefix, StringComparison.Ordinal))
                 {
-                    Assert.StartsWith("Kakehashi.Modules.Notes.", name);
+                    Assert.StartsWith(TestConstants.ModulesPrefix + "Notes.", name);
                 }
             }
         }
@@ -73,7 +73,7 @@ public sealed class NotesLayeringTests
             var references = ReferencedAssemblyNames(assembly);
 
             Assert.DoesNotContain(
-                references, name => name.Equals("Kakehashi.Contracts", StringComparison.Ordinal));
+                references, name => name.Equals(TestConstants.ContractsAssembly, StringComparison.Ordinal));
             Assert.DoesNotContain(
                 references, name => name.StartsWith("Grpc.", StringComparison.Ordinal));
             Assert.DoesNotContain(

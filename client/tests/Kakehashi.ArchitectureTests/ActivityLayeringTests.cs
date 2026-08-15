@@ -45,9 +45,9 @@ public sealed class ActivityLayeringTests
         // Here the module knows only its own contract, however far the feed grows.
         foreach (var name in ReferencedAssemblyNames(_activityApplication))
         {
-            if (name.StartsWith("Kakehashi.Modules.", StringComparison.Ordinal))
+            if (name.StartsWith(TestConstants.ModulesPrefix, StringComparison.Ordinal))
             {
-                Assert.StartsWith("Kakehashi.Modules.Activity.", name);
+                Assert.StartsWith(TestConstants.ModulesPrefix + "Activity.", name);
             }
         }
     }
@@ -60,7 +60,7 @@ public sealed class ActivityLayeringTests
         var references = ReferencedAssemblyNames(_activityApplication);
 
         Assert.DoesNotContain(
-            references, name => name.Equals("Kakehashi.Contracts", StringComparison.Ordinal));
+            references, name => name.Equals(TestConstants.ContractsAssembly, StringComparison.Ordinal));
         Assert.DoesNotContain(
             references, name => name.StartsWith("Grpc.", StringComparison.Ordinal));
         Assert.DoesNotContain(

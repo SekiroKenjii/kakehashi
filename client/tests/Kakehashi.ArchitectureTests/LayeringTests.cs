@@ -32,6 +32,6 @@ public sealed class LayeringTests
         var references = ReferencedAssemblyNames(_sharedKernel);
 
         Assert.DoesNotContain(
-            references, name => name.StartsWith("Kakehashi.", StringComparison.Ordinal));
+            references, name => name.StartsWith(TestConstants.RootPrefix, StringComparison.Ordinal));
     }
 }

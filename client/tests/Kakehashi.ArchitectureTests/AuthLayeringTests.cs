@@ -37,7 +37,7 @@ public sealed class AuthLayeringTests
         Assert.DoesNotContain(references, name => name.Contains(".UI", StringComparison.Ordinal));
         Assert.DoesNotContain(references, name => name.EndsWith(".App", StringComparison.Ordinal));
         Assert.DoesNotContain(
-            references, name => name.Equals("Kakehashi.Mediator", StringComparison.Ordinal));
+            references, name => name.Equals(TestConstants.MediatorAssembly, StringComparison.Ordinal));
     }
 
     [Fact]
@@ -56,9 +56,9 @@ public sealed class AuthLayeringTests
         {
             foreach (var name in ReferencedAssemblyNames(assembly))
             {
-                if (name.StartsWith("Kakehashi.Modules.", StringComparison.Ordinal))
+                if (name.StartsWith(TestConstants.ModulesPrefix, StringComparison.Ordinal))
                 {
-                    Assert.StartsWith("Kakehashi.Modules.Auth.", name);
+                    Assert.StartsWith(TestConstants.ModulesPrefix + "Auth.", name);
                 }
             }
         }
