@@ -13,10 +13,36 @@ permissions:
   contents: read
 
 jobs:
+  # Two things in this workflow cannot run against the template, because a placeholder is not a
+  # legal proto package or C# namespace. The answer has to come from a job that has checked out: a
+  # job-level `if` is evaluated before the workspace exists, and hashFiles there is not available.
+  #
+  # The probe asks whether any placeholder survives rather than naming one. A condition that named
+  # a placeholder would be substituted along with everything else and answer the opposite way
+  # forever after — silently skipping the check in every scaffolded project. '__*__' is not a
+  # placeholder the rename knows, so it survives into the project and answers "false" there.
+  detect:
+    runs-on: ubuntu-latest
+    outputs:
+      is_template: ${{ steps.probe.outputs.is_template }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Probe for placeholders
+        id: probe
+        run: |
+          if [ -n "$(find proto -maxdepth 1 -type d -name '__*__')" ]; then
+            echo "is_template=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "is_template=false" >> "$GITHUB_OUTPUT"
+          fi
+
   # The contract between the two halves. This job is why they live in one repository: a change to
   # the schema is checked against both sides in the same run, so the two cannot drift.
   contract:
     runs-on: ubuntu-latest
+    needs: detect
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,12 +61,10 @@ jobs:
         with:
           version: 1.72.0
 
-      # Skipped in the template, which carries a placeholder proto package: buf's
-      # PACKAGE_LOWER_SNAKE_CASE refuses a double underscore, so no placeholder spelling passes. The
-      # scaffold-smoke workflow lints the renamed tree instead. The condition is the placeholder
-      # directory itself, so this step turns itself back on the moment a project is scaffolded.
+      # buf's PACKAGE_LOWER_SNAKE_CASE refuses a double underscore, so the template's own package
+      # can never pass. scaffold-smoke lints the renamed tree instead.
       - name: Lint the schema
-        if: ${{ hashFiles('proto/__PROTO_PACKAGE__/**') == '' }}
+        if: needs.detect.outputs.is_template == 'false'
         run: buf lint
 
       # Only on pull requests: on a push to main the comparison is against the commit that was
@@ -161,11 +185,11 @@ jobs:
   client:
     # WinUI 3 (Windows App SDK) requires Windows to build.
     runs-on: windows-latest
-    # Skipped in the template for the same reason buf lint is: a namespace spelled
-    # __ROOT_NAMESPACE__ violates IDE1006, and an underscore sorts before every letter, so the
-    # import order is wrong by construction. scaffold-smoke-client builds the renamed tree
-    # instead. The condition is the placeholder proto directory, so a scaffolded project runs it.
-    if: ${{ hashFiles('proto/__PROTO_PACKAGE__/**') == '' }}
+    # Skipped in the template for the same reason buf lint is: a namespace spelled with a
+    # placeholder violates IDE1006, and an underscore sorts before every letter, so the import
+    # order is wrong by construction. scaffold-smoke-client builds the renamed tree instead.
+    needs: detect
+    if: needs.detect.outputs.is_template == 'false'
     defaults:
       run:
         working-directory: client
