@@ -5,19 +5,22 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.Modules.Auth.Application.Account.Commands.UpdateRemoteProfile {
-  public sealed class UpdateRemoteProfileCommandHandler
-      : IRequestHandler<UpdateRemoteProfileCommand, Result> {
+namespace Kakehashi.Modules.Auth.Application.Account.Commands.UpdateRemoteProfile;
+
+public sealed class UpdateRemoteProfileCommandHandler
+    : IRequestHandler<UpdateRemoteProfileCommand, Result>
+{
     private readonly IAccountGateway _account;
 
-    public UpdateRemoteProfileCommandHandler(IAccountGateway account) {
-      ArgumentNullException.ThrowIfNull(account);
-      _account = account;
+    public UpdateRemoteProfileCommandHandler(IAccountGateway account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        _account = account;
     }
 
     public Task<Result> Handle(
-        UpdateRemoteProfileCommand request, CancellationToken cancellationToken) {
-      return _account.UpdateProfileAsync(request.DisplayName, request.Phone, cancellationToken);
+        UpdateRemoteProfileCommand request, CancellationToken cancellationToken)
+    {
+        return _account.UpdateProfileAsync(request.DisplayName, request.Phone, cancellationToken);
     }
-  }
 }

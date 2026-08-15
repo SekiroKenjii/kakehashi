@@ -1,13 +1,15 @@
 using System.Collections.Generic;
 using Microsoft.Extensions.DependencyInjection;
 
-namespace Kakehashi.UI.Contracts {
-  /// <summary>
-  /// A self-contained feature module. The host discovers modules, lets each register its own
-  /// services, and surfaces the navigation entries they contribute. Modules never reference one
-  /// another directly; they communicate through events on the mediator.
-  /// </summary>
-  public interface IModule {
+namespace Kakehashi.UI.Contracts;
+
+/// <summary>
+/// A self-contained feature module. The host discovers modules, lets each register its own
+/// services, and surfaces the navigation entries they contribute. Modules never reference one
+/// another directly; they communicate through events on the mediator.
+/// </summary>
+public interface IModule
+{
     /// <summary>A stable, human-readable module name used in diagnostics.</summary>
     string Name { get; }
 
@@ -19,5 +21,4 @@ namespace Kakehashi.UI.Contracts {
 
     /// <summary>The navigation entries this module contributes to the shell.</summary>
     IReadOnlyList<NavigationItem> GetNavigationItems();
-  }
 }

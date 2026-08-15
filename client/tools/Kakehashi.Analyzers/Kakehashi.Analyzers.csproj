@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    The five style rules `dotnet format` cannot express. An analyzer, not a script, because these
+    rules are about syntax — where a statement sits relative to its neighbours, whether a type has
+    members — and a regex over text cannot tell a `return` inside a string from a statement.
+
+    netstandard2.0 is not a choice: it is what the compiler loads analyzers as.
+  -->
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <EnforceExtendedAnalyzerRules>true</EnforceExtendedAnalyzerRules>
+    <IsRoslynComponent>true</IsRoslynComponent>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.CodeAnalysis.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <AdditionalFiles Include="AnalyzerReleases.Shipped.md" />
+    <AdditionalFiles Include="AnalyzerReleases.Unshipped.md" />
+  </ItemGroup>
+
+</Project>

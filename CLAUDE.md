@@ -43,7 +43,7 @@ Touch only what the request requires.
 
 - Do not improve adjacent code, comments, imports, or doc comments.
 - Do not refactor things that are not broken.
-- Match existing style exactly — Google C# in `client/`, gofmt in `server/`.
+- Match existing style exactly — C# in `client/`, gofmt in `server/`.
 - If you notice pre-existing dead code or a style issue, **mention it — do not fix it silently**.
 
 **Your orphans are your responsibility:** remove imports, variables, handlers and registrations that
@@ -401,9 +401,15 @@ in a `.csproj`. Forbidden (relicensed/paid): Fluent Assertions, MediatR, AutoMap
 
 ### Style
 
-`.editorconfig` in `client/` encodes the Google C# Style Guide and is `root = true`, so it does not
-leak onto Go or proto files. 2-space indent (4 in XAML), 100-column limit, `using` outside
-namespaces with `System.*` first, no `this.`, no implicit usings, warnings as errors.
+`.editorconfig` in `client/` is the style, and is `root = true`, so it does not leak onto Go or
+proto files. 4-space indent, 120-column limit, file-scoped namespaces with a blank line either
+side, `using` outside namespaces with `System.*` first, no `this.`, no implicit usings, warnings
+as errors.
+
+Braces are Allman for what declares or branches — types, methods, control flow, properties — and
+K&R for what evaluates: accessors, lambdas, anonymous methods and types, object/collection
+initializers, switch expressions, patterns. `client/docs/csharp-style.md` states the whole rule
+and what enforces each part.
 
 Member order (review convention, not tool-enforced): nested types → static/const/readonly fields →
 fields and properties → constructors → methods; public before non-public within each group.

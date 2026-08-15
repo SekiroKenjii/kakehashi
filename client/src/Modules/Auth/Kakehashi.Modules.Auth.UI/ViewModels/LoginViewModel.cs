@@ -14,22 +14,24 @@ using Microsoft.Extensions.Options;
 using Microsoft.UI.Xaml.Media;
 using SignInRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignIn.SignInCommand;
 
-namespace Kakehashi.Modules.Auth.UI.ViewModels {
-  /// <summary>
-  /// Drives the sign-in window, whose shape depends on <see cref="AuthMode"/>.
-  /// </summary>
-  /// <remarks>
-  /// In-app mode is one screen: a credentials form that shows its errors inline and disables
-  /// itself while the attempt is in flight; a failed attempt leaves the typed email in place for
-  /// correction.
-  /// <para>
-  /// Browser mode keeps three: explain the flow, wait for the browser, report the failure. The user
-  /// is doing the work in another window, so the app has nothing to show but progress — and when it
-  /// fails there is no field to return to, only a retry.
-  /// </para>
-  /// Either way <see cref="SignInSucceeded"/> fires when the flow completes so the window can close.
-  /// </remarks>
-  public sealed partial class LoginViewModel : ViewModel {
+namespace Kakehashi.Modules.Auth.UI.ViewModels;
+
+/// <summary>
+/// Drives the sign-in window, whose shape depends on <see cref="AuthMode"/>.
+/// </summary>
+/// <remarks>
+/// In-app mode is one screen: a credentials form that shows its errors inline and disables
+/// itself while the attempt is in flight; a failed attempt leaves the typed email in place for
+/// correction.
+/// <para>
+/// Browser mode keeps three: explain the flow, wait for the browser, report the failure. The user
+/// is doing the work in another window, so the app has nothing to show but progress — and when it
+/// fails there is no field to return to, only a retry.
+/// </para>
+/// Either way <see cref="SignInSucceeded"/> fires when the flow completes so the window can close.
+/// </remarks>
+public sealed partial class LoginViewModel : ViewModel
+{
     private readonly ISender _sender;
     private readonly SystemBrowser _browser;
     private readonly AuthOptions _options;
@@ -61,47 +63,57 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     /// warning about interception would be alarming and wrong, and claiming TLS would still be a lie.
     /// </para>
     /// </remarks>
-    public string TransportSummary {
-      get {
-        return DetectTransport() switch {
-          Transport.Tls => "Sent over TLS to your Kakehashi server",
-          Transport.Loopback => "Sent to a server on this machine — no network involved",
-          _ => "Not encrypted: this server is configured over plain HTTP",
-        };
-      }
+    public string TransportSummary
+    {
+        get {
+            return DetectTransport() switch {
+                Transport.Tls => "Sent over TLS to your Kakehashi server",
+                Transport.Loopback => "Sent to a server on this machine — no network involved",
+                _ => "Not encrypted: this server is configured over plain HTTP",
+            };
+        }
     }
 
     /// <summary>The shield, or the warning triangle when there is nothing to be reassured about.</summary>
-    public string TransportGlyph {
-      get { return DetectTransport() == Transport.Plain ? "" : ""; }
+    public string TransportGlyph
+    {
+        get { return DetectTransport() == Transport.Plain ? "" : ""; }
     }
 
     /// <summary>Green for TLS, neutral for loopback, caution for plain HTTP over a network.</summary>
-    public Brush TransportBrush {
-      get {
-        var key = DetectTransport() switch {
-          Transport.Tls => "SystemFillColorSuccessBrush",
-          Transport.Loopback => "TextFillColorTertiaryBrush",
-          _ => "SystemFillColorCautionBrush",
-        };
-        return (Brush)Microsoft.UI.Xaml.Application.Current.Resources[key];
-      }
+    public Brush TransportBrush
+    {
+        get {
+            var key = DetectTransport() switch {
+                Transport.Tls => "SystemFillColorSuccessBrush",
+                Transport.Loopback => "TextFillColorTertiaryBrush",
+                _ => "SystemFillColorCautionBrush",
+            };
+
+            return (Brush)Microsoft.UI.Xaml.Application.Current.Resources[key];
+        }
     }
 
-    private enum Transport {
-      Plain,
-      Loopback,
-      Tls,
+    private enum Transport
+    {
+        Plain,
+        Loopback,
+        Tls,
     }
 
-    private Transport DetectTransport() {
-      if (!Uri.TryCreate(_options.Authority, UriKind.Absolute, out var authority)) {
-        return Transport.Plain;
-      }
-      if (authority.Scheme == Uri.UriSchemeHttps) {
-        return Transport.Tls;
-      }
-      return authority.IsLoopback ? Transport.Loopback : Transport.Plain;
+    private Transport DetectTransport()
+    {
+        if (!Uri.TryCreate(_options.Authority, UriKind.Absolute, out var authority))
+        {
+            return Transport.Plain;
+        }
+
+        if (authority.Scheme == Uri.UriSchemeHttps)
+        {
+            return Transport.Tls;
+        }
+
+        return authority.IsLoopback ? Transport.Loopback : Transport.Plain;
     }
 
     [ObservableProperty]
@@ -137,20 +149,21 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
     public string VersionText { get; }
 
     public LoginViewModel(
-        ISender sender, SystemBrowser browser, IOptions<AuthOptions> options) {
-      ArgumentNullException.ThrowIfNull(sender);
-      ArgumentNullException.ThrowIfNull(browser);
-      ArgumentNullException.ThrowIfNull(options);
-      _sender = sender;
-      _browser = browser;
-      _options = options.Value;
-      Email = string.Empty;
-      Password = string.Empty;
+        ISender sender, SystemBrowser browser, IOptions<AuthOptions> options)
+    {
+        ArgumentNullException.ThrowIfNull(sender);
+        ArgumentNullException.ThrowIfNull(browser);
+        ArgumentNullException.ThrowIfNull(options);
+        _sender = sender;
+        _browser = browser;
+        _options = options.Value;
+        Email = string.Empty;
+        Password = string.Empty;
 
-      var version = Assembly.GetEntryAssembly()?.GetName().Version;
-      VersionText = version is null
-          ? string.Empty
-          : $"v{version.Major}.{version.Minor}.{version.Build}";
+        var version = Assembly.GetEntryAssembly()?.GetName().Version;
+        VersionText = version is null
+            ? string.Empty
+            : $"v{version.Major}.{version.Minor}.{version.Build}";
     }
 
     /// <summary>Raised when sign-in succeeds so the host can dismiss the login window.</summary>
@@ -166,43 +179,56 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
             || (!string.IsNullOrWhiteSpace(Email) && !string.IsNullOrEmpty(Password)));
 
     [RelayCommand(CanExecute = nameof(CanSignIn), IncludeCancelCommand = true)]
-    private async Task SignInAsync(CancellationToken cancellationToken) {
-      if (IsBusy) {
-        return;
-      }
-
-      IsBusy = true;
-      ErrorMessage = null;
-      try {
-        var credentials = IsInAppMode ? new SignInCredentials(Email.Trim(), Password) : null;
-        var result = await _sender.Send(new SignInRequest(credentials), cancellationToken);
-        if (result.IsSuccess) {
-          // The password lives at most as long as the attempt that needed it.
-          Password = string.Empty;
-          SignInSucceeded?.Invoke(this, EventArgs.Empty);
-        } else if (result.Error != AuthErrors.LoginCancelled) {
-          ErrorMessage = result.Error.Message;
+    private async Task SignInAsync(CancellationToken cancellationToken)
+    {
+        if (IsBusy)
+        {
+            return;
         }
-      } catch (OperationCanceledException) {
-        // The user cancelled from the waiting state; fall back to the initial state, not an error.
-      } finally {
-        IsBusy = false;
-      }
+
+        IsBusy = true;
+        ErrorMessage = null;
+        try
+        {
+            var credentials = IsInAppMode ? new SignInCredentials(Email.Trim(), Password) : null;
+            var result = await _sender.Send(new SignInRequest(credentials), cancellationToken);
+
+            if (result.IsSuccess)
+            {
+                // The password lives at most as long as the attempt that needed it.
+                Password = string.Empty;
+                SignInSucceeded?.Invoke(this, EventArgs.Empty);
+            }
+            else if (result.Error != AuthErrors.LoginCancelled)
+            {
+                ErrorMessage = result.Error.Message;
+            }
+        }
+        catch (OperationCanceledException)
+        {
+            // The user cancelled from the waiting state; fall back to the initial state, not an error.
+        }
+        finally
+        {
+            IsBusy = false;
+        }
     }
 
     /// <summary>Re-opens the system browser at the in-progress authorize URL.</summary>
     [RelayCommand]
-    private void ReopenBrowser() {
-      _browser.TryReopen();
+    private void ReopenBrowser()
+    {
+        _browser.TryReopen();
     }
 
     /// <summary>Opens the authorization server in the browser so the user can check reachability.</summary>
     [RelayCommand]
-    private void TroubleshootConnection() {
-      if (_options.Authority is { Length: > 0 } authority) {
-        using var process = Process.Start(
-            new ProcessStartInfo { FileName = authority, UseShellExecute = true });
-      }
+    private void TroubleshootConnection()
+    {
+        if (_options.Authority is { Length: > 0 } authority)
+        {
+            using var process = Process.Start(
+                new ProcessStartInfo { FileName = authority, UseShellExecute = true });
+        }
     }
-  }
 }

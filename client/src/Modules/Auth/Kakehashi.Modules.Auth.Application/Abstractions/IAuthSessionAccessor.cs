@@ -1,12 +1,14 @@
 using System;
 using Kakehashi.Modules.Auth.Domain;
 
-namespace Kakehashi.Modules.Auth.Application.Abstractions {
-  /// <summary>
-  /// Holds the current <see cref="AuthSession"/> for the lifetime of the app. Registered as a
-  /// singleton: the access-token provider reads from it, and the use cases update it.
-  /// </summary>
-  public interface IAuthSessionAccessor {
+namespace Kakehashi.Modules.Auth.Application.Abstractions;
+
+/// <summary>
+/// Holds the current <see cref="AuthSession"/> for the lifetime of the app. Registered as a
+/// singleton: the access-token provider reads from it, and the use cases update it.
+/// </summary>
+public interface IAuthSessionAccessor
+{
     /// <summary>The current session, or <see langword="null"/> when no user is signed in.</summary>
     AuthSession? Current { get; }
 
@@ -19,5 +21,4 @@ namespace Kakehashi.Modules.Auth.Application.Abstractions {
     void Set(AuthSession session);
 
     void Clear();
-  }
 }

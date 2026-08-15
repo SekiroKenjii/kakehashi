@@ -71,7 +71,12 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
   </Folder>
+  <Folder Name="/tools/">
+    <Project Path="tools/Kakehashi.Analyzers/Kakehashi.Analyzers.csproj" />
+    <Project Path="tools/Kakehashi.Analyzers.CodeFixes/Kakehashi.Analyzers.CodeFixes.csproj" />
+  </Folder>
   <Folder Name="/tests/">
+    <Project Path="tests/Kakehashi.Analyzers.Tests/Kakehashi.Analyzers.Tests.csproj" />
     <Project Path="tests/Kakehashi.App.Infrastructure.Tests/Kakehashi.App.Infrastructure.Tests.csproj" />
     <Project Path="tests/Kakehashi.App.Tests/Kakehashi.App.Tests.csproj">
       <Platform Solution="*|x64" Project="x64" />

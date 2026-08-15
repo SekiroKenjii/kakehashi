@@ -15,7 +15,8 @@ consistency is enforced by tooling, not by review etiquette.
 - **WinUI 3** desktop host (`Microsoft.WindowsAppSDK` 2.1.x), configurable **unpackaged or packaged (MSIX)**.
 - **Modular monolith** with strict per-module layering and compile-time dependency rules.
 - **Central Package Management** — every NuGet version is pinned once in `Directory.Packages.props`.
-- **Google C# Style Guide** encoded in `.editorconfig` and enforced by `dotnet format` in CI.
+- **Its own C# style** — `.editorconfig` plus six Roslyn rules for the layout options it has none
+  for, enforced by `dotnet format` and the compiler in CI. See [docs/csharp-style.md](docs/csharp-style.md).
 - **MVVM** with `CommunityToolkit.Mvvm`; **DI** with `Microsoft.Extensions.DependencyInjection`.
 - A small, dependency-free, in-process **mediator** (commands/queries, pipeline behaviors, domain events).
 - **xUnit v3** tests (unit, integration, and reflection-based **architecture** tests) with **NSubstitute**.
@@ -67,7 +68,8 @@ Consistency is enforced automatically — see the [CI workflow](.github/workflow
 
 | Gate | Mechanism |
 | --- | --- |
-| Formatting & naming | `.editorconfig` (Google style) + `dotnet format --verify-no-changes` |
+| Formatting & naming | `.editorconfig` + `dotnet format --verify-no-changes` |
+| Layout rules with no .editorconfig option | `client/tools/Kakehashi.Analyzers` (KH0001-KH0006), build errors |
 | Compiler/analyzer warnings | `TreatWarningsAsErrors` in `Directory.Build.props` |
 | Dependency rules | `Kakehashi.ArchitectureTests` (fails the build if a layer is crossed) |
 | Package versions | Central Package Management (`Directory.Packages.props`) |

@@ -1,13 +1,16 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kakehashi.App.Hosting.Orchestration {
-  /// <summary>Activates the main window and dismisses the splash. Runs last.</summary>
-  public sealed class ActivationOrchestrator : IStartupOrchestrator {
+namespace Kakehashi.App.Hosting.Orchestration;
+
+/// <summary>Activates the main window and dismisses the splash. Runs last.</summary>
+public sealed class ActivationOrchestrator : IStartupOrchestrator
+{
     private readonly StartupContext _context;
 
-    public ActivationOrchestrator(StartupContext context) {
-      _context = context;
+    public ActivationOrchestrator(StartupContext context)
+    {
+        _context = context;
     }
 
     public int Order => 40;
@@ -16,11 +19,12 @@ namespace Kakehashi.App.Hosting.Orchestration {
 
     public string Description => "Ready";
 
-    public Task ExecuteAsync(CancellationToken cancellationToken) {
-      _context.MainWindow?.Activate();
-      _context.Splash?.Close();
-      _context.Splash = null;
-      return Task.CompletedTask;
+    public Task ExecuteAsync(CancellationToken cancellationToken)
+    {
+        _context.MainWindow?.Activate();
+        _context.Splash?.Close();
+        _context.Splash = null;
+
+        return Task.CompletedTask;
     }
-  }
 }

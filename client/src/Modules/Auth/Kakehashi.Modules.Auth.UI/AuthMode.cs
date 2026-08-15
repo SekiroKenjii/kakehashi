@@ -1,6 +1,8 @@
-namespace Kakehashi.Modules.Auth.UI {
-  /// <summary>Where the user types their password.</summary>
-  public enum AuthMode {
+namespace Kakehashi.Modules.Auth.UI;
+
+/// <summary>Where the user types their password.</summary>
+public enum AuthMode
+{
     /// <summary>
     /// Into this application, which posts them to the authorization server. The default, because
     /// the default authorization server is this product's own backend: bouncing through a browser
@@ -17,5 +19,4 @@ namespace Kakehashi.Modules.Auth.UI {
     /// live on that page. Those providers refuse password grants for exactly this reason.
     /// </summary>
     Browser,
-  }
 }

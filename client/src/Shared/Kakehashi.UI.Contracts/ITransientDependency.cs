@@ -1,6 +1,6 @@
-namespace Kakehashi.UI.Contracts {
-  /// <summary>
-  /// Marks a service whose implementation is registered with a transient lifetime.
-  /// </summary>
-  public interface ITransientDependency;
-}
+namespace Kakehashi.UI.Contracts;
+
+/// <summary>
+/// Marks a service whose implementation is registered with a transient lifetime.
+/// </summary>
+public interface ITransientDependency;

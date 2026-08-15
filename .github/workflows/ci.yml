@@ -173,9 +173,14 @@ jobs:
       - name: Restore
         run: dotnet restore Kakehashi.slnx
 
-      # Hard gate: every file must already match the Google-style .editorconfig.
+      # Hard gate: every file must already match the style .editorconfig.
       - name: Verify formatting
         run: dotnet format Kakehashi.slnx --verify-no-changes --severity warn --no-restore
+
+      # The step above leaves a compiler server holding client/tools' analyzer assemblies open,
+      # and the build below has to write them: without this it fails with CS2012 on its own DLL.
+      - name: Release the analyzer assemblies
+        run: dotnet build-server shutdown
 
       # Compiler + analyzer warnings fail the build (TreatWarningsAsErrors).
       - name: Build

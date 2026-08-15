@@ -6,15 +6,17 @@ using Kakehashi.SharedKernel;
 using Kakehashi.UI.Contracts;
 using Kakehashi.UI.Contracts.Services.Platform;
 
-namespace Kakehashi.App.Services {
-  /// <summary>
-  /// Default <see cref="IModuleRegistry"/>: the composed modules plus a locally persisted set of
-  /// detached names. Default-attached semantics — a module absent from the persisted set is
-  /// attached, so a newly compiled-in module appears automatically. Attach/detach are UI-thread
-  /// operations (like the rest of the settings store); each change broadcasts a
-  /// <see cref="ModuleSetChangedMessage"/>.
-  /// </summary>
-  public sealed class ModuleRegistry : IModuleRegistry {
+namespace Kakehashi.App.Services;
+
+/// <summary>
+/// Default <see cref="IModuleRegistry"/>: the composed modules plus a locally persisted set of
+/// detached names. Default-attached semantics — a module absent from the persisted set is
+/// attached, so a newly compiled-in module appears automatically. Attach/detach are UI-thread
+/// operations (like the rest of the settings store); each change broadcasts a
+/// <see cref="ModuleSetChangedMessage"/>.
+/// </summary>
+public sealed class ModuleRegistry : IModuleRegistry
+{
     private const string _detachedKey = "Modules.Detached";
 
     public static readonly Error UnknownModule = new(
@@ -41,109 +43,127 @@ namespace Kakehashi.App.Services {
     private HashSet<string> _withheld = new(StringComparer.Ordinal);
     private HashSet<string> _granted = new(StringComparer.Ordinal);
 
-    public ModuleRegistry(IEnumerable<IModule> modules, ILocalSettingsService localSettings) {
-      ArgumentNullException.ThrowIfNull(modules);
-      ArgumentNullException.ThrowIfNull(localSettings);
-      _localSettings = localSettings;
-      _all = [.. modules];
-      _detached = new HashSet<string>(
-          _localSettings.Read<List<string>>(_detachedKey) ?? [], StringComparer.Ordinal);
+    public ModuleRegistry(IEnumerable<IModule> modules, ILocalSettingsService localSettings)
+    {
+        ArgumentNullException.ThrowIfNull(modules);
+        ArgumentNullException.ThrowIfNull(localSettings);
+        _localSettings = localSettings;
+        _all = [.. modules];
+        _detached = new HashSet<string>(
+            _localSettings.Read<List<string>>(_detachedKey) ?? [], StringComparer.Ordinal);
     }
 
     public IReadOnlyList<IModule> All => _all;
 
     public IReadOnlyList<IModule> Attached => [.. _all.Where(IsAttachedCore)];
 
-    public bool IsAttached(string moduleName) {
-      return Find(moduleName) is { } module && IsAttachedCore(module);
+    public bool IsAttached(string moduleName)
+    {
+        return Find(moduleName) is { } module && IsAttachedCore(module);
     }
 
-    public bool IsWithheld(string moduleName) {
-      return Find(moduleName) is { } module && IsWithheldCore(module);
+    public bool IsWithheld(string moduleName)
+    {
+        return Find(moduleName) is { } module && IsWithheldCore(module);
     }
 
-    public bool IsGranted(string moduleName) {
-      return Find(moduleName) is { } module
-          && module.Descriptor.AssignmentId is { } id
-          && _granted.Contains(id);
+    public bool IsGranted(string moduleName)
+    {
+        return Find(moduleName) is { } module
+            && module.Descriptor.AssignmentId is { } id
+            && _granted.Contains(id);
     }
 
     public void SetAssignments(
-        IReadOnlyCollection<string> withheld, IReadOnlyCollection<string> granted) {
-      ArgumentNullException.ThrowIfNull(withheld);
-      ArgumentNullException.ThrowIfNull(granted);
+        IReadOnlyCollection<string> withheld, IReadOnlyCollection<string> granted)
+    {
+        ArgumentNullException.ThrowIfNull(withheld);
+        ArgumentNullException.ThrowIfNull(granted);
 
-      _withheld = new HashSet<string>(withheld, StringComparer.Ordinal);
-      _granted = new HashSet<string>(granted, StringComparer.Ordinal);
+        _withheld = new HashSet<string>(withheld, StringComparer.Ordinal);
+        _granted = new HashSet<string>(granted, StringComparer.Ordinal);
 
-      // Broadcast without saving: this is the server's answer, not the user's preference, and
-      // persisting it would mean a stale copy outliving the account it described.
-      WeakReferenceMessenger.Default.Send(new ModuleSetChangedMessage());
+        // Broadcast without saving: this is the server's answer, not the user's preference, and
+        // persisting it would mean a stale copy outliving the account it described.
+        WeakReferenceMessenger.Default.Send(new ModuleSetChangedMessage());
     }
 
-    public Result Attach(string moduleName) {
-      if (Find(moduleName) is not { } module) {
-        return Result.Failure(UnknownModule);
-      }
+    public Result Attach(string moduleName)
+    {
+        if (Find(moduleName) is not { } module)
+        {
+            return Result.Failure(UnknownModule);
+        }
 
-      if (IsWithheldCore(module)) {
-        // Refused here so the user gets a sentence instead of a page that loads and then fails on
-        // its first request. The server would refuse it anyway.
-        return Result.Failure(WithheldModule);
-      }
+        if (IsWithheldCore(module))
+        {
+            // Refused here so the user gets a sentence instead of a page that loads and then fails on
+            // its first request. The server would refuse it anyway.
+            return Result.Failure(WithheldModule);
+        }
 
-      if (_detached.Remove(module.Name)) {
-        SaveAndBroadcast();
-      }
+        if (_detached.Remove(module.Name))
+        {
+            SaveAndBroadcast();
+        }
 
-      return Result.Success();
+        return Result.Success();
     }
 
-    public Result Detach(string moduleName) {
-      if (Find(moduleName) is not { } module) {
-        return Result.Failure(UnknownModule);
-      }
+    public Result Detach(string moduleName)
+    {
+        if (Find(moduleName) is not { } module)
+        {
+            return Result.Failure(UnknownModule);
+        }
 
-      if (module.Descriptor.IsRequired) {
-        return Result.Failure(RequiredModule);
-      }
+        if (module.Descriptor.IsRequired)
+        {
+            return Result.Failure(RequiredModule);
+        }
 
-      if (IsGranted(module.Name)) {
-        // An admin-granted module cannot be detached: the grant means the account is expected to
-        // have it, not merely allowed it.
-        return Result.Failure(GrantedModule);
-      }
+        if (IsGranted(module.Name))
+        {
+            // An admin-granted module cannot be detached: the grant means the account is expected to
+            // have it, not merely allowed it.
+            return Result.Failure(GrantedModule);
+        }
 
-      if (_detached.Add(module.Name)) {
-        SaveAndBroadcast();
-      }
+        if (_detached.Add(module.Name))
+        {
+            SaveAndBroadcast();
+        }
 
-      return Result.Success();
+        return Result.Success();
     }
 
-    private IModule? Find(string moduleName) {
-      return _all.FirstOrDefault(
-          module => string.Equals(module.Name, moduleName, StringComparison.Ordinal));
+    private IModule? Find(string moduleName)
+    {
+        return _all.FirstOrDefault(
+            module => string.Equals(module.Name, moduleName, StringComparison.Ordinal));
     }
 
-    private bool IsAttachedCore(IModule module) {
-      // Withheld wins over everything, including Required: a module the server refuses is not one
-      // this client can present, whatever the module says about itself.
-      if (IsWithheldCore(module)) {
-        return false;
-      }
+    private bool IsAttachedCore(IModule module)
+    {
+        // Withheld wins over everything, including Required: a module the server refuses is not one
+        // this client can present, whatever the module says about itself.
+        if (IsWithheldCore(module))
+        {
+            return false;
+        }
 
-      // A required module counts as attached even if a stale settings file says otherwise.
-      return module.Descriptor.IsRequired || !_detached.Contains(module.Name);
+        // A required module counts as attached even if a stale settings file says otherwise.
+        return module.Descriptor.IsRequired || !_detached.Contains(module.Name);
     }
 
-    private bool IsWithheldCore(IModule module) {
-      return module.Descriptor.AssignmentId is { } id && _withheld.Contains(id);
+    private bool IsWithheldCore(IModule module)
+    {
+        return module.Descriptor.AssignmentId is { } id && _withheld.Contains(id);
     }
 
-    private void SaveAndBroadcast() {
-      _localSettings.Save(_detachedKey, _detached.ToList());
-      WeakReferenceMessenger.Default.Send(new ModuleSetChangedMessage());
+    private void SaveAndBroadcast()
+    {
+        _localSettings.Save(_detachedKey, _detached.ToList());
+        WeakReferenceMessenger.Default.Send(new ModuleSetChangedMessage());
     }
-  }
 }
