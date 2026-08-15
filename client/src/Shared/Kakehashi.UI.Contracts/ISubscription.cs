@@ -1,10 +1,12 @@
 using System;
 
-namespace Kakehashi.UI.Contracts {
-  /// <summary>
-  /// Collects <see cref="IDisposable"/>s and disposes them together when the subscription ends.
-  /// </summary>
-  public interface ISubscription : ITransientDependency, IDisposable {
+namespace Kakehashi.UI.Contracts;
+
+/// <summary>
+/// Collects <see cref="IDisposable"/>s and disposes them together when the subscription ends.
+/// </summary>
+public interface ISubscription : ITransientDependency, IDisposable
+{
     /// <summary>
     /// Whether <see cref="Unsubscribe"/> (or Dispose) has run; a spent subscription must not be
     /// reused.
@@ -18,5 +20,4 @@ namespace Kakehashi.UI.Contracts {
     /// Disposes everything added and marks the subscription <see cref="Unsubscribed"/>.
     /// </summary>
     void Unsubscribe();
-  }
 }

@@ -3,14 +3,16 @@ using System.Threading.Tasks;
 using Kakehashi.Modules.Auth.Domain;
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.Modules.Auth.Application.Abstractions {
-  /// <summary>
-  /// Port for obtaining and ending a session at the authorization server. Concrete adapters live in
-  /// the UI layer: one signs in through the system browser (Authorization Code + PKCE), one posts
-  /// credentials from the app itself. Which one is registered is a composition decision; this layer
-  /// does not know and must not care.
-  /// </summary>
-  public interface IInteractiveAuthenticator {
+namespace Kakehashi.Modules.Auth.Application.Abstractions;
+
+/// <summary>
+/// Port for obtaining and ending a session at the authorization server. Concrete adapters live in
+/// the UI layer: one signs in through the system browser (Authorization Code + PKCE), one posts
+/// credentials from the app itself. Which one is registered is a composition decision; this layer
+/// does not know and must not care.
+/// </summary>
+public interface IInteractiveAuthenticator
+{
     /// <summary>Signs in and returns the resulting session.</summary>
     /// <param name="credentials">
     /// Required by adapters that authenticate in-app, ignored by adapters that hand the user to the
@@ -30,5 +32,4 @@ namespace Kakehashi.Modules.Auth.Application.Abstractions {
     /// call with the access token.
     /// </param>
     Task LogoutAsync(AuthSession? session, CancellationToken cancellationToken);
-  }
 }

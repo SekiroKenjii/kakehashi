@@ -7,22 +7,24 @@ using Microsoft.UI.Xaml.Media.Animation;
 using Windows.ApplicationModel.DataTransfer;
 using Windows.System;
 
-namespace Kakehashi.App.UI {
-  /// <summary>
-  /// The Navigation screen: the structure on the left, the selected screen on the right.
-  /// </summary>
-  /// <remarks>
-  /// Everything here is either a static helper <c>x:Bind</c> calls, or a handler that reads its row out
-  /// of <c>Tag</c> and forwards to the view model. Nothing decides anything: what a move means, what
-  /// counts as unsaved, and what gets posted are all the view model's, which is what lets them be
-  /// tested without a window.
-  /// <para>
-  /// The rows carry <c>Tag="{x:Bind}"</c> rather than relying on <c>DataContext</c>. That is a lesson
-  /// this screen already paid for once: a handler that read <c>DataContext</c> matched nothing and
-  /// returned silently on every interaction.
-  /// </para>
-  /// </remarks>
-  public sealed partial class NavigationLayoutPage : Page {
+namespace Kakehashi.App.UI;
+
+/// <summary>
+/// The Navigation screen: the structure on the left, the selected screen on the right.
+/// </summary>
+/// <remarks>
+/// Everything here is either a static helper <c>x:Bind</c> calls, or a handler that reads its row out
+/// of <c>Tag</c> and forwards to the view model. Nothing decides anything: what a move means, what
+/// counts as unsaved, and what gets posted are all the view model's, which is what lets them be
+/// tested without a window.
+/// <para>
+/// The rows carry <c>Tag="{x:Bind}"</c> rather than relying on <c>DataContext</c>. That is a lesson
+/// this screen already paid for once: a handler that read <c>DataContext</c> matched nothing and
+/// returned silently on every interaction.
+/// </para>
+/// </remarks>
+public sealed partial class NavigationLayoutPage : Page
+{
     /// <summary>
     /// The row being dragged.
     /// </summary>
@@ -40,37 +42,42 @@ namespace Kakehashi.App.UI {
     /// <summary>Set while the picker is being put in step with the selection, not by somebody using it.</summary>
     private bool _syncingHeadingPicker;
 
-    public NavigationLayoutPage(NavigationLayoutViewModel viewModel) {
-      ArgumentNullException.ThrowIfNull(viewModel);
-      ViewModel = viewModel;
+    public NavigationLayoutPage(NavigationLayoutViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ViewModel = viewModel;
 
-      InitializeComponent();
+        InitializeComponent();
 
-      ViewModel.PropertyChanged += OnViewModelChanged;
-      ViewModel.Preview.CollectionChanged += (_, _) => RebuildPreview();
-      Loaded += OnLoaded;
+        ViewModel.PropertyChanged += OnViewModelChanged;
+        ViewModel.Preview.CollectionChanged += (_, _) => RebuildPreview();
+        Loaded += OnLoaded;
     }
 
     public NavigationLayoutViewModel ViewModel { get; }
 
     /// <summary>Shown when a string has something in it.</summary>
-    public static Visibility WhenSet(string value) {
-      return value.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
+    public static Visibility WhenSet(string value)
+    {
+        return value.Length > 0 ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>Shown when there is nothing selected. x:Bind has no operator for "not".</summary>
-    public static Visibility WhenAbsent(object? value) {
-      return value is null ? Visibility.Visible : Visibility.Collapsed;
+    public static Visibility WhenAbsent(object? value)
+    {
+        return value is null ? Visibility.Visible : Visibility.Collapsed;
     }
 
     /// <summary>A hidden screen is drawn faded, the way the mockup dims it.</summary>
-    public static double RowOpacity(bool isVisible) {
-      return isVisible ? 1.0 : 0.45;
+    public static double RowOpacity(bool isVisible)
+    {
+        return isVisible ? 1.0 : 0.45;
     }
 
     /// <summary>An open eye for a screen the pane offers, a struck-through one for a hidden screen.</summary>
-    public static string EyeGlyph(bool isVisible) {
-      return isVisible ? "" : "";
+    public static string EyeGlyph(bool isVisible)
+    {
+        return isVisible ? "" : "";
     }
 
     /// <summary>A screen that refuses to be hidden draws its eye faded, since pressing it does nothing.</summary>
@@ -78,13 +85,15 @@ namespace Kakehashi.App.UI {
     /// Faded rather than disabled: <c>IsEnabled=false</c> takes the button out of the tab order and
     /// stops it surfacing a tooltip, which left the sentence below reaching a mouse and nothing else.
     /// </remarks>
-    public static double EyeOpacity(bool canHide) {
-      return canHide ? 1.0 : 0.4;
+    public static double EyeOpacity(bool canHide)
+    {
+        return canHide ? 1.0 : 0.4;
     }
 
     /// <summary>What the eye is, named per row so a reader knows which screen it acts on.</summary>
-    public static string VisibilityLabel(string title, bool isVisible) {
-      return isVisible ? $"{title}: offered in the pane" : $"{title}: hidden from the pane";
+    public static string VisibilityLabel(string title, bool isVisible)
+    {
+        return isVisible ? $"{title}: offered in the pane" : $"{title}: hidden from the pane";
     }
 
     /// <summary>
@@ -100,16 +109,19 @@ namespace Kakehashi.App.UI {
     /// permission, which is a different reason wearing the same words.
     /// </para>
     /// </remarks>
-    public static string VisibilityTip(bool isVisible, bool canHide) {
-      if (!canHide) {
-        return "This screen is shown only to accounts that hold its permission, so it cannot also "
-            + "be hidden by hand. Take the permission away instead.";
-      }
-      return isVisible ? "Offered in the pane — click to hide" : "Hidden — click to offer it";
+    public static string VisibilityTip(bool isVisible, bool canHide)
+    {
+        if (!canHide)
+        {
+            return "This screen is shown only to accounts that hold its permission, so it cannot also "
+                + "be hidden by hand. Take the permission away instead.";
+        }
+        return isVisible ? "Offered in the pane — click to hide" : "Hidden — click to offer it";
     }
 
-    private async void OnLoaded(object sender, RoutedEventArgs e) {
-      await ViewModel.LoadCommand.ExecuteAsync(parameter: null);
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.LoadCommand.ExecuteAsync(parameter: null);
     }
 
     /// <summary>Puts the heading picker in step with whatever is selected.</summary>
@@ -119,48 +131,59 @@ namespace Kakehashi.App.UI {
     /// whose id happens to be empty — so a rebuild would read as somebody unfiling the screen. This
     /// screen has had that bug before, in the row pickers this replaced.
     /// </remarks>
-    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e) {
-      if (e.PropertyName == nameof(NavigationLayoutViewModel.IsPreviewOpen)) {
-        SlidePreview(ViewModel.IsPreviewOpen);
-        return;
-      }
-      if (e.PropertyName != nameof(NavigationLayoutViewModel.SelectedScreen)) {
-        return;
-      }
-
-      _syncingHeadingPicker = true;
-      try {
-        string wanted = ViewModel.SelectedScreen?.Heading is { IsUnfiled: false } heading
-            ? heading.Id
-            : string.Empty;
-
-        HeadingPicker.SelectedItem = null;
-        foreach (var choice in ViewModel.HeadingChoices) {
-          if (choice.Id == wanted) {
-            HeadingPicker.SelectedItem = choice;
-            break;
-          }
+    private void OnViewModelChanged(object? sender, PropertyChangedEventArgs e)
+    {
+        if (e.PropertyName == nameof(NavigationLayoutViewModel.IsPreviewOpen))
+        {
+            SlidePreview(ViewModel.IsPreviewOpen);
+            return;
         }
-      } finally {
-        _syncingHeadingPicker = false;
-      }
+        if (e.PropertyName != nameof(NavigationLayoutViewModel.SelectedScreen))
+        {
+            return;
+        }
+
+        _syncingHeadingPicker = true;
+        try
+        {
+            string wanted = ViewModel.SelectedScreen?.Heading is { IsUnfiled: false } heading
+                ? heading.Id
+                : string.Empty;
+
+            HeadingPicker.SelectedItem = null;
+            foreach (var choice in ViewModel.HeadingChoices)
+            {
+                if (choice.Id == wanted)
+                {
+                    HeadingPicker.SelectedItem = choice;
+                    break;
+                }
+            }
+        }
+        finally
+        {
+            _syncingHeadingPicker = false;
+        }
     }
 
-    private void OnHeadingChosen(object sender, SelectionChangedEventArgs e) {
-      if (_syncingHeadingPicker
-          || HeadingPicker.SelectedItem is not NavHeadingChoice choice
-          || ViewModel.SelectedScreen is not { } screen) {
-        return;
-      }
+    private void OnHeadingChosen(object sender, SelectionChangedEventArgs e)
+    {
+        if (_syncingHeadingPicker
+            || HeadingPicker.SelectedItem is not NavHeadingChoice choice
+            || ViewModel.SelectedScreen is not { } screen)
+        {
+            return;
+        }
 
-      var target = choice.Id.Length == 0
-          ? FindUnfiled()
-          : FindHeading(choice.Id);
-      if (target is null || ReferenceEquals(target, screen.Heading)) {
-        return;
-      }
+        var target = choice.Id.Length == 0
+            ? FindUnfiled()
+            : FindHeading(choice.Id);
+        if (target is null || ReferenceEquals(target, screen.Heading))
+        {
+            return;
+        }
 
-      ViewModel.MoveScreen(screen, target, target.Screens.Count);
+        ViewModel.MoveScreen(screen, target, target.Screens.Count);
     }
 
     /// <summary>How far the panel travels, which is its own width: closed means just off the edge.</summary>
@@ -175,36 +198,41 @@ namespace Kakehashi.App.UI {
     /// simply appeared. Visibility is still set — collapsed once it has left, so nothing offscreen
     /// stays hit-testable, and visible before it starts so there is something to watch move.
     /// </remarks>
-    private void SlidePreview(bool open) {
-      if (open) {
-        PreviewPanel.Visibility = Visibility.Visible;
-      }
+    private void SlidePreview(bool open)
+    {
+        if (open)
+        {
+            PreviewPanel.Visibility = Visibility.Visible;
+        }
 
-      var slide = new DoubleAnimation {
-        To = open ? 0 : _previewTravel,
-        Duration = new Duration(TimeSpan.FromMilliseconds(220)),
-        EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
-      };
-      Storyboard.SetTarget(slide, PreviewSlide);
-      Storyboard.SetTargetProperty(slide, "X");
+        var slide = new DoubleAnimation {
+            To = open ? 0 : _previewTravel,
+            Duration = new Duration(TimeSpan.FromMilliseconds(220)),
+            EasingFunction = new CubicEase { EasingMode = EasingMode.EaseOut },
+        };
+        Storyboard.SetTarget(slide, PreviewSlide);
+        Storyboard.SetTargetProperty(slide, "X");
 
-      // Held in a field, not a local: an unreferenced Storyboard can be collected before it
-      // finishes, so the Completed that collapses the panel never runs and it stays hit-testable.
-      _previewSlide?.Stop();
-      _previewSlide = new Storyboard();
-      _previewSlide.Children.Add(slide);
-      if (!open) {
-        _previewSlide.Completed += (_, _) => PreviewPanel.Visibility = Visibility.Collapsed;
-      }
-      _previewSlide.Begin();
+        // Held in a field, not a local: an unreferenced Storyboard can be collected before it
+        // finishes, so the Completed that collapses the panel never runs and it stays hit-testable.
+        _previewSlide?.Stop();
+        _previewSlide = new Storyboard();
+        _previewSlide.Children.Add(slide);
+        if (!open)
+        {
+            _previewSlide.Completed += (_, _) => PreviewPanel.Visibility = Visibility.Collapsed;
+        }
+        _previewSlide.Begin();
     }
 
-    private void OnTogglePreviewClicked(object sender, RoutedEventArgs e) {
-      ViewModel.IsPreviewOpen = !ViewModel.IsPreviewOpen;
+    private void OnTogglePreviewClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.IsPreviewOpen = !ViewModel.IsPreviewOpen;
     }
 
-    private void OnClosePreviewClicked(object sender, RoutedEventArgs e) {
-      ViewModel.IsPreviewOpen = false;
+    private void OnClosePreviewClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.IsPreviewOpen = false;
     }
 
     /// <summary>
@@ -216,31 +244,37 @@ namespace Kakehashi.App.UI {
     /// thread by its tests. Rebuilt wholesale on every change: the preview is small, and a diffing
     /// version would be a second placement algorithm to keep in step with the planner.
     /// </remarks>
-    private void RebuildPreview() {
-      PanePreview.MenuItems.Clear();
+    private void RebuildPreview()
+    {
+        PanePreview.MenuItems.Clear();
 
-      string group = string.Empty;
-      foreach (var entry in ViewModel.Preview) {
-        if (!string.Equals(entry.Item.Group, group, StringComparison.Ordinal)) {
-          group = entry.Item.Group;
-          if (group.Length > 0) {
-            PanePreview.MenuItems.Add(new NavigationViewItemHeader { Content = group });
-          }
+        string group = string.Empty;
+        foreach (var entry in ViewModel.Preview)
+        {
+            if (!string.Equals(entry.Item.Group, group, StringComparison.Ordinal))
+            {
+                group = entry.Item.Group;
+                if (group.Length > 0)
+                {
+                    PanePreview.MenuItems.Add(new NavigationViewItemHeader { Content = group });
+                }
+            }
+
+            PanePreview.MenuItems.Add(new NavigationViewItem {
+                Content = entry.Item.Title,
+                Icon = new FontIcon { Glyph = entry.Item.IconGlyph },
+                IsEnabled = entry.IsEnabled,
+                SelectsOnInvoked = false,
+            });
         }
-
-        PanePreview.MenuItems.Add(new NavigationViewItem {
-          Content = entry.Item.Title,
-          Icon = new FontIcon { Glyph = entry.Item.IconGlyph },
-          IsEnabled = entry.IsEnabled,
-          SelectsOnInvoked = false,
-        });
-      }
     }
 
-    private void OnScreenPressed(object sender, RoutedEventArgs e) {
-      if (sender is FrameworkElement { Tag: NavScreenNode screen }) {
-        ViewModel.SelectedScreen = screen;
-      }
+    private void OnScreenPressed(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: NavScreenNode screen })
+        {
+            ViewModel.SelectedScreen = screen;
+        }
     }
 
     /// <summary>Enter or Space on a focused row selects it, the way a click does.</summary>
@@ -248,117 +282,145 @@ namespace Kakehashi.App.UI {
     /// The row is a Border rather than a Button on purpose — a Button is a leaf in the automation
     /// tree, so it would hide the eye it contains — and a Border answers no key on its own.
     /// </remarks>
-    private void OnScreenKeyDown(object sender, KeyRoutedEventArgs e) {
-      if (e.Key is not (VirtualKey.Enter or VirtualKey.Space)) {
-        return;
-      }
-      if (sender is FrameworkElement { Tag: NavScreenNode screen }) {
-        ViewModel.SelectedScreen = screen;
+    private void OnScreenKeyDown(object sender, KeyRoutedEventArgs e)
+    {
+        if (e.Key is not (VirtualKey.Enter or VirtualKey.Space))
+        {
+            return;
+        }
+        if (sender is FrameworkElement { Tag: NavScreenNode screen })
+        {
+            ViewModel.SelectedScreen = screen;
+            e.Handled = true;
+        }
+    }
+
+    private void OnVisibilityClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: NavScreenNode screen } && screen.CanHide)
+        {
+            screen.IsVisible = !screen.IsVisible;
+        }
+    }
+
+    private void OnIconClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: NavIconChoice choice })
+        {
+            ViewModel.PickIconCommand.Execute(choice);
+        }
+    }
+
+    private void OnMoveUpClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.MoveUpCommand.Execute(ViewModel.SelectedScreen);
+    }
+
+    private void OnMoveDownClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.MoveDownCommand.Execute(ViewModel.SelectedScreen);
+    }
+
+    private void OnHeadingUpClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: NavHeadingNode heading })
+        {
+            ViewModel.MoveHeading(heading, IndexOfHeading(heading) - 1);
+        }
+    }
+
+    private void OnDeleteHeadingClicked(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: NavHeadingNode heading })
+        {
+            ViewModel.DeleteHeadingCommand.Execute(heading);
+        }
+    }
+
+    private void OnDeleteOrphanClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.DeleteOrphanCommand.Execute(ViewModel.SelectedScreen);
+    }
+
+    private async void OnViewDiffClicked(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PrepareDiff();
+        DiffDialog.XamlRoot = XamlRoot;
+        await DiffDialog.ShowAsync();
+    }
+
+    private void OnScreenDragStarting(UIElement sender, DragStartingEventArgs args)
+    {
+        if (sender is FrameworkElement { Tag: NavScreenNode screen })
+        {
+            _dragged = screen;
+
+            // Text so the package is not empty; the drop reads the field. A screen is not a string, and
+            // anything that arrived as one came from somewhere this page cannot vouch for.
+            args.Data.SetText(screen.DisplayTitle);
+            args.Data.RequestedOperation = DataPackageOperation.Move;
+        }
+    }
+
+    private void OnRowDragOver(object sender, DragEventArgs e)
+    {
+        e.AcceptedOperation = _dragged is null
+            ? DataPackageOperation.None
+            : DataPackageOperation.Move;
         e.Handled = true;
-      }
-    }
-
-    private void OnVisibilityClicked(object sender, RoutedEventArgs e) {
-      if (sender is FrameworkElement { Tag: NavScreenNode screen } && screen.CanHide) {
-        screen.IsVisible = !screen.IsVisible;
-      }
-    }
-
-    private void OnIconClicked(object sender, RoutedEventArgs e) {
-      if (sender is FrameworkElement { Tag: NavIconChoice choice }) {
-        ViewModel.PickIconCommand.Execute(choice);
-      }
-    }
-
-    private void OnMoveUpClicked(object sender, RoutedEventArgs e) {
-      ViewModel.MoveUpCommand.Execute(ViewModel.SelectedScreen);
-    }
-
-    private void OnMoveDownClicked(object sender, RoutedEventArgs e) {
-      ViewModel.MoveDownCommand.Execute(ViewModel.SelectedScreen);
-    }
-
-    private void OnHeadingUpClicked(object sender, RoutedEventArgs e) {
-      if (sender is FrameworkElement { Tag: NavHeadingNode heading }) {
-        ViewModel.MoveHeading(heading, IndexOfHeading(heading) - 1);
-      }
-    }
-
-    private void OnDeleteHeadingClicked(object sender, RoutedEventArgs e) {
-      if (sender is FrameworkElement { Tag: NavHeadingNode heading }) {
-        ViewModel.DeleteHeadingCommand.Execute(heading);
-      }
-    }
-
-    private void OnDeleteOrphanClicked(object sender, RoutedEventArgs e) {
-      ViewModel.DeleteOrphanCommand.Execute(ViewModel.SelectedScreen);
-    }
-
-    private async void OnViewDiffClicked(object sender, RoutedEventArgs e) {
-      ViewModel.PrepareDiff();
-      DiffDialog.XamlRoot = XamlRoot;
-      await DiffDialog.ShowAsync();
-    }
-
-    private void OnScreenDragStarting(UIElement sender, DragStartingEventArgs args) {
-      if (sender is FrameworkElement { Tag: NavScreenNode screen }) {
-        _dragged = screen;
-
-        // Text so the package is not empty; the drop reads the field. A screen is not a string, and
-        // anything that arrived as one came from somewhere this page cannot vouch for.
-        args.Data.SetText(screen.DisplayTitle);
-        args.Data.RequestedOperation = DataPackageOperation.Move;
-      }
-    }
-
-    private void OnRowDragOver(object sender, DragEventArgs e) {
-      e.AcceptedOperation = _dragged is null
-          ? DataPackageOperation.None
-          : DataPackageOperation.Move;
-      e.Handled = true;
     }
 
     /// <summary>Dropped on a heading: filed at the end of it.</summary>
-    private void OnHeadingDrop(object sender, DragEventArgs e) {
-      if (_dragged is { } screen && sender is FrameworkElement { Tag: NavHeadingNode heading }) {
-        ViewModel.MoveScreen(screen, heading, heading.Screens.Count);
-      }
-      _dragged = null;
-      e.Handled = true;
+    private void OnHeadingDrop(object sender, DragEventArgs e)
+    {
+        if (_dragged is { } screen && sender is FrameworkElement { Tag: NavHeadingNode heading })
+        {
+            ViewModel.MoveScreen(screen, heading, heading.Screens.Count);
+        }
+        _dragged = null;
+        e.Handled = true;
     }
 
     /// <summary>Dropped on a row: placed above it.</summary>
-    private void OnScreenDrop(object sender, DragEventArgs e) {
-      if (_dragged is { } screen
-          && sender is FrameworkElement { Tag: NavScreenNode target }
-          && target.Heading is { } heading
-          && !ReferenceEquals(screen, target)) {
-        ViewModel.MoveScreen(screen, heading, heading.Screens.IndexOf(target));
-      }
-      _dragged = null;
-      e.Handled = true;
-    }
-
-    private NavHeadingNode? FindHeading(string id) {
-      foreach (var heading in ViewModel.Headings) {
-        if (!heading.IsUnfiled && heading.Id == id) {
-          return heading;
+    private void OnScreenDrop(object sender, DragEventArgs e)
+    {
+        if (_dragged is { } screen
+            && sender is FrameworkElement { Tag: NavScreenNode target }
+            && target.Heading is { } heading
+            && !ReferenceEquals(screen, target))
+        {
+            ViewModel.MoveScreen(screen, heading, heading.Screens.IndexOf(target));
         }
-      }
-      return null;
+        _dragged = null;
+        e.Handled = true;
     }
 
-    private NavHeadingNode? FindUnfiled() {
-      foreach (var heading in ViewModel.Headings) {
-        if (heading.IsUnfiled) {
-          return heading;
+    private NavHeadingNode? FindHeading(string id)
+    {
+        foreach (var heading in ViewModel.Headings)
+        {
+            if (!heading.IsUnfiled && heading.Id == id)
+            {
+                return heading;
+            }
         }
-      }
-      return null;
+        return null;
     }
 
-    private int IndexOfHeading(NavHeadingNode heading) {
-      return ViewModel.Headings.IndexOf(heading);
+    private NavHeadingNode? FindUnfiled()
+    {
+        foreach (var heading in ViewModel.Headings)
+        {
+            if (heading.IsUnfiled)
+            {
+                return heading;
+            }
+        }
+        return null;
     }
-  }
+
+    private int IndexOfHeading(NavHeadingNode heading)
+    {
+        return ViewModel.Headings.IndexOf(heading);
+    }
 }

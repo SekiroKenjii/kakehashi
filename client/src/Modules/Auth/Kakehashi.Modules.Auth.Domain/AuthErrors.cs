@@ -1,8 +1,10 @@
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.Modules.Auth.Domain {
-  /// <summary>The domain errors the Auth module can return.</summary>
-  public static class AuthErrors {
+namespace Kakehashi.Modules.Auth.Domain;
+
+/// <summary>The domain errors the Auth module can return.</summary>
+public static class AuthErrors
+{
     public static readonly Error AccessTokenRequired =
         new("Auth.Session.AccessTokenRequired", "An access token is required to create a session.");
 
@@ -29,5 +31,4 @@ namespace Kakehashi.Modules.Auth.Domain {
 
     public static readonly Error AccountRequestFailed =
         new("Auth.Account.RequestFailed", "The authorization server could not be reached.");
-  }
 }

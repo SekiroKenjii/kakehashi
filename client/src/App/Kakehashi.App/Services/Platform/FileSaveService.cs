@@ -5,37 +5,41 @@ using Kakehashi.UI.Contracts.Services.Platform;
 using Windows.Storage.Pickers;
 using WinRT.Interop;
 
-namespace Kakehashi.App.Services.Platform {
-  /// <summary>Shows the Windows save dialog.</summary>
-  /// <remarks>
-  /// The window handle is the part that is easy to get wrong: a picker created in a desktop app has
-  /// no window of its own to be modal to, and without InitializeWithWindow it throws rather than
-  /// appearing. That one call is most of the reason this lives behind a port.
-  /// </remarks>
-  public sealed class FileSaveService : IFileSaveService {
+namespace Kakehashi.App.Services.Platform;
+
+/// <summary>Shows the Windows save dialog.</summary>
+/// <remarks>
+/// The window handle is the part that is easy to get wrong: a picker created in a desktop app has
+/// no window of its own to be modal to, and without InitializeWithWindow it throws rather than
+/// appearing. That one call is most of the reason this lives behind a port.
+/// </remarks>
+public sealed class FileSaveService : IFileSaveService
+{
     private readonly IMainWindowProvider _windows;
 
-    public FileSaveService(IMainWindowProvider windows) {
-      ArgumentNullException.ThrowIfNull(windows);
-      _windows = windows;
+    public FileSaveService(IMainWindowProvider windows)
+    {
+        ArgumentNullException.ThrowIfNull(windows);
+        _windows = windows;
     }
 
     public async Task<string?> PickSaveLocationAsync(
-        string suggestedName, string fileTypeLabel, string extension) {
-      if (_windows.MainWindow is not { } window) {
-        return null;
-      }
+        string suggestedName, string fileTypeLabel, string extension)
+    {
+        if (_windows.MainWindow is not { } window)
+        {
+            return null;
+        }
 
-      var picker = new FileSavePicker {
-        SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
-        SuggestedFileName = suggestedName,
-      };
-      picker.FileTypeChoices.Add(fileTypeLabel, new List<string> { extension });
+        var picker = new FileSavePicker {
+            SuggestedStartLocation = PickerLocationId.DocumentsLibrary,
+            SuggestedFileName = suggestedName,
+        };
+        picker.FileTypeChoices.Add(fileTypeLabel, new List<string> { extension });
 
-      InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
 
-      var file = await picker.PickSaveFileAsync();
-      return file?.Path;
+        var file = await picker.PickSaveFileAsync();
+        return file?.Path;
     }
-  }
 }

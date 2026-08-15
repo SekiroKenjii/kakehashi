@@ -1,8 +1,10 @@
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.Modules.Notes.Domain.Notes {
-  /// <summary>The errors the Notes module can return.</summary>
-  public static class NotesErrors {
+namespace Kakehashi.Modules.Notes.Domain.Notes;
+
+/// <summary>The errors the Notes module can return.</summary>
+public static class NotesErrors
+{
     public static readonly Error TitleRequired =
         new("Notes.Note.TitleRequired", "A note needs a title.");
 
@@ -25,5 +27,4 @@ namespace Kakehashi.Modules.Notes.Domain.Notes {
     public static readonly Error NotAssigned = new(
         "Notes.NotAssigned",
         "Your account is not assigned Notes. Ask an administrator for access.");
-  }
 }

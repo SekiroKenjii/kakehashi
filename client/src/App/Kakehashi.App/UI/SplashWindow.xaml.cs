@@ -1,17 +1,19 @@
 using Kakehashi.UI.Common.Helpers;
 using WinUIEx;
 
-namespace Kakehashi.App.UI {
-  public sealed partial class SplashWindow : WindowEx {
-    public SplashWindow(SplashViewModel viewModel) {
-      ViewModel = viewModel;
+namespace Kakehashi.App.UI;
 
-      InitializeComponent();
+public sealed partial class SplashWindow : WindowEx
+{
+    public SplashWindow(SplashViewModel viewModel)
+    {
+        ViewModel = viewModel;
 
-      this.CenterOnScreen();
-      WindowHelper.TrySetAppIcon(this);
+        InitializeComponent();
+
+        this.CenterOnScreen();
+        WindowHelper.TrySetAppIcon(this);
     }
 
     public SplashViewModel ViewModel { get; }
-  }
 }

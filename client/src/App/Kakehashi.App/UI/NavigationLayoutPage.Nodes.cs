@@ -7,55 +7,58 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using Kakehashi.App.Services;
 using Kakehashi.UI.Common.Controls;
 
-namespace Kakehashi.App.UI {
-  /// <summary>An empty <c>Id</c> is the real "no heading" choice, not a missing value.</summary>
-  public sealed record NavHeadingChoice(string Id, string Title);
+namespace Kakehashi.App.UI;
 
-  public sealed record NavIconChoice(string Name, string Glyph);
+/// <summary>An empty <c>Id</c> is the real "no heading" choice, not a missing value.</summary>
+public sealed record NavHeadingChoice(string Id, string Title);
 
-  public sealed record NavCodeFact(string Label, string Value);
+public sealed record NavIconChoice(string Name, string Glyph);
 
-  public sealed record NavChange(string Subject, string What);
+public sealed record NavCodeFact(string Label, string Value);
 
-  /// <summary>
-  /// One destination in the structure tree, as an administrator stages it.
-  /// </summary>
-  /// <remarks>
-  /// Edits are held until Apply: docs/adr/0004-staged-edits-atomic-apply.md
-  /// <para>
-  /// The order comparison against the baseline is positional, not numeric: stored orders of 5 and
-  /// 7 are a valid arrangement, and comparing them against renumbered values would claim unsaved
-  /// changes the moment the screen opened.
-  /// </para>
-  /// </remarks>
-  public sealed partial class NavScreenNode : ObservableObject {
+public sealed record NavChange(string Subject, string What);
+
+/// <summary>
+/// One destination in the structure tree, as an administrator stages it.
+/// </summary>
+/// <remarks>
+/// Edits are held until Apply: docs/adr/0004-staged-edits-atomic-apply.md
+/// <para>
+/// The order comparison against the baseline is positional, not numeric: stored orders of 5 and
+/// 7 are a valid arrangement, and comparing them against renumbered values would claim unsaved
+/// changes the moment the screen opened.
+/// </para>
+/// </remarks>
+public sealed partial class NavScreenNode : ObservableObject
+{
     private readonly string _savedTitle;
     private readonly string _savedIcon;
     private readonly bool _savedVisible;
 
-    public NavScreenNode(NavItemRow row) {
-      ArgumentNullException.ThrowIfNull(row);
+    public NavScreenNode(NavItemRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
 
-      Id = row.Id;
-      ModuleId = row.ModuleId;
-      DefaultTitle = row.DefaultTitle;
-      DefaultIcon = row.DefaultIcon;
-      DefaultGroup = row.DefaultGroup;
-      DefaultOrder = row.DefaultOrder;
-      RequiredPermission = row.RequiredPermission;
-      HideWhenDenied = row.HideWhenDenied;
-      IsOrphan = row.IsOrphan;
+        Id = row.Id;
+        ModuleId = row.ModuleId;
+        DefaultTitle = row.DefaultTitle;
+        DefaultIcon = row.DefaultIcon;
+        DefaultGroup = row.DefaultGroup;
+        DefaultOrder = row.DefaultOrder;
+        RequiredPermission = row.RequiredPermission;
+        HideWhenDenied = row.HideWhenDenied;
+        IsOrphan = row.IsOrphan;
 
-      SavedGroupId = row.GroupId;
-      SavedOrder = row.SortOrder;
+        SavedGroupId = row.GroupId;
+        SavedOrder = row.SortOrder;
 
-      Title = row.Title;
-      Icon = row.Icon;
-      IsVisible = row.IsVisible;
+        Title = row.Title;
+        Icon = row.Icon;
+        IsVisible = row.IsVisible;
 
-      _savedTitle = row.Title;
-      _savedIcon = row.Icon;
-      _savedVisible = row.IsVisible;
+        _savedTitle = row.Title;
+        _savedIcon = row.Icon;
+        _savedVisible = row.IsVisible;
     }
 
     public string Id { get; }
@@ -152,31 +155,36 @@ namespace Kakehashi.App.UI {
         ? $"{Id} · not in this build"
         : $"{Id} · {ModuleId}";
 
-    public bool IsModified {
-      get {
-        if (Title != _savedTitle || Icon != _savedIcon || IsVisible != _savedVisible) {
-          return true;
+    public bool IsModified
+    {
+        get {
+            if (Title != _savedTitle || Icon != _savedIcon || IsVisible != _savedVisible)
+            {
+                return true;
+            }
+            if (!ReferenceEquals(Heading, SavedHeading))
+            {
+                return true;
+            }
+            return Index != SavedIndex;
         }
-        if (!ReferenceEquals(Heading, SavedHeading)) {
-          return true;
-        }
-        return Index != SavedIndex;
-      }
     }
 
     /// <summary>Where it sits under its heading now, counted from zero. -1 while unparented.</summary>
     public int Index => Heading?.Screens.IndexOf(this) ?? -1;
 
     /// <summary>"2 of 5", for the editor's position control.</summary>
-    public string PositionText {
-      get {
-        if (Heading is not { } heading) {
-          return string.Empty;
+    public string PositionText
+    {
+        get {
+            if (Heading is not { } heading)
+            {
+                return string.Empty;
+            }
+            return string.Format(
+                CultureInfo.CurrentCulture, "{0} of {1}",
+                heading.Screens.IndexOf(this) + 1, heading.Screens.Count);
         }
-        return string.Format(
-            CultureInfo.CurrentCulture, "{0} of {1}",
-            heading.Screens.IndexOf(this) + 1, heading.Screens.Count);
-      }
     }
 
     /// <summary>How this screen's staged state differs from what is saved, in words.</summary>
@@ -185,33 +193,41 @@ namespace Kakehashi.App.UI {
     /// both read these. Hidden/shown comes first: it is the only change that takes something out
     /// of the pane.
     /// </remarks>
-    public IReadOnlyList<string> Changes {
-      get {
-        var changes = new List<string>(4);
-        if (IsVisible != _savedVisible) {
-          changes.Add(IsVisible ? "shown" : "hidden");
+    public IReadOnlyList<string> Changes
+    {
+        get {
+            var changes = new List<string>(4);
+            if (IsVisible != _savedVisible)
+            {
+                changes.Add(IsVisible ? "shown" : "hidden");
+            }
+            if (!ReferenceEquals(Heading, SavedHeading))
+            {
+                changes.Add(Heading is { IsUnfiled: false } heading
+                    ? $"moved to {heading.Title}"
+                    : "unfiled");
+            }
+            else if (Index != SavedIndex)
+            {
+                changes.Add("reordered");
+            }
+            if (Title != _savedTitle)
+            {
+                changes.Add(Title.Length == 0 ? "name reset" : $"renamed to {Title}");
+            }
+            if (Icon != _savedIcon)
+            {
+                changes.Add(Icon.Length == 0 ? "icon reset" : $"icon set to {Icon}");
+            }
+            return changes;
         }
-        if (!ReferenceEquals(Heading, SavedHeading)) {
-          changes.Add(Heading is { IsUnfiled: false } heading
-              ? $"moved to {heading.Title}"
-              : "unfiled");
-        } else if (Index != SavedIndex) {
-          changes.Add("reordered");
-        }
-        if (Title != _savedTitle) {
-          changes.Add(Title.Length == 0 ? "name reset" : $"renamed to {Title}");
-        }
-        if (Icon != _savedIcon) {
-          changes.Add(Icon.Length == 0 ? "icon reset" : $"icon set to {Icon}");
-        }
-        return changes;
-      }
     }
 
-    public void Discard() {
-      Title = _savedTitle;
-      Icon = _savedIcon;
-      IsVisible = _savedVisible;
+    public void Discard()
+    {
+        Title = _savedTitle;
+        Icon = _savedIcon;
+        IsVisible = _savedVisible;
     }
 
     /// <summary>Re-announces what depends on where this screen sits.</summary>
@@ -221,47 +237,52 @@ namespace Kakehashi.App.UI {
     /// a node that subscribed to its parent would have to unsubscribe on every reparent, and a missed
     /// unsubscribe is a row that updates when a different heading changes.
     /// </remarks>
-    public void PlacementChanged() {
-      OnPropertyChanged(nameof(Index));
-      OnPropertyChanged(nameof(PositionText));
-      OnPropertyChanged(nameof(IsModified));
+    public void PlacementChanged()
+    {
+        OnPropertyChanged(nameof(Index));
+        OnPropertyChanged(nameof(PositionText));
+        OnPropertyChanged(nameof(IsModified));
     }
-  }
+}
 
-  /// <summary>
-  /// One heading in the structure tree, holding the screens under it.
-  /// </summary>
-  /// <remarks>
-  /// A heading with an empty id has been created on screen and not applied yet: the server derives the
-  /// identifier from the title, so this client cannot know it until the apply comes back.
-  /// </remarks>
-  public sealed partial class NavHeadingNode : ObservableObject {
+/// <summary>
+/// One heading in the structure tree, holding the screens under it.
+/// </summary>
+/// <remarks>
+/// A heading with an empty id has been created on screen and not applied yet: the server derives the
+/// identifier from the title, so this client cannot know it until the apply comes back.
+/// </remarks>
+public sealed partial class NavHeadingNode : ObservableObject
+{
     private readonly string _savedTitle;
 
-    public NavHeadingNode(NavGroupRow row) {
-      ArgumentNullException.ThrowIfNull(row);
-      Id = row.Id;
-      IsSystem = row.IsSystem;
-      SortOrder = row.SortOrder;
-      Title = row.Title;
-      _savedTitle = row.Title;
-      Screens.CollectionChanged += (_, _) => ScreensChanged();
+    public NavHeadingNode(NavGroupRow row)
+    {
+        ArgumentNullException.ThrowIfNull(row);
+        Id = row.Id;
+        IsSystem = row.IsSystem;
+        SortOrder = row.SortOrder;
+        Title = row.Title;
+        _savedTitle = row.Title;
+        Screens.CollectionChanged += (_, _) => ScreensChanged();
     }
 
-    private NavHeadingNode(string title, int order, bool unfiled) {
-      Id = string.Empty;
-      IsSystem = false;
-      IsUnfiled = unfiled;
-      IsNew = !unfiled;
-      SortOrder = order;
-      Title = title;
-      _savedTitle = unfiled ? title : string.Empty;
-      Screens.CollectionChanged += (_, _) => ScreensChanged();
+    private NavHeadingNode(string title, int order, bool unfiled)
+    {
+        Id = string.Empty;
+        IsSystem = false;
+        IsUnfiled = unfiled;
+        IsNew = !unfiled;
+        SortOrder = order;
+        Title = title;
+        _savedTitle = unfiled ? title : string.Empty;
+        Screens.CollectionChanged += (_, _) => ScreensChanged();
     }
 
     /// <summary>Builds a heading somebody just added, which has no identifier until it is applied.</summary>
-    public static NavHeadingNode NewHeading(string title, int order) {
-      return new NavHeadingNode(title, order, unfiled: false);
+    public static NavHeadingNode NewHeading(string title, int order)
+    {
+        return new NavHeadingNode(title, order, unfiled: false);
     }
 
     /// <summary>
@@ -273,8 +294,9 @@ namespace Kakehashi.App.UI {
     /// only place it can be discovered. Not a heading: it has no identifier, is never sent to the
     /// server, and cannot be renamed or deleted.
     /// </remarks>
-    public static NavHeadingNode Unfiled() {
-      return new NavHeadingNode("Not in any heading", int.MaxValue, unfiled: true);
+    public static NavHeadingNode Unfiled()
+    {
+        return new NavHeadingNode("Not in any heading", int.MaxValue, unfiled: true);
     }
 
     public string Id { get; internal set; }
@@ -328,32 +350,37 @@ namespace Kakehashi.App.UI {
     public bool IsModified => IsNew || Title != _savedTitle;
 
     /// <summary>How this heading differs from what is saved, in words.</summary>
-    public IReadOnlyList<string> Changes {
-      get {
-        if (IsUnfiled) {
-          return [];
-        }
-        if (IsNew) {
-          return ["added"];
-        }
+    public IReadOnlyList<string> Changes
+    {
+        get {
+            if (IsUnfiled)
+            {
+                return [];
+            }
+            if (IsNew)
+            {
+                return ["added"];
+            }
 
-        return Title != _savedTitle ? [$"renamed to {Title}"] : [];
-      }
+            return Title != _savedTitle ? [$"renamed to {Title}"] : [];
+        }
     }
 
     /// <summary>The saved order of the screens under it, for deciding whether it needs renumbering.</summary>
     public IReadOnlyList<string> SavedSequence { get; internal set; } = [];
 
-    public void Discard() {
-      Title = _savedTitle;
+    public void Discard()
+    {
+        Title = _savedTitle;
     }
 
-    private void ScreensChanged() {
-      OnPropertyChanged(nameof(CountText));
-      OnPropertyChanged(nameof(IsEmpty));
-      foreach (var screen in Screens) {
-        screen.PlacementChanged();
-      }
+    private void ScreensChanged()
+    {
+        OnPropertyChanged(nameof(CountText));
+        OnPropertyChanged(nameof(IsEmpty));
+        foreach (var screen in Screens)
+        {
+            screen.PlacementChanged();
+        }
     }
-  }
 }

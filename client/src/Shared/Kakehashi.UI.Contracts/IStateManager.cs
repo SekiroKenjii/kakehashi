@@ -1,11 +1,13 @@
 using System;
 
-namespace Kakehashi.UI.Contracts {
-  /// <summary>
-  /// An observable state cell: holds a current value and pushes every update to subscribers.
-  /// </summary>
-  /// <typeparam name="T">The state type.</typeparam>
-  public interface IStateManager<T> : ITransientDependency, IDisposable {
+namespace Kakehashi.UI.Contracts;
+
+/// <summary>
+/// An observable state cell: holds a current value and pushes every update to subscribers.
+/// </summary>
+/// <typeparam name="T">The state type.</typeparam>
+public interface IStateManager<T> : ITransientDependency, IDisposable
+{
     /// <summary>The most recently set state.</summary>
     T CurrentState { get; }
 
@@ -22,5 +24,4 @@ namespace Kakehashi.UI.Contracts {
 
     /// <summary>Sets the state and notifies subscribers.</summary>
     void Next(T state);
-  }
 }

@@ -1,9 +1,11 @@
 using System;
 using Microsoft.UI.Xaml.Controls;
 
-namespace Kakehashi.UI.Contracts.Services.Platform {
-  /// <summary>Shows module pages, resolved from the container, in the shell's content frame.</summary>
-  public interface INavigationService : IUiContractService, ISingletonDependency {
+namespace Kakehashi.UI.Contracts.Services.Platform;
+
+/// <summary>Shows module pages, resolved from the container, in the shell's content frame.</summary>
+public interface INavigationService : IUiContractService, ISingletonDependency
+{
     /// <summary>
     /// Emits a <see cref="NavigationEvent"/> whenever the shell navigates to a new page. Other
     /// components (e.g. the shell view model, the header behavior) react to this to update the UI.
@@ -50,5 +52,4 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
 
     /// <summary>Clears the navigation back stack.</summary>
     void ClearBackStack();
-  }
 }

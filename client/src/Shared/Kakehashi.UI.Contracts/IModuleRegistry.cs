@@ -1,23 +1,25 @@
 using System.Collections.Generic;
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.UI.Contracts {
-  /// <summary>
-  /// Tracks which composed modules are part of the user's runtime composition. Every module stays
-  /// compiled in with its services registered; attaching and detaching only changes what the shell
-  /// and pages present. Each change is broadcast as a <see cref="ModuleSetChangedMessage"/> via the
-  /// CommunityToolkit <c>WeakReferenceMessenger</c>.
-  /// </summary>
-  /// <remarks>
-  /// Detaching is the user's reversible preference; an assignment is an administrator's permission.
-  /// The two are separate states with their own keys, and the preference question is asked first:
-  /// docs/adr/0015-module-attachment-is-not-a-security-boundary.md
-  /// <para>
-  /// <b>None of this is a security boundary.</b> The server refuses an unassigned module's
-  /// requests.
-  /// </para>
-  /// </remarks>
-  public interface IModuleRegistry {
+namespace Kakehashi.UI.Contracts;
+
+/// <summary>
+/// Tracks which composed modules are part of the user's runtime composition. Every module stays
+/// compiled in with its services registered; attaching and detaching only changes what the shell
+/// and pages present. Each change is broadcast as a <see cref="ModuleSetChangedMessage"/> via the
+/// CommunityToolkit <c>WeakReferenceMessenger</c>.
+/// </summary>
+/// <remarks>
+/// Detaching is the user's reversible preference; an assignment is an administrator's permission.
+/// The two are separate states with their own keys, and the preference question is asked first:
+/// docs/adr/0015-module-attachment-is-not-a-security-boundary.md
+/// <para>
+/// <b>None of this is a security boundary.</b> The server refuses an unassigned module's
+/// requests.
+/// </para>
+/// </remarks>
+public interface IModuleRegistry
+{
     /// <summary>Every module composed into the application.</summary>
     IReadOnlyList<IModule> All { get; }
 
@@ -58,5 +60,4 @@ namespace Kakehashi.UI.Contracts {
     /// as it was rather than empty, and the server is still the thing that refuses.
     /// </remarks>
     void SetAssignments(IReadOnlyCollection<string> withheld, IReadOnlyCollection<string> granted);
-  }
 }

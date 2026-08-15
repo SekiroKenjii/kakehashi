@@ -14,13 +14,15 @@ using Microsoft.UI.Xaml;
 using Windows.System;
 using SignOutRequest = Kakehashi.Modules.Auth.Application.Sessions.Commands.SignOut.SignOutCommand;
 
-namespace Kakehashi.Modules.Auth.UI.ViewModels {
-  /// <summary>
-  /// Backs the account flyout: the identity header, session status, the appearance switch,
-  /// navigation to the profile page, and sign-out. Sign-out itself only sends the use case; the
-  /// forced re-sign-in is driven by the module's sign-out notification handler.
-  /// </summary>
-  public sealed partial class AccountFlyoutViewModel : ViewModel {
+namespace Kakehashi.Modules.Auth.UI.ViewModels;
+
+/// <summary>
+/// Backs the account flyout: the identity header, session status, the appearance switch,
+/// navigation to the profile page, and sign-out. Sign-out itself only sends the use case; the
+/// forced re-sign-in is driven by the module's sign-out notification handler.
+/// </summary>
+public sealed partial class AccountFlyoutViewModel : ViewModel
+{
     private readonly ISender _sender;
     private readonly INavigationService _navigationService;
     private readonly IThemeService _themeService;
@@ -67,142 +69,163 @@ namespace Kakehashi.Modules.Auth.UI.ViewModels {
         INavigationService navigationService,
         IThemeService themeService,
         IClock clock,
-        IConfiguration configuration) {
-      ArgumentNullException.ThrowIfNull(sender);
-      ArgumentNullException.ThrowIfNull(navigationService);
-      ArgumentNullException.ThrowIfNull(themeService);
-      ArgumentNullException.ThrowIfNull(clock);
-      ArgumentNullException.ThrowIfNull(configuration);
+        IConfiguration configuration)
+    {
+        ArgumentNullException.ThrowIfNull(sender);
+        ArgumentNullException.ThrowIfNull(navigationService);
+        ArgumentNullException.ThrowIfNull(themeService);
+        ArgumentNullException.ThrowIfNull(clock);
+        ArgumentNullException.ThrowIfNull(configuration);
 
-      _sender = sender;
-      _navigationService = navigationService;
-      _themeService = themeService;
-      _clock = clock;
-      _supportUrl = configuration["Support:Url"] ?? string.Empty;
+        _sender = sender;
+        _navigationService = navigationService;
+        _themeService = themeService;
+        _clock = clock;
+        _supportUrl = configuration["Support:Url"] ?? string.Empty;
 
-      DisplayName = "Not signed in";
-      SignedInText = "—";
-      SessionSummary = "—";
+        DisplayName = "Not signed in";
+        SignedInText = "—";
+        SessionSummary = "—";
     }
 
     /// <summary>Whether a support destination is configured. Unset hides the row.</summary>
     public bool HasSupport => _supportUrl.Length > 0;
 
     [RelayCommand]
-    private async Task LoadAsync() {
-      var session = await _sender.Send(new GetCurrentSessionQuery());
-      IsAuthenticated = session.IsAuthenticated;
-      DisplayName = session.DisplayName ?? (session.IsAuthenticated ? "Signed in" : "Not signed in");
-      AvatarName = session.DisplayName;
-      Email = session.Email;
-      SignedInText = FormatSignedInAgo(session.SignedInAtUtc);
-      SessionSummary = await DescribeSessionsAsync();
-      ThemeIndex = _themeService.Theme switch {
-        ElementTheme.Light => 1,
-        ElementTheme.Dark => 2,
-        _ => 0,
-      };
+    private async Task LoadAsync()
+    {
+        var session = await _sender.Send(new GetCurrentSessionQuery());
+        IsAuthenticated = session.IsAuthenticated;
+        DisplayName = session.DisplayName ?? (session.IsAuthenticated ? "Signed in" : "Not signed in");
+        AvatarName = session.DisplayName;
+        Email = session.Email;
+        SignedInText = FormatSignedInAgo(session.SignedInAtUtc);
+        SessionSummary = await DescribeSessionsAsync();
+        ThemeIndex = _themeService.Theme switch {
+            ElementTheme.Light => 1,
+            ElementTheme.Dark => 2,
+            _ => 0,
+        };
     }
 
     [RelayCommand]
-    private void ViewProfile() {
-      GoToAccount();
+    private void ViewProfile()
+    {
+        GoToAccount();
     }
 
     /// <summary>Opens the account page, where the password is changed.</summary>
     [RelayCommand]
-    private void ChangePassword() {
-      GoToAccount();
+    private void ChangePassword()
+    {
+        GoToAccount();
     }
 
     /// <summary>Opens the account page's session list.</summary>
     [RelayCommand]
-    private void ViewSessions() {
-      GoToAccount();
+    private void ViewSessions()
+    {
+        GoToAccount();
     }
 
     /// <summary>Opens the account page's security activity.</summary>
     [RelayCommand]
-    private void ViewActivity() {
-      GoToAccount();
+    private void ViewActivity()
+    {
+        GoToAccount();
     }
 
     /// <summary>Opens the configured support destination in the system browser.</summary>
     [RelayCommand]
-    private async Task OpenSupportAsync() {
-      if (!HasSupport) {
-        return;
-      }
-      await Launcher.LaunchUriAsync(new Uri(_supportUrl));
+    private async Task OpenSupportAsync()
+    {
+        if (!HasSupport)
+        {
+            return;
+        }
+        await Launcher.LaunchUriAsync(new Uri(_supportUrl));
     }
 
-    private void GoToAccount() {
-      _navigationService.NavigateTo(_navigationService.GetPageKey(typeof(AccountPage)));
+    private void GoToAccount()
+    {
+        _navigationService.NavigateTo(_navigationService.GetPageKey(typeof(AccountPage)));
     }
 
     /// <summary>Counts the account's live sessions, and says which one is here.</summary>
-    private async Task<string> DescribeSessionsAsync() {
-      if (!IsAuthenticated) {
-        return "—";
-      }
+    private async Task<string> DescribeSessionsAsync()
+    {
+        if (!IsAuthenticated)
+        {
+            return "—";
+        }
 
-      var result = await _sender.Send(new GetRemoteSessionsQuery());
-      if (result is null || result.IsFailure) {
-        // A count that could not be fetched is left blank rather than shown as zero, which would
-        // read as "not signed in anywhere".
-        return "—";
-      }
+        var result = await _sender.Send(new GetRemoteSessionsQuery());
+        if (result is null || result.IsFailure)
+        {
+            // A count that could not be fetched is left blank rather than shown as zero, which would
+            // read as "not signed in anywhere".
+            return "—";
+        }
 
-      var sessions = result.Value;
-      if (sessions.Count == 0) {
-        return "no other devices";
-      }
+        var sessions = result.Value;
+        if (sessions.Count == 0)
+        {
+            return "no other devices";
+        }
 
-      var others = sessions.Count - 1;
-      var devices = sessions.Count == 1 ? "1 device" : $"{sessions.Count} devices";
-      return others <= 0 ? $"{devices} · this device" : $"{devices} · this + {others} other";
+        var others = sessions.Count - 1;
+        var devices = sessions.Count == 1 ? "1 device" : $"{sessions.Count} devices";
+        return others <= 0 ? $"{devices} · this device" : $"{devices} · this + {others} other";
     }
 
     [RelayCommand]
-    private void OpenSettings() {
-      // The host registers its settings page under this well-known key; the module deliberately
-      // has no reference to the page type itself.
-      _navigationService.NavigateTo("Settings");
+    private void OpenSettings()
+    {
+        // The host registers its settings page under this well-known key; the module deliberately
+        // has no reference to the page type itself.
+        _navigationService.NavigateTo("Settings");
     }
 
     [RelayCommand]
-    private async Task SignOutAsync() {
-      if (!IsAuthenticated) {
-        return;
-      }
+    private async Task SignOutAsync()
+    {
+        if (!IsAuthenticated)
+        {
+            return;
+        }
 
-      await _sender.Send(new SignOutRequest());
+        await _sender.Send(new SignOutRequest());
     }
 
-    partial void OnThemeIndexChanged(int value) {
-      _themeService.SetTheme(value switch {
-        1 => ElementTheme.Light,
-        2 => ElementTheme.Dark,
-        _ => ElementTheme.Default,
-      });
+    partial void OnThemeIndexChanged(int value)
+    {
+        _themeService.SetTheme(value switch {
+            1 => ElementTheme.Light,
+            2 => ElementTheme.Dark,
+            _ => ElementTheme.Default,
+        });
     }
 
-    private string FormatSignedInAgo(DateTimeOffset? signedInAtUtc) {
-      if (signedInAtUtc is not { } signedInAt) {
-        return "—";
-      }
+    private string FormatSignedInAgo(DateTimeOffset? signedInAtUtc)
+    {
+        if (signedInAtUtc is not { } signedInAt)
+        {
+            return "—";
+        }
 
-      var elapsed = _clock.UtcNow - signedInAt;
-      if (elapsed < TimeSpan.FromMinutes(1)) {
-        return "just now";
-      }
-      if (elapsed < TimeSpan.FromHours(1)) {
-        return $"{(int)elapsed.TotalMinutes}m ago";
-      }
-      if (elapsed < TimeSpan.FromHours(24)) {
-        return $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m ago";
-      }
-      return $"{(int)elapsed.TotalDays}d ago";
+        var elapsed = _clock.UtcNow - signedInAt;
+        if (elapsed < TimeSpan.FromMinutes(1))
+        {
+            return "just now";
+        }
+        if (elapsed < TimeSpan.FromHours(1))
+        {
+            return $"{(int)elapsed.TotalMinutes}m ago";
+        }
+        if (elapsed < TimeSpan.FromHours(24))
+        {
+            return $"{(int)elapsed.TotalHours}h {elapsed.Minutes}m ago";
+        }
+        return $"{(int)elapsed.TotalDays}d ago";
     }
-  }
 }

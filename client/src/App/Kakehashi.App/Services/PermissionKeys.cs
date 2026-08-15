@@ -1,18 +1,20 @@
-namespace Kakehashi.App.Services {
-  /// <summary>
-  /// The permission keys this client checks, spelled once.
-  /// </summary>
-  /// <remarks>
-  /// These are the same strings the server's modules declare in their catalogues. There is no way
-  /// to make a compiler check that — the two halves are different languages joined by a wire — so
-  /// they are collected here rather than typed at each call site, which at least reduces it to one
-  /// place to get wrong.
-  /// <para>
-  /// Checking them is presentation. Every route is checked server-side against the same table, so
-  /// a client that skipped every check here is refused identically.
-  /// </para>
-  /// </remarks>
-  public static class PermissionKeys {
+namespace Kakehashi.App.Services;
+
+/// <summary>
+/// The permission keys this client checks, spelled once.
+/// </summary>
+/// <remarks>
+/// These are the same strings the server's modules declare in their catalogues. There is no way
+/// to make a compiler check that — the two halves are different languages joined by a wire — so
+/// they are collected here rather than typed at each call site, which at least reduces it to one
+/// place to get wrong.
+/// <para>
+/// Checking them is presentation. Every route is checked server-side against the same table, so
+/// a client that skipped every check here is refused identically.
+/// </para>
+/// </remarks>
+public static class PermissionKeys
+{
     /// <summary>Guards the Role Permissions screen. Declared by the server's authz module.</summary>
     public const string ManageRoles = "roles.manage";
 
@@ -31,5 +33,4 @@ namespace Kakehashi.App.Services {
     /// permissions.
     /// </remarks>
     public const string ManageNavigation = "navigation.manage";
-  }
 }

@@ -15,13 +15,15 @@ using Microsoft.UI.Xaml;
 using NSubstitute;
 using Xunit;
 
-namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
-  /// <summary>
-  /// Unit tests for <see cref="AccountFlyoutViewModel"/>: the identity/status it loads from the
-  /// current session, the "signed in ago" formatting (using a fixed <see cref="IClock"/>), the
-  /// theme index, and that sign-out only dispatches when authenticated.
-  /// </summary>
-  public sealed class AccountFlyoutViewModelTests {
+namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels;
+
+/// <summary>
+/// Unit tests for <see cref="AccountFlyoutViewModel"/>: the identity/status it loads from the
+/// current session, the "signed in ago" formatting (using a fixed <see cref="IClock"/>), the
+/// theme index, and that sign-out only dispatches when authenticated.
+/// </summary>
+public sealed class AccountFlyoutViewModelTests
+{
     private static readonly DateTimeOffset _now =
         new(2026, 6, 13, 12, 0, 0, TimeSpan.Zero);
 
@@ -33,71 +35,77 @@ namespace Kakehashi.Modules.Auth.UI.Tests.ViewModels {
     private readonly IClock _clock = Substitute.For<IClock>();
     private SessionDto _session = SignedOut();
 
-    public AccountFlyoutViewModelTests() {
-      _clock.UtcNow.Returns(_now);
-      _sender.Send(Arg.Is<GetCurrentSessionQuery>(request => request != null)).Returns(_ => Task.FromResult(_session));
-      _sender.Send(Arg.Is<SignOutCommand>(request => request != null)).Returns(Task.FromResult(Result.Success()));
+    public AccountFlyoutViewModelTests()
+    {
+        _clock.UtcNow.Returns(_now);
+        _sender.Send(Arg.Is<GetCurrentSessionQuery>(request => request != null)).Returns(_ => Task.FromResult(_session));
+        _sender.Send(Arg.Is<SignOutCommand>(request => request != null)).Returns(Task.FromResult(Result.Success()));
     }
 
     [Fact]
-    public async Task Load_WhenSignedIn_PopulatesStateAndAgo() {
-      _theme.Theme.Returns(ElementTheme.Dark);
-      _session = new SessionDto(
-          true, "Vo Thuong", "vo@example.com", null, _now.AddHours(-2).AddMinutes(-5), []);
-      var viewModel = CreateViewModel();
+    public async Task Load_WhenSignedIn_PopulatesStateAndAgo()
+    {
+        _theme.Theme.Returns(ElementTheme.Dark);
+        _session = new SessionDto(
+            true, "Vo Thuong", "vo@example.com", null, _now.AddHours(-2).AddMinutes(-5), []);
+        var viewModel = CreateViewModel();
 
-      await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-      Assert.True(viewModel.IsAuthenticated);
-      Assert.Equal("Vo Thuong", viewModel.DisplayName);
-      Assert.Equal("Vo Thuong", viewModel.AvatarName);
-      Assert.Equal("vo@example.com", viewModel.Email);
-      Assert.True(viewModel.HasEmail);
-      Assert.Equal("Online", viewModel.StatusText);
-      Assert.Equal(2, viewModel.ThemeIndex);
-      Assert.Equal("2h 5m ago", viewModel.SignedInText);
+        Assert.True(viewModel.IsAuthenticated);
+        Assert.Equal("Vo Thuong", viewModel.DisplayName);
+        Assert.Equal("Vo Thuong", viewModel.AvatarName);
+        Assert.Equal("vo@example.com", viewModel.Email);
+        Assert.True(viewModel.HasEmail);
+        Assert.Equal("Online", viewModel.StatusText);
+        Assert.Equal(2, viewModel.ThemeIndex);
+        Assert.Equal("2h 5m ago", viewModel.SignedInText);
     }
 
     [Fact]
-    public async Task Load_WhenSignedOut_ShowsOfflinePlaceholders() {
-      var viewModel = CreateViewModel();
+    public async Task Load_WhenSignedOut_ShowsOfflinePlaceholders()
+    {
+        var viewModel = CreateViewModel();
 
-      await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-      Assert.False(viewModel.IsAuthenticated);
-      Assert.Equal("Not signed in", viewModel.DisplayName);
-      Assert.Null(viewModel.AvatarName);
-      Assert.False(viewModel.HasEmail);
-      Assert.Equal("Offline", viewModel.StatusText);
-      Assert.Equal("—", viewModel.SignedInText);
+        Assert.False(viewModel.IsAuthenticated);
+        Assert.Equal("Not signed in", viewModel.DisplayName);
+        Assert.Null(viewModel.AvatarName);
+        Assert.False(viewModel.HasEmail);
+        Assert.Equal("Offline", viewModel.StatusText);
+        Assert.Equal("—", viewModel.SignedInText);
     }
 
     [Fact]
-    public async Task SignOut_WhenAuthenticated_DispatchesSignOut() {
-      _session = new SessionDto(true, "Vo", "vo@example.com", null, _now, []);
-      var viewModel = CreateViewModel();
-      await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+    public async Task SignOut_WhenAuthenticated_DispatchesSignOut()
+    {
+        _session = new SessionDto(true, "Vo", "vo@example.com", null, _now, []);
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-      await viewModel.SignOutCommand.ExecuteAsync(parameter: null);
+        await viewModel.SignOutCommand.ExecuteAsync(parameter: null);
 
-      await _sender.Received(1).Send(Arg.Any<SignOutCommand>());
+        await _sender.Received(1).Send(Arg.Any<SignOutCommand>());
     }
 
     [Fact]
-    public async Task SignOut_WhenNotAuthenticated_DoesNothing() {
-      var viewModel = CreateViewModel();
+    public async Task SignOut_WhenNotAuthenticated_DoesNothing()
+    {
+        var viewModel = CreateViewModel();
 
-      await viewModel.SignOutCommand.ExecuteAsync(parameter: null);
+        await viewModel.SignOutCommand.ExecuteAsync(parameter: null);
 
-      await _sender.DidNotReceive().Send(Arg.Any<SignOutCommand>());
+        await _sender.DidNotReceive().Send(Arg.Any<SignOutCommand>());
     }
 
-    private AccountFlyoutViewModel CreateViewModel() {
-      return new AccountFlyoutViewModel(_sender, _navigation, _theme, _clock, _configuration);
+    private AccountFlyoutViewModel CreateViewModel()
+    {
+        return new AccountFlyoutViewModel(_sender, _navigation, _theme, _clock, _configuration);
     }
 
-    private static SessionDto SignedOut() {
-      return new SessionDto(false, null, null, null, null, []);
+    private static SessionDto SignedOut()
+    {
+        return new SessionDto(false, null, null, null, null, []);
     }
-  }
 }

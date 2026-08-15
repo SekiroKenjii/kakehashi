@@ -1,11 +1,13 @@
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.Modules.Activity.Application.Activity {
-  /// <summary>
-  /// The errors this module can return. They live in the application layer because this module has
-  /// no domain: every one of them describes what the network did.
-  /// </summary>
-  public static class ActivityErrors {
+namespace Kakehashi.Modules.Activity.Application.Activity;
+
+/// <summary>
+/// The errors this module can return. They live in the application layer because this module has
+/// no domain: every one of them describes what the network did.
+/// </summary>
+public static class ActivityErrors
+{
     /// <summary>
     /// The server refused the request because there is no valid session behind it.
     /// </summary>
@@ -42,5 +44,4 @@ namespace Kakehashi.Modules.Activity.Application.Activity {
     public static readonly Error ReportRefused = new(
         "Activity.ReportRefused",
         "This version of the app reported something the server does not accept.");
-  }
 }

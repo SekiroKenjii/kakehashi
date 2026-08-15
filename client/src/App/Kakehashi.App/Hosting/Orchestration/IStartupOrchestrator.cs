@@ -1,12 +1,14 @@
 using System.Threading;
 using System.Threading.Tasks;
 
-namespace Kakehashi.App.Hosting.Orchestration {
-  /// <summary>
-  /// One ordered step in the application's startup pipeline. Implementations are discovered from the
-  /// container and run in ascending <see cref="Order"/> by the <see cref="AppOrchestrator"/>.
-  /// </summary>
-  public interface IStartupOrchestrator {
+namespace Kakehashi.App.Hosting.Orchestration;
+
+/// <summary>
+/// One ordered step in the application's startup pipeline. Implementations are discovered from the
+/// container and run in ascending <see cref="Order"/> by the <see cref="AppOrchestrator"/>.
+/// </summary>
+public interface IStartupOrchestrator
+{
     /// <summary>Relative execution order; lower values run first.</summary>
     int Order { get; }
 
@@ -17,5 +19,4 @@ namespace Kakehashi.App.Hosting.Orchestration {
     string Description { get; }
 
     Task ExecuteAsync(CancellationToken cancellationToken);
-  }
 }

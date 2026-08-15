@@ -1,9 +1,11 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 
-namespace Kakehashi.UI.Contracts.Services.Platform {
-  /// <summary>Shows modal content dialogs anchored to the main window.</summary>
-  public interface IDialogService : IUiContractService, ISingletonDependency {
+namespace Kakehashi.UI.Contracts.Services.Platform;
+
+/// <summary>Shows modal content dialogs anchored to the main window.</summary>
+public interface IDialogService : IUiContractService, ISingletonDependency
+{
     /// <summary>Shows an informational dialog with a single dismiss button.</summary>
     Task ShowMessageAsync(string title, string message, string closeText = "OK");
 
@@ -32,5 +34,4 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
         string title,
         string primaryText,
         params (string Label, string InitialValue, bool IsSecret)[] fields);
-  }
 }

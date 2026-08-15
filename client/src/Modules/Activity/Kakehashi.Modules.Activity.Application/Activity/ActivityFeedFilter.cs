@@ -1,10 +1,12 @@
 using System;
 
-namespace Kakehashi.Modules.Activity.Application.Activity {
-  /// <summary>
-  /// What to ask the feed for. Every default means "do not narrow by this".
-  /// </summary>
-  public sealed record ActivityFeedFilter {
+namespace Kakehashi.Modules.Activity.Application.Activity;
+
+/// <summary>
+/// What to ask the feed for. Every default means "do not narrow by this".
+/// </summary>
+public sealed record ActivityFeedFilter
+{
     public static ActivityFeedFilter Default { get; } = new();
 
     /// <summary>Only entries at or after this moment. Null is unbounded.</summary>
@@ -29,5 +31,4 @@ namespace Kakehashi.Modules.Activity.Application.Activity {
 
     /// <summary>How many entries to ask for. The server clamps anything unreasonable.</summary>
     public int PageSize { get; init; } = 50;
-  }
 }

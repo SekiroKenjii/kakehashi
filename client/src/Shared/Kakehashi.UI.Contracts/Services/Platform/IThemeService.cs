@@ -1,12 +1,14 @@
 using System;
 using Microsoft.UI.Xaml;
 
-namespace Kakehashi.UI.Contracts.Services.Platform {
-  /// <summary>
-  /// Reads, applies and persists the app's theme. The implementation applies the theme to the main
-  /// window's content root and the title-bar caption buttons, and persists the choice across runs.
-  /// </summary>
-  public interface IThemeService : IUiContractService, ISingletonDependency {
+namespace Kakehashi.UI.Contracts.Services.Platform;
+
+/// <summary>
+/// Reads, applies and persists the app's theme. The implementation applies the theme to the main
+/// window's content root and the title-bar caption buttons, and persists the choice across runs.
+/// </summary>
+public interface IThemeService : IUiContractService, ISingletonDependency
+{
     /// <summary>The currently applied theme.</summary>
     ElementTheme Theme { get; }
 
@@ -18,5 +20,4 @@ namespace Kakehashi.UI.Contracts.Services.Platform {
 
     /// <summary>Applies and persists the given theme.</summary>
     void SetTheme(ElementTheme theme);
-  }
 }

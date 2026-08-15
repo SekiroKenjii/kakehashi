@@ -1,10 +1,12 @@
-namespace Kakehashi.Modules.Auth.UI {
-  /// <summary>
-  /// Strongly-typed configuration for the Auth module, bound from the <c>Auth</c> section of
-  /// <c>appsettings.json</c>. When <see cref="Authority"/> is empty the module stays inert: the login
-  /// gate is skipped and the app runs unauthenticated.
-  /// </summary>
-  public sealed class AuthOptions {
+namespace Kakehashi.Modules.Auth.UI;
+
+/// <summary>
+/// Strongly-typed configuration for the Auth module, bound from the <c>Auth</c> section of
+/// <c>appsettings.json</c>. When <see cref="Authority"/> is empty the module stays inert: the login
+/// gate is skipped and the app runs unauthenticated.
+/// </summary>
+public sealed class AuthOptions
+{
     /// <summary>The configuration section these options bind to.</summary>
     public const string SectionName = "Auth";
 
@@ -35,5 +37,4 @@ namespace Kakehashi.Modules.Auth.UI {
     /// <summary>Whether enough configuration is present to attempt authentication.</summary>
     public bool IsConfigured =>
         !string.IsNullOrWhiteSpace(Authority) && !string.IsNullOrWhiteSpace(ClientId);
-  }
 }

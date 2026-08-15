@@ -7,26 +7,29 @@ using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using WinUIEx;
 
-namespace Kakehashi.Modules.Auth.UI.Views {
-  /// <summary>A small sign-in window shown by the startup gate when interactive login is required.</summary>
-  public sealed partial class LoginWindow : WindowEx {
+namespace Kakehashi.Modules.Auth.UI.Views;
+
+/// <summary>A small sign-in window shown by the startup gate when interactive login is required.</summary>
+public sealed partial class LoginWindow : WindowEx
+{
     private readonly TaskCompletionSource<bool> _outcome = new();
     private bool _allowClose;
     private bool _isConfirmingClose;
 
-    public LoginWindow(LoginViewModel viewModel) {
-      ArgumentNullException.ThrowIfNull(viewModel);
-      ViewModel = viewModel;
+    public LoginWindow(LoginViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ViewModel = viewModel;
 
-      InitializeComponent();
+        InitializeComponent();
 
-      this.CenterOnScreen();
-      WindowHelper.TrySetAppIcon(this);
-      ExtendsContentIntoTitleBar = true;
+        this.CenterOnScreen();
+        WindowHelper.TrySetAppIcon(this);
+        ExtendsContentIntoTitleBar = true;
 
-      ViewModel.SignInSucceeded += OnSignInSucceeded;
-      AppWindow.Closing += OnClosing;
-      Closed += OnClosed;
+        ViewModel.SignInSucceeded += OnSignInSucceeded;
+        AppWindow.Closing += OnClosing;
+        Closed += OnClosed;
     }
 
     public LoginViewModel ViewModel { get; }
@@ -37,50 +40,58 @@ namespace Kakehashi.Modules.Auth.UI.Views {
     /// </summary>
     public Task<bool> Outcome => _outcome.Task;
 
-    private void OnSignInSucceeded(object? sender, EventArgs e) {
-      _allowClose = true;
-      _outcome.TrySetResult(true);
-      Close();
+    private void OnSignInSucceeded(object? sender, EventArgs e)
+    {
+        _allowClose = true;
+        _outcome.TrySetResult(true);
+        Close();
     }
 
-    private async void OnClosing(AppWindow sender, AppWindowClosingEventArgs args) {
-      if (_allowClose) {
-        return;
-      }
-
-      // The user is closing the sign-in window without authenticating. Confirm before quitting the
-      // app instead of letting an unhandled cancellation surface as the error window.
-      args.Cancel = true;
-
-      // A second close request while the dialog is open would make ShowAsync throw.
-      if (_isConfirmingClose) {
-        return;
-      }
-
-      var dialog = new ContentDialog {
-        Title = "Quit application?",
-        Content = "You need to sign in to use the app. Do you want to quit?",
-        PrimaryButtonText = "Quit",
-        CloseButtonText = "Back to sign in",
-        DefaultButton = ContentDialogButton.Close,
-        XamlRoot = Content.XamlRoot,
-      };
-
-      _isConfirmingClose = true;
-      try {
-        if (await dialog.ShowAsync() == ContentDialogResult.Primary) {
-          _allowClose = true;
-          _outcome.TrySetResult(false);
-          Close();
+    private async void OnClosing(AppWindow sender, AppWindowClosingEventArgs args)
+    {
+        if (_allowClose)
+        {
+            return;
         }
-      } finally {
-        _isConfirmingClose = false;
-      }
+
+        // The user is closing the sign-in window without authenticating. Confirm before quitting the
+        // app instead of letting an unhandled cancellation surface as the error window.
+        args.Cancel = true;
+
+        // A second close request while the dialog is open would make ShowAsync throw.
+        if (_isConfirmingClose)
+        {
+            return;
+        }
+
+        var dialog = new ContentDialog {
+            Title = "Quit application?",
+            Content = "You need to sign in to use the app. Do you want to quit?",
+            PrimaryButtonText = "Quit",
+            CloseButtonText = "Back to sign in",
+            DefaultButton = ContentDialogButton.Close,
+            XamlRoot = Content.XamlRoot,
+        };
+
+        _isConfirmingClose = true;
+        try
+        {
+            if (await dialog.ShowAsync() == ContentDialogResult.Primary)
+            {
+                _allowClose = true;
+                _outcome.TrySetResult(false);
+                Close();
+            }
+        }
+        finally
+        {
+            _isConfirmingClose = false;
+        }
     }
 
-    private void OnClosed(object sender, WindowEventArgs args) {
-      // Any other close path (no sign-in) is treated as a request to quit.
-      _outcome.TrySetResult(false);
+    private void OnClosed(object sender, WindowEventArgs args)
+    {
+        // Any other close path (no sign-in) is treated as a request to quit.
+        _outcome.TrySetResult(false);
     }
-  }
 }

@@ -1,3 +1,3 @@
-namespace Kakehashi.App.Extensions {
-  public static class CollectionExtension { }
-}
+namespace Kakehashi.App.Extensions;
+
+public static class CollectionExtension { }

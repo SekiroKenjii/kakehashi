@@ -5,20 +5,22 @@ using System.Linq;
 using CommunityToolkit.Mvvm.ComponentModel;
 using Kakehashi.Modules.Activity.Application.Activity;
 
-namespace Kakehashi.Modules.Activity.UI.ViewModels {
-  /// <summary>One key-and-value line inside an expanded row.</summary>
-  public sealed record ActivityDetail(string Label, string Value);
+namespace Kakehashi.Modules.Activity.UI.ViewModels;
 
-  /// <summary>
-  /// One row in the feed, which may stand for several entries.
-  /// </summary>
-  /// <remarks>
-  /// An observable object rather than a record because expansion is mutable state the row owns;
-  /// the facts themselves are get-only. Wording, icon and grouping are decided here from the
-  /// server's stable kind and structured facts, so the page can be re-worded without a server
-  /// release.
-  /// </remarks>
-  public sealed partial class ActivityRow : ObservableObject {
+/// <summary>One key-and-value line inside an expanded row.</summary>
+public sealed record ActivityDetail(string Label, string Value);
+
+/// <summary>
+/// One row in the feed, which may stand for several entries.
+/// </summary>
+/// <remarks>
+/// An observable object rather than a record because expansion is mutable state the row owns;
+/// the facts themselves are get-only. Wording, icon and grouping are decided here from the
+/// server's stable kind and structured facts, so the page can be re-worded without a server
+/// release.
+/// </remarks>
+public sealed partial class ActivityRow : ObservableObject
+{
     /// <summary>
     /// The glyph drawn for a kind this build does not recognise. Written as an escape, never a
     /// literal: Private Use Area code points render as nothing in an editor and in a diff, so a
@@ -26,25 +28,26 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// </summary>
     private const string _fallbackGlyph = "\uE946";
 
-    private ActivityRow(IReadOnlyList<ActivityEntryDto> entries) {
-      Entries = entries;
-      var first = entries[0];
+    private ActivityRow(IReadOnlyList<ActivityEntryDto> entries)
+    {
+        Entries = entries;
+        var first = entries[0];
 
-      Kind = first.Kind;
-      Category = first.Category;
+        Kind = first.Kind;
+        Category = first.Category;
 
-      var (title, glyph, isAlert) = Present(first.Kind);
-      Title = title;
-      Glyph = glyph;
-      IsAlert = isAlert;
-      IsNew = first.Kind == ActivityKinds.NewDeviceSignedIn;
+        var (title, glyph, isAlert) = Present(first.Kind);
+        Title = title;
+        Glyph = glyph;
+        IsAlert = isAlert;
+        IsNew = first.Kind == ActivityKinds.NewDeviceSignedIn;
 
-      Meta = Join(first.Platform, first.IPAddress);
-      TimeText = entries.Count > 1 ? Span(entries) : Moment(first.OccurredAt);
-      Occurrences = entries.Count > 1
-          ? [.. entries.Select(entry => Occurrence(entry))]
-          : [];
-      Facts = Describe(first);
+        Meta = Join(first.Platform, first.IPAddress);
+        TimeText = entries.Count > 1 ? Span(entries) : Moment(first.OccurredAt);
+        Occurrences = entries.Count > 1
+            ? [.. entries.Select(entry => Occurrence(entry))]
+            : [];
+        Facts = Describe(first);
     }
 
     /// <summary>The entries this row stands for, newest first. One, unless it is a burst.</summary>
@@ -109,9 +112,9 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
 
     /// <summary>The category, spelled for a person.</summary>
     public string CategoryText => Category switch {
-      ActivityCategories.Security => "Security",
-      ActivityCategories.System => "System",
-      _ => Category,
+        ActivityCategories.Security => "Security",
+        ActivityCategories.System => "System",
+        _ => Category,
     };
 
     [ObservableProperty]
@@ -126,11 +129,12 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// control of its own: there is no expander for UIA to report an expand-collapse pattern on, so
     /// a reader pressing Enter had no way to hear that anything had happened.
     /// </remarks>
-    public string AnnouncedName {
-      get {
-        string burst = IsBurst ? $", {Count} times" : string.Empty;
-        return $"{Title}, {TimeText}{burst}, {(IsExpanded ? "expanded" : "collapsed")}";
-      }
+    public string AnnouncedName
+    {
+        get {
+            string burst = IsBurst ? $", {Count} times" : string.Empty;
+            return $"{Title}, {TimeText}{burst}, {(IsExpanded ? "expanded" : "collapsed")}";
+        }
     }
 
     /// <summary>Builds one row per entry, collapsing consecutive repeats into a burst.</summary>
@@ -140,21 +144,25 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// inside a short window collapses.
     /// </remarks>
     public static IReadOnlyList<ActivityRow> Collapse(
-        IReadOnlyList<ActivityEntryDto> entries, TimeSpan window) {
-      var rows = new List<ActivityRow>();
-      var run = new List<ActivityEntryDto>();
+        IReadOnlyList<ActivityEntryDto> entries, TimeSpan window)
+    {
+        var rows = new List<ActivityRow>();
+        var run = new List<ActivityEntryDto>();
 
-      foreach (var entry in entries) {
-        if (run.Count > 0 && !Continues(run[^1], entry, window)) {
-          rows.Add(new ActivityRow(run));
-          run = [];
+        foreach (var entry in entries)
+        {
+            if (run.Count > 0 && !Continues(run[^1], entry, window))
+            {
+                rows.Add(new ActivityRow(run));
+                run = [];
+            }
+            run.Add(entry);
         }
-        run.Add(entry);
-      }
-      if (run.Count > 0) {
-        rows.Add(new ActivityRow(run));
-      }
-      return rows;
+        if (run.Count > 0)
+        {
+            rows.Add(new ActivityRow(run));
+        }
+        return rows;
     }
 
     /// <summary>Whether <paramref name="next"/> is more of the same thing as <paramref name="last"/>.</summary>
@@ -163,31 +171,33 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// session, and two of them minutes apart are two decisions somebody made rather than one event
     /// reported twice.
     /// </remarks>
-    private static bool Continues(ActivityEntryDto last, ActivityEntryDto next, TimeSpan window) {
-      return last.Kind == next.Kind
-          && last.SessionId.Length > 0
-          && last.SessionId == next.SessionId
-          && last.OccurredAt - next.OccurredAt <= window;
+    private static bool Continues(ActivityEntryDto last, ActivityEntryDto next, TimeSpan window)
+    {
+        return last.Kind == next.Kind
+            && last.SessionId.Length > 0
+            && last.SessionId == next.SessionId
+            && last.OccurredAt - next.OccurredAt <= window;
     }
 
-    private static (string Title, string Glyph, bool IsAlert) Present(string kind) {
-      // An unrecognised kind shows its raw value rather than being dropped: the server can add
-      // kinds without a client release, and a feed that hides them is incomplete.
-      return kind switch {
-        ActivityKinds.SignedIn => ("Signed in", "\uE930", false),
-        ActivityKinds.SignedOut => ("Signed out", "\uE7E8", false),
-        ActivityKinds.NewDeviceSignedIn => ("New device signed in", "\uE717", false),
-        ActivityKinds.SessionRevoked => ("Session revoked", "\uEE35", false),
-        // The one row that says another person acted on this account, so it is drawn as an alert
-        // even though it shares the revocation glyph.
-        ActivityKinds.SessionRevokedByAdmin =>
-            ("Session revoked by an administrator", "\uEE35", true),
-        ActivityKinds.FailedSignIn => ("Failed sign-in attempt", "\uE783", true),
-        ActivityKinds.PasswordChanged => ("Password changed", "\uE8D7", false),
-        ActivityKinds.AppUpdated => ("App updated", "\uE895", false),
-        ActivityKinds.ThemeChanged => ("Theme changed", "\uE790", false),
-        _ => (kind, _fallbackGlyph, false),
-      };
+    private static (string Title, string Glyph, bool IsAlert) Present(string kind)
+    {
+        // An unrecognised kind shows its raw value rather than being dropped: the server can add
+        // kinds without a client release, and a feed that hides them is incomplete.
+        return kind switch {
+            ActivityKinds.SignedIn => ("Signed in", "\uE930", false),
+            ActivityKinds.SignedOut => ("Signed out", "\uE7E8", false),
+            ActivityKinds.NewDeviceSignedIn => ("New device signed in", "\uE717", false),
+            ActivityKinds.SessionRevoked => ("Session revoked", "\uEE35", false),
+            // The one row that says another person acted on this account, so it is drawn as an alert
+            // even though it shares the revocation glyph.
+            ActivityKinds.SessionRevokedByAdmin =>
+                ("Session revoked by an administrator", "\uEE35", true),
+            ActivityKinds.FailedSignIn => ("Failed sign-in attempt", "\uE783", true),
+            ActivityKinds.PasswordChanged => ("Password changed", "\uE8D7", false),
+            ActivityKinds.AppUpdated => ("App updated", "\uE895", false),
+            ActivityKinds.ThemeChanged => ("Theme changed", "\uE790", false),
+            _ => (kind, _fallbackGlyph, false),
+        };
     }
 
     /// <summary>
@@ -198,96 +208,113 @@ namespace Kakehashi.Modules.Activity.UI.ViewModels {
     /// would fabricate data on a security screen. The stored device string is the user agent — the
     /// readable and raw forms both come from that one value.
     /// </remarks>
-    private static IReadOnlyList<ActivityDetail> Describe(ActivityEntryDto entry) {
-      var facts = new List<ActivityDetail>(5) { new("Event", entry.Id) };
-      if (entry.SessionId.Length > 0) {
-        facts.Add(new ActivityDetail("Session", entry.SessionId));
-      }
-      if (entry.IPAddress.Length > 0) {
-        facts.Add(new ActivityDetail("IP address", entry.IPAddress));
-      }
-      if (entry.Platform.Length > 0) {
-        facts.Add(new ActivityDetail("Platform", entry.Platform));
-      }
-      if (entry.Device.Length > 0) {
-        facts.Add(new ActivityDetail("Reported as", entry.Device));
-      }
-      return facts;
+    private static IReadOnlyList<ActivityDetail> Describe(ActivityEntryDto entry)
+    {
+        var facts = new List<ActivityDetail>(5) { new("Event", entry.Id) };
+        if (entry.SessionId.Length > 0)
+        {
+            facts.Add(new ActivityDetail("Session", entry.SessionId));
+        }
+        if (entry.IPAddress.Length > 0)
+        {
+            facts.Add(new ActivityDetail("IP address", entry.IPAddress));
+        }
+        if (entry.Platform.Length > 0)
+        {
+            facts.Add(new ActivityDetail("Platform", entry.Platform));
+        }
+        if (entry.Device.Length > 0)
+        {
+            facts.Add(new ActivityDetail("Reported as", entry.Device));
+        }
+        return facts;
     }
 
-    private static string Occurrence(ActivityEntryDto entry) {
-      return entry.OccurredAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture);
+    private static string Occurrence(ActivityEntryDto entry)
+    {
+        return entry.OccurredAt.ToLocalTime().ToString("HH:mm:ss", CultureInfo.CurrentCulture);
     }
 
     /// <summary>The span a burst covers, oldest to newest.</summary>
-    private static string Span(IReadOnlyList<ActivityEntryDto> entries) {
-      string oldest = entries[^1].OccurredAt.ToLocalTime()
-          .ToString("HH:mm", CultureInfo.CurrentCulture);
-      string newest = entries[0].OccurredAt.ToLocalTime()
-          .ToString("HH:mm", CultureInfo.CurrentCulture);
-      return oldest == newest ? newest : oldest + "–" + newest;
+    private static string Span(IReadOnlyList<ActivityEntryDto> entries)
+    {
+        string oldest = entries[^1].OccurredAt.ToLocalTime()
+            .ToString("HH:mm", CultureInfo.CurrentCulture);
+        string newest = entries[0].OccurredAt.ToLocalTime()
+            .ToString("HH:mm", CultureInfo.CurrentCulture);
+        return oldest == newest ? newest : oldest + "–" + newest;
     }
 
     /// <summary>Clock time, plus how long ago while that is still the more useful answer.</summary>
-    private static string Moment(DateTimeOffset occurred) {
-      string clock = occurred.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
-      string relative = Relative(occurred);
-      return relative.Length == 0 ? clock : clock + " · " + relative;
+    private static string Moment(DateTimeOffset occurred)
+    {
+        string clock = occurred.ToLocalTime().ToString("HH:mm", CultureInfo.CurrentCulture);
+        string relative = Relative(occurred);
+        return relative.Length == 0 ? clock : clock + " · " + relative;
     }
 
-    private static string Relative(DateTimeOffset moment) {
-      var elapsed = DateTimeOffset.UtcNow - moment;
-      if (elapsed < TimeSpan.FromMinutes(1)) {
-        return "just now";
-      }
-      if (elapsed < TimeSpan.FromHours(1)) {
-        return $"{(int)elapsed.TotalMinutes}m ago";
-      }
-      if (elapsed < TimeSpan.FromDays(1)) {
-        return $"{(int)elapsed.TotalHours}h ago";
-      }
+    private static string Relative(DateTimeOffset moment)
+    {
+        var elapsed = DateTimeOffset.UtcNow - moment;
+        if (elapsed < TimeSpan.FromMinutes(1))
+        {
+            return "just now";
+        }
+        if (elapsed < TimeSpan.FromHours(1))
+        {
+            return $"{(int)elapsed.TotalMinutes}m ago";
+        }
+        if (elapsed < TimeSpan.FromDays(1))
+        {
+            return $"{(int)elapsed.TotalHours}h ago";
+        }
 
-      // Past a day the day header above the row already says which day it was, so repeating it on
-      // every row is noise.
-      return string.Empty;
+        // Past a day the day header above the row already says which day it was, so repeating it on
+        // every row is noise.
+        return string.Empty;
     }
 
-    private static string Join(params string[] parts) {
-      return string.Join(" · ", parts.Where(part => part.Length > 0));
+    private static string Join(params string[] parts)
+    {
+        return string.Join(" · ", parts.Where(part => part.Length > 0));
     }
-  }
+}
 
-  /// <summary>
-  /// One day's rows, which is what the list groups by.
-  /// </summary>
-  /// <remarks>
-  /// The boundary is the reader's local midnight, not the server's.
-  /// </remarks>
-  public sealed class ActivityDay {
-    public ActivityDay(DateTime day, IReadOnlyList<ActivityRow> items) {
-      Items = items;
-      Title = TitleFor(day);
-      CountText = items.Count == 1
-          ? "1 event"
-          : items.Count.ToString(CultureInfo.CurrentCulture) + " events";
+/// <summary>
+/// One day's rows, which is what the list groups by.
+/// </summary>
+/// <remarks>
+/// The boundary is the reader's local midnight, not the server's.
+/// </remarks>
+public sealed class ActivityDay
+{
+    public ActivityDay(DateTime day, IReadOnlyList<ActivityRow> items)
+    {
+        Items = items;
+        Title = TitleFor(day);
+        CountText = items.Count == 1
+            ? "1 event"
+            : items.Count.ToString(CultureInfo.CurrentCulture) + " events";
     }
 
     public string Title { get; }
     public string CountText { get; }
     public IReadOnlyList<ActivityRow> Items { get; }
 
-    private static string TitleFor(DateTime day) {
-      var today = DateTimeOffset.Now.Date;
-      var date = day.Date;
-      string spelled = date.ToString("dddd · d MMMM", CultureInfo.CurrentCulture);
+    private static string TitleFor(DateTime day)
+    {
+        var today = DateTimeOffset.Now.Date;
+        var date = day.Date;
+        string spelled = date.ToString("dddd · d MMMM", CultureInfo.CurrentCulture);
 
-      if (date == today) {
-        return "Today · " + date.ToString("d MMMM", CultureInfo.CurrentCulture);
-      }
-      if (date == today.AddDays(-1)) {
-        return "Yesterday · " + date.ToString("d MMMM", CultureInfo.CurrentCulture);
-      }
-      return spelled;
+        if (date == today)
+        {
+            return "Today · " + date.ToString("d MMMM", CultureInfo.CurrentCulture);
+        }
+        if (date == today.AddDays(-1))
+        {
+            return "Yesterday · " + date.ToString("d MMMM", CultureInfo.CurrentCulture);
+        }
+        return spelled;
     }
-  }
 }

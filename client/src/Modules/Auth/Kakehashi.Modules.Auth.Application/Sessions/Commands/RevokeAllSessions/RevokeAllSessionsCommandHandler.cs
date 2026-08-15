@@ -5,19 +5,22 @@ using Kakehashi.Application.Abstractions.Messaging;
 using Kakehashi.Modules.Auth.Application.Abstractions;
 using Kakehashi.SharedKernel;
 
-namespace Kakehashi.Modules.Auth.Application.Sessions.Commands.RevokeAllSessions {
-  public sealed class RevokeAllSessionsCommandHandler
-      : IRequestHandler<RevokeAllSessionsCommand, Result> {
+namespace Kakehashi.Modules.Auth.Application.Sessions.Commands.RevokeAllSessions;
+
+public sealed class RevokeAllSessionsCommandHandler
+    : IRequestHandler<RevokeAllSessionsCommand, Result>
+{
     private readonly IAccountGateway _account;
 
-    public RevokeAllSessionsCommandHandler(IAccountGateway account) {
-      ArgumentNullException.ThrowIfNull(account);
-      _account = account;
+    public RevokeAllSessionsCommandHandler(IAccountGateway account)
+    {
+        ArgumentNullException.ThrowIfNull(account);
+        _account = account;
     }
 
     public Task<Result> Handle(
-        RevokeAllSessionsCommand request, CancellationToken cancellationToken) {
-      return _account.RevokeAllSessionsAsync(cancellationToken);
+        RevokeAllSessionsCommand request, CancellationToken cancellationToken)
+    {
+        return _account.RevokeAllSessionsAsync(cancellationToken);
     }
-  }
 }
