@@ -6,6 +6,7 @@ import (
 	"compress/gzip"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"testing"
 )
@@ -97,7 +98,10 @@ func TestExtract(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if info.Mode().Perm()&0o111 == 0 {
+	// Windows has no executable bit — Go maps a file mode there to the read-only attribute alone,
+	// so every extracted file reports rw. The bit matters on the operating system that runs the
+	// scripts, and that is where this asserts.
+	if runtime.GOOS != "windows" && info.Mode().Perm()&0o111 == 0 {
 		t.Errorf("build.sh lost its executable bit: %v", info.Mode())
 	}
 }
