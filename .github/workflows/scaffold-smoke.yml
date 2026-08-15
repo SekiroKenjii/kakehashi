@@ -1,8 +1,9 @@
 name: Scaffold smoke
 
-# This workflow belongs to the template and to nothing else: it renames the tree and runs the gates
-# on the result, which is the only shape the code is ever compiled in for real. tools/rename deletes
-# this file, so a scaffolded project keeps ci.yml and not this.
+# This workflow belongs to the template and to nothing else: it builds the CLI, scaffolds a project
+# with it, and runs the gates on the result — the only shape the code is ever compiled in for real.
+# templates/template.json excludes this file and tools/cli, so a scaffolded project keeps ci.yml and
+# neither of these.
 on:
   push:
     branches: [main, development]
@@ -12,7 +13,63 @@ on:
 permissions:
   contents: read
 
+env:
+  # The scaffold writes outside the checkout, so the template it reads is never the tree it writes.
+  PROJECT_NAME: SmokeApp
+  PROJECT_MODULE: example.com/smokeapp
+
 jobs:
+  # The CLI is its own Go module and gets its own job, per docs/adr/0019. It runs on both operating
+  # systems because it scaffolds on both: a path or process bug specific to Windows should fail here
+  # by name, not three steps into scaffold-client after a NuGet restore.
+  cli:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: tools/cli
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: tools/cli/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      # Formatting and doc comments are a property of the source, so once is enough.
+      - name: Verify formatting
+        if: runner.os == 'Linux'
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal)
+          if [ -n "$unformatted" ]; then
+            echo "these files are not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      # Godoc shape for exported identifiers and package comments, per docs/COMMENTS.md — the same
+      # rules and the same pinned version as the server job.
+      - name: Lint doc comments
+        if: runner.os == 'Linux'
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.12.2
+          working-directory: tools/cli
+
   scaffold-smoke-server:
     runs-on: ubuntu-latest
     steps:
@@ -30,8 +87,8 @@ jobs:
         with:
           version: 1.72.0
 
-      # Before the scaffold, not after: the rename regenerates the contract, and buf shells out to
-      # these two. Reading the versions from go.mod works on the placeholder tree — the main
+      # Before the scaffold, not after: `kakehashi new` regenerates the contract, and buf shells out
+      # to these two. Reading the versions from go.mod works on the placeholder tree — the main
       # module's own path is not what is being queried.
       - name: Install the code generators
         working-directory: server
@@ -39,50 +96,70 @@ jobs:
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
           go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
-      # The rename's own self-check runs here: it exits non-zero if any placeholder or identity
-      # string survives, so this step is a gate before the gates.
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
+      # The CLI's own self-check runs here: it refuses to hand over a tree that still carries a
+      # placeholder or names the template, so this step is a gate before the gates. The identity is
+      # for the commit the scaffold makes.
       - name: Scaffold
         run: |
-          git config user.email smoke@example.com
-          git config user.name Smoke
-          tools/rename/rename.sh \
-            --app-name SmokeApp \
-            --go-module example.com/smokeapp \
-            --author Smoke
-          git add -A
-          git commit -q -m "chore: scaffold from the template"
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          "$RUNNER_TEMP/kakehashi" new "$PROJECT_NAME" \
+            --module "$PROJECT_MODULE" \
+            --author Smoke \
+            --template-dir . \
+            --dir "$RUNNER_TEMP/project" \
+            --no-input
+
+      # The template it read has to come out of the run unchanged: the scaffold works in a
+      # temporary directory beside the destination and never in the source. --porcelain rather than
+      # `git diff`, because the regression this guards against — a working directory, a cache, a
+      # build output left behind — is untracked, and a diff cannot see it.
+      - name: Verify the template was not modified
+        run: |
+          dirty=$(git status --porcelain)
+          if [ -n "$dirty" ]; then
+            echo "the scaffold changed the template it read:"
+            echo "$dirty"
+            exit 1
+          fi
 
       # Gate 3, on the tree that can carry it.
       - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
         run: buf lint
 
-      # The rename moves the generated tree with the proto package. Regenerating has to reproduce
-      # it byte for byte, or the substitution reached the schema and the output differently.
-      - name: Verify the generated code survived the rename
+      # The scaffold moves the generated tree with the proto package and regenerates it.
+      # Regenerating again has to reproduce it byte for byte.
+      - name: Verify the generated code matches the schema
+        working-directory: ${{ runner.temp }}/project
         run: |
           buf generate
           git diff --exit-code -- server/internal/gen
 
       - name: Build
-        working-directory: server
+        working-directory: ${{ runner.temp }}/project/server
         run: go build ./...
 
       - name: Vet
-        working-directory: server
+        working-directory: ${{ runner.temp }}/project/server
         run: go vet ./...
 
       - name: Test
-        working-directory: server
+        working-directory: ${{ runner.temp }}/project/server
         run: go test ./...
 
       # Gate 1. It sees the generated packages only here: in the template their directory begins
       # with an underscore, which the go tool skips when expanding ./...
       - name: Check module boundaries
-        working-directory: server
+        working-directory: ${{ runner.temp }}/project/server
         run: go run ./tools/archlint
 
       - name: Verify formatting
-        working-directory: server
+        working-directory: ${{ runner.temp }}/project/server
         run: |
           unformatted=$(gofmt -l ./cmd ./internal ./tools)
           if [ -n "$unformatted" ]; then
@@ -98,40 +175,69 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
         with:
           global-json-file: client/global.json
 
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$env:RUNNER_TEMP/kakehashi.exe" ./cmd/kakehashi
+
+      # The scaffold runs dotnet format on the way through, because the root namespace sorts
+      # somewhere new and the using blocks it moved through are out of order until it does.
       - name: Scaffold
         run: |
-          git config user.email smoke@example.com
-          git config user.name Smoke
-          ./tools/rename/rename.ps1 -AppName SmokeApp -GoModule example.com/smokeapp -Author Smoke
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          & "$env:RUNNER_TEMP/kakehashi.exe" new $env:PROJECT_NAME `
+            --module $env:PROJECT_MODULE `
+            --author Smoke `
+            --template-dir . `
+            --dir "$env:RUNNER_TEMP/project" `
+            --no-input
+          if ($LASTEXITCODE -ne 0) { throw "the scaffold exited $LASTEXITCODE" }
 
       - name: Restore
-        working-directory: client
-        run: dotnet restore SmokeApp.slnx
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet restore ${{ env.PROJECT_NAME }}.slnx
 
       - name: Verify formatting
-        working-directory: client
-        run: dotnet format SmokeApp.slnx --verify-no-changes --severity warn --no-restore
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet format ${{ env.PROJECT_NAME }}.slnx --verify-no-changes --severity warn --no-restore
 
       # The step above leaves a compiler server holding client/tools' analyzer assemblies open,
       # and the build below has to write them: without this it fails with CS2012 on its own DLL.
       - name: Release the analyzer assemblies
-        working-directory: client
+        working-directory: ${{ runner.temp }}/project/client
         run: dotnet build-server shutdown
 
       - name: Build
-        working-directory: client
-        run: dotnet build SmokeApp.slnx -c Release --no-restore
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet build ${{ env.PROJECT_NAME }}.slnx -c Release --no-restore
 
       # The test projects are unpackaged WinUI executables, so the SDK compiles its bootstrapper
       # into them as a module initializer, and with no matching runtime installed it calls
       # Environment.Exit before the first test runs.
       - name: Install the Windows App Runtime
-        working-directory: client
+        working-directory: ${{ runner.temp }}/project/client
         run: |
           $props = [xml](Get-Content Directory.Packages.props)
           $node = $props.SelectSingleNode("//PackageVersion[@Include='Microsoft.WindowsAppSDK']")
@@ -145,8 +251,8 @@ jobs:
 
       # Gate 2 is inside this run: SmokeApp.ArchitectureTests is one of the suites.
       - name: Test
-        working-directory: client
-        run: dotnet test SmokeApp.slnx -c Release --no-build --verbosity normal
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet test ${{ env.PROJECT_NAME }}.slnx -c Release --no-build --verbosity normal
 
   # Removing the example module has to leave a tree that still builds, or --bare is a promise the
   # template cannot keep.
@@ -167,43 +273,79 @@ jobs:
         with:
           version: 1.72.0
 
-      # Before the scaffold, not after: the rename regenerates the contract, and buf shells out to
-      # these two. Reading the versions from go.mod works on the placeholder tree — the main
-      # module's own path is not what is being queried.
       - name: Install the code generators
         working-directory: server
         run: |
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
           go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
-      # Before the rename, which is the order the CLI uses: the unit file and the tree agree on
-      # placeholder paths, and neither has to know what the project will be called.
-      - name: Remove the notes unit
-        working-directory: tools/units
-        run: go run . ../../templates/units/notes.json
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
 
-      - name: Scaffold
+      - name: Scaffold without the example module
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          "$RUNNER_TEMP/kakehashi" new "$PROJECT_NAME" \
+            --module "$PROJECT_MODULE" \
+            --author Smoke \
+            --template-dir . \
+            --dir "$RUNNER_TEMP/project" \
+            --bare \
+            --no-input
+
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/project/server
+        run: go build ./...
+
+      - name: Test
+        working-directory: ${{ runner.temp }}/project/server
+        run: go test ./...
+
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: go run ./tools/archlint
+
+  # The rename scripts are the fallback for anyone who starts from the "Use this template" button
+  # rather than from the CLI. Their own self-check is the assertion: it exits non-zero while any
+  # placeholder or identity string survives, which is what rots first when the template grows a file.
+  rename-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Rename in place
         run: |
           git config user.email smoke@example.com
           git config user.name Smoke
           tools/rename/rename.sh \
-            --app-name SmokeApp \
-            --go-module example.com/smokeapp \
+            --app-name "$PROJECT_NAME" \
+            --go-module "$PROJECT_MODULE" \
             --author Smoke
-          git add -A
-          git commit -q -m "chore: scaffold from the template"
-
-      - name: Lint the schema
-        run: buf lint
 
       - name: Build
         working-directory: server
         run: go build ./...
-
-      - name: Test
-        working-directory: server
-        run: go test ./...
-
-      - name: Check module boundaries
-        working-directory: server
-        run: go run ./tools/archlint

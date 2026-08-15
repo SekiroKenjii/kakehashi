@@ -1,0 +1,13 @@
+version: "2"
+
+# Comment-convention enforcement only (docs/COMMENTS.md), the same rules the server module is held
+# to. Build, vet and tests have their own steps in the same job.
+linters:
+  default: none
+  enable:
+    - revive
+  settings:
+    revive:
+      rules:
+        - name: exported
+        - name: package-comments
