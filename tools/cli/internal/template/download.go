@@ -10,13 +10,10 @@ import (
 	"strings"
 )
 
-// The release assets. The archive is built by CI rather than taken from GitHub's generated source
-// tarball: a generated archive is repacked on demand and its checksum is not stable, and a
-// checksum that changes under you is worth nothing.
-const (
-	archiveAsset   = "template-v%s.tar.gz"
-	checksumsAsset = "checksums.txt"
-)
+// checksumsAsset is the release's own list of digests. The archive beside it is built by CI rather
+// than taken from GitHub's generated source tarball: a generated archive is repacked on demand and
+// its checksum is not stable, and a checksum that changes under you is worth nothing.
+const checksumsAsset = "checksums.txt"
 
 // fetch downloads a template release, verifies it against the release's own checksums file, and
 // leaves it extracted in the cache. The returned directory is the cached tree.
@@ -26,7 +23,9 @@ func (c *Client) fetch(ctx context.Context, version string) (string, error) {
 		return "", err
 	}
 
-	name := fmt.Sprintf(archiveAsset, version)
+	// From the tag rather than from the normalised version: the asset is named after the tag that
+	// built it, and template/v0.3 ships template-v0.3.tar.gz.
+	name := "template-" + strings.TrimPrefix(release.Tag, "template/") + ".tar.gz"
 	archiveURL, err := asset(release, name)
 	if err != nil {
 		return "", err

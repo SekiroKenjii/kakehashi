@@ -20,15 +20,19 @@ tree into your project.
 
 ```sh
 go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@latest
-kakehashi new OrderDesk --module github.com/me/orderdesk
+kakehashi new OrderDesk --module github.com/me/orderdesk --template-dir path/to/kakehashi
 cd orderdesk
 ```
 
-`kakehashi new` fetches a template release, verifies its checksum, substitutes every placeholder,
-renames every path that holds one, removes the template's own documentation, and **fails if
-anything is left behind** — in a temporary directory, so a failure leaves nothing to clean up.
-`kakehashi doctor` says what the machine is missing first, `--bare` leaves the example module out,
-and `--dry-run` does the whole thing without writing the project.
+`kakehashi new` substitutes every placeholder, renames every path that holds one, removes the
+template's own documentation, regenerates the contract, and **fails if anything is left behind** —
+in a temporary directory, so a failure leaves nothing to clean up. `kakehashi doctor` says what the
+machine is missing first, `--bare` leaves the example module out, and `--dry-run` prints the plan
+and writes nothing.
+
+`--template-dir` points at a clone of this repository, and is needed until the first
+`template/vX.Y.Z` release is tagged. After that, dropping it fetches the newest template the CLI is
+compatible with, verifies it against the release's checksums, and caches it.
 
 Starting from the GitHub "Use this template" button instead? The rename scripts are the same
 algorithm, run in place:

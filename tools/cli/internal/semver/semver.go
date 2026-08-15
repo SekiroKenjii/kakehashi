@@ -75,7 +75,6 @@ func MustParse(s string) Version {
 // Range is a space-separated list of constraints, all of which must hold: ">=0.2 <0.4". An empty
 // range accepts everything, which is what a template that states no requirement means.
 type Range struct {
-	source      string
 	constraints []constraint
 }
 
@@ -84,13 +83,18 @@ type constraint struct {
 	version Version
 }
 
-var operators = []string{">=", "<=", "!=", ">", "<", "="}
+var operators = []string{">=", "<=", ">", "<", "="}
+
+// operand is what may follow an operator, and the whole of it. Parse reads the first version-shaped
+// run in a string and ignores the rest, so without this ">=0.2,<0.4" — the npm spelling, and the
+// natural thing to type — would parse as ">=0.2" and drop the upper bound without a word.
+var operand = regexp.MustCompile(`^v?\d+(\.\d+){0,2}$`)
 
 // ParseRange reads a constraint list. Every constraint has to carry an operator: a bare version
 // number is ambiguous between "exactly" and "at least", and guessing is how a compatibility matrix
 // starts lying.
 func ParseRange(s string) (Range, error) {
-	r := Range{source: strings.TrimSpace(s)}
+	r := Range{}
 	for _, field := range strings.Fields(s) {
 		c := constraint{}
 		for _, op := range operators {
@@ -100,10 +104,16 @@ func ParseRange(s string) (Range, error) {
 			}
 		}
 		if c.op == "" {
-			return Range{}, fmt.Errorf("constraint %q needs one of >=, <=, >, <, =, !=", field)
+			return Range{}, fmt.Errorf("constraint %q needs one of >=, <=, >, <, =", field)
 		}
 
-		v, err := Parse(strings.TrimPrefix(field, c.op))
+		rest := strings.TrimPrefix(field, c.op)
+		if !operand.MatchString(rest) {
+			return Range{}, fmt.Errorf("constraint %q: %q is not a version number, and constraints "+
+				"are separated by spaces", field, rest)
+		}
+
+		v, err := Parse(rest)
 		if err != nil {
 			return Range{}, fmt.Errorf("constraint %q: %w", field, err)
 		}
@@ -129,8 +139,6 @@ func (r Range) Allows(v Version) bool {
 			ok = cmp < 0
 		case "=":
 			ok = cmp == 0
-		case "!=":
-			ok = cmp != 0
 		}
 		if !ok {
 			return false
@@ -138,6 +146,3 @@ func (r Range) Allows(v Version) bool {
 	}
 	return true
 }
-
-// String returns the range as it was written.
-func (r Range) String() string { return r.source }

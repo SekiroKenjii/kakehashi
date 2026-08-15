@@ -1,5 +1,6 @@
 // Package cli is the command surface: flag parsing, the order the other packages run in, and what
-// reaches the terminal. Nothing here decides anything a library could decide instead.
+// reaches the terminal. Validation, resolution and the scaffold itself belong to the packages it
+// calls, not here.
 package cli
 
 import (
@@ -53,10 +54,9 @@ func Execute() int {
 
 	fmt.Fprintln(os.Stderr, "kakehashi:", err)
 	var usage usageError
-	// Cobra reports an unknown command or a bad argument count as a plain error, and both are the
-	// same kind of mistake as a bad flag.
-	if errors.As(err, &usage) || strings.HasPrefix(err.Error(), "unknown command") ||
-		strings.Contains(err.Error(), "accepts") {
+	// Every command wraps its own argument and flag errors, so the only classification left to a
+	// string is cobra's own message for a command it does not have.
+	if errors.As(err, &usage) || strings.HasPrefix(err.Error(), "unknown command") {
 		fmt.Fprintln(os.Stderr)
 		fmt.Fprintln(os.Stderr, command.UsageString())
 		return exitUsage

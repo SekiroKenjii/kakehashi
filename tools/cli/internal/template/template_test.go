@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"net/http"
 	"net/http/httptest"
@@ -18,12 +19,20 @@ import (
 const descriptor = `{
   "schemaVersion": 1,
   "templateVersion": "%s",
-  "requiresCli": ">=0.1.0",
+  "requiresCli": "%s",
   "markersSchema": 1,
   "unitsSchema": 1,
   "exampleUnits": ["example"]
 }
 `
+
+// stub is one release the fake channel serves.
+type stub struct {
+	version     string
+	requiresCLI string
+	draft       bool
+	prerelease  bool
+}
 
 // channel is a stand-in for the release channel: it serves a release list, the archive assets and
 // the checksums file, and counts what was asked for.
@@ -36,11 +45,20 @@ type channel struct {
 
 func newChannel(t *testing.T, versions ...string) *channel {
 	t.Helper()
-	c := &channel{archives: map[string][]byte{}}
+	releases := make([]stub, 0, len(versions))
 	for _, version := range versions {
-		c.archives[version] = tarball(t, []entry{
-			{name: DescriptorName, body: fmt.Sprintf(descriptor, version)},
-			{name: "README.md", body: "# " + version + "\n"},
+		releases = append(releases, stub{version: version, requiresCLI: ">=0.1.0"})
+	}
+	return newChannelOf(t, releases...)
+}
+
+func newChannelOf(t *testing.T, releases ...stub) *channel {
+	t.Helper()
+	c := &channel{archives: map[string][]byte{}}
+	for _, r := range releases {
+		c.archives[r.version] = tarball(t, []entry{
+			{name: DescriptorName, body: fmt.Sprintf(descriptor, r.version, r.requiresCLI)},
+			{name: "README.md", body: "# " + r.version + "\n"},
 		})
 	}
 
@@ -48,23 +66,31 @@ func newChannel(t *testing.T, versions ...string) *channel {
 	mux.HandleFunc("/repos/owner/repo/releases", func(w http.ResponseWriter, r *http.Request) {
 		c.requests.Add(1)
 		base := "http://" + r.Host
-		releases := []map[string]any{{"tag_name": "cli/v9.9.9"}}
-		for _, version := range versions {
-			releases = append(releases, map[string]any{
-				"tag_name": TagPrefix + version,
-				"assets": []map[string]string{
-					{
-						"name":                 fmt.Sprintf(archiveAsset, version),
-						"browser_download_url": base + "/download/" + version + "/archive",
+
+		// The first page carries the CLI series as well; the second is always empty, which is how
+		// the client learns to stop.
+		body := []map[string]any{}
+		if r.URL.Query().Get("page") == "1" {
+			body = append(body, map[string]any{"tag_name": "cli/v9.9.9"})
+			for _, release := range releases {
+				body = append(body, map[string]any{
+					"tag_name":   TagPrefix + release.version,
+					"draft":      release.draft,
+					"prerelease": release.prerelease,
+					"assets": []map[string]string{
+						{
+							"name":                 "template-v" + release.version + ".tar.gz",
+							"browser_download_url": base + "/download/" + release.version + "/archive",
+						},
+						{
+							"name":                 checksumsAsset,
+							"browser_download_url": base + "/download/" + release.version + "/checksums",
+						},
 					},
-					{
-						"name":                 checksumsAsset,
-						"browser_download_url": base + "/download/" + version + "/checksums",
-					},
-				},
-			})
+				})
+			}
 		}
-		if err := json.NewEncoder(w).Encode(releases); err != nil {
+		if err := json.NewEncoder(w).Encode(body); err != nil {
 			t.Error(err)
 		}
 	})
@@ -79,7 +105,7 @@ func newChannel(t *testing.T, versions ...string) *channel {
 				body = append(append([]byte{}, archive...), 'x')
 			}
 			sum := sha256.Sum256(body)
-			fmt.Fprintf(w, "%s  %s\n", hex.EncodeToString(sum[:]), fmt.Sprintf(archiveAsset, parts[0]))
+			fmt.Fprintf(w, "%s  template-v%s.tar.gz\n", hex.EncodeToString(sum[:]), parts[0])
 			return
 		}
 		if _, err := w.Write(archive); err != nil {
@@ -159,6 +185,89 @@ func TestResolveAcceptsEverySpellingOfAPinnedVersion(t *testing.T) {
 	}
 }
 
+// §2 step 2: the default is the newest template this CLI is compatible with, not the newest
+// template. Otherwise a template that raises its floor strands every CLI below it.
+func TestResolveFallsBackToTheNewestCompatibleRelease(t *testing.T) {
+	client := client(t, newChannelOf(t,
+		stub{version: "0.1.0", requiresCLI: ">=0.1.0 <0.2.0"},
+		stub{version: "0.2.0", requiresCLI: ">=0.2.0 <0.3.0"},
+		stub{version: "0.3.0", requiresCLI: ">=0.3.0"},
+	))
+
+	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.5"})
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if resolved.Version != "0.1.0" {
+		t.Errorf("version = %s, want the newest one this CLI can use", resolved.Version)
+	}
+}
+
+// With nothing in range the refusal has to name a version pair, so the reader knows which of the
+// two to move.
+func TestResolveReportsWhenNoReleaseIsCompatible(t *testing.T) {
+	client := client(t, newChannelOf(t, stub{version: "0.3.0", requiresCLI: ">=0.3.0"}))
+
+	_, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	if err == nil {
+		t.Fatal("Resolve accepted a template outside this CLI's range")
+	}
+	if !errors.Is(err, ErrIncompatible) {
+		t.Errorf("error is not an incompatibility: %v", err)
+	}
+	if !strings.Contains(err.Error(), "0.3.0") || !strings.Contains(err.Error(), "0.1.0") {
+		t.Errorf("error %q does not name both versions", err)
+	}
+}
+
+// A draft is visible only to a caller with a token, and a prerelease is not what "newest" means.
+// Either one would make the resolved version depend on who is running the command.
+func TestResolveSkipsDraftsAndPrereleases(t *testing.T) {
+	client := client(t, newChannelOf(t,
+		stub{version: "0.1.0", requiresCLI: ">=0.1.0"},
+		stub{version: "0.2.0", requiresCLI: ">=0.1.0", draft: true},
+		stub{version: "0.3.0", requiresCLI: ">=0.1.0", prerelease: true},
+	))
+
+	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	if err != nil {
+		t.Fatalf("Resolve: %v", err)
+	}
+	if resolved.Version != "0.1.0" {
+		t.Errorf("version = %s, want the newest published release", resolved.Version)
+	}
+}
+
+// The version becomes a cache path segment.
+func TestResolveRefusesAPinnedVersionThatIsNotAVersion(t *testing.T) {
+	client := client(t, newChannel(t, "0.1.0"))
+
+	for _, pinned := range []string{"../../../../tmp/evil", "v", "latest"} {
+		if _, err := client.Resolve(context.Background(), Request{Version: pinned, CLIVersion: "0.1.0"}); err == nil {
+			t.Errorf("Resolve accepted --template-version %q", pinned)
+		}
+	}
+}
+
+// MkdirTemp's suffix is digits, and a killed process leaves the staging directory behind.
+func TestCachedIgnoresAnInterruptedExtraction(t *testing.T) {
+	client := client(t, newChannel(t, "0.1.0"))
+	templates := filepath.Join(client.CacheDir, "templates")
+	for _, name := range []string{"0.1.0", ".extract-3703434504", "notes"} {
+		if err := os.MkdirAll(filepath.Join(templates, name), 0o755); err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	cached, err := client.Cached()
+	if err != nil {
+		t.Fatalf("Cached: %v", err)
+	}
+	if len(cached) != 1 || cached[0] != "0.1.0" {
+		t.Errorf("Cached = %v, want only the one version", cached)
+	}
+}
+
 func TestResolveRefusesAnArchiveThatDoesNotMatchItsChecksum(t *testing.T) {
 	channel := newChannel(t, "0.1.0")
 	channel.corrupt = true
@@ -220,7 +329,7 @@ func TestResolveDirectorySkipsTheReleaseChannel(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	body := fmt.Sprintf(descriptor, "3.4.5")
+	body := fmt.Sprintf(descriptor, "3.4.5", ">=0.1.0")
 	if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(DescriptorName)), []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}

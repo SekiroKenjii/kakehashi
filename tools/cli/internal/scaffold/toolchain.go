@@ -9,41 +9,41 @@ import (
 	"strings"
 )
 
-// regenerate re-runs the code generator over the substituted schema, and reports whether it ran.
+// regenerate re-runs the code generator over the substituted schema.
 //
 // Substituting text into generated protobuf code cannot stand in for this: the descriptor embedded
 // in a .pb.go carries byte-length prefixes, so a package name of a different length leaves lengths
 // that disagree with the bytes after them, and the server fails to parse its own descriptor at
 // startup. That is why this is a hard failure rather than a warning.
-func regenerate(work string, log func(string, ...any)) (bool, error) {
+func regenerate(work string, log func(string, ...any)) error {
 	if _, err := os.Stat(filepath.Join(work, "buf.gen.yaml")); err != nil {
-		return false, nil
+		return nil
 	}
 	if _, err := exec.LookPath("buf"); err != nil {
-		return false, fmt.Errorf("buf is needed to regenerate the contract: https://buf.build/docs/installation")
+		return fmt.Errorf("buf is needed to regenerate the contract: https://buf.build/docs/installation")
 	}
 
 	if out, err := run(work, "buf", "generate"); err != nil {
-		return false, fmt.Errorf("buf generate: %w\n%s\n\nprotoc-gen-go and protoc-gen-connect-go have to be on PATH", err, out)
+		return fmt.Errorf("buf generate: %w\n%s\n\nprotoc-gen-go and protoc-gen-connect-go have to be on PATH", err, out)
 	}
 	log("regenerated the contract")
-	return true, nil
+	return nil
 }
 
-// reformat runs the formatter the client's own gate checks with, and reports whether it ran. The
+// reformat runs the formatter the client's own gate checks with. The
 // root namespace sorts somewhere new, so the using blocks it moved through are out of order until
 // this runs — which needs the .NET SDK, and on Windows for a WinUI solution. A machine without it
 // gets a warning naming the one command to run, rather than a failed scaffold.
-func reformat(work string, log func(string, ...any)) bool {
+func reformat(work string, log func(string, ...any)) {
 	client := filepath.Join(work, "client")
 	solution := solutionIn(client)
 	if solution == "" {
-		return false
+		return
 	}
 	if _, err := exec.LookPath("dotnet"); err != nil {
 		log("the .NET SDK is not installed — run 'dotnet format %s' in client/ before committing, "+
 			"or the format check will fail on import ordering", solution)
-		return false
+		return
 	}
 
 	// MSBuild worker nodes outlive the command by fifteen minutes and inherit its directory, and on
@@ -56,10 +56,9 @@ func reformat(work string, log func(string, ...any)) bool {
 	if err != nil {
 		log("could not reformat the client — run 'dotnet format %s' in client/ before committing:\n%s",
 			solution, out)
-		return false
+		return
 	}
 	log("reformatted the client")
-	return true
 }
 
 // solutionIn names the solution file in a directory, or nothing when the tree has no client. It

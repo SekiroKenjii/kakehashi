@@ -2,6 +2,7 @@ package template
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -94,6 +95,10 @@ func LoadDescriptor(root, cliVersion string) (*Descriptor, error) {
 	return &d, nil
 }
 
+// ErrIncompatible reports a template this CLI is outside the range of. Resolve tells it apart from
+// every other failure because it is the one worth trying an older release for.
+var ErrIncompatible = errors.New("incompatible template")
+
 // allows checks this CLI against the template's requiresCli range, naming the template version in
 // the refusal: whoever reads it has to know which of the two to move.
 func (d *Descriptor) allows(cliVersion string) error {
@@ -110,8 +115,8 @@ func (d *Descriptor) allows(cliVersion string) error {
 		return fmt.Errorf("cli version %q: %w", cliVersion, err)
 	}
 	if !want.Allows(have) {
-		return fmt.Errorf("template %s needs kakehashi %s, this is %s",
-			d.TemplateVersion, d.RequiresCLI, cliVersion)
+		return fmt.Errorf("%w: template %s needs kakehashi %s, this is %s",
+			ErrIncompatible, d.TemplateVersion, d.RequiresCLI, cliVersion)
 	}
 	return nil
 }

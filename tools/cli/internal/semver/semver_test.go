@@ -1,6 +1,7 @@
 package semver_test
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/semver"
@@ -67,7 +68,6 @@ func TestRangeAllows(t *testing.T) {
 		{">=0.2 <0.4", "0.1.9", false},
 		{"=1.0.0", "1.0.0", true},
 		{"=1.0.0", "1.0.1", false},
-		{"!=1.0.0", "1.0.1", true},
 		{">1.0.0", "1.0.0", false},
 		{"<=1.0.0", "1.0.0", true},
 		{"", "9.9.9", true},
@@ -83,9 +83,36 @@ func TestRangeAllows(t *testing.T) {
 	}
 }
 
-// A bare version number is ambiguous between "exactly" and "at least".
-func TestParseRangeRefusesAConstraintWithNoOperator(t *testing.T) {
-	if _, err := semver.ParseRange("0.2"); err == nil {
-		t.Error("ParseRange accepted a constraint with no operator")
+func TestParseRangeRefusals(t *testing.T) {
+	cases := []struct {
+		name  string
+		rang  string
+		says  string
+		valid bool
+	}{
+		// A bare version number is ambiguous between "exactly" and "at least".
+		{"no operator", "0.2", "needs one of", false},
+		{"a caret", "^1.2", "needs one of", false},
+		// The npm spelling. Parse would read the first number and drop the upper bound silently.
+		{"comma separated", ">=0.2.0,<0.4.0", "separated by spaces", false},
+		{"trailing text", ">=0.2.0-rc", "not a version number", false},
+		{"the spelling that works", ">=0.2.0 <0.4.0", "", true},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := semver.ParseRange(c.rang)
+			if c.valid {
+				if err != nil {
+					t.Errorf("ParseRange(%q): %v", c.rang, err)
+				}
+				return
+			}
+			if err == nil {
+				t.Fatalf("ParseRange accepted %q", c.rang)
+			}
+			if !strings.Contains(err.Error(), c.says) {
+				t.Errorf("error %q does not say %q", err, c.says)
+			}
+		})
 	}
 }

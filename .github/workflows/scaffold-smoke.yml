@@ -70,7 +70,7 @@ jobs:
           version: v2.12.2
           working-directory: tools/cli
 
-  scaffold-server:
+  scaffold-smoke-server:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -168,7 +168,7 @@ jobs:
             exit 1
           fi
 
-  scaffold-client:
+  scaffold-smoke-client:
     # WinUI 3 (Windows App SDK) requires Windows to build.
     runs-on: windows-latest
     steps:
@@ -256,7 +256,7 @@ jobs:
 
   # Removing the example module has to leave a tree that still builds, or --bare is a promise the
   # template cannot keep.
-  scaffold-bare:
+  scaffold-smoke-bare:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout

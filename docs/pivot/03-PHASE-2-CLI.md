@@ -181,10 +181,10 @@ Kiểm tra môi trường, in bảng ✅/⚠️/❌ + hướng khắc phục (wi
    split auth into a unit. `inapp` and `browser` write `Auth:Mode` through the descriptor. The
    rewrite goes through a JSON decode, so the settings file comes back with its keys in
    alphabetical order — only when the mode actually changes.
-5. **Two packages beside the seven in §1.** `internal/semver`, because doctor's minimum versions
-   and the template's compatibility range are the same comparison written twice otherwise; and
-   `internal/tui`, which §1 asks for — it holds the wizard's refusal, and `new` with no arguments
-   calls it and turns that refusal into exit code 2.
+5. **One package beside the seven in §1:** `internal/semver`, because doctor's minimum versions and
+   the template's compatibility range are the same comparison written twice otherwise. `internal/tui`
+   is one of the seven, and holds the wizard's refusal — `new` with no arguments calls it and turns
+   that refusal into exit code 2.
 6. **`--root-namespace` and `--year` are not flags.** §2's table has neither and both derive
    (from the app name and from the clock). The manifest records them anyway: an upgrade that cannot
    reproduce the inputs cannot diff anything.
@@ -201,6 +201,16 @@ Kiểm tra môi trường, in bảng ✅/⚠️/❌ + hướng khắc phục (wi
    A title of `Ben & Jerry` produced a project whose client half was not well-formed XML, so those
    five are refused with a message that says why. `--author` defaults to `git config user.name`,
    which is not a value the caller necessarily typed.
-10. **Left alone, mentioned here:** `server/cmd/server/main.go` and the client's `ModuleCatalog.cs`
+10. **`--template-dir` is a flag §2 does not list**, and it is the only one that works before the
+    first `template/vX.Y.Z` tag exists: it scaffolds from a checkout, which is what CI uses and
+    what the README's first command shows. A project scaffolded that way records the directory it
+    was read from as `template.source`, rather than the release channel it never touched — true,
+    and a manifest an upgrade cannot fetch from until the project is re-scaffolded from a release.
+11. **`--dry-run` does the work and then throws it away.** §2 asks it to print the plan and write
+    nothing. It prints the plan, and then also stages, prunes, substitutes, renames and regenerates
+    in the temporary directory before deleting it — a plan that has been carried out once is the
+    only kind that cannot be wrong. The cost is that it needs buf and the protoc plugins, like a
+    real run.
+12. **Left alone, mentioned here:** `server/cmd/server/main.go` and the client's `ModuleCatalog.cs`
    both point a reader at `docs/BOILERPLATE.md`, which no scaffolded project has. Pre-existing from
    Phase 1, and fixing it is a comment change in two files nobody asked for.

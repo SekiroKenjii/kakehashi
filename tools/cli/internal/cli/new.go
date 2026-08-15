@@ -43,7 +43,12 @@ func newCommand() *cobra.Command {
 		Long: "Scaffold a project from the template.\n\n" +
 			"With no app name, this opens the wizard, which Phase 4 builds. Until then, pass the\n" +
 			"name and --module.",
-		Args:         cobra.MaximumNArgs(1),
+		Args: func(_ *cobra.Command, args []string) error {
+			if len(args) > 1 {
+				return usagef("new takes one app name, got %d", len(args))
+			}
+			return nil
+		},
 		SilenceUsage: true,
 		RunE: func(command *cobra.Command, args []string) error {
 			return runNew(command, args, opts)
@@ -109,6 +114,9 @@ func runNew(command *cobra.Command, args []string, opts *options) error {
 	}
 
 	fmt.Fprintf(out, "kakehashi: %s <%s> from template %s\n", inputs.AppName, inputs.GoModule, resolved.Version)
+	if opts.dryRun {
+		plan(out, inputs, dest, resolved)
+	}
 	result, err := scaffold.Run(scaffold.Options{
 		Source:     resolved.Dir,
 		Dest:       dest,
@@ -196,19 +204,16 @@ func destination(dir, appName string) (string, error) {
 
 func report(out io.Writer, result *scaffold.Result, in scaffold.Inputs, dryRun bool) {
 	fmt.Fprintf(out, "  %d files, %d substituted, %d paths renamed\n",
-		result.Staged, result.Substituted, result.Renamed)
+		result.Files, result.Substituted, result.Renamed)
 	if len(result.UnitsRemoved) > 0 {
 		fmt.Fprintf(out, "  removed: %s\n", strings.Join(result.UnitsRemoved, ", "))
 	}
 	if dryRun {
-		fmt.Fprintf(out, "\n  dry run: %s was not written\n", result.Dest)
+		fmt.Fprintf(out, "\n  dry run: nothing was written to %s\n", result.Dest)
 		return
 	}
 
-	relative, err := filepath.Rel(mustGetwd(), result.Dest)
-	if err != nil {
-		relative = result.Dest
-	}
+	where := shortest(result.Dest)
 	fmt.Fprintf(out, `
   %s is ready in %s
 
@@ -216,17 +221,41 @@ func report(out io.Writer, result *scaffold.Result, in scaffold.Inputs, dryRun b
     docker compose up -d
     curl http://localhost:8080/healthz
     dotnet run --project "client/src/App/%s.App/%s.App.csproj" -p:Platform=x64
-`, in.AppTitle, relative, relative, in.AppName, in.AppName)
+`, in.AppTitle, where, where, in.AppName, in.AppName)
 
 	if !result.Committed {
 		fmt.Fprintln(out, "\n  Commit before you start: git add -A && git commit -m \"chore: scaffold\"")
 	}
 }
 
-func mustGetwd() string {
+// plan prints what a run would produce, for --dry-run to be readable before the counts arrive.
+func plan(out io.Writer, in scaffold.Inputs, dest string, resolved *template.Resolved) {
+	example := "with the example module"
+	if !in.WithExample {
+		example = "without the example module"
+	}
+	fmt.Fprintf(out, `  plan
+    destination    %s
+    template       %s (%s)
+    go module      %s
+    proto package  %s
+    title, accent  %s, %s
+    author, year   %s, %s
+    sign-in        %s, %s
+`, dest, resolved.Version, resolved.Source, in.GoModule, in.ProtoPackage,
+		in.AppTitle, in.Accent, in.Author, in.Year, in.Auth, example)
+}
+
+// shortest is the destination as a reader would type it: relative to the working directory when
+// that is shorter, and absolute when the relative form is a chain of parent directories.
+func shortest(dest string) string {
 	wd, err := os.Getwd()
 	if err != nil {
-		return "."
+		return dest
 	}
-	return wd
+	relative, err := filepath.Rel(wd, dest)
+	if err != nil || strings.HasPrefix(relative, "..") {
+		return dest
+	}
+	return relative
 }

@@ -18,8 +18,8 @@ var identityPattern = regexp.MustCompile(`__[A-Z][A-Z0-9_]*__|Kakehashi|kakehash
 // tool rather than finish the scaffold. It and the manifest are the only two exemptions.
 var markerPattern = regexp.MustCompile(`kakehashi:[a-z0-9-]+:(begin|end)`)
 
-// reported caps the list in the error. A scaffold that leaks the template's name leaks it in
-// hundreds of places, and the first few are enough to find the cause.
+// reported caps the list in the error: one leak of the template's name is usually hundreds of
+// lines, and a terminal full of them buries the file that caused it.
 const reported = 20
 
 // selfCheck refuses to hand over a tree that still names the template.

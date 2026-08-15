@@ -9,6 +9,7 @@ package scaffold
 import (
 	"context"
 	"fmt"
+	"io/fs"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -17,7 +18,6 @@ import (
 
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/manifest"
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/template"
-	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/unitfile"
 )
 
 // Options is one scaffold. Source is a template tree on disk — an extracted release or a checkout.
@@ -33,16 +33,15 @@ type Options struct {
 	Log        func(format string, args ...any)
 }
 
-// Result is what the scaffold did, for the caller to print.
+// Result is what the scaffold did, for the caller to print. Files counts the project rather than
+// the template it came from, so it is taken at the end and not from the staging step.
 type Result struct {
 	Dest         string
-	Staged       int
+	Files        int
 	Substituted  int
 	Renamed      int
 	UnitsApplied []string
 	UnitsRemoved []string
-	Generated    bool
-	Formatted    bool
 	Committed    bool
 }
 
@@ -131,12 +130,9 @@ func ensureParent(dir string) (string, error) {
 func build(work string, opts Options) (*Result, error) {
 	result := &Result{Dest: opts.Dest}
 
-	staged, err := stage(opts.Source, work)
-	if err != nil {
+	if _, err := stage(opts.Source, work); err != nil {
 		return nil, err
 	}
-	result.Staged = staged
-
 	if err := trim(work, opts.Descriptor); err != nil {
 		return nil, err
 	}
@@ -166,15 +162,18 @@ func build(work string, opts Options) (*Result, error) {
 	}
 	result.Renamed = renamed
 
-	if result.Generated, err = regenerate(work, opts.Log); err != nil {
+	if err := regenerate(work, opts.Log); err != nil {
 		return nil, err
 	}
-	result.Formatted = reformat(work, opts.Log)
+	reformat(work, opts.Log)
 
 	if err := cleanBuildOutput(work); err != nil {
 		return nil, err
 	}
 	if err := selfCheck(work, opts.Inputs); err != nil {
+		return nil, err
+	}
+	if result.Files, err = count(work); err != nil {
 		return nil, err
 	}
 	if err := writeManifest(work, opts, result); err != nil {
@@ -233,14 +232,19 @@ func writeManifest(work string, opts Options, result *Result) error {
 	return m.Write(filepath.Join(work, manifest.Name))
 }
 
-// units reads the template's unit files out of the staged tree, where trim has already had its say
-// about which of them ship.
-func units(work string, d *template.Descriptor) ([]*unitfile.Unit, error) {
-	dir, err := under(work, d.Units)
-	if err != nil {
-		return nil, err
-	}
-	return unitfile.LoadDir(dir)
+// count is how many files the project has, which is not how many the template shipped.
+func count(work string) (int, error) {
+	files := 0
+	err := filepath.WalkDir(work, func(_ string, entry fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if !entry.IsDir() {
+			files++
+		}
+		return nil
+	})
+	return files, err
 }
 
 // under resolves a path the template named against the working directory, and refuses one that

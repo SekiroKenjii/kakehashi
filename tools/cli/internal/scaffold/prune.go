@@ -8,8 +8,19 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/template"
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/unitfile"
 )
+
+// units reads the template's unit files out of the staged tree, where trim has already had its say
+// about which of them ship.
+func units(work string, d *template.Descriptor) ([]*unitfile.Unit, error) {
+	dir, err := under(work, d.Units)
+	if err != nil {
+		return nil, err
+	}
+	return unitfile.LoadDir(dir)
+}
 
 // prune removes the units this scaffold did not ask for and reports both lists for the manifest.
 func prune(work string, opts Options) (applied, removed []string, err error) {

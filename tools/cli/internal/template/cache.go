@@ -1,7 +1,6 @@
 package template
 
 import (
-	"fmt"
 	"os"
 	"path/filepath"
 	"sort"
@@ -20,12 +19,15 @@ func DefaultCacheDir() string {
 	return filepath.Join(base, "kakehashi")
 }
 
-// cached is where one version lives, whether or not it has been fetched.
+// cached is where one version lives, whether or not it has been fetched. The version reaches here
+// normalised, which is what keeps it a single path segment.
 func (c *Client) cached(version string) string {
 	return filepath.Join(c.CacheDir, "templates", version)
 }
 
-// Cached lists the template versions already fetched, oldest first.
+// Cached lists the template versions already fetched, oldest first. A directory whose name is not
+// exactly a version is not one: an interrupted extraction leaves a staging directory behind, and
+// its random suffix is digits, which a laxer reading would take for a version number.
 func (c *Client) Cached() ([]string, error) {
 	entries, err := os.ReadDir(filepath.Join(c.CacheDir, "templates"))
 	if os.IsNotExist(err) {
@@ -41,7 +43,7 @@ func (c *Client) Cached() ([]string, error) {
 			continue
 		}
 		v, err := semver.Parse(entry.Name())
-		if err != nil {
+		if err != nil || v.String() != entry.Name() {
 			continue
 		}
 		versions = append(versions, v)
@@ -53,15 +55,4 @@ func (c *Client) Cached() ([]string, error) {
 		names = append(names, v.String())
 	}
 	return names, nil
-}
-
-func (c *Client) newestCached() (string, error) {
-	cached, err := c.Cached()
-	if err != nil {
-		return "", err
-	}
-	if len(cached) == 0 {
-		return "", fmt.Errorf("no template has been fetched into %s", c.CacheDir)
-	}
-	return cached[len(cached)-1], nil
 }

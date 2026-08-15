@@ -1,6 +1,6 @@
 // Package checks probes a machine for what building a scaffolded project needs. Every check
-// answers with a status, what it found, and the one command that fixes it — a report a reader
-// cannot act on is a report that wastes the run it took.
+// answers with a status, what it found, and the command that fixes it; a check that cannot name a
+// fix does not belong here.
 package checks
 
 import (

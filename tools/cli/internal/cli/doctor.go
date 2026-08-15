@@ -26,14 +26,20 @@ func doctorCommand() *cobra.Command {
 		Args:  cobra.NoArgs,
 		RunE: func(command *cobra.Command, _ []string) error {
 			results := checks.Run(command.Context(), checks.All())
-			ok := len(checks.Failed(results)) == 0
+			failed := checks.Failed(results)
 
 			if asJSON {
-				return writeJSON(command.OutOrStdout(), doctorReport{OK: ok, Checks: results})
+				if err := writeJSON(command.OutOrStdout(), doctorReport{OK: len(failed) == 0, Checks: results}); err != nil {
+					return err
+				}
+			} else {
+				writeTable(command.OutOrStdout(), results)
 			}
-			writeTable(command.OutOrStdout(), results)
-			if !ok {
-				return fmt.Errorf("%d required check(s) failed", len(checks.Failed(results)))
+
+			// The exit code is the same either way. --json is the form CI reads, and CI reads
+			// exit codes.
+			if len(failed) > 0 {
+				return fmt.Errorf("%d required check(s) failed", len(failed))
 			}
 			return nil
 		},

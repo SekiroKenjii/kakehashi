@@ -9,10 +9,13 @@ import (
 	"path/filepath"
 )
 
-// maxArchiveBytes bounds both the download and what it expands to. A template is a few megabytes;
-// anything past this is a mistake or an attack, and either way the disk is not the place to find
-// out.
-const maxArchiveBytes = 512 << 20
+// What one archive may cost: bytes for the download and what it expands to, entries for the
+// filesystem objects it creates. Both are needed — a directory costs an inode and no bytes, so the
+// byte budget alone bounds nothing about how many of them an archive may create.
+const (
+	maxArchiveBytes   = 512 << 20
+	maxArchiveEntries = 100_000
+)
 
 // extract unpacks a tarball into target, which must not exist. It unpacks beside the target and
 // renames, so an interrupted download never leaves a half-tree in the cache for the next run to
@@ -36,7 +39,16 @@ func extract(archive, target string) error {
 	if err != nil {
 		return err
 	}
-	return os.Rename(root, target)
+
+	if err := os.Rename(root, target); err != nil {
+		// Rename never replaces a directory, so a second process that fetched the same version
+		// while this one was unpacking has already produced the answer.
+		if _, exists := os.Stat(target); exists == nil {
+			return nil
+		}
+		return err
+	}
+	return nil
 }
 
 func unpack(archive, into string) error {
@@ -53,6 +65,7 @@ func unpack(archive, into string) error {
 	defer zipped.Close()
 
 	remaining := int64(maxArchiveBytes)
+	entries := 0
 	reader := tar.NewReader(zipped)
 	for {
 		header, err := reader.Next()
@@ -61,6 +74,11 @@ func unpack(archive, into string) error {
 		}
 		if err != nil {
 			return err
+		}
+
+		entries++
+		if entries > maxArchiveEntries {
+			return fmt.Errorf("%s holds more than %d entries", filepath.Base(archive), maxArchiveEntries)
 		}
 
 		// git archive writes one of these ahead of the tree, and Go hands it to the caller rather
