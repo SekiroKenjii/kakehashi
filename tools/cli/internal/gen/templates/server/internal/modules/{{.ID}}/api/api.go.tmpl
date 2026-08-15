@@ -1,0 +1,62 @@
+// Package {{.ID}}api is the {{.ID}} module's public contract.
+//
+// Other modules import this package and nothing else under internal/modules/{{.ID}}/. Keep it free of
+// implementation: interfaces, plain data, events. No SQL, no protobuf, no other module.
+package {{.ID}}api
+
+import (
+	"context"
+	"time"
+)
+
+// {{.Entity}} is {{article .Variable}} {{.Variable}} as the rest of the application sees it.
+//
+// It is a data transfer object, deliberately separate from the domain entity in
+// internal/modules/{{.ID}}/domain: the domain type is free to grow invariants, unexported fields
+// and behaviour without any of it leaking across the module boundary.
+type {{.Entity}} struct {
+	ID        int64
+	Title     string
+	Body      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// Service is the {{.ID}} use-case surface.
+type Service interface {
+	// List returns every {{.Variable}}, most recently updated first.
+	List(ctx context.Context) ([]{{.Entity}}, error)
+
+	// Get returns one {{.Variable}}. It fails with an errs.NotFound error when id does not exist.
+	Get(ctx context.Context, id int64) ({{.Entity}}, error)
+
+	// Create stores a new {{.Variable}}. An empty or whitespace-only title fails with an errs.Invalid error
+	// whose message is safe to show a user.
+	Create(ctx context.Context, title, body string) ({{.Entity}}, error)
+
+	// Update rewrites {{article .Variable}} {{.Variable}}'s title and body.
+	Update(ctx context.Context, id int64, title, body string) ({{.Entity}}, error)
+
+	// Delete removes {{article .Variable}} {{.Variable}}. Deleting one that is already gone succeeds: the caller wanted it
+	// gone, and it is.
+	Delete(ctx context.Context, id int64) error
+}
+
+// Created is published after {{article .Variable}} {{.Variable}} is stored.
+type Created struct {
+	{{.Entity}} {{.Entity}}
+}
+
+// Updated is published after {{article .Variable}} {{.Variable}}'s contents change.
+type Updated struct {
+	{{.Entity}} {{.Entity}}
+}
+
+// Deleted is published after {{article .Variable}} {{.Variable}} is removed.
+//
+// It carries the title as well as the ID because the {{.Variable}} is gone by the time a subscriber runs;
+// a message naming the {{.Variable}} can only come from the event.
+type Deleted struct {
+	ID    int64
+	Title string
+}

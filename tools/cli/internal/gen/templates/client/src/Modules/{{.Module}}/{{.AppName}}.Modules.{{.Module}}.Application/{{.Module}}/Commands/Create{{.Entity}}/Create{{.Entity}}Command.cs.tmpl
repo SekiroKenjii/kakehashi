@@ -1,0 +1,10 @@
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Create{{.Entity}};
+
+/// <summary>Creates {{article .Variable}} {{.Variable}}.</summary>
+/// <param name="Title">Required; trimmed before it is sent.</param>
+/// <param name="Body">Optional.</param>
+public sealed record Create{{.Entity}}Command(string? Title, string? Body)
+    : IRequest<Result<{{.Entity}}Dto>>;

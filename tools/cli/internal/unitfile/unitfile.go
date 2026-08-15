@@ -59,6 +59,25 @@ func Load(path string) (*Unit, error) {
 	return &u, nil
 }
 
+// Write records a unit, stamping the schema version. A generator writes one of these for the
+// module it has just made, in the same format the template uses for its own removable units, so
+// removal has one thing to read either way.
+func (u *Unit) Write(path string) error {
+	u.SchemaVersion = SchemaVersion
+	if u.Paths == nil {
+		u.Paths = []string{}
+	}
+	if u.Markers == nil {
+		u.Markers = []Marker{}
+	}
+
+	body, err := json.MarshalIndent(u, "", "  ")
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(path, append(body, '\n'), 0o644)
+}
+
 // LoadDir reads every unit file in a directory, ordered by id. A directory that does not exist
 // holds no units, which is what a template with nothing removable looks like.
 //

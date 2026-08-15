@@ -1,0 +1,11 @@
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Update{{.Entity}};
+
+/// <summary>Rewrites {{article .Variable}} {{.Variable}}'s title and body.</summary>
+/// <param name="Id">The {{.Variable}} to rewrite.</param>
+/// <param name="Title">Required; trimmed before it is sent.</param>
+/// <param name="Body">Optional.</param>
+public sealed record Update{{.Entity}}Command(long Id, string? Title, string? Body)
+    : IRequest<Result<{{.Entity}}Dto>>;

@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>{{.RootNamespace}}.Modules.{{.Module}}.Domain</RootNamespace>
+    <AssemblyName>{{.AppName}}.Modules.{{.Module}}.Domain</AssemblyName>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\{{.AppName}}.SharedKernel\{{.AppName}}.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>

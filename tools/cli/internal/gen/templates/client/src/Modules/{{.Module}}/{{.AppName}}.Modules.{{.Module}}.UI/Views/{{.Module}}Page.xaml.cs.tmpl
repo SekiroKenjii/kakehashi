@@ -1,0 +1,85 @@
+using System;
+using {{.RootNamespace}}.Modules.{{.Module}}.UI.ViewModels;
+using Microsoft.UI.Xaml;
+using Microsoft.UI.Xaml.Controls;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI.Views;
+
+/// <summary>
+/// The {{.ID}} page: the {{.Variable}} list served by the backend, with create, edit and delete through
+/// dialogs.
+/// </summary>
+public sealed partial class {{.Module}}Page : Page
+{
+    public {{.Module}}Page({{.Module}}ViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ViewModel = viewModel;
+
+        InitializeComponent();
+
+        Loaded += OnLoaded;
+    }
+
+    public {{.Module}}ViewModel ViewModel { get; }
+
+    private async void OnLoaded(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.LoadCommand.ExecuteAsync(parameter: null);
+    }
+
+    private async void OnNew{{.Entity}}(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PrepareCreate();
+        await Edit{{.Entity}}Dialog.ShowAsync();
+    }
+
+    private async void OnEdit{{.Entity}}(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is {{.Entity}}ListItem item)
+        {
+            await ViewModel.PrepareEditAsync(item);
+            await Edit{{.Entity}}Dialog.ShowAsync();
+        }
+    }
+
+    private async void OnDelete{{.Entity}}(object sender, RoutedEventArgs e)
+    {
+        if ((sender as FrameworkElement)?.Tag is {{.Entity}}ListItem item)
+        {
+            ViewModel.PrepareDelete(item);
+            await Delete{{.Entity}}Dialog.ShowAsync();
+        }
+    }
+
+    /// <summary>
+    /// Saves the {{.Variable}}. Cancelling the close keeps the dialog open so the validation error stays
+    /// visible, and a rejected title does not cost the user the body they just typed.
+    /// </summary>
+    private async void OnSave{{.Entity}}(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        var deferral = args.GetDeferral();
+        try
+        {
+            args.Cancel = !await ViewModel.SaveAsync();
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
+
+    private async void OnConfirmDelete(
+        ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        var deferral = args.GetDeferral();
+        try
+        {
+            args.Cancel = !await ViewModel.ConfirmDeleteAsync();
+        }
+        finally
+        {
+            deferral.Complete();
+        }
+    }
+}

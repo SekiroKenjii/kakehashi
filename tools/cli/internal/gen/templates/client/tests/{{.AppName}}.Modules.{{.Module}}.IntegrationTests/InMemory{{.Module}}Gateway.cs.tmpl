@@ -1,0 +1,93 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.IntegrationTests;
+
+/// <summary>
+/// Stands in for the server, reproducing the behaviour the contract promises: server-assigned
+/// ids, newest-first ordering, and a delete that succeeds even when there is nothing to delete.
+/// </summary>
+/// <remarks>
+/// If the real service ever stops behaving this way, these tests keep passing and the
+/// end-to-end run fails; that division of labour is deliberate, because only this suite can run
+/// on every commit.
+/// </remarks>
+internal sealed class InMemory{{.Module}}Gateway : I{{.Module}}Gateway
+{
+    private readonly Dictionary<long, {{.Entity}}Dto> _{{.ID}} = [];
+    private long _nextId = 1;
+
+    public bool FailEverything { get; set; }
+
+    public Task<Result<IReadOnlyList<{{.Entity}}Dto>>> ListAsync(CancellationToken cancellationToken)
+    {
+        if (FailEverything)
+        {
+            return Task.FromResult(
+                Result.Failure<IReadOnlyList<{{.Entity}}Dto>>({{.Module}}Errors.RequestFailed));
+        }
+
+        IReadOnlyList<{{.Entity}}Dto> ordered = [.. _{{.ID}}.Values
+            .OrderByDescending({{.Variable}} => {{.Variable}}.UpdatedAt)
+            .ThenByDescending({{.Variable}} => {{.Variable}}.Id)];
+
+        return Task.FromResult(Result.Success(ordered));
+    }
+
+    public Task<Result<{{.Entity}}Dto>> CreateAsync({{.Entity}}Draft draft, CancellationToken cancellationToken)
+    {
+        if (FailEverything)
+        {
+            return Task.FromResult(Result.Failure<{{.Entity}}Dto>({{.Module}}Errors.RequestFailed));
+        }
+
+        var now = DateTimeOffset.UtcNow;
+        var {{.Variable}} = new {{.Entity}}Dto(_nextId++, draft.Title, draft.Body, now, now);
+        _{{.ID}}[{{.Variable}}.Id] = {{.Variable}};
+
+        return Task.FromResult(Result.Success({{.Variable}}));
+    }
+
+    public Task<Result<{{.Entity}}Dto>> UpdateAsync(
+        long id, {{.Entity}}Draft draft, CancellationToken cancellationToken)
+    {
+        if (FailEverything)
+        {
+            return Task.FromResult(Result.Failure<{{.Entity}}Dto>({{.Module}}Errors.RequestFailed));
+        }
+
+        if (!_{{.ID}}.TryGetValue(id, out var existing))
+        {
+            return Task.FromResult(Result.Failure<{{.Entity}}Dto>({{.Module}}Errors.NotFound));
+        }
+
+        var updated = existing with {
+            Title = draft.Title,
+            Body = draft.Body,
+            UpdatedAt = DateTimeOffset.UtcNow,
+        };
+        _{{.ID}}[id] = updated;
+
+        return Task.FromResult(Result.Success(updated));
+    }
+
+    public Task<Result> DeleteAsync(long id, CancellationToken cancellationToken)
+    {
+        if (FailEverything)
+        {
+            return Task.FromResult(Result.Failure({{.Module}}Errors.RequestFailed));
+        }
+
+        // Succeeds whether or not the {{.Variable}} was there, matching the server.
+        _{{.ID}}.Remove(id);
+
+        return Task.FromResult(Result.Success());
+    }
+}

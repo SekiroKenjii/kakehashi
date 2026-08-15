@@ -1,0 +1,22 @@
+using System;
+using System.Reflection;
+using {{.RootNamespace}}.Mediator;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application;
+
+/// <summary>Registers the {{.Module}} application layer: its message handlers.</summary>
+public static class {{.Module}}ApplicationServiceCollectionExtensions
+{
+    /// <summary>The assembly that contains the {{.Module}} application handlers.</summary>
+    public static Assembly Assembly =>
+        typeof({{.Module}}ApplicationServiceCollectionExtensions).Assembly;
+
+    public static IServiceCollection Add{{.Module}}Application(this IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+        services.AddMediator(Assembly);
+
+        return services;
+    }
+}

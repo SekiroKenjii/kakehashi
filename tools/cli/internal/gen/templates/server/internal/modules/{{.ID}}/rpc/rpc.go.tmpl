@@ -1,0 +1,95 @@
+// Package rpc is the {{.ID}} module's wire layer.
+//
+// It is the only package in the module allowed to import the generated protobuf code, and
+// tools/archlint enforces that. Everything here is mapping: no rules, no decisions, no error
+// shaping. Errors are returned as the service produced them, and the interceptor in platform/rpc
+// turns them into status codes.
+package rpc
+
+import (
+	"context"
+	"net/http"
+
+	"connectrpc.com/connect"
+	"google.golang.org/protobuf/types/known/timestamppb"
+
+	{{.ID}}v1 "{{.GoModule}}/server/internal/gen/{{.ProtoPackage}}/{{.ID}}/v1"
+	"{{.GoModule}}/server/internal/gen/{{.ProtoPackage}}/{{.ID}}/v1/{{.ID}}v1connect"
+	{{.ID}}api "{{.GoModule}}/server/internal/modules/{{.ID}}/api"
+)
+
+// NewRoute builds the Connect handler for {{.Module}}Service.
+func NewRoute(svc {{.ID}}api.Service, opts []connect.HandlerOption) (string, http.Handler) {
+	return {{.ID}}v1connect.New{{.Module}}ServiceHandler(&handler{svc: svc}, opts...)
+}
+
+// handler adapts {{.ID}}api.Service to the generated interface.
+type handler struct {
+	svc {{.ID}}api.Service
+}
+
+func (h *handler) List{{.Module}}(
+	ctx context.Context, _ *connect.Request[{{.ID}}v1.List{{.Module}}Request],
+) (*connect.Response[{{.ID}}v1.List{{.Module}}Response], error) {
+	{{.ID}}, err := h.svc.List(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	out := make([]*{{.ID}}v1.{{.Entity}}, len({{.ID}}))
+	for i, n := range {{.ID}} {
+		out[i] = toProto(n)
+	}
+	return connect.NewResponse(&{{.ID}}v1.List{{.Module}}Response{{"{"}}{{.Module}}: out}), nil
+}
+
+func (h *handler) Get{{.Entity}}(
+	ctx context.Context, req *connect.Request[{{.ID}}v1.Get{{.Entity}}Request],
+) (*connect.Response[{{.ID}}v1.Get{{.Entity}}Response], error) {
+	{{.Variable}}, err := h.svc.Get(ctx, req.Msg.GetId())
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&{{.ID}}v1.Get{{.Entity}}Response{{"{"}}{{.Entity}}: toProto({{.Variable}})}), nil
+}
+
+func (h *handler) Create{{.Entity}}(
+	ctx context.Context, req *connect.Request[{{.ID}}v1.Create{{.Entity}}Request],
+) (*connect.Response[{{.ID}}v1.Create{{.Entity}}Response], error) {
+	{{.Variable}}, err := h.svc.Create(ctx, req.Msg.GetTitle(), req.Msg.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&{{.ID}}v1.Create{{.Entity}}Response{{"{"}}{{.Entity}}: toProto({{.Variable}})}), nil
+}
+
+func (h *handler) Update{{.Entity}}(
+	ctx context.Context, req *connect.Request[{{.ID}}v1.Update{{.Entity}}Request],
+) (*connect.Response[{{.ID}}v1.Update{{.Entity}}Response], error) {
+	{{.Variable}}, err := h.svc.Update(ctx, req.Msg.GetId(), req.Msg.GetTitle(), req.Msg.GetBody())
+	if err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&{{.ID}}v1.Update{{.Entity}}Response{{"{"}}{{.Entity}}: toProto({{.Variable}})}), nil
+}
+
+func (h *handler) Delete{{.Entity}}(
+	ctx context.Context, req *connect.Request[{{.ID}}v1.Delete{{.Entity}}Request],
+) (*connect.Response[{{.ID}}v1.Delete{{.Entity}}Response], error) {
+	if err := h.svc.Delete(ctx, req.Msg.GetId()); err != nil {
+		return nil, err
+	}
+	return connect.NewResponse(&{{.ID}}v1.Delete{{.Entity}}Response{}), nil
+}
+
+func toProto(n {{.ID}}api.{{.Entity}}) *{{.ID}}v1.{{.Entity}} {
+	return &{{.ID}}v1.{{.Entity}}{
+		Id:        n.ID,
+		Title:     n.Title,
+		Body:      n.Body,
+		CreatedAt: timestamppb.New(n.CreatedAt),
+		UpdatedAt: timestamppb.New(n.UpdatedAt),
+	}
+}
+
+var _ {{.ID}}v1connect.{{.Module}}ServiceHandler = (*handler)(nil)

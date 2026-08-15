@@ -1,0 +1,38 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Update{{.Entity}};
+
+/// <summary>Validates the draft locally, then asks the server to rewrite the {{.Variable}}.</summary>
+public sealed class Update{{.Entity}}CommandHandler
+    : IRequestHandler<Update{{.Entity}}Command, Result<{{.Entity}}Dto>>
+{
+    private readonly I{{.Module}}Gateway _{{.ID}};
+
+    public Update{{.Entity}}CommandHandler(I{{.Module}}Gateway {{.ID}})
+    {
+        ArgumentNullException.ThrowIfNull({{.ID}});
+        _{{.ID}} = {{.ID}};
+    }
+
+    public async Task<Result<{{.Entity}}Dto>> Handle(
+        Update{{.Entity}}Command request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        var draft = {{.Entity}}Draft.Create(request.Title, request.Body);
+
+        if (draft.IsFailure)
+        {
+            return Result.Failure<{{.Entity}}Dto>(draft.Error);
+        }
+
+        return await _{{.ID}}.UpdateAsync(request.Id, draft.Value, cancellationToken)
+            .ConfigureAwait(false);
+    }
+}
