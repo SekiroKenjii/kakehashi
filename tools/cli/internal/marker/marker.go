@@ -10,7 +10,6 @@ package marker
 import (
 	"fmt"
 	"path/filepath"
-	"regexp"
 	"strings"
 )
 
@@ -78,35 +77,77 @@ func (s Style) comment(indent, text string) string {
 	return line
 }
 
-// Unit is one module's fence inside a region.
-func Unit(id string) string { return "kakehashi:unit-" + id }
+// prefix is the generator's namespace, and the first thing every marker says.
+const prefix = "kakehashi:"
 
-func fence(name, edge string) *regexp.Regexp {
-	return regexp.MustCompile(regexp.QuoteMeta(name + ":" + edge))
+// Unit is one module's fence inside a region.
+func Unit(id string) string { return prefix + "unit-" + id }
+
+// section is a region's fence.
+func section(name string) string { return prefix + name }
+
+// opens and closes are every comment syntax a marker is written in, longest first so that "<!--"
+// is not read as the start of something shorter.
+var (
+	opens  = []string{"<!--", "//", "/*", "#"}
+	closes = []string{"-->", "*/"}
+)
+
+// name reads the marker a line *is*, and returns nothing for a line that merely mentions one.
+//
+// The distinction is load-bearing. The composition roots explain their own markers in prose —
+// "the markers below — kakehashi:module-imports:begin and its kind — delimit the wiring a
+// generator writes" — and a match anywhere in the line would read that sentence as a second
+// opening of the section.
+func name(line string) string {
+	text := strings.TrimSpace(line)
+	for _, open := range opens {
+		if after, found := strings.CutPrefix(text, open); found {
+			text = after
+			break
+		}
+	}
+	for _, close := range closes {
+		text = strings.TrimSuffix(text, close)
+	}
+
+	text = strings.TrimSpace(text)
+	if !strings.HasPrefix(text, prefix) {
+		return ""
+	}
+	return text
 }
 
+// is reports whether a line is exactly the given marker. The marker arrives prefixed, from
+// Unit or section, so there is one spelling of it and not two.
+func is(line, marker, edge string) bool { return name(line) == marker+":"+edge }
+
 // Has reports whether a body already carries a unit's fence, which is what makes adding a module
-// twice an error rather than a second copy of its wiring.
+// twice an error rather than a second copy of its wiring, and what tells a removal it finished.
 func Has(body, id string) bool {
-	return fence(Unit(id), "begin").MatchString(body)
+	for _, line := range strings.Split(body, "\n") {
+		if is(line, Unit(id), "begin") || is(line, Unit(id), "end") {
+			return true
+		}
+	}
+	return false
 }
 
 // region locates the content between a section's markers, exclusive of the marker lines, and the
 // indentation the section is written at.
-func region(lines []string, section string) (start, end int, indent string, err error) {
-	begin, finish := fence(section, "begin"), fence(section, "end")
+func region(lines []string, want string) (start, end int, indent string, err error) {
 	start, end = -1, -1
 
 	for i, line := range lines {
 		switch {
-		case begin.MatchString(line):
+		case is(line, section(want), "begin"):
 			if start >= 0 {
-				return 0, 0, "", fmt.Errorf("section %s begins twice", section)
+				return 0, 0, "", fmt.Errorf("section %s begins twice", want)
 			}
 			start, indent = i, leading(line)
-		case finish.MatchString(line):
+		case is(line, section(want), "end"):
 			if start < 0 {
-				return 0, 0, "", fmt.Errorf("section %s ends before it begins", section)
+				return 0, 0, "", fmt.Errorf("section %s ends before it begins", want)
 			}
 			end = i
 		}
@@ -115,7 +156,7 @@ func region(lines []string, section string) (start, end int, indent string, err 
 		}
 	}
 	if start < 0 || end < 0 {
-		return 0, 0, "", fmt.Errorf("no %s section in this file", section)
+		return 0, 0, "", fmt.Errorf("no %s section in this file", want)
 	}
 	return start + 1, end, indent, nil
 }

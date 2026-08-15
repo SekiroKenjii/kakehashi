@@ -40,12 +40,16 @@ public sealed class NotesModule : IModule
         services.TryAddSingleton<INotesGateway, GrpcNotesGateway>();
         services.AddTransient<NotesViewModel>();
         services.AddTransient<NotesPage>();
+        // kakehashi:module-page-services:begin
+        // kakehashi:module-page-services:end
     }
 
     public IReadOnlyList<NavigationItem> GetNavigationItems()
     {
         return [
             new NavigationItem("Notes", "\uE70B", typeof(NotesPage)) { Id = "notes", Group = "Utilities" },
+            // kakehashi:module-page-navigation:begin
+            // kakehashi:module-page-navigation:end
         ];
     }
 }

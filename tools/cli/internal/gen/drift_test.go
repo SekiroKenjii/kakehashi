@@ -26,6 +26,7 @@ func example() gen.Data {
 		Entity:   "Note",
 		Variable: "note",
 		Icon:     "note",
+		Glyph:    `\uE70B`,
 		Title:    "Notes",
 
 		AppName:       "__APP_NAME__",
@@ -98,7 +99,7 @@ func TestTheGeneratorCoversEveryFileOfTheExample(t *testing.T) {
 func TestRenderingAnotherModuleLeavesNoTraceOfTheExample(t *testing.T) {
 	data := example()
 	data.ID, data.Module, data.Entity, data.Variable, data.Title = "orders", "Orders", "Order", "order", "Orders"
-	data.Icon = "document"
+	data.Icon, data.Glyph = "document", `\uE8A5`
 	data.AppName, data.RootNamespace = "SmokeApp", "SmokeApp"
 	data.ProtoPackage, data.GoModule = "smokeapp", "example.com/smokeapp"
 

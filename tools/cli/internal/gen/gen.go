@@ -36,6 +36,7 @@ type Data struct {
 	Entity   string
 	Variable string
 	Icon     string
+	Glyph    string
 	Title    string
 
 	AppName       string
@@ -60,6 +61,7 @@ type File struct {
 type Module struct {
 	Files     []File
 	Wiring    []gensync.Site
+	Paths     []string
 	Generated []string
 }
 
@@ -127,12 +129,17 @@ func Render(d Data) (*Module, error) {
 		module.Wiring = append(module.Wiring, next)
 	}
 
-	for _, path := range plan.Generated {
-		out, err := text("generated path", path, d)
-		if err != nil {
-			return nil, err
+	for _, list := range []struct {
+		from []string
+		to   *[]string
+	}{{plan.Paths, &module.Paths}, {plan.Generated, &module.Generated}} {
+		for _, path := range list.from {
+			out, err := text("path", path, d)
+			if err != nil {
+				return nil, err
+			}
+			*list.to = append(*list.to, out)
 		}
-		module.Generated = append(module.Generated, out)
 	}
 	return module, nil
 }

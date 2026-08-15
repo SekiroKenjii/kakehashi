@@ -46,6 +46,7 @@ func Derive(root string) (Report, error) {
 	// The unit file lists the module's paths, so the generator's file set and the unit file the
 	// scaffold ships cannot come to disagree about what the module is.
 	for _, path := range unit.Paths {
+		plan.Paths = append(plan.Paths, tokenise(path))
 		if generated(path) {
 			plan.Generated = append(plan.Generated, tokenise(path))
 			report.Generated = append(report.Generated, tokenise(path))

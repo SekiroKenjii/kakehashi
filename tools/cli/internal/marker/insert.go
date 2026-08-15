@@ -12,9 +12,6 @@ import (
 // ordered by what boots first, and appending is the only placement that does not claim to know
 // better. The lines arrive unindented and are written at the section's own indentation.
 func Insert(body, section, id string, lines []string, sorted bool, style Style) (string, error) {
-	if Has(body, id) {
-		return "", fmt.Errorf("this file already wires %s in", id)
-	}
 	if len(lines) == 0 {
 		return "", fmt.Errorf("nothing to insert for %s", id)
 	}
@@ -23,6 +20,12 @@ func Insert(body, section, id string, lines []string, sorted bool, style Style) 
 	start, end, indent, err := region(split, section)
 	if err != nil {
 		return "", err
+	}
+
+	// Inside the section rather than across the file: one file often has a module in two sections —
+	// the composition root imports it and registers it — and each is its own insertion.
+	if Has(strings.Join(split[start:end], "\n"), id) {
+		return "", fmt.Errorf("the %s section already wires %s in", section, id)
 	}
 
 	block := make([]string, 0, len(lines)+2)
@@ -58,22 +61,23 @@ func position(region []string, key string) int {
 	return len(region)
 }
 
+// isUnit reports whether a line is one of a unit's own fences, whichever unit it belongs to.
+func isUnit(line string) bool { return strings.HasPrefix(name(line), prefix+"unit-") }
+
 // itemAt reads one item starting at i and returns its sort key and the index after it.
 func itemAt(region []string, i int) (key string, next int) {
-	line := strings.TrimSpace(region[i])
-	if !strings.Contains(line, "kakehashi:unit-") {
-		return line, i + 1
+	if !isUnit(region[i]) {
+		return strings.TrimSpace(region[i]), i + 1
 	}
 
 	// A unit block sorts by its first content line, and ends at its own end marker.
 	key = ""
 	for j := i + 1; j < len(region); j++ {
-		inner := strings.TrimSpace(region[j])
-		if strings.Contains(inner, "kakehashi:unit-") {
+		if isUnit(region[j]) {
 			return key, j + 1
 		}
 		if key == "" {
-			key = inner
+			key = strings.TrimSpace(region[j])
 		}
 	}
 	return key, len(region)

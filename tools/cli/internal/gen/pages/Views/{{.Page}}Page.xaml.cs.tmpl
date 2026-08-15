@@ -1,0 +1,21 @@
+using System;
+using {{.RootNamespace}}.Modules.{{.Module}}.UI.ViewModels;
+using Microsoft.UI.Xaml.Controls;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI.Views;
+
+/// <summary>
+/// The {{.PageTitle}} page.
+/// </summary>
+public sealed partial class {{.Page}}Page : Page
+{
+    public {{.Page}}Page({{.Page}}PageViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ViewModel = viewModel;
+
+        InitializeComponent();
+    }
+
+    public {{.Page}}PageViewModel ViewModel { get; }
+}

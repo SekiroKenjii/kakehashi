@@ -32,6 +32,10 @@ var rules = []rule{
 	// icon called "order" is one the font cannot draw (docs/adr/0013).
 	{regexp.MustCompile(`(DefaultIcon:(?:\s*))"note"`), `$1"{{.Icon}}"`},
 
+	// The client draws a glyph rather than resolving the semantic name, so a module generated from
+	// the example would otherwise be drawn with the example's icon.
+	{regexp.MustCompile(`("\\uE70B")`), `"{{.Glyph}}"`},
+
 	// A heading, shouted. The generic rules below would leave it as the plural in title case.
 	literal("NOTES", "{{upper .Module}}"),
 

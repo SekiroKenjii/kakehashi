@@ -14,7 +14,13 @@ import (
 // Plan is what the derivation writes beside the templates: the lines a module carves into the
 // files that know every module, and the tree the code generator produces rather than a template.
 type Plan struct {
-	Wiring    []Site   `json:"wiring"`
+	Wiring []Site `json:"wiring"`
+
+	// Paths is what a module *is*, at the granularity the example unit file states it: a directory
+	// where the whole directory belongs to the module, a file where it does not. A record written
+	// from the rendered file list instead would miss anything added to the module afterwards — a
+	// page, for one — and removal would leave it behind.
+	Paths     []string `json:"paths"`
 	Generated []string `json:"generated"`
 }
 
@@ -104,6 +110,9 @@ func dedent(lines []string) []string {
 func writePlan(root string, plan Plan) error {
 	if plan.Generated == nil {
 		plan.Generated = []string{}
+	}
+	if plan.Paths == nil {
+		plan.Paths = []string{}
 	}
 	if plan.Wiring == nil {
 		plan.Wiring = []Site{}

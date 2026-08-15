@@ -89,6 +89,17 @@
       ]
     }
   ],
+  "paths": [
+    "proto/{{.ProtoPackage}}/{{.ID}}/v1/",
+    "server/internal/gen/{{.ProtoPackage}}/{{.ID}}/v1/",
+    "server/internal/modules/{{.ID}}/",
+    "client/src/Modules/{{.Module}}/",
+    "client/tests/{{.AppName}}.ArchitectureTests/{{.Module}}LayeringTests.cs",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.Application.Tests/",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.Domain.Tests/",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.IntegrationTests/",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.UI.Tests/"
+  ],
   "generated": [
     "server/internal/gen/{{.ProtoPackage}}/{{.ID}}/v1/"
   ]

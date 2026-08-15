@@ -9,15 +9,15 @@ import (
 // what removing a module does to the files that wire it in, and what scaffolding a project without
 // the example module does to the same files.
 func Strip(body, id string) (string, error) {
-	begin, end := fence(Unit(id), "begin"), fence(Unit(id), "end")
+	unit := Unit(id)
 
 	var kept []string
 	depth := 0
 	for _, line := range strings.Split(body, "\n") {
 		switch {
-		case begin.MatchString(line):
+		case is(line, unit, "begin"):
 			depth++
-		case end.MatchString(line):
+		case is(line, unit, "end"):
 			depth--
 			// An end before its begin would otherwise take everything between the two out and
 			// leave a balanced count behind to say nothing happened.

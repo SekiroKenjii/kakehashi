@@ -29,7 +29,8 @@ type Names struct {
 	Module   string // Orders — namespace segment, service type prefix
 	Entity   string // Order  — the aggregate's type name
 	Variable string // order  — a local holding one of them
-	Icon     string // the navigation icon, which is the client's vocabulary and not derived
+	Icon     string // the navigation icon the server declares, a name from the client's vocabulary
+	Glyph    string // what the client draws for it until somebody picks a better one
 	Title    string // Orders — what the navigation pane shows
 }
 
@@ -59,6 +60,7 @@ func New(id, entity, icon string) (Names, error) {
 		Entity:   entity,
 		Variable: lowerFirst(entity),
 		Icon:     icon,
+		Glyph:    DefaultGlyph,
 		Title:    pascal(id),
 	}, nil
 }
@@ -67,6 +69,11 @@ func New(id, entity, icon string) (Names, error) {
 // client (docs/adr/0013), and an unknown name falls back to a default glyph rather than failing,
 // so the generator picks a name that vocabulary already has.
 const DefaultIcon = "document"
+
+// DefaultGlyph is what the client draws for a generated module. The client maps semantic names to
+// glyphs and the pane is given a glyph directly, so this is the one place the two vocabularies are
+// not resolved through each other — the generated module names the document icon in both.
+const DefaultGlyph = `\uE8A5`
 
 var entityPattern = regexp.MustCompile(`^[A-Z][A-Za-z0-9]{1,39}$`)
 
