@@ -31,7 +31,18 @@ type Options struct {
 	CLIVersion string
 	DryRun     bool
 	Log        func(format string, args ...any)
+
+	// Step names the pipeline stage that is starting, for a caller that shows progress. The stages
+	// are the ones below, which is why they are named here and not by whoever draws them.
+	Step func(name string)
 }
+
+// The pipeline stages this package performs, as Step reports them.
+const (
+	StepApply = "apply"
+	StepCheck = "check"
+	StepGit   = "git"
+)
 
 // Result is what the scaffold did, for the caller to print. Files counts the project rather than
 // the template it came from, so it is taken at the end and not from the staging step.
@@ -50,6 +61,9 @@ type Result struct {
 func Run(opts Options) (*Result, error) {
 	if opts.Log == nil {
 		opts.Log = func(string, ...any) {}
+	}
+	if opts.Step == nil {
+		opts.Step = func(string) {}
 	}
 	if err := opts.Inputs.Validate(); err != nil {
 		return nil, err
@@ -130,6 +144,7 @@ func ensureParent(dir string) (string, error) {
 func build(work string, opts Options) (*Result, error) {
 	result := &Result{Dest: opts.Dest}
 
+	opts.Step(StepApply)
 	if _, err := stage(opts.Source, work); err != nil {
 		return nil, err
 	}
@@ -162,6 +177,7 @@ func build(work string, opts Options) (*Result, error) {
 	}
 	result.Renamed = renamed
 
+	opts.Step(StepCheck)
 	if err := regenerate(work, opts.Log); err != nil {
 		return nil, err
 	}
@@ -180,6 +196,7 @@ func build(work string, opts Options) (*Result, error) {
 		return nil, err
 	}
 	if !opts.DryRun {
+		opts.Step(StepGit)
 		result.Committed = initRepository(work, opts.Version, opts.Log)
 	}
 	return result, nil
@@ -212,7 +229,11 @@ func CheckDestination(dest string) error {
 
 func writeManifest(work string, opts Options, result *Result) error {
 	m := &manifest.Manifest{
-		Template:  manifest.Template{Source: opts.Origin, Version: opts.Version},
+		Template: manifest.Template{
+			Source:      opts.Origin,
+			Version:     opts.Version,
+			RequiresCLI: opts.Descriptor.RequiresCLI,
+		},
 		CLI:       manifest.CLI{Version: opts.CLIVersion},
 		CreatedAt: time.Now().UTC().Truncate(time.Second),
 		Inputs: manifest.Inputs{

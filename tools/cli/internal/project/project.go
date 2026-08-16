@@ -16,17 +16,13 @@ import (
 
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/manifest"
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/semver"
+	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/template"
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/unitfile"
 )
 
 // RecordDir is where a generated module's unit record lives, beside the manifest. The template's
 // own units stay in templates/units, and removal reads both.
 const RecordDir = ".kakehashi/units"
-
-// SupportedTemplates is the range of template versions this CLI can generate into. A project older
-// than the range may not have the marker sections a generator writes to; a newer one may have
-// moved them.
-const SupportedTemplates = ">=0.1.0 <1.0.0"
 
 // Project is an opened project.
 type Project struct {
@@ -35,7 +31,7 @@ type Project struct {
 }
 
 // Open finds the project that contains dir and checks this CLI can generate into it.
-func Open(dir string) (*Project, error) {
+func Open(dir string, cliVersion string) (*Project, error) {
 	root, err := find(dir)
 	if err != nil {
 		return nil, err
@@ -45,7 +41,7 @@ func Open(dir string) (*Project, error) {
 	if err != nil {
 		return nil, err
 	}
-	if err := supported(m.Template.Version); err != nil {
+	if err := compatible(m.Template, cliVersion); err != nil {
 		return nil, err
 	}
 	return &Project{Root: root, Manifest: m}, nil
@@ -70,18 +66,40 @@ func find(dir string) (string, error) {
 	}
 }
 
-func supported(version string) error {
-	allowed, err := semver.ParseRange(SupportedTemplates)
+// compatible checks the matrix of docs/pivot/06-PHASE-5-RELEASE.md §1.2 in both directions against
+// what the scaffold recorded, and names the side that has to move. `new` runs the same two checks
+// against the template tree; here there is no tree, only what it said about itself at the time.
+func compatible(t manifest.Template, cliVersion string) error {
+	allowed, err := semver.ParseRange(template.SupportedTemplates)
 	if err != nil {
 		return err
 	}
-	have, err := semver.Parse(version)
+	have, err := semver.Parse(t.Version)
 	if err != nil {
-		return fmt.Errorf("%s records template version %q: %w", manifest.Name, version, err)
+		return fmt.Errorf("%s records template version %q: %w", manifest.Name, t.Version, err)
 	}
 	if !allowed.Allows(have) {
-		return fmt.Errorf("this project is on template %s, and this kakehashi generates into %s",
-			version, SupportedTemplates)
+		return fmt.Errorf("this project is on template %s and this kakehashi generates into %s — "+
+			"upgrade the CLI", t.Version, template.SupportedTemplates)
+	}
+
+	// Absent on a project scaffolded before the manifest recorded it, which is not a refusal: the
+	// range above already bounds how far apart the two can be.
+	if t.RequiresCLI == "" {
+		return nil
+	}
+
+	wanted, err := semver.ParseRange(t.RequiresCLI)
+	if err != nil {
+		return fmt.Errorf("%s records requiresCli %q: %w", manifest.Name, t.RequiresCLI, err)
+	}
+	running, err := semver.Parse(cliVersion)
+	if err != nil {
+		return fmt.Errorf("cli version %q: %w", cliVersion, err)
+	}
+	if !wanted.Allows(running) {
+		return fmt.Errorf("this project's template (%s) needs kakehashi %s and this is %s — "+
+			"change the CLI, not the project", t.Version, t.RequiresCLI, cliVersion)
 	}
 	return nil
 }

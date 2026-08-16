@@ -38,7 +38,17 @@ type Client struct {
 	HTTP     *http.Client
 	CacheDir string
 	Log      func(format string, args ...any)
+
+	// Step names the stage that is starting, for a caller that shows progress.
+	Step func(name string)
 }
+
+// The pipeline stages this package performs, as Step reports them. Fetching covers the cache as
+// well as the network: from the caller's side both answer the same question.
+const (
+	StepFetch  = "fetch"
+	StepVerify = "verify"
+)
 
 // Request is one resolution. Dir short-circuits everything else: a directory on disk is already a
 // template, and no version resolution, download or cache applies to it.
@@ -74,6 +84,9 @@ func New(c Client) *Client {
 	if c.Log == nil {
 		c.Log = func(string, ...any) {}
 	}
+	if c.Step == nil {
+		c.Step = func(string) {}
+	}
 	return &c
 }
 
@@ -83,6 +96,7 @@ func New(c Client) *Client {
 // the newest release: a template states the CLI range it needs, and walking back to the newest one
 // in range is what lets an older CLI keep working after a template raises its floor.
 func (c *Client) Resolve(ctx context.Context, req Request) (*Resolved, error) {
+	c.Step(StepFetch)
 	if req.Dir != "" {
 		return c.resolveDirectory(req)
 	}
@@ -155,6 +169,7 @@ func (c *Client) resolveVersion(ctx context.Context, version string, req Request
 		}
 	}
 
+	c.Step(StepVerify)
 	descriptor, err := LoadDescriptor(dir, req.CLIVersion)
 	if err != nil {
 		return nil, err
@@ -170,6 +185,7 @@ func (c *Client) resolveDirectory(req Request) (*Resolved, error) {
 		return nil, err
 	}
 
+	c.Step(StepVerify)
 	descriptor, err := LoadDescriptor(dir, req.CLIVersion)
 	if err != nil {
 		return nil, err

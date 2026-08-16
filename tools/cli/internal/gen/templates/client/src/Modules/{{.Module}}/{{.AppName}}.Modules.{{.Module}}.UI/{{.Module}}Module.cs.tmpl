@@ -38,6 +38,7 @@ public sealed class {{.Module}}Module : IModule
         services.AddBackendGrpcClient<{{.Module}}V1.{{.Module}}Service.{{.Module}}ServiceClient>();
 
         services.TryAddSingleton<I{{.Module}}Gateway, Grpc{{.Module}}Gateway>();
+        services.AddTransient<IGettingStartedStep, {{.Module}}GettingStartedStep>();
         services.AddTransient<{{.Module}}ViewModel>();
         services.AddTransient<{{.Module}}Page>();
         // kakehashi:module-page-services:begin

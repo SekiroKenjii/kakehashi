@@ -1,0 +1,63 @@
+name: Bug — the CLI
+description: kakehashi new / add / remove / doctor did the wrong thing
+labels: ["bug", "cli"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Both version lines, please. The CLI and the template ship separately, and almost every
+        report that cannot be reproduced turns out to be a pair we did not have.
+
+  - type: input
+    id: cli-version
+    attributes:
+      label: CLI version
+      description: "`kakehashi version` — the first line."
+      placeholder: kakehashi 0.1.0
+    validations:
+      required: true
+
+  - type: input
+    id: template-version
+    attributes:
+      label: Template version
+      description: >-
+        The `template.version` in `.kakehashi.json`, or "none" if the command failed before a
+        project existed.
+      placeholder: 0.1.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options:
+        - Windows
+        - Linux
+        - macOS
+    validations:
+      required: true
+
+  - type: textarea
+    id: command
+    attributes:
+      label: The command
+      description: The whole command line, and the output it printed.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true
+
+  - type: textarea
+    id: doctor
+    attributes:
+      label: kakehashi doctor
+      description: Optional, and the fastest way to rule out the machine.
+      render: shell

@@ -1,0 +1,38 @@
+# yaml-language-server: $schema=https://aka.ms/winget-manifest.defaultLocale.1.6.0.schema.json
+PackageIdentifier: SekiroKenjii.Kakehashi
+PackageVersion: __VERSION__
+PackageLocale: en-US
+Publisher: SekiroKenjii
+PublisherUrl: https://github.com/SekiroKenjii
+PublisherSupportUrl: https://github.com/SekiroKenjii/kakehashi/issues
+PackageName: Kakehashi
+PackageUrl: https://github.com/SekiroKenjii/kakehashi
+License: MIT
+LicenseUrl: https://github.com/SekiroKenjii/kakehashi/blob/main/LICENSE
+Copyright: Copyright (c) SekiroKenjii
+ShortDescription: Scaffold a WinUI 3 client and a Go server in one repository.
+Description: >-
+  Kakehashi scaffolds a Windows desktop application and the server behind it as one repository: a
+  WinUI 3 client, a Go backend, and one Protocol Buffers contract the build checks against both
+  halves. Three architecture gates — a module-boundary linter for the server, layering tests for the
+  client, and a breaking-change check on the contract — run on every push. The CLI creates a project,
+  generates modules and pages across both halves with the wiring, and removes them again.
+Moniker: kakehashi
+Tags:
+  - boilerplate
+  - cli
+  - code-generator
+  - desktop
+  - dotnet
+  - golang
+  - grpc
+  - scaffolding
+  - winui
+ReleaseNotesUrl: https://github.com/SekiroKenjii/kakehashi/releases/tag/cli/v__VERSION__
+Documentation:
+  - DocumentLabel: Getting started
+    DocumentUrl: https://github.com/SekiroKenjii/kakehashi/blob/main/docs/getting-started.md
+  - DocumentLabel: CLI reference
+    DocumentUrl: https://github.com/SekiroKenjii/kakehashi/blob/main/docs/cli.md
+ManifestType: defaultLocale
+ManifestVersion: 1.6.0

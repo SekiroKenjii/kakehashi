@@ -94,8 +94,8 @@ func (in Inputs) Validate() error {
 		{"--accent", in.Accent, accentPattern},
 		{"--year", in.Year, yearPattern},
 	} {
-		if !rule.pattern.MatchString(rule.value) {
-			return fmt.Errorf("%s must match %s, got %q", rule.flag, rule.pattern, rule.value)
+		if err := matches(rule.flag, rule.value, rule.pattern); err != nil {
+			return err
 		}
 	}
 
@@ -103,12 +103,8 @@ func (in Inputs) Validate() error {
 		flag  string
 		value string
 	}{{"--title", in.AppTitle}, {"--author", in.Author}} {
-		if strings.TrimSpace(text.value) == "" {
-			return fmt.Errorf("%s must not be empty", text.flag)
-		}
-		if found := markupPattern.FindString(text.value); found != "" {
-			return fmt.Errorf("%s may not contain %q: it is substituted into XML, JSON and source "+
-				"code, which escape it three different ways", text.flag, found)
+		if err := freeText(text.flag, text.value); err != nil {
+			return err
 		}
 	}
 	switch in.Auth {
@@ -125,6 +121,42 @@ func (in Inputs) Validate() error {
 		if placeholderPattern.MatchString(r.value) {
 			return fmt.Errorf("%s may not contain a placeholder: %q", r.name, r.value)
 		}
+	}
+	return nil
+}
+
+// ValidateAppName reports whether a value may be the app name. Validate applies the same rule to a
+// whole Inputs; this states it for a caller that checks one answer as it is typed, and phrases the
+// refusal for somebody who typed a field rather than passed a flag.
+func ValidateAppName(name string) error { return matches("app name", name, appNamePattern) }
+
+// ValidateGoModule reports whether a value may be the project's Go module path.
+func ValidateGoModule(path string) error { return matches("module path", path, goModulePattern) }
+
+// ValidateAccent reports whether a value may be the accent colour.
+func ValidateAccent(colour string) error { return matches("accent", colour, accentPattern) }
+
+// ValidateTitle reports whether a value may be the display title.
+func ValidateTitle(title string) error { return freeText("display title", title) }
+
+// matches is one pattern rule. The label is what the caller calls the value, because a flag error
+// names a flag and a wizard names the field.
+func matches(label, value string, pattern *regexp.Regexp) error {
+	if !pattern.MatchString(value) {
+		return fmt.Errorf("%s must match %s, got %q", label, pattern, value)
+	}
+	return nil
+}
+
+// freeText is the rule for a value with no pattern: present, and free of the characters a Go string
+// literal, an XML attribute and a JSON string each escape differently.
+func freeText(label, value string) error {
+	if strings.TrimSpace(value) == "" {
+		return fmt.Errorf("%s must not be empty", label)
+	}
+	if found := markupPattern.FindString(value); found != "" {
+		return fmt.Errorf("%s may not contain %q: it is substituted into XML, JSON and source "+
+			"code, which escape it three different ways", label, found)
 	}
 	return nil
 }

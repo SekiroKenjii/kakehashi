@@ -1,6 +1,7 @@
 package template
 
 import (
+	"errors"
 	"os"
 	"path/filepath"
 	"strings"
@@ -73,6 +74,31 @@ func TestLoadDescriptorChecksTheCompatibilityRange(t *testing.T) {
 	}
 }
 
+// The other direction: a template outside the range this CLI declares is refused whatever it says
+// about the CLI, and the refusal names the CLI as the thing to change.
+func TestLoadDescriptorChecksTheTemplateAgainstTheRangeTheCliDeclares(t *testing.T) {
+	dir := templateDir(t, `{
+	  "schemaVersion": 1,
+	  "templateVersion": "1.0.0",
+	  "requiresCli": ">=0.1",
+	  "markersSchema": 1,
+	  "unitsSchema": 1
+	}`)
+
+	_, err := LoadDescriptor(dir, "0.1.0")
+	if err == nil {
+		t.Fatal("LoadDescriptor accepted a template past the range this CLI declares")
+	}
+	if !errors.Is(err, ErrIncompatible) {
+		t.Errorf("the refusal is not an incompatibility, so Resolve will not look further back: %v", err)
+	}
+	for _, want := range []string{SupportedTemplates, "1.0.0", "upgrade the CLI"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Errorf("refusal does not mention %q: %v", want, err)
+		}
+	}
+}
+
 func TestLoadDescriptorRefusals(t *testing.T) {
 	cases := []struct {
 		name string
@@ -81,7 +107,8 @@ func TestLoadDescriptorRefusals(t *testing.T) {
 		{"a schema this CLI does not know", `{"schemaVersion": 99, "markersSchema": 1, "unitsSchema": 1}`},
 		{"a marker vocabulary it does not speak", `{"schemaVersion": 1, "markersSchema": 2, "unitsSchema": 1}`},
 		{"a unit format it does not parse", `{"schemaVersion": 1, "markersSchema": 1, "unitsSchema": 2}`},
-		{"a range that is not a range", `{"schemaVersion": 1, "markersSchema": 1, "unitsSchema": 1, "requiresCli": "newest"}`},
+		{"a range that is not a range", `{"schemaVersion": 1, "templateVersion": "0.1.0",
+		  "markersSchema": 1, "unitsSchema": 1, "requiresCli": "newest"}`},
 		{"not json", `{`},
 	}
 	for _, c := range cases {

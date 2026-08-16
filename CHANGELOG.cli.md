@@ -1,0 +1,37 @@
+# Changelog — CLI
+
+The CLI's own version line, tagged `cli/vX.Y.Z`. The template has its own:
+[CHANGELOG.template.md](CHANGELOG.template.md).
+
+Ordinary semantic versioning for a tool. The interesting number is the range of templates a release
+works with — stated by the binary and checked against each template's own `requiresCli`, in both
+directions.
+
+## Unreleased
+
+| | |
+| --- | --- |
+| Templates supported | `>=0.1.0 <1.0.0` |
+
+### Added
+
+- `kakehashi new` with no arguments opens a wizard: seven questions, a default on every one but the
+  app name, and a summary before anything is written.
+- The pipeline reports its stages — fetch, verify, apply, check, git — and finishes with a
+  copy-pasteable next-steps block.
+- The compatibility matrix is checked in both directions. The CLI declares the template range it
+  understands, the template declares the CLI range it needs, and a refusal names the side that has
+  to move. `add` and `remove` get the same two checks from `.kakehashi.json`, which now records the
+  template's `requiresCli`.
+- A generated module contributes a getting-started row to the Home page checklist, derived from the
+  example module like the rest of the generator's output.
+
+### Changed
+
+- The identity self-check distinguishes the CLI named as a command from the template named as a
+  product, so a scaffolded project may tell its reader what to run. The exemption is by position,
+  not by line.
+
+## cli/v0.1.0
+
+The first release. `new`, `add module`, `add page`, `remove module`, `doctor`, `version`.

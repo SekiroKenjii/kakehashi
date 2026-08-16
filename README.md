@@ -16,12 +16,30 @@
 point for one. Every place it would name itself carries a placeholder, and a rename turns the whole
 tree into your project.
 
-## Five minutes
+## Three commands
 
 ```sh
 go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@latest
-kakehashi new OrderDesk --module github.com/me/orderdesk --template-dir path/to/kakehashi
-cd orderdesk
+kakehashi new                 # a wizard: name, module path, example module, sign-in, accent
+cd orderdesk && docker compose up -d
+```
+
+Then run the client, and the Home page's Backend card reads **Connected**. Ten minutes later:
+
+```sh
+kakehashi add module orders   # both halves, the contract, the wiring — all three gates still green
+```
+
+That second command is the differentiator. The stack is replaceable; a generator that writes a
+module across a client, a server and the contract between them, and leaves every architecture check
+passing, is not something you get by copying a repository.
+
+[**Getting started**](docs/getting-started.md) walks the whole of it at reading pace.
+
+### The longer form
+
+```sh
+kakehashi new OrderDesk --module github.com/me/orderdesk --no-input
 ```
 
 `kakehashi new` substitutes every placeholder, renames every path that holds one, removes the
@@ -30,12 +48,22 @@ in a temporary directory, so a failure leaves nothing to clean up. `kakehashi do
 machine is missing first, `--bare` leaves the example module out, and `--dry-run` prints the plan
 and writes nothing.
 
-`--template-dir` points at a clone of this repository, and is needed until the first
-`template/vX.Y.Z` release is tagged. After that, dropping it fetches the newest template the CLI is
-compatible with, verifies it against the release's checksums, and caches it.
+With no `--template-version` it fetches the newest template this CLI is compatible with, verifies it
+against the release's checksums and caches it. `--template-dir path/to/kakehashi` scaffolds from a
+clone instead, which is what to pass before the first `template/vX.Y.Z` release is tagged.
 
-Starting from the GitHub "Use this template" button instead? The rename scripts are the same
-algorithm, run in place:
+Every command and flag: [docs/cli.md](docs/cli.md).
+
+### Other ways to install
+
+| | |
+| --- | --- |
+| `go install` | above; works from the moment a `cli/v*` tag exists |
+| GitHub Releases | binaries for Linux, macOS and Windows on amd64 and arm64, with `checksums.txt` |
+| winget, scoop | manifests in [`packaging/`](packaging/), submitted per release |
+
+Starting from the GitHub "Use this template" button instead? That gives you the repository with its
+placeholders still in it, and no CLI. The rename scripts are the same algorithm, run in place:
 
 ```sh
 tools/rename/rename.sh --app-name OrderDesk --go-module github.com/me/orderdesk
@@ -44,6 +72,10 @@ tools/rename/rename.sh --app-name OrderDesk --go-module github.com/me/orderdesk
 ```pwsh
 ./tools/rename/rename.ps1 -AppName OrderDesk -GoModule github.com/me/orderdesk
 ```
+
+They do what the scaffold does and refuse to finish while a placeholder survives, but nothing else:
+no example-module removal, no manifest, and so no `add module` afterwards. The CLI is the supported
+path; this is the fallback.
 
 Either way:
 
@@ -128,6 +160,17 @@ and a new name sorts somewhere else.
 
 ## Where to look first
 
+**Using it**
+
+- [`docs/getting-started.md`](docs/getting-started.md) — nothing to a running app
+- [`docs/first-module.md`](docs/first-module.md) — `add module`, then making it do something
+- [`docs/remove-example.md`](docs/remove-example.md) — taking Notes back out
+- [`docs/gates.md`](docs/gates.md) — the three gates, and how to read what each one prints
+- [`docs/cli.md`](docs/cli.md) — every command and flag
+- [`docs/faq.md`](docs/faq.md) — Windows only? A different database? Where does it deploy?
+
+**How it is built**
+
 - [`docs/BOILERPLATE.md`](docs/BOILERPLATE.md) — every file, classified: frame, example or identity
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the reasoning behind the shapes
 - [`docs/CONTRACTS.md`](docs/CONTRACTS.md) — what the two halves promise each other
@@ -135,7 +178,12 @@ and a new name sorts somewhere else.
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — how the pane is arranged, and who decides what
 - [`docs/adr/`](docs/adr/) — the decisions, including why the template ships one example module
 - [`docs/brand/`](docs/brand/) — the mark, the palette, and why the accent is vermilion
-- [`CONTRIBUTING.md`](CONTRIBUTING.md) — the branching model, and how a release is cut
+
+**Contributing and releasing**
+
+- [`CONTRIBUTING.md`](CONTRIBUTING.md) — the branching model
+- [`docs/RELEASING.md`](docs/RELEASING.md) — the two version lines, the dry runs, the launch list
+- [`CHANGELOG.template.md`](CHANGELOG.template.md) · [`CHANGELOG.cli.md`](CHANGELOG.cli.md)
 
 ## Licence
 

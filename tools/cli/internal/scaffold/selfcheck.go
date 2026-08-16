@@ -13,10 +13,20 @@ import (
 // A tree that still carries one of these is a half-finished scaffold, not a project.
 var identityPattern = regexp.MustCompile(`__[A-Z][A-Z0-9_]*__|Kakehashi|kakehashi|KAKEHASHI|SekiroKenjii|架け橋`)
 
-// markerPattern is the generator's namespace rather than the application's: the CLI reads these
-// markers in a scaffolded project to add and remove modules, and renaming them would break the
-// tool rather than finish the scaffold. It and the manifest are the only two exemptions.
-var markerPattern = regexp.MustCompile(`kakehashi:[a-z0-9-]+:(begin|end)`)
+// toolPattern is the CLI named as a tool rather than the template named as a product, which is the
+// one thing this check must not object to:
+//
+//   - the generator's markers, which the CLI reads back in a scaffolded project to add and remove
+//     modules — renaming them would break the tool rather than finish the scaffold;
+//   - the manifest and the records beside it, whose names are the tool's own;
+//   - a command somebody is told to run, in a README, a doc comment or a page that offers it.
+//
+// A generated project runs `kakehashi add module` the way it runs `docker compose up`, and saying
+// so is not a leak. Every other spelling of the name still is.
+var toolPattern = regexp.MustCompile(
+	`kakehashi:[a-z0-9-]+:(begin|end)` +
+		`|\.kakehashi(\.json|/)` +
+		`|\bkakehashi (new|add|remove|doctor|version|upgrade)\b`)
 
 // reported caps the list in the error: one leak of the template's name is usually hundreds of
 // lines, and a terminal full of them buries the file that caused it.
@@ -36,11 +46,11 @@ func selfCheck(root string, in Inputs) error {
 			return nil
 		}
 		for i, line := range strings.Split(string(body), "\n") {
-			if markerPattern.MatchString(line) {
-				continue
-			}
+			// By position rather than by line: a line that runs a command is not a licence for
+			// everything else on it.
+			allowed := toolPattern.FindAllStringIndex(line, -1)
 			for _, match := range identityPattern.FindAllStringIndex(line, -1) {
-				if covered(line, match, claimed) {
+				if within(match, allowed) || covered(line, match, claimed) {
 					continue
 				}
 				hits = append(hits, fmt.Sprintf("%s:%d: %s", filepath.ToSlash(rel), i+1, line[match[0]:match[1]]))
@@ -78,6 +88,16 @@ func claims(in Inputs) []string {
 		}
 	}
 	return claimed
+}
+
+// within reports whether the match sits inside one of the spans.
+func within(match []int, spans [][]int) bool {
+	for _, span := range spans {
+		if span[0] <= match[0] && match[1] <= span[1] {
+			return true
+		}
+	}
+	return false
 }
 
 // covered reports whether the match sits inside an occurrence of one of the caller's values.

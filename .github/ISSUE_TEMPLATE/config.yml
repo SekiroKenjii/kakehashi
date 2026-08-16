@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: How do I …?
+    url: https://github.com/SekiroKenjii/kakehashi/discussions
+    about: Questions about using the boilerplate, rather than defects in it.
+  - name: The guides
+    url: https://github.com/SekiroKenjii/kakehashi/tree/main/docs
+    about: getting-started, first-module, remove-example, cli, gates, faq.

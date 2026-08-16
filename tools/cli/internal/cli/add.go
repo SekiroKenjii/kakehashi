@@ -80,7 +80,7 @@ func runAddModule(command *cobra.Command, id string, opts *moduleOptions) error 
 	if err != nil {
 		return err
 	}
-	p, err := project.Open(working)
+	p, err := project.Open(working, version)
 	if err != nil {
 		return err
 	}

@@ -21,13 +21,25 @@ using Microsoft.UI.Xaml;
 
 namespace __ROOT_NAMESPACE__.App.UI;
 
+/// <param name="Command">
+/// The shell command that does the step, when one does. It is offered to the clipboard rather than
+/// run: this is a developer's terminal, not the app's.
+/// </param>
 public sealed record GettingStartedStep(
-    string Id, string Title, string Subtitle, bool IsDone, bool HasAction)
+    string Id, string Title, string Subtitle, bool IsDone, bool HasAction, string Command = "")
 {
     public bool IsNotDone => !IsDone;
 
-    public bool ShowsChevron => HasAction && !IsDone;
+    public bool HasCommand => Command.Length > 0;
+
+    public bool ShowsChevron => HasAction && !IsDone && !HasCommand;
 }
+
+/// <summary>
+/// One of the three architecture gates, as the Home page lists them: what it protects, and the
+/// command that runs it.
+/// </summary>
+public sealed record GateItem(string Name, string Protects, string Command);
 
 /// <param name="IsWithheld">
 /// An administrator has not assigned this module to the account. The tile is drawn locked rather
@@ -72,32 +84,40 @@ public sealed record HomeActivityItem(
 public sealed partial class HomeViewModel : ViewModel
 {
     private const string _dismissedKey = "Home.GettingStartedDismissed";
-    private const string _exploreStepDoneKey = "Home.ExploreModuleStepDone";
-    private const string _themeStepDoneKey = "Home.CustomizeThemeStepDone";
-    private const string _signInStepId = "signin";
-    private const string _exploreStepId = "explore";
-    private const string _themeStepId = "theme";
-    private const string _registerStepId = "register";
+    private const string _stepDoneKeyPrefix = "Home.StepDone.";
+    private const string _backendStepId = "backend";
+    private const string _architectureStepId = "architecture";
+    private const string _addModuleStepId = "addmodule";
+    private const string _modulePrefix = "module:";
+    private const string _removePrefix = "remove:";
     /// <summary>
-    /// How many modules ship with the template: Notes, Activity and Auth. A higher count means the
-    /// developer registered their own. Keep it equal to the shipped modules, or "register your
+    /// How many modules ship with the template: the example, Activity and Auth. A higher count
+    /// means the developer added their own. Keep it equal to the shipped modules, or "add your
     /// first module" reports itself complete on a fresh install.
     /// </summary>
     private const int _shippedModuleCount = 3;
     private const int _pageSize = 5;
 
+    /// <summary>
+    /// What the Backend card offers when nothing answers. The whole stack is one compose file, so
+    /// this is the command rather than a page of instructions.
+    /// </summary>
+    private const string _startBackendCommand = "docker compose up -d";
+
     private readonly ISender _sender;
     private readonly INavigationService _navigationService;
     private readonly IThemeService _themeService;
     private readonly ILocalSettingsService _localSettings;
+    private readonly IClipboardService _clipboard;
+    private readonly INotificationService _notifications;
     private readonly IBackendClient _backendClient;
     private readonly BackendOptions _backendOptions;
     private readonly IModuleRegistry _moduleRegistry;
+    private readonly IReadOnlyList<IGettingStartedStep> _moduleSteps;
     private readonly AppActivityLog _activityLog;
     private readonly bool _isBackendConfigured;
     private List<HomeActivityItem> _allActivity = [];
     private int _activityPage = 1;
-    private DateTimeOffset? _signedInAtUtc;
     private ModuleCardItem? _pendingDetach;
 
     [ObservableProperty]
@@ -117,6 +137,13 @@ public sealed partial class HomeViewModel : ViewModel
 
     [ObservableProperty]
     public partial double StepsProgress { get; set; }
+
+    /// <summary>
+    /// How many rows the checklist has. It varies with the project — a bare scaffold has fewer —
+    /// so the progress bar takes its maximum from here rather than from a number in the markup.
+    /// </summary>
+    [ObservableProperty]
+    public partial double StepsTotal { get; set; }
 
     [ObservableProperty]
     public partial string StepsProgressText { get; set; }
@@ -158,30 +185,39 @@ public sealed partial class HomeViewModel : ViewModel
         INavigationService navigationService,
         IThemeService themeService,
         ILocalSettingsService localSettings,
+        IClipboardService clipboard,
+        INotificationService notifications,
         IBackendClient backendClient,
         IOptions<BackendOptions> backendOptions,
         IConfiguration configuration,
         AppActivityLog activityLog,
-        IModuleRegistry moduleRegistry)
+        IModuleRegistry moduleRegistry,
+        IEnumerable<IGettingStartedStep> moduleSteps)
     {
         ArgumentNullException.ThrowIfNull(sender);
         ArgumentNullException.ThrowIfNull(navigationService);
         ArgumentNullException.ThrowIfNull(themeService);
         ArgumentNullException.ThrowIfNull(localSettings);
+        ArgumentNullException.ThrowIfNull(clipboard);
+        ArgumentNullException.ThrowIfNull(notifications);
         ArgumentNullException.ThrowIfNull(backendClient);
         ArgumentNullException.ThrowIfNull(backendOptions);
         ArgumentNullException.ThrowIfNull(configuration);
         ArgumentNullException.ThrowIfNull(activityLog);
         ArgumentNullException.ThrowIfNull(moduleRegistry);
+        ArgumentNullException.ThrowIfNull(moduleSteps);
 
         _sender = sender;
         _navigationService = navigationService;
         _themeService = themeService;
         _localSettings = localSettings;
+        _clipboard = clipboard;
+        _notifications = notifications;
         _backendClient = backendClient;
         _backendOptions = backendOptions.Value;
         _activityLog = activityLog;
         _moduleRegistry = moduleRegistry;
+        _moduleSteps = [.. moduleSteps];
         // The committed appsettings.json ships without a Backend section; in that state the bound
         // options only hold placeholder defaults, so the card must not present them as a real backend.
         _isBackendConfigured = configuration
@@ -190,7 +226,7 @@ public sealed partial class HomeViewModel : ViewModel
 
         GreetingText = BuildGreeting(displayName: null);
         DateText = DateTime.Now.ToString("dddd, MMMM d");
-        StepsProgressText = "0 of 4 complete";
+        StepsProgressText = string.Empty;
         ModulesHeader = "FEATURE MODULES";
         ActivityPageLabel = string.Empty;
         DetachPrompt = string.Empty;
@@ -200,6 +236,25 @@ public sealed partial class HomeViewModel : ViewModel
     }
 
     public ObservableCollection<GettingStartedStep> Steps { get; } = [];
+
+    /// <summary>
+    /// The three gates, and how to run each. They are listed on the Home page because a developer
+    /// who meets them on the first run meets them before their first pull request rather than in it.
+    /// </summary>
+    public IReadOnlyList<GateItem> Gates { get; } = [
+        new GateItem(
+            "archlint",
+            "Module boundaries inside the Go server.",
+            "cd server && go run ./tools/archlint"),
+        new GateItem(
+            "__APP_NAME__.ArchitectureTests",
+            "The three layers inside the WinUI client.",
+            "cd client && dotnet test __APP_NAME__.slnx"),
+        new GateItem(
+            "buf breaking",
+            "The contract between the two halves.",
+            "buf breaking --against \".git#branch=main\""),
+    ];
 
     public ObservableCollection<ModuleCardItem> ModuleCards { get; } = [];
 
@@ -217,6 +272,9 @@ public sealed partial class HomeViewModel : ViewModel
             : Uri.TryCreate(_backendOptions.BaseAddress, UriKind.Absolute, out var uri)
                 ? $"{uri.Host}:{uri.Port}"
                 : _backendOptions.BaseAddress;
+
+    /// <summary>What to run when the backend does not answer. Shown only while it does not.</summary>
+    public string StartBackendCommand => _startBackendCommand;
 
     public string BackendProtocolText =>
         !_isBackendConfigured
@@ -238,14 +296,54 @@ public sealed partial class HomeViewModel : ViewModel
         var session = await _sender.Send(new GetCurrentSessionQuery());
         IsAuthenticated = session.IsAuthenticated;
         AvatarName = session.DisplayName;
-        _signedInAtUtc = session.SignedInAtUtc;
         GreetingText = BuildGreeting(session.DisplayName);
         DateText = DateTime.Now.ToString("dddd, MMMM d");
         IsGettingStartedVisible = !_localSettings.Read<bool>(_dismissedKey);
-        RebuildSteps();
         RebuildModuleCards();
         LoadActivity();
+        // The checklist reads the backend's state and the modules' own, so it is built after the
+        // probe rather than before it: a checklist built first would tick on the next visit.
         await PingBackendAsync();
+        await RebuildStepsAsync();
+    }
+
+    /// <summary>Probes the backend again and re-reads the checklist against the answer.</summary>
+    [RelayCommand]
+    private async Task RetryBackendAsync()
+    {
+        await PingBackendAsync();
+        await RebuildStepsAsync();
+    }
+
+    /// <summary>Puts a shell command on the clipboard and says so.</summary>
+    [RelayCommand]
+    private void Copy(string command)
+    {
+        if (string.IsNullOrEmpty(command))
+        {
+            return;
+        }
+
+        _clipboard.SetText(command);
+        _notifications.Show($"Copied: {command}");
+    }
+
+    /// <summary>
+    /// Copies a step's command and counts the step as done. Nothing here can watch a terminal, so
+    /// taking the command is the last thing this app sees of the step — and treating that as the
+    /// answer beats a checkbox that never ticks.
+    /// </summary>
+    [RelayCommand]
+    private async Task CopyStepAsync(GettingStartedStep step)
+    {
+        if (step is not { HasCommand: true })
+        {
+            return;
+        }
+
+        Copy(step.Command);
+        MarkDone(step.Id);
+        await RebuildStepsAsync();
     }
 
     [RelayCommand]
@@ -255,22 +353,47 @@ public sealed partial class HomeViewModel : ViewModel
         _localSettings.Save(_dismissedKey, true);
     }
 
+    /// <summary>
+    /// Acts on a checklist row: opens the module a module row belongs to, and marks a row whose
+    /// only outcome is having read something.
+    /// </summary>
     [RelayCommand]
-    private void OpenStep(GettingStartedStep step)
+    private async Task OpenStepAsync(GettingStartedStep step)
     {
-        switch (step?.Id)
+        if (step is null)
         {
-            case _signInStepId:
-                _navigationService.NavigateTo(_navigationService.GetPageKey(typeof(AccountPage)));
-                break;
-            case _exploreStepId:
-                _localSettings.Save(_exploreStepDoneKey, true);
-                _navigationService.NavigateTo(_navigationService.GetPageKey(typeof(AccountPage)));
-                break;
-            case _themeStepId:
-                _localSettings.Save(_themeStepDoneKey, true);
-                _navigationService.NavigateTo(_navigationService.GetPageKey(typeof(SettingsPage)));
-                break;
+            return;
+        }
+
+        if (step.Id == _architectureStepId)
+        {
+            MarkDone(step.Id);
+            await RebuildStepsAsync();
+
+            return;
+        }
+
+        if (step.Id.StartsWith(_modulePrefix, StringComparison.Ordinal))
+        {
+            OpenModulePage(step.Id[_modulePrefix.Length..]);
+        }
+    }
+
+    /// <summary>Navigates to a module's first page, and does nothing for one that has none.</summary>
+    private void OpenModulePage(string moduleName)
+    {
+        var module = _moduleRegistry.Attached.FirstOrDefault(item => item.Name == moduleName);
+
+        if (module is null)
+        {
+            return;
+        }
+
+        var pages = module.GetNavigationItems();
+
+        if (pages.Count > 0)
+        {
+            _navigationService.NavigateTo(_navigationService.GetPageKey(pages[0].PageType));
         }
     }
 
@@ -371,34 +494,114 @@ public sealed partial class HomeViewModel : ViewModel
         HasDetachedModules = DetachedModules.Count > 0;
     }
 
-    private void RebuildSteps()
+    /// <summary>
+    /// Rebuilds the checklist of docs/pivot/05-PHASE-4-UI.md §2.1. The first rows read real state —
+    /// the backend probe, and each module's own answer about itself — and the rest are marked by
+    /// the developer acting on them, because nothing in this process can watch a terminal.
+    /// </summary>
+    /// <remarks>
+    /// The module rows come from the container rather than from a list here. A module the scaffold
+    /// left out, or that <c>kakehashi remove module</c> took back, is not there to register one,
+    /// so the checklist shrinks to match the project without anybody editing it — which is the
+    /// whole of what --bare needs (§2.2).
+    /// </remarks>
+    private async Task RebuildStepsAsync()
     {
-        bool exploreDone = _localSettings.Read<bool>(_exploreStepDoneKey);
-        bool themeDone = _localSettings.Read<bool>(_themeStepDoneKey)
-            || _themeService.Theme != ElementTheme.Default;
-        bool registerDone = _moduleRegistry.All.Count > _shippedModuleCount;
-        string signInSubtitle = IsAuthenticated && _signedInAtUtc is { } signedInAt
-            ? $"OAuth 2.0 browser flow · completed {FormatRelative(signedInAt)}"
-            : "OAuth 2.0 browser flow · sign in from the Account page";
+        var steps = new List<GettingStartedStep>
+        {
+            new(
+                _backendStepId,
+                "Backend connected",
+                _isBackendConfigured
+                    ? $"{BackendEndpointText} over {BackendProtocolText} · {BackendStatusText}"
+                    : "No Backend section in appsettings.json yet.",
+                IsBackendConnected,
+                HasAction: false),
+        };
+
+        foreach (var module in _moduleSteps)
+        {
+            steps.Add(new GettingStartedStep(
+                _modulePrefix + module.ModuleName,
+                module.Title,
+                module.Subtitle,
+                await IsDoneAsync(module),
+                HasAction: true));
+        }
+
+        steps.Add(new GettingStartedStep(
+            _architectureStepId,
+            "Read docs/ARCHITECTURE.md",
+            "Why the shape is the shape: the modules, the layers, and the contract between them.",
+            IsMarkedDone(_architectureStepId),
+            HasAction: true));
+
+        bool added = _moduleRegistry.All.Count > _shippedModuleCount;
+        steps.Add(new GettingStartedStep(
+            _addModuleStepId,
+            "Add your first module",
+            "Both halves, the proto contract and the wiring, with all three gates still green.",
+            added || IsMarkedDone(_addModuleStepId),
+            HasAction: false,
+            Command: "kakehashi add module orders"));
+
+        // Only while the project still holds what it was given. Once there is a module somebody
+        // wrote, "take the example back out" is advice they have already outgrown.
+        if (!added)
+        {
+            foreach (var module in _moduleSteps)
+            {
+                string id = _removePrefix + module.ModuleName;
+                steps.Add(new GettingStartedStep(
+                    id,
+                    $"Remove the {module.ModuleName} example when you no longer need it",
+                    "It leaves nothing behind: the proto, both module trees, the tests and the wiring.",
+                    IsMarkedDone(id),
+                    HasAction: false,
+                    // The name in lower case is the unit id by construction: the generator makes
+                    // the name by capitalising the id.
+                    Command: "kakehashi remove module " + module.ModuleName.ToLowerInvariant()));
+            }
+        }
 
         Steps.Clear();
-        Steps.Add(new GettingStartedStep(
-            _signInStepId, "Sign in with company SSO", signInSubtitle, IsAuthenticated,
-            HasAction: true));
-        Steps.Add(new GettingStartedStep(
-            _exploreStepId, "Explore the sample module",
-            "Open the Account module to view active sessions, recent sign-ins and more.",
-            exploreDone, HasAction: true));
-        Steps.Add(new GettingStartedStep(
-            _themeStepId, "Customize the app theme",
-            "Light / Dark / System — in Settings → Appearance", themeDone, HasAction: true));
-        Steps.Add(new GettingStartedStep(
-            _registerStepId, "Register your first module",
-            "Implement IModule and it appears in the nav rail", registerDone, HasAction: false));
+        foreach (var step in steps)
+        {
+            Steps.Add(step);
+        }
 
-        int done = Steps.Count(step => step.IsDone);
+        int done = steps.Count(step => step.IsDone);
+        StepsTotal = steps.Count;
         StepsProgress = done;
-        StepsProgressText = $"{done} of {Steps.Count} complete";
+        StepsProgressText = $"{done} of {steps.Count} complete";
+    }
+
+    /// <summary>
+    /// Asks a module whether its step is done, and reads a module that cannot answer as not done.
+    /// The usual reason is a backend that is not running, which is the row above's problem.
+    /// </summary>
+    private static async Task<bool> IsDoneAsync(IGettingStartedStep step)
+    {
+        try
+        {
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+
+            return await step.IsDoneAsync(timeout.Token);
+        }
+        catch (Exception)
+        {
+            return false;
+        }
+    }
+
+    private bool IsMarkedDone(string stepId)
+    {
+        return _localSettings.Read<bool>(_stepDoneKeyPrefix + stepId);
+    }
+
+    private void MarkDone(string stepId)
+    {
+        _localSettings.Save(_stepDoneKeyPrefix + stepId, true);
     }
 
     private void RebuildModuleCards()

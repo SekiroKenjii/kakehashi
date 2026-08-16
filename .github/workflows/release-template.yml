@@ -1,0 +1,171 @@
+name: Release template
+
+# The template's own release line. It is tagged template/vX.Y.Z, independently of the CLI's
+# cli/vX.Y.Z, because the two ship separately and a project is on the template version it was made
+# with: docs/pivot/06-PHASE-5-RELEASE.md §1.
+#
+# Nothing here fires on a branch. A release happens when somebody pushes a tag, or asks for a dry
+# run — which builds and checks the asset, uploads it to the run, and creates no release at all.
+on:
+  push:
+    tags: ["template/v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to build, without the tag prefix (for example 0.1.0).
+        type: string
+        required: true
+      dry_run:
+        description: Build and check the asset, publish nothing.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  # Every gate, on both operating systems, before anything is packaged. A release is the one moment
+  # where "it passed on the branch" is not good enough: the asset is what people download, and it is
+  # built from this commit rather than from that one.
+  smoke:
+    uses: ./.github/workflows/scaffold-smoke.yml
+    with:
+      full: true
+
+  package:
+    needs: smoke
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # The tag and the descriptor have to agree. They are edited at different times by different
+      # people, and a release whose asset says one version while its tag says another is a support
+      # question nobody can answer.
+      - name: Resolve the version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#template/v}"
+          fi
+          declared=$(jq -r .templateVersion templates/template.json)
+          if [ "$version" != "$declared" ]; then
+            echo "the tag says $version and templates/template.json says $declared"
+            exit 1
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # git archive rather than a copy of the working directory: it carries the tracked files and
+      # nothing else, so a stray build output cannot reach an asset.
+      #
+      # What comes out is then trimmed by the descriptor's own exclude list rather than by a second
+      # list here. Those paths belong to the template repository, and the scaffold would drop them
+      # anyway; doing it now keeps the download to what a project is made of. The descriptor itself
+      # stays: the CLI reads it out of the archive to know all of this.
+      - name: Build the archive
+        id: archive
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          stage="$RUNNER_TEMP/template"
+          mkdir -p "$stage"
+          git archive --format=tar HEAD | tar -x -C "$stage"
+
+          jq -r '.exclude[]' templates/template.json | while read -r path; do
+            [ "$path" = "templates/template.json" ] && continue
+            rm -rf "${stage:?}/$path"
+          done
+
+          name="template-v$VERSION.tar.gz"
+          out="$RUNNER_TEMP/assets"
+          mkdir -p "$out"
+          tar -czf "$out/$name" -C "$stage" .
+          ( cd "$out" && sha256sum "$name" > checksums.txt )
+
+          echo "name=$name" >> "$GITHUB_OUTPUT"
+          echo "dir=$out" >> "$GITHUB_OUTPUT"
+          ls -l "$out"
+
+      # The asset is scaffolded from before it is published. Reading it back is the only check that
+      # covers the packaging itself — trimming the wrong path produces an archive that passes every
+      # test in this repository and fails on the first person who downloads it.
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Scaffold from the asset
+        env:
+          ASSET: ${{ steps.archive.outputs.dir }}/${{ steps.archive.outputs.name }}
+        run: |
+          git config --global user.email release@example.com
+          git config --global user.name Release
+          unpacked="$RUNNER_TEMP/unpacked"
+          mkdir -p "$unpacked"
+          tar -xzf "$ASSET" -C "$unpacked"
+
+          go build -o "$RUNNER_TEMP/kakehashi" ./tools/cli/cmd/kakehashi
+          "$RUNNER_TEMP/kakehashi" new AssetCheck \
+            --module example.com/assetcheck \
+            --author Release \
+            --template-dir "$unpacked" \
+            --dir "$RUNNER_TEMP/asset-project" \
+            --no-input
+
+      - name: Build the project the asset produced
+        working-directory: ${{ runner.temp }}/asset-project/server
+        run: |
+          go build ./...
+          go test ./...
+          go run ./tools/archlint
+
+      # A dry run stops here. The asset and its checksums are on the run for somebody to download
+      # and look at, and no release exists.
+      - name: Upload the asset for review
+        if: inputs.dry_run
+        uses: actions/upload-artifact@v4
+        with:
+          name: template-v${{ steps.version.outputs.version }}
+          path: ${{ steps.archive.outputs.dir }}/*
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          ASSETS: ${{ steps.archive.outputs.dir }}
+        run: |
+          notes="$RUNNER_TEMP/notes.md"
+          {
+            echo "Template \`v$VERSION\`."
+            echo
+            echo "\`\`\`sh"
+            echo "kakehashi new MyApp --module github.com/you/myapp --template-version $VERSION"
+            echo "\`\`\`"
+            echo
+            echo "See CHANGELOG.template.md for what changed."
+          } > "$notes"
+
+          gh release create "$GITHUB_REF_NAME" \
+            --title "Template v$VERSION" \
+            --notes-file "$notes" \
+            "$ASSETS/template-v$VERSION.tar.gz" \
+            "$ASSETS/checksums.txt"

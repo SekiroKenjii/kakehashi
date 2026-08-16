@@ -42,7 +42,7 @@ func removeModuleCommand() *cobra.Command {
 			if err != nil {
 				return err
 			}
-			p, err := project.Open(working)
+			p, err := project.Open(working, version)
 			if err != nil {
 				return err
 			}
