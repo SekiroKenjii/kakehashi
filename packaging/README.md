@@ -14,11 +14,11 @@ person's, at least until the CLI has a release cadence worth automating.
 
 ## Filling them in
 
-After `cli/vX.Y.Z` is published, its `checksums.txt` has every digest these files need.
+After `tools/cli/vX.Y.Z` is published, its `checksums.txt` has every digest these files need.
 
 ```sh
 version=1.0.0
-gh release download "cli/v$version" --pattern checksums.txt --output - | grep -i windows
+gh release download "tools/cli/v$version" --pattern checksums.txt --output - | grep -i windows
 ```
 
 Then replace `__VERSION__` and each `__SHA256_*__` in the copies you submit. Leaving the

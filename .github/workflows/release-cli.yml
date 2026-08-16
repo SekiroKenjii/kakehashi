@@ -1,17 +1,19 @@
 name: Release CLI
 
-# The CLI's release line, tagged cli/vX.Y.Z, independently of the template's template/vX.Y.Z. The
-# two ship separately on purpose: docs/pivot/06-PHASE-5-RELEASE.md §1.
+# The CLI's release line, tagged tools/cli/vX.Y.Z, independently of the template's template/vX.Y.Z.
+# The two ship separately on purpose: docs/pivot/06-PHASE-5-RELEASE.md §1.
 #
-# `go install` needs nothing from this workflow — the module path is enough, and that channel works
-# from the moment a tag exists. This is for the people who would rather download a binary.
+# The prefix is the module's own directory because that is the only prefix `go install` reads, per
+# ADR 0022. `go install` needs nothing else from this workflow — the module path is enough, and that
+# channel works from the moment a tag exists. This is for the people who would rather download a
+# binary.
 #
-# Two ways in, and neither is a branch push. Pushing a cli/vX.Y.Z tag releases it; running the
+# Two ways in, and neither is a branch push. Pushing a tools/cli/vX.Y.Z tag releases it; running the
 # workflow by hand does too, once dry run is turned off — the release then creates the tag itself,
 # from main, so a release is one action rather than a tag push somebody has to remember separately.
 on:
   push:
-    tags: ["cli/v*"]
+    tags: ["tools/cli/v*"]
   workflow_dispatch:
     inputs:
       version:
@@ -86,9 +88,9 @@ jobs:
         run: |
           if [ "$EVENT" = "workflow_dispatch" ]; then
             version="$INPUT_VERSION"
-            tag="cli/v$version"
+            tag="tools/cli/v$version"
           else
-            version="${GITHUB_REF_NAME#cli/v}"
+            version="${GITHUB_REF_NAME#tools/cli/v}"
             tag="$GITHUB_REF_NAME"
           fi
 
@@ -157,7 +159,7 @@ jobs:
           notes="$RUNNER_TEMP/notes.md"
           {
             echo '```sh'
-            echo "go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@$TAG"
+            echo "go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@v$VERSION"
             echo '```'
             echo
             echo "Or take an archive below and check it against \`checksums.txt\`."

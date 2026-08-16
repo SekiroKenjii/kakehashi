@@ -7,7 +7,7 @@ This repository follows [Gitflow](https://nvie.com/posts/a-successful-git-branch
 
 | Branch | Holds | Who merges into it |
 | --- | --- | --- |
-| `main` | What has been released. A release commit carries a `template/vX.Y.Z` tag, a `cli/vX.Y.Z` tag, or both. | `release/*` and `hotfix/*`, through a pull request |
+| `main` | What has been released. A release commit carries a `template/vX.Y.Z` tag, a `tools/cli/vX.Y.Z` tag, or both. | `release/*` and `hotfix/*`, through a pull request |
 | `development` | Everything finished but not yet released. | `feature/*` and `bugfix/*`, through a pull request |
 
 The model this repository follows names the production branch `master`. This one is **`main`** —
@@ -53,7 +53,7 @@ the other or both — never a bare `vX.Y.Z`, which no workflow listens for.
 | | Tag | Version declared in |
 | --- | --- | --- |
 | Template | `template/vX.Y.Z` | `templates/template.json` → `templateVersion` |
-| CLI | `cli/vX.Y.Z` | `version` in `tools/cli/internal/cli/cli.go` |
+| CLI | `tools/cli/vX.Y.Z` | `version` in `tools/cli/internal/cli/cli.go` |
 
 ```bash
 git switch development && git pull
@@ -72,7 +72,7 @@ Prefer the command line? Tags work exactly as well, and the workflows treat them
 ```bash
 git switch main && git pull
 git tag -a template/v1.1.0 -m "Template v1.1.0" && git push origin template/v1.1.0
-git tag -a cli/v1.1.0 -m "CLI v1.1.0" && git push origin cli/v1.1.0
+git tag -a tools/cli/v1.1.0 -m "CLI v1.1.0" && git push origin tools/cli/v1.1.0
 ```
 
 Then the second merge:
