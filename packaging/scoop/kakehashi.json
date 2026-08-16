@@ -5,11 +5,11 @@
     "license": "MIT",
     "architecture": {
         "64bit": {
-            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v__VERSION__/kakehashi___VERSION___Windows_amd64.zip",
+            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v__VERSION__/kakehashi___VERSION___Windows_amd64.zip",
             "hash": "__SHA256_WINDOWS_AMD64__"
         },
         "arm64": {
-            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v__VERSION__/kakehashi___VERSION___Windows_arm64.zip",
+            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v__VERSION__/kakehashi___VERSION___Windows_arm64.zip",
             "hash": "__SHA256_WINDOWS_ARM64__"
         }
     },
@@ -17,19 +17,19 @@
     "checkver": {
         "url": "https://api.github.com/repos/SekiroKenjii/kakehashi/releases",
         "jsonpath": "$..tag_name",
-        "regex": "cli/v([\\d.]+)"
+        "regex": "tools/cli/v([\\d.]+)"
     },
     "autoupdate": {
         "architecture": {
             "64bit": {
-                "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v$version/kakehashi_$version_Windows_amd64.zip"
+                "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v$version/kakehashi_$version_Windows_amd64.zip"
             },
             "arm64": {
-                "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v$version/kakehashi_$version_Windows_arm64.zip"
+                "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v$version/kakehashi_$version_Windows_arm64.zip"
             }
         },
         "hash": {
-            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v$version/checksums.txt"
+            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v$version/checksums.txt"
         }
     }
 }

@@ -28,7 +28,7 @@ Tags:
   - grpc
   - scaffolding
   - winui
-ReleaseNotesUrl: https://github.com/SekiroKenjii/kakehashi/releases/tag/cli/v__VERSION__
+ReleaseNotesUrl: https://github.com/SekiroKenjii/kakehashi/releases/tag/tools/cli/v__VERSION__
 Documentation:
   - DocumentLabel: Getting started
     DocumentUrl: https://github.com/SekiroKenjii/kakehashi/blob/main/docs/getting-started.md

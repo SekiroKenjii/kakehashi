@@ -7,7 +7,10 @@ the template version it was made with.
 | | Tag | Changelog | Workflow |
 | --- | --- | --- | --- |
 | Template | `template/vX.Y.Z` | [CHANGELOG.template.md](../CHANGELOG.template.md) | `.github/workflows/release-template.yml` |
-| CLI | `cli/vX.Y.Z` | [CHANGELOG.cli.md](../CHANGELOG.cli.md) | `.github/workflows/release-cli.yml` |
+| CLI | `tools/cli/vX.Y.Z` | [CHANGELOG.cli.md](../CHANGELOG.cli.md) | `.github/workflows/release-cli.yml` |
+
+The CLI's prefix is its own directory because `tools/cli` is a Go module and that is the only prefix
+`go install` reads — ADR 0022.
 
 Neither workflow fires on a branch. There are two ways to release, and they end in the same place:
 
@@ -125,16 +128,21 @@ statement of what is template-only and the scaffold and the packaging cannot dis
 
    ```sh
    git switch main && git pull
-   git tag -a cli/vX.Y.Z -m "CLI vX.Y.Z"
-   git push origin cli/vX.Y.Z
+   git tag -a tools/cli/vX.Y.Z -m "CLI vX.Y.Z"
+   git push origin tools/cli/vX.Y.Z
    ```
 
-6. **Check both channels.**
+6. **Check both channels.** The version query has no prefix: the tag carries the module's directory
+   and `go install` takes what is left.
 
    ```sh
-   go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@cli/vX.Y.Z
+   go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@vX.Y.Z
+   go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@latest
    kakehashi version
    ```
+
+   `@latest` is the one that proves the tag is shaped right. If it installs a `v0.0.0-`
+   pseudo-version, Go did not recognise the tag and is serving the default branch instead.
 
    and download one archive from the release and check it against `checksums.txt`.
 

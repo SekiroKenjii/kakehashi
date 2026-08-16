@@ -4,7 +4,7 @@ One binary. `new` makes a project from the template; `add` and `remove` maintain
 `doctor` checks the machine.
 
 Install it with `go install`, or take a binary and its checksum from the boilerplate's releases page
-— the one-line form of both is in the boilerplate's own README. The CLI is tagged `cli/vX.Y.Z`,
+— the one-line form of both is in the boilerplate's own README. The CLI is tagged `tools/cli/vX.Y.Z`,
 separately from the template's `template/vX.Y.Z`, and the two are released independently.
 
 ## Exit codes

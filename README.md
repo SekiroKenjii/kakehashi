@@ -58,7 +58,7 @@ Every command and flag: [docs/cli.md](docs/cli.md).
 
 | | |
 | --- | --- |
-| `go install` | above; works from the moment a `cli/v*` tag exists |
+| `go install` | above; works from the moment a `tools/cli/v*` tag exists |
 | GitHub Releases | binaries for Linux, macOS and Windows on amd64 and arm64, with `checksums.txt` |
 | winget, scoop | manifests in [`packaging/`](packaging/), submitted per release |
 
