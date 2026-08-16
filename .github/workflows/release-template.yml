@@ -4,8 +4,9 @@ name: Release template
 # cli/vX.Y.Z, because the two ship separately and a project is on the template version it was made
 # with: docs/pivot/06-PHASE-5-RELEASE.md §1.
 #
-# Nothing here fires on a branch. A release happens when somebody pushes a tag, or asks for a dry
-# run — which builds and checks the asset, uploads it to the run, and creates no release at all.
+# Two ways in, and neither is a branch push. Pushing a template/vX.Y.Z tag releases it; running the
+# workflow by hand does too, once dry run is turned off — the release then creates the tag itself,
+# from main, so a release is one action rather than a tag push somebody has to remember separately.
 on:
   push:
     tags: ["template/v*"]
@@ -16,7 +17,7 @@ on:
         type: string
         required: true
       dry_run:
-        description: Build and check the asset, publish nothing.
+        description: Leave on to build and check the asset without publishing. Turn it off to tag and release.
         type: boolean
         default: true
 
@@ -41,23 +42,42 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      # The tag and the descriptor have to agree. They are edited at different times by different
-      # people, and a release whose asset says one version while its tag says another is a support
-      # question nobody can answer.
+      # The version and the descriptor have to agree. They are edited at different times by
+      # different people, and a release whose asset says one version while its tag says another is
+      # a support question nobody can answer.
+      #
+      # A tag push brings its own name; a dispatch has none yet, so the name is derived and the tag
+      # is created at publish time.
       - name: Resolve the version
         id: version
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          PUBLISHING: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            version="${{ inputs.version }}"
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
+            tag="template/v$version"
           else
             version="${GITHUB_REF_NAME#template/v}"
+            tag="$GITHUB_REF_NAME"
           fi
+
           declared=$(jq -r .templateVersion templates/template.json)
           if [ "$version" != "$declared" ]; then
-            echo "the tag says $version and templates/template.json says $declared"
+            echo "the release says $version and templates/template.json says $declared"
             exit 1
           fi
+
+          # A dispatch chooses its own ref, and main is the only one that holds what was released.
+          # A dry run may rehearse from anywhere, which is what a release branch wants.
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$PUBLISHING" = "true" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "publishing runs from main; this is $GITHUB_REF — re-run it on main, or leave dry run on"
+            exit 1
+          fi
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       # git archive rather than a copy of the working directory: it carries the tracked files and
       # nothing else, so a stray build output cannot reach an asset.
@@ -111,6 +131,12 @@ jobs:
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
           go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
+      # From inside tools/cli, which is its own Go module: the repository root has no go.mod, so
+      # ./tools/cli/cmd/kakehashi is not a package path from there.
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
       - name: Scaffold from the asset
         env:
           ASSET: ${{ steps.archive.outputs.dir }}/${{ steps.archive.outputs.name }}
@@ -121,7 +147,6 @@ jobs:
           mkdir -p "$unpacked"
           tar -xzf "$ASSET" -C "$unpacked"
 
-          go build -o "$RUNNER_TEMP/kakehashi" ./tools/cli/cmd/kakehashi
           "$RUNNER_TEMP/kakehashi" new AssetCheck \
             --module example.com/assetcheck \
             --author Release \
@@ -146,11 +171,15 @@ jobs:
           path: ${{ steps.archive.outputs.dir }}/*
           if-no-files-found: error
 
+      # --target is what lets a dispatch release without a tag already existing: the release creates
+      # the tag at that commit. On a tag push the tag is already there and the target is the commit
+      # it points at, so the same line is right either way.
       - name: Publish the release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
           ASSETS: ${{ steps.archive.outputs.dir }}
         run: |
           notes="$RUNNER_TEMP/notes.md"
@@ -164,7 +193,8 @@ jobs:
             echo "See CHANGELOG.template.md for what changed."
           } > "$notes"
 
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
             --title "Template v$VERSION" \
             --notes-file "$notes" \
             "$ASSETS/template-v$VERSION.tar.gz" \
