@@ -6,8 +6,9 @@ name: Release CLI
 # `go install` needs nothing from this workflow — the module path is enough, and that channel works
 # from the moment a tag exists. This is for the people who would rather download a binary.
 #
-# Nothing here fires on a branch. A release happens when somebody pushes a tag, or asks for a dry
-# run — which builds every platform, uploads it to the run, and creates no release at all.
+# Two ways in, and neither is a branch push. Pushing a cli/vX.Y.Z tag releases it; running the
+# workflow by hand does too, once dry run is turned off — the release then creates the tag itself,
+# from main, so a release is one action rather than a tag push somebody has to remember separately.
 on:
   push:
     tags: ["cli/v*"]
@@ -18,7 +19,7 @@ on:
         type: string
         required: true
       dry_run:
-        description: Build every platform and publish nothing.
+        description: Leave on to build every platform without publishing. Turn it off to tag and release.
         type: boolean
         default: true
 
@@ -71,15 +72,42 @@ jobs:
           go-version: "1.26"
           cache-dependency-path: tools/cli/go.sum
 
+      # The version has to agree with the one compiled into the source, and that check is not the
+      # one below it: the release build injects the version with -ldflags, so a downloaded binary
+      # reports whatever this workflow passed it whatever the source says. `go install` injects
+      # nothing and reports the source value — so a tag that disagrees with cli.go ships a P0
+      # channel that calls itself the wrong version, and decides the compatibility matrix on it.
       - name: Resolve the version
         id: version
+        env:
+          EVENT: ${{ github.event_name }}
+          INPUT_VERSION: ${{ inputs.version }}
+          PUBLISHING: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run) }}
         run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            version="${{ inputs.version }}"
+          if [ "$EVENT" = "workflow_dispatch" ]; then
+            version="$INPUT_VERSION"
+            tag="cli/v$version"
           else
             version="${GITHUB_REF_NAME#cli/v}"
+            tag="$GITHUB_REF_NAME"
           fi
+
+          declared=$(sed -n 's/^var version = "\(.*\)"$/\1/p' tools/cli/internal/cli/cli.go)
+          if [ "$version" != "$declared" ]; then
+            echo "the release says $version and tools/cli/internal/cli/cli.go says $declared"
+            echo "'go install' builds from source and would report $declared"
+            exit 1
+          fi
+
+          # A dispatch chooses its own ref, and main is the only one that holds what was released.
+          # A dry run may rehearse from anywhere, which is what a release branch wants.
+          if [ "$EVENT" = "workflow_dispatch" ] && [ "$PUBLISHING" = "true" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "publishing runs from main; this is $GITHUB_REF — re-run it on main, or leave dry run on"
+            exit 1
+          fi
+
           echo "version=$version" >> "$GITHUB_OUTPUT"
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
 
       # The same script somebody can run before pushing the tag, which is the point of it being a
       # script: a release that can only be produced by CI is a release nobody can rehearse.
@@ -116,16 +144,20 @@ jobs:
           path: ${{ runner.temp }}/dist/*
           if-no-files-found: error
 
+      # --target is what lets a dispatch release without a tag already existing: the release creates
+      # the tag at that commit. On a tag push the tag is already there and the target is the commit
+      # it points at, so the same line is right either way.
       - name: Publish the release
-        if: github.event_name == 'push'
+        if: github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && !inputs.dry_run)
         env:
           GH_TOKEN: ${{ github.token }}
           VERSION: ${{ steps.version.outputs.version }}
+          TAG: ${{ steps.version.outputs.tag }}
         run: |
           notes="$RUNNER_TEMP/notes.md"
           {
             echo '```sh'
-            echo "go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@$GITHUB_REF_NAME"
+            echo "go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@$TAG"
             echo '```'
             echo
             echo "Or take an archive below and check it against \`checksums.txt\`."
@@ -133,7 +165,8 @@ jobs:
             echo "See \`CHANGELOG.cli.md\` for what changed, and \`docs/cli.md\` for the whole command surface."
           } > "$notes"
 
-          gh release create "$GITHUB_REF_NAME" \
+          gh release create "$TAG" \
+            --target "$GITHUB_SHA" \
             --title "CLI v$VERSION" \
             --notes-file "$notes" \
             "$RUNNER_TEMP"/dist/*

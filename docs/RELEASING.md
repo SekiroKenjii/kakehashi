@@ -9,9 +9,22 @@ the template version it was made with.
 | Template | `template/vX.Y.Z` | [CHANGELOG.template.md](../CHANGELOG.template.md) | `.github/workflows/release-template.yml` |
 | CLI | `cli/vX.Y.Z` | [CHANGELOG.cli.md](../CHANGELOG.cli.md) | `.github/workflows/release-cli.yml` |
 
-Neither workflow fires on a branch. A release happens when somebody pushes a tag — and both accept a
-**dry run** through `workflow_dispatch`, which builds and checks everything a release would carry,
-uploads it to the workflow run, and creates no release.
+Neither workflow fires on a branch. There are two ways to release, and they end in the same place:
+
+| | How | The tag |
+| --- | --- | --- |
+| **From Actions** | Run the workflow, give it the version, turn **dry run off** | the release creates it, at `main` |
+| **From a tag push** | `git tag` and `git push` | you create it, and the push is the trigger |
+
+The first is fewer steps and nothing to forget; the second is what a scripted release does. Both run
+the same checks and produce the same assets.
+
+Leaving **dry run on** — the default — builds and checks everything a release would carry, uploads
+it to the workflow run, and creates no tag and no release. Do that first.
+
+Publishing from Actions only runs on `main`; the workflow refuses any other ref, because `main` is
+the only branch that holds what was released. A dry run may rehearse from anywhere, which is what a
+release branch wants.
 
 ## What the numbers mean
 
@@ -52,10 +65,14 @@ the format actually changed, and say so in the changelog.
    whole smoke suite on both operating systems, packages the asset, scaffolds a project *from the
    asset*, builds it, and uploads the archive and its checksums to the run. Download them and look.
 6. **Merge to `main`** through the usual release branch — see [CONTRIBUTING.md](../CONTRIBUTING.md).
-7. **Tag and push.**
+7. **Publish**, either way:
+
+   Actions → Release template → Run workflow, **from `main`**, version `X.Y.Z`, dry run **off**. The
+   release creates the tag.
 
    ```sh
-   git tag template/vX.Y.Z
+   git switch main && git pull
+   git tag -a template/vX.Y.Z -m "Template vX.Y.Z"
    git push origin template/vX.Y.Z
    ```
 
@@ -79,9 +96,14 @@ statement of what is template-only and the scaffold and the packaging cannot dis
 
 ## Releasing the CLI
 
-1. **Write the changelog entry** in `CHANGELOG.cli.md`, including the template range this release
+1. **Bump `version` in `tools/cli/internal/cli/cli.go`** to match. The release build injects the
+   version with `-ldflags`, so a downloaded binary reports whatever the workflow passed it — but
+   `go install` injects nothing and reports the source value. A tag that disagrees with `cli.go`
+   ships the P0 channel calling itself the wrong version, and the compatibility matrix is decided on
+   what the binary says it is. The workflow refuses the mismatch.
+2. **Write the changelog entry** in `CHANGELOG.cli.md`, including the template range this release
    supports.
-2. **Dry run**, locally — this is the same script CI runs, which is the point of it being a script:
+3. **Dry run**, locally — this is the same script CI runs, which is the point of it being a script:
 
    ```sh
    cd tools/cli && ./scripts/build-release.sh X.Y.Z
@@ -95,15 +117,19 @@ statement of what is template-only and the scaffold and the packaging cannot dis
    ```
 
    Or Actions → Release CLI → Run workflow, dry run on, and download the artifact.
-3. **Merge to `main`.**
-4. **Tag and push.**
+4. **Merge to `main`.**
+5. **Publish**, either way:
+
+   Actions → Release CLI → Run workflow, **from `main`**, version `X.Y.Z`, dry run **off**. The
+   release creates the tag.
 
    ```sh
-   git tag cli/vX.Y.Z
+   git switch main && git pull
+   git tag -a cli/vX.Y.Z -m "CLI vX.Y.Z"
    git push origin cli/vX.Y.Z
    ```
 
-5. **Check both channels.**
+6. **Check both channels.**
 
    ```sh
    go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@cli/vX.Y.Z
@@ -112,7 +138,7 @@ statement of what is template-only and the scaffold and the packaging cannot dis
 
    and download one archive from the release and check it against `checksums.txt`.
 
-6. **Update the packaging manifests** — [packaging/](../packaging/) — with the version and the
+7. **Update the packaging manifests** — [packaging/](../packaging/) — with the version and the
    digests from `checksums.txt`, and submit them. Not automated, and not CI's to do: both go to
    somebody else's repository.
 
@@ -134,7 +160,7 @@ The one-time list for the first public release. Everything above is per-release;
 - [ ] **Turn on "Use this template"** in the repository settings, and check the README says what to
       run afterwards — `tools/rename/rename.ps1` — for somebody who arrives that way.
 - [ ] **Turn on Discussions**, which the issue-template config links to.
-- [ ] **First tags**: `template/v1.0.0` and `cli/v1.0.0`, in that order. The CLI's default resolution
+- [ ] **First release**: template then CLI, in that order. The CLI's default resolution
       needs a published template to find, so a CLI release without one is a tool with nothing to
       fetch.
 - [ ] **Check the compatibility refusals against the real releases**, in both directions: an old CLI
