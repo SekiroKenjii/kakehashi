@@ -35,7 +35,8 @@
     }
   ],
   "move": [
-    { "from": "templates/README.scaffold.md", "to": "README.md" }
+    { "from": "templates/README.scaffold.md", "to": "README.md" },
+    { "from": "templates/CLAUDE.scaffold.md", "to": "CLAUDE.md" }
   ],
   "auth": {
     "file": "client/src/App/__APP_NAME__.App/appsettings.json",

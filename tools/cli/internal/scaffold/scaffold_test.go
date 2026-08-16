@@ -97,6 +97,12 @@ func TestManifestRecordsTheScaffold(t *testing.T) {
 	if m.Template.Version != "9.9.9" || m.Template.Source != opts.Origin {
 		t.Errorf("template = %+v", m.Template)
 	}
+	// The template's own half of the compatibility matrix, copied out of the descriptor: a
+	// generator running here later has no template tree to read it from.
+	if m.Template.RequiresCLI != opts.Descriptor.RequiresCLI {
+		t.Errorf("requiresCli = %q, want the descriptor's %q",
+			m.Template.RequiresCLI, opts.Descriptor.RequiresCLI)
+	}
 	if m.CLI.Version != "0.1.0" {
 		t.Errorf("cli = %+v", m.CLI)
 	}
@@ -245,6 +251,45 @@ func TestSelfCheckSurvivesAShortInputValue(t *testing.T) {
 		t.Fatal("a one-letter input turned the identity check off")
 	}
 	if !strings.Contains(err.Error(), "leak.md") {
+		t.Errorf("the refusal does not name the file: %v", err)
+	}
+}
+
+// A scaffolded project runs the CLI, records where it came from, and carries the generator's
+// markers. All three spell the tool's name, and none of them is the template's identity leaking.
+func TestSelfCheckAllowsTheCliNamedAsATool(t *testing.T) {
+	source := copyTree(t, fixture)
+	tool := filepath.Join(source, "docs", "tool.md")
+	body := "Add one with `kakehashi add module orders`, take it back with\n" +
+		"`kakehashi remove module orders`. The record is .kakehashi.json.\n" +
+		"// kakehashi:module-registrations:begin\n"
+	if err := os.WriteFile(tool, []byte(body), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	opts := optionsFrom(t, inputs(), source)
+	if _, err := scaffold.Run(opts); err != nil {
+		t.Fatalf("Run refused a project that names the tool it is run with: %v", err)
+	}
+}
+
+// The exemption is the tool, not the line it is on. A command does not license the sentence beside
+// it to keep calling the project by the template's name.
+func TestSelfCheckStillCatchesTheTemplateOnALineThatRunsTheTool(t *testing.T) {
+	source := copyTree(t, fixture)
+	tool := filepath.Join(source, "docs", "tool.md")
+	if err := os.WriteFile(tool,
+		[]byte("Run `kakehashi add module orders` in your Kakehashi project.\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+
+	opts := optionsFrom(t, inputs(), source)
+
+	_, err := scaffold.Run(opts)
+	if err == nil {
+		t.Fatal("a command on the line turned the identity check off for the rest of it")
+	}
+	if !strings.Contains(err.Error(), "tool.md") {
 		t.Errorf("the refusal does not name the file: %v", err)
 	}
 }

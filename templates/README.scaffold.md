@@ -7,8 +7,47 @@ against both halves — so the two cannot drift apart without something going re
 
 ---
 
-Both halves are modular monoliths. Both halves have a linter that fails the build when a module
-reaches past a boundary it was not given. The third linter guards the boundary between them.
+## The first five minutes
+
+Prerequisites: Go 1.26+, [buf](https://buf.build/docs/installation), Docker, and the .NET 10 SDK.
+Building or running the client additionally needs Windows and the Windows App Runtime.
+
+**1. Start the backend.** SQL Server, MongoDB and the server itself are one compose file.
+
+```sh
+docker compose up -d
+curl http://localhost:8080/healthz   # 200
+```
+
+**2. Run the client.**
+
+```pwsh
+dotnet run --project client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj -p:Platform=x64
+```
+
+**3. Watch the Home page tick.** The Backend card reads **Connected**, and the Getting started
+checklist ticks itself as you go: the backend when it answers, the example module when it has
+something in it. Everything else on that card is a command with a copy button — including the two
+below.
+
+If the Backend card reads **Offline**, the card carries the command that fixes it and a Retry
+button beside it. Nothing else needs to be true for the client to start.
+
+## Add your first module
+
+```sh
+kakehashi add module orders
+```
+
+That writes both halves — `proto/__PROTO_PACKAGE__/orders/v1/`, the server module under
+`server/internal/modules/orders/`, the client Domain/Application/UI projects, one CRUD page — and
+every line of wiring that mounts them. All three gates stay green with no hand edits; that is the
+point of the command, and CI checks it on every push.
+
+`kakehashi add page orders Archive` adds a page to a module that already exists.
+
+Full reference: [`docs/cli.md`](docs/cli.md). A worked example, from the command to a working
+feature: [`docs/first-module.md`](docs/first-module.md).
 
 ## The three gates
 
@@ -18,14 +57,30 @@ network as well as inside a process.
 | Gate | What it protects | Command |
 | --- | --- | --- |
 | `archlint` | module boundaries **inside** the Go server | `cd server && go run ./tools/archlint` |
-| `__APP_NAME__.ArchitectureTests` | the three layers **inside** the WinUI client | `cd client && dotnet test` |
+| `__APP_NAME__.ArchitectureTests` | the three layers **inside** the WinUI client | `cd client && dotnet test __APP_NAME__.slnx` |
 | `buf breaking` | the contract **between** them | `buf breaking --against '.git#branch=main'` |
 
 Inside the server, a module is reachable only through its `api` package. Inside the client, a module
 is reachable only through mediator notifications. Between the two, the only thing either side may
 assume about the other is what is written in `proto/`.
 
-None of the three is optional, and all three run on every push.
+None of the three is optional, and all three run on every push. What each one refuses, and how to
+read what it prints: [`docs/gates.md`](docs/gates.md).
+
+## Remove the example
+
+The Notes module is one feature end to end — proto contract, `api/domain/store/service/rpc` on the
+server, Domain/Application/UI on the client, one page, its tests. It is there to be read and then
+deleted:
+
+```sh
+kakehashi remove module notes
+```
+
+It leaves nothing behind: both module trees, the generated code, the proto directory, the test
+projects and every line of wiring go together. Removing it leaves the frame with no feature module,
+which is exactly what `kakehashi new --bare` produces. Step by step:
+[`docs/remove-example.md`](docs/remove-example.md).
 
 ## Layout
 
@@ -88,24 +143,17 @@ mount on one `ServeMux`, behind one port and one certificate. Plain gRPC would n
 or a connection multiplexer. That it also speaks JSON, so `curl` works, is a bonus rather than the
 reason.
 
-## Getting started
-
-Prerequisites: Go 1.26+, [buf](https://buf.build/docs/installation), Docker, and the .NET 10 SDK.
-Building or running the client additionally needs Windows and the Windows App Runtime.
-
-```sh
-docker compose up -d          # SQL Server, MongoDB, and the server
-curl localhost:8080/healthz   # 200
-```
+## Testing
 
 ```pwsh
-dotnet run --project client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj -p:Platform=x64
+cd client && dotnet test __APP_NAME__.slnx
 ```
 
-The home page's Backend card should read **Connected**, and the Notes page should let you write
-one, edit it and delete it — through gRPC, into SQL Server.
+```sh
+cd server && go test ./...
+```
 
-To include the tests that talk to a running backend rather than skipping them:
+To include the client tests that talk to a running backend rather than skipping them:
 
 ```pwsh
 $env:__APP_NAME_UPPER___TEST_BACKEND = "http://localhost:8080"; dotnet test client/__APP_NAME__.slnx
@@ -125,11 +173,15 @@ credentials, and browsers will refuse to send them over plain HTTP anyway.
 
 ## Where to look first
 
+- [`docs/getting-started.md`](docs/getting-started.md) — the five minutes above, at walking pace
+- [`docs/first-module.md`](docs/first-module.md) — `add module`, then making it do something
+- [`docs/gates.md`](docs/gates.md) — the three gates, and how to read what each one prints
+- [`docs/cli.md`](docs/cli.md) — every command and flag
+- [`docs/faq.md`](docs/faq.md) — Windows only? A different database? Where does it deploy?
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — the reasoning behind the shapes
 - [`docs/CONTRACTS.md`](docs/CONTRACTS.md) — what the two halves promise each other, and how those
   promises are allowed to change
 - [`docs/RBAC.md`](docs/RBAC.md) — who may do what, to which rows, and where the scope is honoured
 - [`docs/NAVIGATION.md`](docs/NAVIGATION.md) — how the pane is arranged, and who decides what
-- [`docs/ACTIVITY.md`](docs/ACTIVITY.md) — what the feed records, the one write that comes from
-  outside, and how long it keeps things
+- [`CLAUDE.md`](CLAUDE.md) — the same rules, written for an AI agent working in this repository
 - [`CONTRIBUTING.md`](CONTRIBUTING.md) — the branching model, and how a release is cut
