@@ -1,0 +1,67 @@
+name: Bug — the template
+description: A scaffolded project does not build, a gate is wrong, or the generated code is
+labels: ["bug", "template"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Both version lines, please. The CLI and the template ship separately, and almost every
+        report that cannot be reproduced turns out to be a pair we did not have.
+
+  - type: input
+    id: template-version
+    attributes:
+      label: Template version
+      description: "The `template.version` in `.kakehashi.json`."
+      placeholder: 1.0.0
+    validations:
+      required: true
+
+  - type: input
+    id: cli-version
+    attributes:
+      label: CLI version
+      description: "`kakehashi version` — the first line."
+      placeholder: kakehashi 1.0.0
+    validations:
+      required: true
+
+  - type: dropdown
+    id: half
+    attributes:
+      label: Which half
+      options:
+        - Server (Go)
+        - Client (WinUI 3)
+        - The contract (proto / buf)
+        - Both, or the wiring between them
+    validations:
+      required: true
+
+  - type: checkboxes
+    id: scaffold
+    attributes:
+      label: How the project was made
+      options:
+        - label: "`kakehashi new` with the example module"
+        - label: "`kakehashi new --bare`"
+        - label: The "Use this template" button and the rename script
+        - label: A module added or removed afterwards
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: What to run
+      description: >-
+        The commands, from the scaffold onwards, and the output. A failing gate's whole message is
+        more useful than a summary of it.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What you expected instead
+    validations:
+      required: true

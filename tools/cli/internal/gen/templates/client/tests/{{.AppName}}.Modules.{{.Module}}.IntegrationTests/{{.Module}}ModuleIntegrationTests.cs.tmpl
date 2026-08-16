@@ -1,0 +1,132 @@
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Create{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Delete{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Update{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Queries.Get{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using Microsoft.Extensions.DependencyInjection;
+using Xunit;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.IntegrationTests;
+
+/// <summary>
+/// Exercises the {{.Module}} module the way the host does: the real mediator, real handler discovery,
+/// real validation — with the network replaced by an in-memory stand-in. The mediator is never
+/// mocked; if handler registration breaks, these fail.
+/// </summary>
+public sealed class {{.Module}}ModuleIntegrationTests
+{
+    private static ServiceProvider BuildProvider(I{{.Module}}Gateway gateway)
+    {
+        var services = new ServiceCollection();
+        services.AddLogging();
+        services.Add{{.Module}}Application();
+        services.AddSingleton(gateway);
+
+        return services.BuildServiceProvider();
+    }
+
+    [Fact]
+    public async Task CreateThenList_RoundTripsThroughTheMediator()
+    {
+        using var provider = BuildProvider(new InMemory{{.Module}}Gateway());
+        var sender = provider.GetRequiredService<ISender>();
+
+        var created = await sender.Send(new Create{{.Entity}}Command("  Shopping list  ", "milk"));
+        Assert.True(created.IsSuccess);
+        Assert.Equal("Shopping list", created.Value.Title);
+
+        var listed = await sender.Send(new Get{{.Module}}Query());
+        Assert.True(listed.IsSuccess);
+        Assert.Equal("Shopping list", Assert.Single(listed.Value).Title);
+    }
+
+    [Fact]
+    public async Task Create_BlankTitle_IsRejectedBeforeItReachesTheGateway()
+    {
+        var gateway = new InMemory{{.Module}}Gateway();
+        using var provider = BuildProvider(gateway);
+        var sender = provider.GetRequiredService<ISender>();
+
+        var result = await sender.Send(new Create{{.Entity}}Command("   ", "body"));
+
+        Assert.True(result.IsFailure);
+        Assert.Equal({{.Module}}Errors.TitleRequired, result.Error);
+
+        var listed = await sender.Send(new Get{{.Module}}Query());
+        Assert.Empty(listed.Value);
+    }
+
+    [Fact]
+    public async Task Update_RewritesThe{{.Entity}}AndMovesItToTheTop()
+    {
+        using var provider = BuildProvider(new InMemory{{.Module}}Gateway());
+        var sender = provider.GetRequiredService<ISender>();
+
+        var first = await sender.Send(new Create{{.Entity}}Command("First", string.Empty));
+        await sender.Send(new Create{{.Entity}}Command("Second", string.Empty));
+
+        var updated = await sender.Send(new Update{{.Entity}}Command(first.Value.Id, "First, edited", "new"));
+        Assert.True(updated.IsSuccess);
+
+        var listed = await sender.Send(new Get{{.Module}}Query());
+        // Newest-updated first, so the {{.Variable}} just edited leads.
+        Assert.Equal("First, edited", listed.Value[0].Title);
+        Assert.Equal("new", listed.Value[0].Body);
+    }
+
+    [Fact]
+    public async Task Delete_RemovesThe{{.Entity}}AndSucceedsOnASecondAttempt()
+    {
+        using var provider = BuildProvider(new InMemory{{.Module}}Gateway());
+        var sender = provider.GetRequiredService<ISender>();
+
+        var created = await sender.Send(new Create{{.Entity}}Command("Doomed", string.Empty));
+
+        Assert.True((await sender.Send(new Delete{{.Entity}}Command(created.Value.Id))).IsSuccess);
+        Assert.Empty((await sender.Send(new Get{{.Module}}Query())).Value);
+
+        // The contract says a delete of something already gone succeeds, so a retry after a dropped
+        // connection is safe.
+        Assert.True((await sender.Send(new Delete{{.Entity}}Command(created.Value.Id))).IsSuccess);
+    }
+
+    [Fact]
+    public async Task GatewayFailure_SurfacesAsAFailedResultRatherThanAnException()
+    {
+        var gateway = new InMemory{{.Module}}Gateway { FailEverything = true };
+        using var provider = BuildProvider(gateway);
+        var sender = provider.GetRequiredService<ISender>();
+
+        // A backend that is down is an ordinary state for a desktop app, not an exceptional one.
+        var listed = await sender.Send(new Get{{.Module}}Query());
+
+        Assert.True(listed.IsFailure);
+        Assert.Equal({{.Module}}Errors.RequestFailed, listed.Error);
+    }
+
+    [Fact]
+    public async Task EveryHandlerInTheModuleIsDiscovered()
+    {
+        // Add{{.Module}}Application scans the assembly; a handler that was added but not found would only
+        // fail at runtime, on the one screen that uses it.
+        using var provider = BuildProvider(new InMemory{{.Module}}Gateway());
+        var sender = provider.GetRequiredService<ISender>();
+
+        var created = await sender.Send(new Create{{.Entity}}Command("Title", string.Empty));
+        IReadOnlyList<object?> answers = [
+            created,
+            await sender.Send(new Update{{.Entity}}Command(created.Value.Id, "Retitled", string.Empty)),
+            await sender.Send(new Get{{.Module}}Query()),
+            await sender.Send(new Delete{{.Entity}}Command(created.Value.Id)),
+        ];
+
+        Assert.All(answers, answer => Assert.NotNull(answer));
+    }
+}

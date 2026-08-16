@@ -6,9 +6,9 @@ import (
 	"testing"
 	"time"
 
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/modules/activity/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 var occurred = time.Date(2026, time.August, 6, 9, 30, 0, 0, time.UTC)
@@ -148,7 +148,7 @@ func TestListReturnsWhatTheFeedDrawsAndKeepsTheAccountIdBack(t *testing.T) {
 		UserID:     "account-1",
 		Kind:       "SignedIn",
 		SessionID:  "session-1",
-		Device:     "Kakehashi/1.1.2 (Windows NT 10.0; Win64)",
+		Device:     "__APP_NAME__/1.1.2 (Windows NT 10.0; Win64)",
 		IPAddress:  "10.0.0.1",
 		OccurredAt: occurred,
 	}}}
@@ -163,10 +163,8 @@ func TestListReturnsWhatTheFeedDrawsAndKeepsTheAccountIdBack(t *testing.T) {
 		t.Fatalf("got %d entries, want 1", len(page.Entries))
 	}
 
-	// The row id crosses now: the reader of a row is the account that owns it, and a screen offering
-	// "copy this event" needs something to copy. The account id still does not, and activityapi.Entry
-	// has no field for it — that half is a compile-time fact rather than one a test can observe, so
-	// what this asserts is that the rest of the mapping stays complete.
+	// The row id crosses; the account id does not, and activityapi.Entry has no field for it. That
+	// half is a compile-time fact, so this asserts the rest of the mapping stays complete.
 	got := page.Entries[0]
 	if got.ID != "id-1" || got.Kind != "SignedIn" || got.SessionID != "session-1" ||
 		got.IPAddress != "10.0.0.1" || !got.OccurredAt.Equal(occurred) {

@@ -1,8 +1,8 @@
 package authz
 
 import (
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
 )
 
 // The screen this module owns.

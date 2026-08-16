@@ -8,6 +8,9 @@
 // Neither list grows because a module was added. modules() gains one line; the other changes only
 // when somebody decides to exempt a route from the permission check, which is a decision worth
 // seeing in a diff.
+//
+// The markers below — kakehashi:module-imports:begin and its kind — delimit the wiring a generator
+// writes and a removable unit takes back: docs/BOILERPLATE.md.
 package main
 
 import (
@@ -18,30 +21,33 @@ import (
 	"os/signal"
 	"syscall"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	"github.com/SekiroKenjii/kakehashi/server/internal/app/server"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/health"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/logging"
+	"__GO_MODULE__/server/internal/app"
+	"__GO_MODULE__/server/internal/app/server"
+	// kakehashi:module-imports:begin
+	"__GO_MODULE__/server/internal/modules/account"
+	// kakehashi:unit-activity:begin
+	"__GO_MODULE__/server/internal/modules/activity"
+	// kakehashi:unit-activity:end
+	"__GO_MODULE__/server/internal/modules/authz"
+	"__GO_MODULE__/server/internal/modules/health"
+	"__GO_MODULE__/server/internal/modules/navigation"
+	// kakehashi:unit-notes:begin
+	"__GO_MODULE__/server/internal/modules/notes"
+	// kakehashi:unit-notes:end
+	// kakehashi:module-imports:end
+	"__GO_MODULE__/server/internal/platform/logging"
 )
 
 func main() {
 	log := logging.FromEnv()
 
-	// The context is cancelled on SIGINT or SIGTERM, which is what a container runtime sends
-	// before it resorts to SIGKILL. Everything downstream treats cancellation as "wind up", so
-	// this one line is the whole graceful-shutdown trigger.
+	// Cancelled on SIGINT or SIGTERM, which a container runtime sends before SIGKILL. Everything
+	// downstream treats cancellation as "wind up", so this line is the whole shutdown trigger.
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
 
-	// Default signal handling is restored the moment the first signal arrives, so a second Ctrl-C
-	// during a slow shutdown kills the process. Deferring stop() alone kept the handler installed
-	// for the whole shutdown window, which swallowed exactly the signal somebody sends because the
-	// shutdown is taking too long.
+	// Default handling is restored on the first signal, so a second Ctrl-C during a slow shutdown
+	// kills the process rather than being swallowed.
 	go func() {
 		<-ctx.Done()
 		stop()
@@ -76,9 +82,8 @@ func run(ctx context.Context, log *slog.Logger) error {
 	closeCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), rt.Cfg.ShutdownTimeout)
 	defer cancel()
 
-	// Joined rather than returned separately, so a serve failure never costs the cleanup. The
-	// version this replaces returned the serve error immediately and skipped every step below it,
-	// leaking the pools and dropping the telemetry that explained the failure.
+	// Joined rather than returned separately, so a serve failure never skips the cleanup:
+	// returning early would leak the pools and drop the telemetry that explains the failure.
 	return errors.Join(serveErr, rt.Close(closeCtx))
 }
 
@@ -92,39 +97,25 @@ func run(ctx context.Context, log *slog.Logger) error {
 // A function rather than a literal inside run(), so a test can walk it without booting a server.
 func modules() []app.Module {
 	return []app.Module{
+		// kakehashi:module-registrations:begin
 		health.New(),
+		// kakehashi:unit-notes:begin
 		notes.New(),
+		// kakehashi:unit-notes:end
 		account.New(),
+		// kakehashi:unit-activity:begin
 		activity.New(),
+		// kakehashi:unit-activity:end
 		authz.New(),
 		navigation.New(),
+		// kakehashi:module-registrations:end
 	}
 }
 
 // unprotectedRouteModules are the modules permitted to serve a route whose policy checks no
-// permission. The kernel refuses at boot any route declaring Public or SignedIn from a module that
-// is not named here, giving both the module and the pattern.
+// permission. Boot refuses Public or SignedIn from any other module.
 //
-// Four, and each for a reason that would break the server without it:
-//
-//	health       a liveness probe that needs an account is not a liveness probe.
-//	account      signing in cannot require a permission you can only have after signing in, and
-//	             OpenID Connect has to answer an anonymous browser.
-//	authz        a module that answers "what may I do" cannot require permission to answer.
-//	navigation   a client cannot draw a locked door until it knows the door is there, so an account
-//	             with no grants must still be able to ask what its pane looks like.
-//
-// Each of the four also serves an administrative surface, and each of those names its own
-// permission on its own route. Being on this list buys a module permission to ASK for an
-// unprotected route, not blanket exemption — which is the difference from the list it replaces,
-// where naming a module here removed the check from every route it served, so the account module's
-// user directory was protected only by a wrapper somebody had written by hand.
-//
-// It lives here rather than as something a module declares about itself, because exemption is a
-// security decision. A module that could exempt itself would opt out by editing one line of its own
-// file — and the documented way to add a module is to copy an existing one, which is exactly how a
-// stray app.Public() travels. Named at the composition root, it is a one-line diff in the file a
-// reviewer already reads to learn what this server is made of.
-//
-// It grows per security exemption. It does not grow when a module is added.
+// It lives at the composition root because exemption is a security decision a module must not make
+// about itself, and it grows per exemption, never per added module. What earns a place, and why
+// each of the four has one: docs/adr/0001-per-route-permission-policy.md.
 var unprotectedRouteModules = []string{"health", "account", "authz", "navigation"}

@@ -4,7 +4,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 var occurred = time.Date(2026, time.August, 6, 9, 30, 0, 0, time.UTC)

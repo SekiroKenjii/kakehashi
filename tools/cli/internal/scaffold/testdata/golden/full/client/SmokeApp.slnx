@@ -1,0 +1,6 @@
+<Solution>
+  <Project Path="src/SmokeApp.App/SmokeApp.App.csproj" />
+  <!-- kakehashi:unit-example:begin -->
+  <Project Path="src/Modules/Example/SmokeApp.Modules.Example.UI/SmokeApp.Modules.Example.UI.csproj" />
+  <!-- kakehashi:unit-example:end -->
+</Solution>

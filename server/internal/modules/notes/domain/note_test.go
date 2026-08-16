@@ -5,7 +5,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 var (
@@ -52,9 +52,8 @@ func TestNewNoteAllowsAnEmptyBody(t *testing.T) {
 }
 
 func TestTitleLengthIsCountedInRunesNotBytes(t *testing.T) {
-	// Every one of these is 3 bytes in UTF-8. Counting bytes would reject a Vietnamese title at 40
-	// characters while letting an English one run to 120 — a rule that only looks correct in the
-	// language it was written in.
+	// Each is 3 bytes in UTF-8: counting bytes rejects a Vietnamese title at 40 characters while
+	// letting an English one run to 120.
 	atLimit := strings.Repeat("ế", MaxTitleLength)
 	overLimit := strings.Repeat("ế", MaxTitleLength+1)
 

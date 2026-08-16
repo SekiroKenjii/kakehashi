@@ -7,30 +7,18 @@ import (
 	"github.com/zitadel/oidc/v3/pkg/oidc"
 	"github.com/zitadel/oidc/v3/pkg/op"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/modules/account/service"
+	"__GO_MODULE__/server/internal/modules/account/store"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
-// inAppSignInHandler issues tokens from credentials posted by the app itself, with no browser involved.
+// inAppSignInHandler issues tokens from credentials posted by the app itself, with no browser
+// involved. The tokens come from the provider's own op.CreateTokenResponse, so both sign-in modes
+// issue identical tokens: docs/adr/0007-in-app-sign-in-alongside-browser-oidc.md
 //
-// # Why this exists alongside the browser flow
-//
-// Authorization Code + PKCE through the system browser is the right answer when the identity
-// provider is someone else's — Entra, Okta, Google — because the whole point is that the password
-// is typed into *their* page and this application never sees it, and because that is where SSO,
-// MFA and conditional access live.
-//
-// None of that applies when the provider is this very process. A first-party desktop client
-// talking to its own backend gains nothing from bouncing through a browser: the password crosses
-// the same trust boundary either way, and the user pays for it with a window that steals focus and
-// a loopback listener that corporate firewalls dislike. So the default is this endpoint, and the
-// browser flow stays mounted for the day the issuer becomes someone else's.
-//
-// The line to remember: **the moment Auth:Authority points at a real IdP, the client must switch
-// back to browser mode.** Entra and friends refuse password grants for most configurations
-// precisely because it defeats MFA — and they are right to.
+// The moment Auth:Authority points at an external IdP, the client must switch back to browser
+// mode — real IdPs refuse password grants because they defeat MFA.
 type inAppSignInHandler struct {
 	svc      *service.Service
 	store    *store.SQLServer
@@ -83,37 +71,28 @@ func (h *inAppSignInHandler) signIn(w http.ResponseWriter, r *http.Request) {
 		"openid", "profile", "email", "offline_access", scopeRoles,
 	}
 
-	// A synthetic authorization, already authenticated. op's token builder wants an
-	// op.IDTokenRequest, and everything it asks for is known here — which is the whole reason this
-	// endpoint is short: the token minting, signing and claim assembly are the provider's, not
-	// ours, so the two sign-in modes cannot drift into issuing different tokens.
-	//
-	// ResponseType is "code" and it is not decoration. op decides whether an exchange earns a
-	// refresh token by asking three questions of the request — offline_access in the scopes, a
-	// response type of code, and refresh_token among the client's grants — and a request that
-	// answers no to any of them gets an access token alone. Without this field the client would be
-	// back at the sign-in form every time the access token aged out, which for a desktop app is
-	// every ten minutes.
+	// A synthetic op.IDTokenRequest so the provider mints both modes' tokens the same way:
+	// docs/adr/0007-in-app-sign-in-alongside-browser-oidc.md.
 	request := &authRequest{row: domain.AuthRequest{
-		ID:           session.ID,
-		ClientID:     h.client.id,
-		Subject:      account.ID,
-		Scopes:       scopes,
+		ID:       session.ID,
+		ClientID: h.client.id,
+		Subject:  account.ID,
+		Scopes:   scopes,
+
+		// Load-bearing: op grants a refresh token only for offline_access plus a code response
+		// type plus refresh_token in the client's grants.
 		ResponseType: string(oidc.ResponseTypeCode),
 		SessionID:    session.ID,
 		Done:         true,
 		AuthTime:     time.Now(),
 	}}
 
-	// The issuer normally rides in on the context that op's own handlers build. Minting a token
-	// outside them means putting it there by hand — without it the JWT ships with no "iss" claim
-	// and every verifier, including this server's own, rejects it as not ours.
+	// op's own handlers put the issuer on the context; minting outside them means doing it by hand.
+	// Without it the JWT ships with no "iss" and every verifier rejects it, including this one.
 	ctx := op.ContextWithIssuer(r.Context(), h.issuer)
 
-	// The empty last two arguments are the authorization code and the refresh token being rotated.
-	// This flow has neither: no code was ever issued, so claiming one would put a c_hash in the ID
-	// token that hashes something the client never saw, and there is no prior refresh token
-	// because this is the first exchange.
+	// The empty arguments are the authorization code and the refresh token being rotated; this
+	// flow has neither. Claiming a code would put a c_hash over something the client never saw.
 	response, err := op.CreateTokenResponse(
 		ctx, request, h.client, h.provider, true, "", "")
 	if err != nil {

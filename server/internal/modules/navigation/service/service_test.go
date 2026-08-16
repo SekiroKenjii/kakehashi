@@ -6,11 +6,11 @@ import (
 	"testing"
 	"time"
 
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
+	"__GO_MODULE__/server/internal/modules/navigation/domain"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // A fake store rather than a real database, because every rule worth testing here is a decision
@@ -127,8 +127,8 @@ func (f *fakeStore) InsertGroup(_ context.Context, g domain.Group, _ time.Time) 
 	if _, exists := f.groups[g.ID]; exists {
 		return errs.Conflictf("The identifier %s is already taken by another heading.", g.ID)
 	}
-	// AK_NavGroup_Title: the real schema refuses two headings with the same name, and the fake used
-	// to accept them — so the conflict path was unreachable from either side of the boundary.
+	// AK_NavGroup_Title: the real schema refuses two headings with one name, so the fake must too,
+	// or the conflict path is unreachable from either side of the boundary.
 	if f.titleTaken(g.Title, g.ID) {
 		return errs.Conflictf("A navigation heading called %s already exists.", g.Title)
 	}
@@ -214,8 +214,8 @@ func (f *fakeStore) Move(_ context.Context, id, groupID string, order int, _ tim
 	if !ok {
 		return errs.NotFoundf("No navigation item with id %s.", id)
 	}
-	// FK_NavItem_NavGroup. The fake used to accept any heading id, so the real store's foreign-key
-	// failure was unreachable by any test and a test could reach a state the schema forbids.
+	// FK_NavItem_NavGroup. The fake refuses a heading id it does not hold, like the real store's
+	// foreign key, so no test can reach a state the schema forbids.
 	if groupID != "" {
 		if _, exists := f.groups[groupID]; !exists {
 			return errs.NotFoundf("No navigation heading with id %s.", groupID)
@@ -490,8 +490,8 @@ func TestDeleteGroupLeavesItsDestinationsUngrouped(t *testing.T) {
 	}
 }
 
-// A row whose destination this build no longer has. Kept, skipped when drawing, and visible on the
-// administration screen — which is the only place anybody can find out it is there.
+// A row whose destination is not part of this build. Kept, skipped when drawing, and visible on
+// the administration screen — which is the only place anybody can find out it is there.
 func TestAnOrphanIsSkippedWhenDrawnAndListedWhenManaged(t *testing.T) {
 	store := newFakeStore()
 	ctx := context.Background()

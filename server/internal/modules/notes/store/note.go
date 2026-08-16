@@ -5,8 +5,8 @@ import (
 	"database/sql"
 	"errors"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/notes/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Every query against notes.Note. One file per table is the store package's unit, and this module
@@ -58,17 +58,15 @@ func (s *SQLServer) Get(ctx context.Context, id int64) (domain.Note, error) {
 
 // Insert stores n and returns it with its assigned ID.
 func (s *SQLServer) Insert(ctx context.Context, n domain.Note) (domain.Note, error) {
-	// OUTPUT INSERTED.id rather than a follow-up SELECT: go-mssqldb does not implement
-	// LastInsertId, and OUTPUT is the answer that stays correct under concurrent inserts and
-	// triggers, which SCOPE_IDENTITY() only mostly is.
+	// OUTPUT INSERTED.id, not a follow-up SELECT: go-mssqldb has no LastInsertId, and OUTPUT stays
+	// correct under concurrent inserts and triggers where SCOPE_IDENTITY() only mostly does.
 	const q = `
         INSERT INTO notes.Note (Title, Body, CreatedAt, UpdatedAt)
         OUTPUT INSERTED.Id
         VALUES (@p1, @p2, @p3, @p4);`
 
-	// Truncated to what the column can hold, and returned that way, so the note the caller gets
-	// back is the note that is actually stored. Without this, a create answers with nanoseconds,
-	// the next read answers with milliseconds, and the timestamp appears to change on its own.
+	// Truncated to the column's precision and returned that way: otherwise a create answers in
+	// nanoseconds, the next read in milliseconds, and the timestamp appears to change by itself.
 	n.CreatedAt = storable(n.CreatedAt)
 	n.UpdatedAt = storable(n.UpdatedAt)
 

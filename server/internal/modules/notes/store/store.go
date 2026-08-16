@@ -17,9 +17,9 @@ import (
 	"errors"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/notes/domain"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // SQLServer stores notes in the shared database.
@@ -48,9 +48,8 @@ func scanNote(sc scanner) (domain.Note, error) {
 		return domain.Note{}, errs.Internalf(err, "scan note")
 	}
 
-	// DATETIME2 carries no time zone, so the driver hands back a time.Time whose location is
-	// whatever it defaulted to. We only ever write UTC, so say so rather than letting a local
-	// zone be inferred from a value that never had one.
+	// DATETIME2 carries no zone, so the driver returns whatever location it defaulted to. Only UTC
+	// is ever written, so say so rather than let a local zone be inferred.
 	n.CreatedAt = n.CreatedAt.UTC()
 	n.UpdatedAt = n.UpdatedAt.UTC()
 	return n, nil

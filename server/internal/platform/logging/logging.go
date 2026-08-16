@@ -13,11 +13,8 @@ type Options struct {
 	// than failing: a typo in an environment variable should not stop the server from starting.
 	Level string
 
-	// JSON switches to structured output.
-	//
-	// Unlike a desktop app, the default here is on. A server's logs are read by a collector far
-	// more often than by a human with a terminal, and text output that has to be re-parsed
-	// downstream loses the structure slog went to the trouble of recording.
+	// JSON switches to structured output. FromEnv defaults it to on: server logs are read by
+	// collectors more often than by people, and text output loses slog's structure.
 	JSON bool
 }
 
@@ -37,14 +34,14 @@ func New(opts Options) *slog.Logger {
 	return slog.New(h)
 }
 
-// FromEnv builds a logger from KAKEHASHI_LOG_LEVEL and KAKEHASHI_LOG_FORMAT.
+// FromEnv builds a logger from __APP_NAME_UPPER___LOG_LEVEL and __APP_NAME_UPPER___LOG_FORMAT.
 //
 // It is called before configuration is loaded, because a configuration error is the first thing
 // that needs logging.
 func FromEnv() *slog.Logger {
 	return New(Options{
-		Level: os.Getenv("KAKEHASHI_LOG_LEVEL"),
-		JSON:  !strings.EqualFold(os.Getenv("KAKEHASHI_LOG_FORMAT"), "text"),
+		Level: os.Getenv("__APP_NAME_UPPER___LOG_LEVEL"),
+		JSON:  !strings.EqualFold(os.Getenv("__APP_NAME_UPPER___LOG_FORMAT"), "text"),
 	})
 }
 

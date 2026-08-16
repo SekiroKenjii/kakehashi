@@ -11,11 +11,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	navigationv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/navigation/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/navigation/v1/navigationv1connect"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	navigationv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/navigation/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/navigation/v1/navigationv1connect"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // NewRoute builds the Connect handler for NavigationService — the caller's own pane.
@@ -40,9 +40,8 @@ func (h *handler) GetNavigation(
 	ctx context.Context, _ *connect.Request[navigationv1.GetNavigationRequest],
 ) (*connect.Response[navigationv1.GetNavigationResponse], error) {
 	if _, ok := auth.SubjectFrom(ctx); !ok {
-		// Unauthenticated rather than the pane an anonymous caller would get. An account that may
-		// reach nothing and an expired token draw the same empty pane and mean opposite things; only
-		// one of them is fixed by signing in again.
+		// Unauthenticated rather than the pane an anonymous caller would get: reaching nothing and an
+		// expired token draw the same empty pane, and only one is fixed by signing in again.
 		return nil, errs.Unauthenticatedf("Sign in to see your navigation.")
 	}
 

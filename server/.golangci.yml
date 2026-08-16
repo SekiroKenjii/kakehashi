@@ -1,0 +1,19 @@
+version: "2"
+
+# Comment-convention enforcement only (docs/COMMENTS.md). Build, vet, tests, formatting and
+# architecture each have their own gate; this one checks that exported identifiers and packages
+# carry godoc-shaped comments.
+linters:
+  default: none
+  enable:
+    - revive
+  settings:
+    revive:
+      rules:
+        # Methods on unexported types (the rpc handlers) are not checked: they implement generated
+        # interfaces, and a doc there could only restate the signature.
+        - name: exported
+        - name: package-comments
+  exclusions:
+    paths:
+      - internal/gen

@@ -2,30 +2,24 @@
 //
 // The variables, in one place:
 //
-//	KAKEHASHI_ADDR                  listen address, default :8080
-//	KAKEHASHI_PUBLIC_URL            externally reachable origin; becomes the OIDC issuer
-//	KAKEHASHI_SHUTDOWN_TIMEOUT      how long modules get to stop, default 15s
-//	KAKEHASHI_SQLSERVER_DSN         required
-//	KAKEHASHI_SQLSERVER_MAX_OPEN_CONNS
-//	KAKEHASHI_MONGO_URI             required
-//	KAKEHASHI_MONGO_DATABASE
-//	KAKEHASHI_LOG_LEVEL             debug|info|warn|error
-//	KAKEHASHI_LOG_FORMAT            text to turn off JSON logging
-//	KAKEHASHI_TELEMETRY_ENABLED     false to keep OpenTelemetry off entirely
+//	__APP_NAME_UPPER___ADDR                  listen address, default :8080
+//	__APP_NAME_UPPER___PUBLIC_URL            externally reachable origin; becomes the OIDC issuer
+//	__APP_NAME_UPPER___SHUTDOWN_TIMEOUT      how long modules get to stop, default 15s
+//	__APP_NAME_UPPER___SQLSERVER_DSN         required
+//	__APP_NAME_UPPER___SQLSERVER_MAX_OPEN_CONNS
+//	__APP_NAME_UPPER___MONGO_URI             required
+//	__APP_NAME_UPPER___MONGO_DATABASE
+//	__APP_NAME_UPPER___LOG_LEVEL             debug|info|warn|error
+//	__APP_NAME_UPPER___LOG_FORMAT            text to turn off JSON logging
+//	__APP_NAME_UPPER___TELEMETRY_ENABLED     false to keep OpenTelemetry off entirely
 //	OTEL_SERVICE_NAME               standard, not prefixed
 //	OTEL_EXPORTER_OTLP_ENDPOINT     standard; absent means telemetry stays off
 //
-// Modules add their own under KAKEHASHI_<MODULE>_*; see Config.Module.
+// Modules add their own under __APP_NAME_UPPER___<MODULE>_*; see Config.Module.
 //
-// Environment variables rather than a file, because that is what every place this is likely to run
-// already speaks: docker compose, a systemd unit, a Kubernetes secret. A file would need a path,
-// which would need an environment variable anyway, and would then have to be mounted into the
-// container the config was meant to configure.
-//
-// Everything the server reads is prefixed KAKEHASHI_, with two deliberate exceptions:
+// Everything the server reads is prefixed __APP_NAME_UPPER___, with two deliberate exceptions:
 // OTEL_SERVICE_NAME and OTEL_EXPORTER_OTLP_ENDPOINT are spelled the way the OpenTelemetry
-// specification spells them. Renaming standard variables to match a house style is how you end up
-// with a collector that silently exports nothing because the operator set the name they knew.
+// specification spells them, so operators and collectors that know the standard names find them.
 package config
 
 import (
@@ -38,7 +32,7 @@ import (
 )
 
 // EnvPrefix namespaces every variable this server owns.
-const EnvPrefix = "KAKEHASHI_"
+const EnvPrefix = "__APP_NAME_UPPER___"
 
 // Config is the process-wide configuration, resolved once at boot.
 type Config struct {
@@ -47,9 +41,9 @@ type Config struct {
 
 	// PublicURL is the externally reachable origin, e.g. "https://api.example.com".
 	//
-	// It is not cosmetic. It becomes the OpenID Connect issuer, and an issuer that does not match
-	// what the client dialled is rejected by every conforming client, including this project's.
-	// Behind a reverse proxy it is the proxy's address, not the container's.
+	// It becomes the OpenID Connect issuer, and an issuer that does not match what the client
+	// dialled is rejected by every conforming client, including this project's. Behind a reverse
+	// proxy it is the proxy's address, not the container's.
 	PublicURL string
 
 	// ShutdownTimeout bounds how long modules get to stop cleanly before the process exits anyway.
@@ -63,11 +57,10 @@ type Config struct {
 // SQLServer configures the transactional store.
 type SQLServer struct {
 	// DSN is a go-mssqldb connection URL, e.g.
-	// "sqlserver://sa:pass@localhost:1433?database=kakehashi".
+	// "sqlserver://sa:pass@localhost:1433?database=__APP_NAME_LOWER__".
 	DSN string
 
-	// MaxOpenConns caps the pool. Unlike the desktop original, which pinned it to one connection
-	// because SQLite serialises writes anyway, a server has real concurrency to serve.
+	// MaxOpenConns caps the pool. Load rejects values below one.
 	MaxOpenConns int
 }
 
@@ -84,21 +77,16 @@ type Telemetry struct {
 
 	// Enabled reports whether traces and metrics are exported.
 	//
-	// Off unless an OTLP endpoint is configured, and forced off by KAKEHASHI_TELEMETRY_ENABLED=false
-	// whatever else is set — which is the switch to reach for when a collector is running for
-	// something else on the same machine and you want this server to stay out of it. With it off
-	// the server keeps logging to the console exactly as before; nothing else changes.
+	// Off unless an OTLP endpoint is configured, and forced off by __APP_NAME_UPPER___TELEMETRY_ENABLED=false
+	// whatever else is set. Console logging is unaffected either way.
 	//
-	// The endpoint itself is not stored: the OTLP exporters read that variable themselves, along
-	// with the headers, protocol and timeout variables that go with it. Parsing it here would mean
-	// reimplementing that whole family, slightly differently.
+	// The endpoint itself is not stored: the OTLP exporters read OTEL_EXPORTER_OTLP_ENDPOINT
+	// themselves, along with the headers, protocol and timeout variables that go with it.
 	Enabled bool
 }
 
-// Load reads the configuration, reporting every problem at once.
-//
-// Every problem, not the first: a fresh deployment usually has several variables missing, and
-// finding them one restart at a time is a waste of everybody's afternoon.
+// Load reads the configuration, reporting every problem at once rather than the first: a fresh
+// deployment usually has several variables missing.
 func Load() (*Config, error) {
 	l := &loader{}
 
@@ -114,20 +102,19 @@ func Load() (*Config, error) {
 
 		Mongo: Mongo{
 			URI:      l.required(EnvPrefix + "MONGO_URI"),
-			Database: l.str(EnvPrefix+"MONGO_DATABASE", "kakehashi"),
+			Database: l.str(EnvPrefix+"MONGO_DATABASE", "__APP_NAME_LOWER__"),
 		},
 
 		Telemetry: Telemetry{
-			ServiceName: l.str("OTEL_SERVICE_NAME", "kakehashi-server"),
+			ServiceName: l.str("OTEL_SERVICE_NAME", "__APP_NAME_LOWER__-server"),
 			Enabled: l.boolean(EnvPrefix+"TELEMETRY_ENABLED", true) &&
 				os.Getenv("OTEL_EXPORTER_OTLP_ENDPOINT") != "",
 		},
 	}
 
 	if c.SQLServer.MaxOpenConns <= 0 {
-		// Not clamped to a default, because a number somebody wrote means something to them.
-		// database/sql reads zero as "unlimited", which is the opposite of what a person setting a
-		// pool size to zero expects, and a negative is not a size at all.
+		// Rejected rather than clamped: database/sql reads zero as "unlimited", the opposite of
+		// what a pool size of zero intends, and a negative is not a size at all.
 		l.problems = append(l.problems, fmt.Errorf(
 			"%sSQLSERVER_MAX_OPEN_CONNS must be greater than zero, got %d",
 			EnvPrefix, c.SQLServer.MaxOpenConns))
@@ -141,7 +128,7 @@ func Load() (*Config, error) {
 
 // Module returns a module's namespaced view of the environment.
 //
-// A module with ID "notes" reading key "PAGE_SIZE" gets KAKEHASHI_NOTES_PAGE_SIZE. The namespace
+// A module with ID "notes" reading key "PAGE_SIZE" gets __APP_NAME_UPPER___NOTES_PAGE_SIZE. The namespace
 // is the module ID for the same reason its tables are prefixed with it: two modules must not be
 // able to collide on a name, and the ID is the one identifier that is already unique.
 //

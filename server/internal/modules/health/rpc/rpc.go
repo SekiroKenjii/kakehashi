@@ -15,9 +15,9 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	healthv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/health/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/health/v1/healthv1connect"
-	healthapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/health/api"
+	healthv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/health/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/health/v1/healthv1connect"
+	healthapi "__GO_MODULE__/server/internal/modules/health/api"
 )
 
 // NewRoute builds the Connect handler for HealthService.
@@ -53,9 +53,8 @@ func (h *handler) Ping(
 ) (*connect.Response[healthv1.PingResponse], error) {
 	status, err := h.svc.Ping(ctx, req.Msg.GetMessage())
 	if err != nil {
-		// Returned bare. The interceptor in platform/rpc decides the status code and what the
-		// caller is allowed to read; doing it here would mean doing it differently in every
-		// handler.
+		// Returned bare: the interceptor in platform/rpc decides the status code and what the caller
+		// may read, which every handler would otherwise decide differently.
 		return nil, err
 	}
 

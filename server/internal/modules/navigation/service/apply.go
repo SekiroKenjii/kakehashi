@@ -4,20 +4,14 @@ import (
 	"context"
 	"strings"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/navigation/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
-// Applying a whole arrangement at once.
-//
-// The rest of admin.go changes one row per call, which is what a screen needed when every edit was
-// written the moment it was made. One gesture now produces several changes — dragging a screen into
-// another heading renumbers what it landed among — and a sequence of single-row calls cannot fail
-// halfway without leaving the pane half-rearranged.
-//
-// Everything here validates before anything writes. That ordering is the feature: a refusal leaves
-// the stored layout exactly as it was, so an administrator who mistyped one heading has not silently
-// half-applied the other eleven changes.
+// Applying a whole arrangement at once: staged on the client, applied in one atomic call —
+// docs/adr/0004-staged-edits-atomic-apply.md. The whole arrangement is validated before any row is
+// written — one transaction, one cache invalidation — so a refusal leaves the stored layout
+// exactly as it was.
 
 // GroupSpec is a heading as an administrator wants it. An empty ID means "create it".
 type GroupSpec struct {
@@ -116,9 +110,8 @@ func (s *Service) planGroups(
 		}
 		wanted[group.ID] = struct{}{}
 
-		// Titles are unique in the database, so a collision would surface as a conflict from the
-		// middle of a transaction naming one row. Caught here it names both, before anything is
-		// written. Compared case-insensitively because the database's collation is.
+		// Titles are unique in the database, so a collision caught here names both rows before
+		// anything is written. Compared case-insensitively because the collation is.
 		folded := strings.ToLower(group.Title)
 		if other, clash := titles[folded]; clash {
 			return nil, ApplyOutcome{}, errs.Invalidf(
@@ -165,9 +158,8 @@ func (s *Service) planGroups(
 func (s *Service) planItems(
 	specs []ItemSpec, stored *layout, plan *domain.LayoutPlan, outcome *ApplyOutcome,
 ) error {
-	// The headings this arrangement will end with, which is what an item may be placed under — not
-	// the ones stored now. A screen that creates a heading and drops a destination into it in one
-	// gesture is the ordinary case, and checking against the stored set would refuse it.
+	// The headings this arrangement will END with, not the ones stored now: creating a heading and
+	// dropping a destination into it in one gesture is the ordinary case.
 	available := make(map[string]struct{}, len(plan.CreateGroups)+len(stored.groups))
 	for _, g := range plan.CreateGroups {
 		available[g.ID] = struct{}{}
@@ -179,11 +171,8 @@ func (s *Service) planItems(
 		available[g.ID] = struct{}{}
 	}
 
-	// Headings on their way out, kept separately rather than removed from available. An item still
-	// pointing at one is not an error: the schema ungroups whatever was under a deleted heading, and
-	// the single-row DeleteGroup relies on exactly that. Refusing here would make the two ways of
-	// deleting a heading disagree about what happens to its contents, and a screen would have to
-	// renumber every affected row to say something the server already knows.
+	// Headings on their way out, kept separately rather than removed from available: the schema
+	// ungroups whatever was under a deleted heading, and single-row DeleteGroup relies on that.
 	deleting := make(map[string]struct{}, len(plan.DeleteGroups))
 	for _, id := range plan.DeleteGroups {
 		delete(available, id)
@@ -204,10 +193,8 @@ func (s *Service) planItems(
 
 		groupID := spec.GroupID
 		if groupID != "" {
-			// Validated in Go before the write, because the database is more forgiving than the pane:
-			// SQL Server compares case-insensitively, so the foreign key accepts "Administration" for
-			// the heading whose id is "administration" — and then Build, which matches exactly, finds
-			// no such heading and drops the destination out of every pane it belonged in.
+			// Validated in Go before the write: SQL Server compares case-insensitively, so the foreign
+			// key accepts "Administration" where Build, matching exactly, then finds no such heading.
 			if err := domain.ValidateSlug(groupID); err != nil {
 				return err
 			}
@@ -220,9 +207,8 @@ func (s *Service) planItems(
 		}
 
 		if !spec.IsVisible {
-			// The one hide that cannot be undone: Build skips an invisible destination before it
-			// checks anything, so hiding the screen that manages the pane removes the only surface
-			// that could unhide it, from every client at once.
+			// The one hide that cannot be undone: Build skips an invisible destination, so hiding the
+			// layout screen removes the only surface that could unhide it, on every client at once.
 			if d, declared := s.byID[spec.ID]; declared && d.HideWhenDenied {
 				return errs.Invalidf(
 					"%s is shown only to accounts that hold its permission, so it cannot also be "+

@@ -6,8 +6,8 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The catalogue. Reconciled at boot from what the modules declare rather than typed in by hand: a

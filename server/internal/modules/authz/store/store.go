@@ -11,8 +11,8 @@ import (
 	"context"
 	"database/sql"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // SQLServer stores authorization state in the shared database.

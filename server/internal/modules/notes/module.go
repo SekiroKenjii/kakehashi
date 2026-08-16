@@ -14,11 +14,11 @@
 package notes
 
 import (
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	notesapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/store"
+	"__GO_MODULE__/server/internal/app"
+	notesapi "__GO_MODULE__/server/internal/modules/notes/api"
+	"__GO_MODULE__/server/internal/modules/notes/rpc"
+	"__GO_MODULE__/server/internal/modules/notes/service"
+	"__GO_MODULE__/server/internal/modules/notes/store"
 )
 
 // Module is the notes feature.

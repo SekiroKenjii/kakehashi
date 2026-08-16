@@ -1,0 +1,35 @@
+{
+    "version": "__VERSION__",
+    "description": "Scaffold a WinUI 3 client and a Go server in one repository, with three architecture gates.",
+    "homepage": "https://github.com/SekiroKenjii/kakehashi",
+    "license": "MIT",
+    "architecture": {
+        "64bit": {
+            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v__VERSION__/kakehashi___VERSION___Windows_amd64.zip",
+            "hash": "__SHA256_WINDOWS_AMD64__"
+        },
+        "arm64": {
+            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v__VERSION__/kakehashi___VERSION___Windows_arm64.zip",
+            "hash": "__SHA256_WINDOWS_ARM64__"
+        }
+    },
+    "bin": "kakehashi.exe",
+    "checkver": {
+        "url": "https://api.github.com/repos/SekiroKenjii/kakehashi/releases",
+        "jsonpath": "$..tag_name",
+        "regex": "cli/v([\\d.]+)"
+    },
+    "autoupdate": {
+        "architecture": {
+            "64bit": {
+                "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v$version/kakehashi_$version_Windows_amd64.zip"
+            },
+            "arm64": {
+                "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v$version/kakehashi_$version_Windows_arm64.zip"
+            }
+        },
+        "hash": {
+            "url": "https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v$version/checksums.txt"
+        }
+    }
+}

@@ -1,18 +1,6 @@
 // Package account makes the server its own OpenID Connect provider, and serves the account
-// management around it.
-//
-// The module's layers:
-//
-//	api/      the contract: the account DTOs, the Service surface, the security-event kinds.
-//	domain/   Account and its invariants; password hashing lives behind it.
-//	store/    persistence, in the account schema. Owns the provider's state too.
-//	service/  the use cases: authenticate, sessions, profile, audit trail.
-//	rpc/      the wire: the OIDC provider, the sign-in pages, the /account endpoints,
-//	          and the auth.Verifier the rest of the server authenticates with.
-//	module.go the wiring below.
-//
-// It is the one place in the repository allowed to import an OpenID Connect library, and
-// tools/archlint enforces that.
+// management around it. It is the one place in the repository allowed to import an OpenID Connect
+// library, and tools/archlint enforces that.
 package account
 
 import (
@@ -23,14 +11,14 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/app"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/modules/account/rpc"
+	"__GO_MODULE__/server/internal/modules/account/service"
+	"__GO_MODULE__/server/internal/modules/account/store"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Module is the account feature: identity, sessions, and the OpenID Connect provider.
@@ -43,7 +31,7 @@ type Module struct {
 // New returns the module, ready to be mounted on the kernel.
 func New() *Module { return &Module{} }
 
-// ID namespaces the module's schema (account.*) and its configuration keys (KAKEHASHI_ACCOUNT_*).
+// ID namespaces the module's schema (account.*) and its configuration keys (__APP_NAME_UPPER___ACCOUNT_*).
 // It is "account" rather than "identity" because the ID doubles as the SQL schema name, and
 // IDENTITY is a reserved word in T-SQL.
 func (m *Module) ID() string { return "account" }
@@ -74,7 +62,7 @@ func (m *Module) Start(ctx context.Context, k *app.Kernel) error {
 	section := k.Cfg.Module(m.ID())
 	options := rpc.Options{
 		Issuer:   k.Cfg.PublicURL,
-		ClientID: section.String("CLIENT_ID", "kakehashi-desktop"),
+		ClientID: section.String("CLIENT_ID", "__APP_NAME_LOWER__-desktop"),
 		RedirectURIs: splitList(
 			section.String("REDIRECT_URIS", "http://127.0.0.1:8765/")),
 		CryptoSecret:   section.String("CRYPTO_SECRET", ""),
@@ -91,9 +79,9 @@ func (m *Module) Start(ctx context.Context, k *app.Kernel) error {
 	if options.CryptoSecret == "" {
 		// Boot anyway, loudly: a dev stack works with a fixed secret, a production deployment
 		// must set its own. Refusing to start would make the boilerplate unrunnable on clone.
-		options.CryptoSecret = "kakehashi-dev-crypto-secret"
+		options.CryptoSecret = "__APP_NAME_LOWER__-dev-crypto-secret"
 		k.Log.WarnContext(ctx,
-			"KAKEHASHI_ACCOUNT_CRYPTO_SECRET is not set; using the development default. "+
+			"__APP_NAME_UPPER___ACCOUNT_CRYPTO_SECRET is not set; using the development default. "+
 				"Set it before exposing this server to anything.")
 	}
 
@@ -132,11 +120,8 @@ func (m *Module) Routes(k *app.Kernel) []app.Route {
 	out := make([]app.Route, 0, len(m.wire.Routes)+1)
 	out = append(out, m.wire.Routes...)
 
-	// The administrative surface, and the reason the policy lives on the route rather than in a
-	// wrapper here. This used to be auth.RequirePermission(...) written by hand around the handler,
-	// which meant deleting one call — or adding a second admin route and forgetting it — opened the
-	// whole user directory to any signed-in caller, with nothing to catch it. Stated as a policy,
-	// the mux applies it and the kernel refuses to boot a route that states nothing.
+	// The administrative surface. The policy lives on the route: the mux applies it and the kernel
+	// refuses to boot a route that states nothing. docs/adr/0001-per-route-permission-policy.md
 	return append(out, app.Route{
 		Pattern: pattern,
 		Handler: handler,

@@ -67,14 +67,15 @@ recognise returns nothing rather than everything. The route gate has already est
 caller holds the permission; if the store cannot tell how far it reaches, the safe answer is the
 smaller one.
 
-The narrowing lives in the store rather than the gate for the reason `auth.ScopeOf`'s own comment
-gives: a gate that rewrote everyone's SQL would have to understand everyone's schema, while a store
-narrowing its own query only has to understand its own.
+The narrowing lives in the store rather than the gate: a gate that rewrote everyone's SQL would
+have to understand everyone's schema, while a store narrowing its own query only has to understand
+its own.
 
 **One trap, written down because it cost a live debugging session.** The three scope names do not
 sort the way they rank — alphabetically `all` < `own` < `team`, so `MAX(Scope)` over the column
 picks the *narrowest*. The fold is done on an explicit `CASE` rank instead, and
-`platform/auth/scope_order_test.go` exists solely to fail if somebody puts `MAX` back.
+`platform/auth/scope_order_test.go` exists solely to fail if somebody puts `MAX` back. The defect
+and the decision are recorded in [ADR 0005](adr/0005-scope-order-is-not-string-order.md).
 
 ## Enforcement
 
@@ -130,7 +131,7 @@ and gives the audit log eight entries for one act.
 
 ## What shipped
 
-The contract is `proto/kakehashi/authz/v1/authz.proto` plus `proto/kakehashi/account/v1/account.proto`,
+The contract is `proto/__APP_NAME_LOWER__/authz/v1/authz.proto` plus `proto/__APP_NAME_LOWER__/account/v1/account.proto`,
 and the split between them is the module boundary: the account module owns people, the authorization
 module owns what they may do. Nothing carries a copy of the other's fact, so the two cannot
 disagree — the users screen calls both and joins by id.
@@ -175,7 +176,7 @@ decide that, not a caller.
 An administrator could switch `roles.manage` off on the role they themselves held, press Save, and
 be refused by their very next request — including every request the screen that did it makes. There
 is no way back through the product: putting it back needs the permission that was just removed. The
-only recovery is `KAKEHASHI_AUTHZ_BOOTSTRAP_ADMIN`, i.e. a redeploy.
+only recovery is `__APP_NAME_UPPER___AUTHZ_BOOTSTRAP_ADMIN`, i.e. a redeploy.
 
 `Service.ensureActorKeepsControl` now refuses it, and refuses the two other routes to the same
 place: deleting a role that is the actor's only source of `roles.manage`, and unassigning it from

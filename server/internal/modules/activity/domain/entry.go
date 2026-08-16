@@ -1,37 +1,26 @@
-// Package domain holds the activity module's one record type and the three rules it enforces.
+// Package domain holds the activity module's one record type and the rules it enforces.
 //
-// Entry is an append-only record, not an aggregate root: written once, never changed. There is no
-// method here that mutates one and the store has no update statement. The account module's
-// domain/doc.go makes the same ruling about its SecurityEvent, and it is true of Entry clause for
-// clause.
+// Entry is an append-only record, not an aggregate root: written once, never changed. No method
+// here mutates one and the store has no update statement. Append-only is not the same as
+// permanent: an entry is never edited or deleted by anything this code calls, but it expires, on
+// a schedule Mongo runs, once it is older than Retention.
 //
-// Append-only is not the same as permanent, and the distinction arrived with Retention below. An
-// entry is never edited and never deleted by anything this code calls; it expires, on a schedule
-// Mongo runs, once it is older than Retention. Nobody can rewrite history — history simply stops
-// going back forever, which is what the screen means when it says how far it goes.
-//
-// This module therefore has zero aggregate roots and one record type, which is why there is no
-// doc.go — that appears once a package has more than one root to name.
-//
-// The consequence worth stating: no transaction, ever, anywhere in this module. That is the
-// premise rather than a simplification. The moment a use case here needs two writes to succeed
-// together, it does not belong in activity, or it does not belong in Mongo.
+// There is no transaction anywhere in this module, as a premise rather than a simplification: a
+// use case that needs two writes to succeed together does not belong in activity, or does not
+// belong in Mongo.
 package domain
 
 import (
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Retention is how long an entry is kept before the store deletes it.
 //
-// A rule about the record rather than about the storage, which is why it is here and not in store/ —
-// the store implements it with a TTL index, but "ninety days" is a decision about how long somebody
-// can look back, and the only reason the number lives in one place is so the index and the number
-// the screen reports cannot come to disagree.
-//
-// It is also this module's first deletion of anything. See the note on Entry below.
+// It is here rather than in store/ because "ninety days" is a rule about how long somebody can
+// look back; the store implements it with a TTL index, and one constant keeps the index and the
+// number the screen reports from disagreeing.
 const Retention = 90 * 24 * time.Hour
 
 // Entry is one recorded fact about an account.

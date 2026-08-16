@@ -14,7 +14,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // MaxRoleName is the longest a role's name may be, matching the column it is stored in.
@@ -64,10 +64,8 @@ func NewRole(id, name, description string, isSystem bool) (Role, error) {
 	if trimmed == "" {
 		return Role{}, errs.Invalidf("A role needs a name.")
 	}
-	// Runes, not bytes. len() counts UTF-8 bytes, so "Quản trị hệ thống nhân sự" — twenty-five
-	// characters — measured well over the limit and was refused with a message about characters.
-	// The column is nvarchar(64), which counts UTF-16 units, so runes are the closer of the two and
-	// the one the message means.
+	// Runes, not bytes: len() counts UTF-8, so a Vietnamese name would measure over the limit and
+	// be refused with a message about characters. nvarchar(64) counts UTF-16, so runes are closer.
 	if utf8.RuneCountInString(trimmed) > MaxRoleName {
 		return Role{}, errs.Invalidf("A role name is limited to %d characters.", MaxRoleName)
 	}
@@ -131,8 +129,7 @@ func (r *Role) Revoke(permissionKey string) {
 
 // CanDelete reports whether this role may be removed.
 //
-// Returned as a Result-shaped error rather than a bool so the refusal carries its reason to the
-// screen: "you cannot delete this" without saying why is the least useful sentence in software.
+// Returned as an error rather than a bool so the refusal carries its reason to the screen.
 func (r Role) CanDelete() error {
 	if r.IsSystem {
 		return errs.Invalidf("%q ships with the product and cannot be deleted.", r.Name)

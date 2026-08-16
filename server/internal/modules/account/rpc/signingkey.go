@@ -13,14 +13,13 @@ import (
 	"github.com/google/uuid"
 	"github.com/zitadel/oidc/v3/pkg/op"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/modules/account/store"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The provider's token-signing key: minted on first boot, parsed on every boot after, and
-// presented in the two shapes op asks for. One unit, because a key that cannot be presented is
-// not a key — which is why the adapters and the bootstrap were never really two things.
+// presented in the two shapes op asks for.
 
 // signingKey is the provider's private key, loaded from the store.
 type signingKey struct {

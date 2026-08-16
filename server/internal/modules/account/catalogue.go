@@ -1,8 +1,8 @@
 package account
 
 import (
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
 )
 
 // The permissions this module enforces in its own handlers.
@@ -22,10 +22,8 @@ func (m *Module) Permissions() []authzapi.Permission {
 			Category:    "Administration",
 			IsHighRisk:  true,
 
-			// The one permission in this build whose row scope is real: Accounts narrows on it.
-			// own sees only yourself, team sees the accounts sharing your TeamId, all sees every
-			// account. The column has existed since the schema was written — its migration comment
-			// says "TeamId is what the 'team' row scope means" — and until now nothing read it.
+			// The one permission whose row scope is real: Accounts narrows on it — own is
+			// yourself, team shares your TeamId, all is every account.
 			IsScoped: true,
 		},
 	}

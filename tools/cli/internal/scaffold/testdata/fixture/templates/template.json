@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "templateVersion": "1.9.9",
+  "requiresCli": ">=1.1.0",
+  "markersSchema": 1,
+  "unitsSchema": 1,
+  "units": "templates/units",
+  "exampleUnits": ["example"],
+  "exclude": [
+    "TEMPLATE-ONLY.md",
+    "templates/template.json"
+  ],
+  "excludeLines": [
+    { "file": "docs/index.md", "match": ["TEMPLATE-ONLY"] }
+  ],
+  "move": [
+    { "from": "templates/README.scaffold.md", "to": "README.md" }
+  ],
+  "auth": {
+    "file": "client/src/__APP_NAME__.App/appsettings.json",
+    "path": ["Auth", "Mode"],
+    "modes": { "inapp": "InApp", "browser": "Browser" }
+  }
+}

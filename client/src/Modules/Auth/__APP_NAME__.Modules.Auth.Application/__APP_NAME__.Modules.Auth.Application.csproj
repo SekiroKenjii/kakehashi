@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>__ROOT_NAMESPACE__.Modules.Auth.Application</RootNamespace>
+    <AssemblyName>__APP_NAME__.Modules.Auth.Application</AssemblyName>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.Application.Abstractions\__APP_NAME__.Application.Abstractions.csproj" />
+    <ProjectReference Include="..\..\..\Shared\__APP_NAME__.Mediator\__APP_NAME__.Mediator.csproj" />
+    <ProjectReference Include="..\__APP_NAME__.Modules.Auth.Domain\__APP_NAME__.Modules.Auth.Domain.csproj" />
+  </ItemGroup>
+
+</Project>

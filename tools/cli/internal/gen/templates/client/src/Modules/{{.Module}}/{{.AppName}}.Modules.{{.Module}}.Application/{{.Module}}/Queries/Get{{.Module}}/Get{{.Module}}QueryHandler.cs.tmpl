@@ -1,0 +1,32 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Queries.Get{{.Module}};
+
+public sealed class Get{{.Module}}QueryHandler
+    : IRequestHandler<Get{{.Module}}Query, Result<IReadOnlyList<{{.Entity}}Dto>>>
+{
+    private readonly I{{.Module}}Gateway _{{.ID}};
+
+    public Get{{.Module}}QueryHandler(I{{.Module}}Gateway {{.ID}})
+    {
+        ArgumentNullException.ThrowIfNull({{.ID}});
+        _{{.ID}} = {{.ID}};
+    }
+
+    /// <summary>Returns every {{.Variable}}.</summary>
+    /// <remarks>
+    /// A pass-through kept on purpose: view models call this rather than the gateway, so
+    /// client-side sorting, filtering or merging has a home that costs no caller a change.
+    /// </remarks>
+    public Task<Result<IReadOnlyList<{{.Entity}}Dto>>> Handle(
+        Get{{.Module}}Query request, CancellationToken cancellationToken)
+    {
+        return _{{.ID}}.ListAsync(cancellationToken);
+    }
+}

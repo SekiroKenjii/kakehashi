@@ -1,11 +1,11 @@
-# Kakehashi — Claude Instructions
+# __APP_TITLE__ — Claude Instructions
 
 A WinUI 3 client and a Go backend in one repository, joined by contracts the build enforces. Both
 halves are modular monoliths. Read `docs/ARCHITECTURE.md` before making a structural change.
 
 ## How to work — agent behavior
 
-> These four rules address the most common LLM coding mistakes.
+> These five rules address the most common LLM coding mistakes.
 > They override any instinct to be thorough, helpful, or proactive beyond the request.
 
 **Tradeoff:** These bias toward caution over speed. Use judgment for trivial one-line fixes.
@@ -43,13 +43,22 @@ Touch only what the request requires.
 
 - Do not improve adjacent code, comments, imports, or doc comments.
 - Do not refactor things that are not broken.
-- Match existing style exactly — Google C# in `client/`, gofmt in `server/`.
+- Match existing style exactly — C# in `client/`, gofmt in `server/`.
 - If you notice pre-existing dead code or a style issue, **mention it — do not fix it silently**.
 
 **Your orphans are your responsibility:** remove imports, variables, handlers and registrations that
 *your* change made unused. Leave pre-existing dead code alone unless asked.
 
-### 4. Verifiable execution
+### 4. Comments — [docs/COMMENTS.md](docs/COMMENTS.md) is the law
+
+> **Comments.** State facts, not narrative. Present tense, current code only — history belongs in
+> the PR or an ADR. No doc comment on a member whose name already says everything. A comment block
+> over 6 lines belongs in docs/adr/. Never quote an old comment inside a new one.
+
+When you touch a file for another reason, comments inside your change conform to the convention;
+leave the rest alone.
+
+### 5. Verifiable execution
 
 Define success before writing code. For multi-step tasks, state the plan first:
 
@@ -71,9 +80,9 @@ cd server && go build ./... && go test ./... && go vet ./... && go run ./tools/a
 ```pwsh
 # Client
 cd client
-dotnet build Kakehashi.slnx                                       # zero errors, zero warnings
-dotnet test  Kakehashi.slnx                                       # all suites incl. architecture
-dotnet format Kakehashi.slnx --verify-no-changes --severity warn  # no formatting drift
+dotnet build __APP_NAME__.slnx                                       # zero errors, zero warnings
+dotnet test  __APP_NAME__.slnx                                       # all suites incl. architecture
+dotnet format __APP_NAME__.slnx --verify-no-changes --severity warn  # no formatting drift
 ```
 
 ---
@@ -92,8 +101,54 @@ docs/           ARCHITECTURE.md, CONTRACTS.md, RBAC.md, NAVIGATION.md
 | Gate | Protects | Never skip because |
 | --- | --- | --- |
 | `archlint` | server module boundaries | it is the only thing standing between "modular monolith" and "monolith with directories in it" |
-| `Kakehashi.ArchitectureTests` | client layering | same, for the other half |
+| `__APP_NAME__.ArchitectureTests` | client layering | same, for the other half |
 | `buf breaking` | the wire contract | a desktop client runs the version the user installed, for as long as they like |
+
+---
+
+## Branching — Gitflow, and `main` is protected
+
+**Never commit to `main`, and never push to it.** It refuses both, and so does `development`.
+
+| Branch | Cut from | Merges into |
+| --- | --- | --- |
+| `feature/…`, `bugfix/…` | `development` | `development` |
+| `release/…` | `development` | `main` **and** `development` |
+| `hotfix/…` | `main` | `main` **and** `development` |
+
+`development` is the integration branch and `main` holds what has been released, tagged `vX.Y.Z`.
+Everything lands through a pull request whose CI is green. A release or hotfix goes back into
+`development` as well — a fix that ships and then reappears in the next release is what that second
+merge prevents.
+
+Full walkthrough, including the release and hotfix sequences: [CONTRIBUTING.md](CONTRIBUTING.md).
+
+### Commit messages — Conventional Commits, no exceptions
+
+**Every commit subject starts with a type and a colon.** This is not a preference, it is what the
+history already is, and a subject without one has to be rewritten by hand afterwards.
+
+```text
+<type>: <subject in the imperative, lower case, no full stop>
+
+<body: why, not what. Wrap at 72 columns.>
+```
+
+| Type | For |
+| --- | --- |
+| `feat` | a capability the product did not have |
+| `fix` | a defect somebody could hit |
+| `refactor` | the behaviour is identical and the code is not |
+| `docs` | documentation, comments, README, the docs/ tree |
+| `test` | tests only |
+| `chore` | tooling, scripts, dependencies, repository plumbing |
+| `ci` | the workflow files |
+
+Scope is optional and used sparingly: `feat(navigation):`. Breaking changes take `!` before the
+colon and explain themselves in the body. Pick the type from what the change *is*, not from the
+phase of a plan it belongs to.
+
+**Never write the `Co-Authored-By` trailer.**
 
 ---
 
@@ -289,7 +344,7 @@ Constraint and index names: `PK_<Table><Column>`, `FK_<Table>_<ForeignTable><Col
 1. Copy `internal/modules/notes/` → `internal/modules/<id>/`, rename the package and the ID.
    (`health/` is the same shape minus `domain/` and `store/`, for a module that stores nothing;
    `activity/` is the one to copy for MongoDB, and for a module that reacts to another's events.)
-2. Add `proto/kakehashi/<id>/v1/<id>.proto`, run `buf generate`, commit the output.
+2. Add `proto/__APP_NAME_LOWER__/<id>/v1/<id>.proto`, run `buf generate`, commit the output.
 3. Mount it in `cmd/server/main.go` — one line, the only file that names it.
 4. **Name the units.** Before writing the second use case, list this module's aggregate roots, its
    tables and its use-case families, and give each one a file. `notes/` is a one-root module and
@@ -309,12 +364,12 @@ Constraint and index names: `PK_<Table><Column>`, `FK_<Table>_<ForeignTable><Col
 | Host | WinUI 3 / `Microsoft.WindowsAppSDK` 2.1.x, .NET 10, C# `latest` |
 | MVVM | `CommunityToolkit.Mvvm` 8.4.x — source generators **on** |
 | DI / hosting | `Microsoft.Extensions.Hosting` + `DependencyInjection` |
-| Mediator | custom in-process mediator (`Kakehashi.Mediator`) — **no MediatR** |
+| Mediator | custom in-process mediator (`__APP_NAME__.Mediator`) — **no MediatR** |
 | Backend transport | `Grpc.Net.Client` + `Grpc.Net.ClientFactory`, generated from `proto/` at build time |
 | Win32 interop | `Microsoft.Windows.CsWin32` via `NativeMethods.txt`, never `[DllImport]` |
 | Testing | **xUnit v3** + **NSubstitute** — no Fluent Assertions, no MediatR mocks |
 
-### Layering — enforced by `Kakehashi.ArchitectureTests`
+### Layering — enforced by `__APP_NAME__.ArchitectureTests`
 
 ```text
 Domain       →  SharedKernel only
@@ -327,7 +382,7 @@ UI (host)    →  Application + Domain + SharedKernel + WinUI/host libs
    `IModule.RegisterServices`.
 3. Domain never throws for expected failures — return `Result` / `Result<T>`.
 4. DTOs cross the Application boundary. Never return a domain entity to the UI.
-5. `SharedKernel` has no `Kakehashi.*` dependencies.
+5. `SharedKernel` has no `__APP_NAME__.*` dependencies.
 
 Per-module layering lives with its module (`AuthLayeringTests`), so adding or removing a module
 never means editing `LayeringTests`.
@@ -346,9 +401,15 @@ in a `.csproj`. Forbidden (relicensed/paid): Fluent Assertions, MediatR, AutoMap
 
 ### Style
 
-`.editorconfig` in `client/` encodes the Google C# Style Guide and is `root = true`, so it does not
-leak onto Go or proto files. 2-space indent (4 in XAML), 100-column limit, `using` outside
-namespaces with `System.*` first, no `this.`, no implicit usings, warnings as errors.
+`.editorconfig` in `client/` is the style, and is `root = true`, so it does not leak onto Go or
+proto files. 4-space indent, 120-column limit, file-scoped namespaces with a blank line either
+side, `using` outside namespaces with `System.*` first, no `this.`, no implicit usings, warnings
+as errors.
+
+Braces are Allman for what declares or branches — types, methods, control flow, properties — and
+K&R for what evaluates: accessors, lambdas, anonymous methods and types, object/collection
+initializers, switch expressions, patterns. `client/docs/csharp-style.md` states the whole rule
+and what enforces each part.
 
 Member order (review convention, not tool-enforced): nested types → static/const/readonly fields →
 fields and properties → constructors → methods; public before non-public within each group.

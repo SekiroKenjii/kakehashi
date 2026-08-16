@@ -1,0 +1,106 @@
+{
+  "wiring": [
+    {
+      "file": "server/cmd/server/main.go",
+      "section": "module-imports",
+      "sorted": true,
+      "lines": [
+        "\"{{.GoModule}}/server/internal/modules/{{.ID}}\""
+      ]
+    },
+    {
+      "file": "server/cmd/server/main.go",
+      "section": "module-registrations",
+      "sorted": false,
+      "lines": [
+        "{{.ID}}.New(),"
+      ]
+    },
+    {
+      "file": "server/cmd/server/main_test.go",
+      "section": "module-ids",
+      "sorted": false,
+      "lines": [
+        "\"{{.ID}}\","
+      ]
+    },
+    {
+      "file": "client/{{.AppName}}.slnx",
+      "section": "module-projects",
+      "sorted": true,
+      "lines": [
+        "\u003cFolder Name=\"/src/Modules/{{.Module}}/\"\u003e",
+        "  \u003cProject Path=\"src/Modules/{{.Module}}/{{.AppName}}.Modules.{{.Module}}.Application/{{.AppName}}.Modules.{{.Module}}.Application.csproj\"\u003e",
+        "    \u003cPlatform Solution=\"*|x64\" Project=\"x64\" /\u003e",
+        "  \u003c/Project\u003e",
+        "  \u003cProject Path=\"src/Modules/{{.Module}}/{{.AppName}}.Modules.{{.Module}}.Domain/{{.AppName}}.Modules.{{.Module}}.Domain.csproj\"\u003e",
+        "    \u003cPlatform Solution=\"*|x64\" Project=\"x64\" /\u003e",
+        "  \u003c/Project\u003e",
+        "  \u003cProject Path=\"src/Modules/{{.Module}}/{{.AppName}}.Modules.{{.Module}}.UI/{{.AppName}}.Modules.{{.Module}}.UI.csproj\"\u003e",
+        "    \u003cPlatform Solution=\"*|x64\" Project=\"x64\" /\u003e",
+        "  \u003c/Project\u003e",
+        "\u003c/Folder\u003e"
+      ]
+    },
+    {
+      "file": "client/{{.AppName}}.slnx",
+      "section": "module-test-projects",
+      "sorted": true,
+      "lines": [
+        "\u003cProject Path=\"tests/{{.AppName}}.Modules.{{.Module}}.Application.Tests/{{.AppName}}.Modules.{{.Module}}.Application.Tests.csproj\" /\u003e",
+        "\u003cProject Path=\"tests/{{.AppName}}.Modules.{{.Module}}.Domain.Tests/{{.AppName}}.Modules.{{.Module}}.Domain.Tests.csproj\" /\u003e",
+        "\u003cProject Path=\"tests/{{.AppName}}.Modules.{{.Module}}.IntegrationTests/{{.AppName}}.Modules.{{.Module}}.IntegrationTests.csproj\" /\u003e",
+        "\u003cProject Path=\"tests/{{.AppName}}.Modules.{{.Module}}.UI.Tests/{{.AppName}}.Modules.{{.Module}}.UI.Tests.csproj\"\u003e",
+        "  \u003cPlatform Solution=\"*|x64\" Project=\"x64\" /\u003e",
+        "\u003c/Project\u003e"
+      ]
+    },
+    {
+      "file": "client/src/App/{{.AppName}}.App/Composition/ModuleCatalog.cs",
+      "section": "module-imports",
+      "sorted": true,
+      "lines": [
+        "using {{.RootNamespace}}.Modules.{{.Module}}.UI;"
+      ]
+    },
+    {
+      "file": "client/src/App/{{.AppName}}.App/Composition/ModuleCatalog.cs",
+      "section": "module-registrations",
+      "sorted": false,
+      "lines": [
+        "new {{.Module}}Module(),"
+      ]
+    },
+    {
+      "file": "client/src/App/{{.AppName}}.App/{{.AppName}}.App.csproj",
+      "section": "module-projects",
+      "sorted": true,
+      "lines": [
+        "\u003cProjectReference Include=\"..\\..\\Modules\\{{.Module}}\\{{.AppName}}.Modules.{{.Module}}.UI\\{{.AppName}}.Modules.{{.Module}}.UI.csproj\" /\u003e"
+      ]
+    },
+    {
+      "file": "client/tests/{{.AppName}}.ArchitectureTests/{{.AppName}}.ArchitectureTests.csproj",
+      "section": "module-projects",
+      "sorted": true,
+      "lines": [
+        "\u003cProjectReference Include=\"..\\..\\src\\Modules\\{{.Module}}\\{{.AppName}}.Modules.{{.Module}}.Domain\\{{.AppName}}.Modules.{{.Module}}.Domain.csproj\" /\u003e",
+        "\u003cProjectReference Include=\"..\\..\\src\\Modules\\{{.Module}}\\{{.AppName}}.Modules.{{.Module}}.Application\\{{.AppName}}.Modules.{{.Module}}.Application.csproj\" /\u003e"
+      ]
+    }
+  ],
+  "paths": [
+    "proto/{{.ProtoPackage}}/{{.ID}}/v1/",
+    "server/internal/gen/{{.ProtoPackage}}/{{.ID}}/v1/",
+    "server/internal/modules/{{.ID}}/",
+    "client/src/Modules/{{.Module}}/",
+    "client/tests/{{.AppName}}.ArchitectureTests/{{.Module}}LayeringTests.cs",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.Application.Tests/",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.Domain.Tests/",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.IntegrationTests/",
+    "client/tests/{{.AppName}}.Modules.{{.Module}}.UI.Tests/"
+  ],
+  "generated": [
+    "server/internal/gen/{{.ProtoPackage}}/{{.ID}}/v1/"
+  ]
+}

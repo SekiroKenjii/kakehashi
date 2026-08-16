@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 const authRequestColumns = `r.Id, r.ClientId, r.Subject, r.Scopes, r.RedirectUri,

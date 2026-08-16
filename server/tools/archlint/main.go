@@ -1,46 +1,35 @@
-// Command archlint enforces the module boundaries this codebase is built on.
-//
-// A modular monolith only stays modular if something checks. Left to code review alone, one "just
-// this once" import from a handler straight into another module's service is all it takes, and a
-// year later the modules are a single tangle with directories between them.
-//
-// So this runs in CI, and in `make lint`. It reads the import graph with `go list` and fails on any
-// edge that breaks a rule below.
+// Command archlint enforces the module boundaries this codebase is built on. It runs in CI and in
+// `make lint`, reads the import graph with `go list`, and fails on any edge that breaks a rule
+// below.
 //
 // # The rules
 //
-//  1. A module may not import another module's internals. Only its api package.
+//  1. A module may not import another module's internals, only its api package. The api package
+//     is the module's contract; everything behind it is free to change.
 //
 //     internal/modules/notes/rpc  ->  internal/modules/account/api      allowed
 //     internal/modules/notes/rpc  ->  internal/modules/account/service  rejected
 //
-//     This is the rule the whole architecture rests on. The api package is a promise; everything
-//     behind it is free to change.
+//  2. An api package may not import another module at all, not even another api: contracts that
+//     reference each other are a cycle.
 //
-//  2. An api package may not import another module at all, not even another api. Contracts that
-//     reference each other are not contracts, they are a cycle waiting to be discovered.
-//
-//  3. The platform may not import a module. Dependencies point inward: modules know about the
-//     platform, the platform knows nothing about them.
+//  3. The platform may not import a module. Dependencies point inward.
 //
 //  4. The kernel (internal/app) may not import a module. Only cmd/ may, and only to mount them.
 //
-//  5. Inside a module, only store/ may import the database packages. Persistence is one layer's
-//     job; a service that reaches for a connection has stopped orchestrating and started querying,
-//     and the tests that used to run without a database no longer do.
+//  5. Inside a module, only store/ may import the database packages: persistence is one layer's
+//     job.
 //
-//  6. Only rpc/ may import the generated protobuf code. Generated types are the wire's shape, not
-//     the module's. Let them into domain/ or service/ and a change to the schema becomes a change
-//     to the business rules, which is exactly the coupling the api package exists to prevent.
+//  6. Only rpc/ may import the generated protobuf code: generated types are the wire's shape, not
+//     the module's.
 //
-//  7. Only the account module may import an OpenID Connect library. Token issuing lives in one
-//     place or it lives in several, and the second one is discovered during an incident.
+//  7. Only the account module may import an OpenID Connect library: token issuing lives in one
+//     place.
 //
 // # Adding a rule
 //
-// Rules are data, in the check function. If your project grows a convention worth keeping
-// ("nothing outside store/ may import encoding/csv", say), add it there rather than trusting
-// everyone to remember.
+// Rules are data, in the check function. A convention worth keeping ("nothing outside store/ may
+// import encoding/csv", say) is added there rather than remembered.
 package main
 
 import (
@@ -117,10 +106,8 @@ func check(module string, pkgs []pkg) []violation {
 	genPrefix := module + "/internal/gen"
 
 	for _, p := range pkgs {
-		// Generated code is machine-written and sits outside the architecture: the Connect package
-		// imports its sibling message package because the generator says so, and no edit anyone
-		// could make would answer a complaint about it. Skip it as a source; it is still checked
-		// as a target, which is what rule 6 is for.
+		// Generated code is skipped as a source: its imports are the generator's, not anyone's to
+		// change. It is still checked as a target, which is what rule 6 is for.
 		if isUnder(p.ImportPath, genPrefix) {
 			continue
 		}

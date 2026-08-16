@@ -1,6 +1,6 @@
 package store
 
-import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
+import "__GO_MODULE__/server/internal/platform/database"
 
 // The schema history, whole. It is one unit because its value is its order: migration 2 only reads
 // correctly underneath migration 1, and splitting a sequence turns "has this shipped?" into a

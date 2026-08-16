@@ -1,0 +1,139 @@
+name: Release CLI
+
+# The CLI's release line, tagged cli/vX.Y.Z, independently of the template's template/vX.Y.Z. The
+# two ship separately on purpose: docs/pivot/06-PHASE-5-RELEASE.md §1.
+#
+# `go install` needs nothing from this workflow — the module path is enough, and that channel works
+# from the moment a tag exists. This is for the people who would rather download a binary.
+#
+# Nothing here fires on a branch. A release happens when somebody pushes a tag, or asks for a dry
+# run — which builds every platform, uploads it to the run, and creates no release at all.
+on:
+  push:
+    tags: ["cli/v*"]
+  workflow_dispatch:
+    inputs:
+      version:
+        description: Version to build, without the tag prefix (for example 1.0.0).
+        type: string
+        required: true
+      dry_run:
+        description: Build every platform and publish nothing.
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+jobs:
+  # The CLI's own suite, on both operating systems, before anything is built for download. A tag is
+  # not a reason to trust the branch run.
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: tools/cli
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: tools/cli/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+  release:
+    needs: test
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: tools/cli/go.sum
+
+      - name: Resolve the version
+        id: version
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            version="${{ inputs.version }}"
+          else
+            version="${GITHUB_REF_NAME#cli/v}"
+          fi
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+      # The same script somebody can run before pushing the tag, which is the point of it being a
+      # script: a release that can only be produced by CI is a release nobody can rehearse.
+      - name: Build every platform
+        working-directory: tools/cli
+        run: ./scripts/build-release.sh "${{ steps.version.outputs.version }}" "$RUNNER_TEMP/dist"
+
+      - name: Verify the checksums
+        working-directory: ${{ runner.temp }}/dist
+        run: sha256sum -c checksums.txt
+
+      # The Linux build is the one this runner can execute, so it is the one that has to answer.
+      # A binary that reports the wrong version decides the compatibility matrix wrongly.
+      - name: Verify the version the binary reports
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/check"
+          tar -xzf "$RUNNER_TEMP/dist/kakehashi_${VERSION}_Linux_amd64.tar.gz" -C "$RUNNER_TEMP/check"
+          reported=$("$RUNNER_TEMP/check/kakehashi" --version)
+          echo "$reported"
+          case "$reported" in
+            *"$VERSION"*) ;;
+            *) echo "the binary reports '$reported', not $VERSION"; exit 1 ;;
+          esac
+
+      # A dry run stops here. Everything a release would carry is on the run for somebody to
+      # download and check, and no release exists.
+      - name: Upload the builds for review
+        if: inputs.dry_run
+        uses: actions/upload-artifact@v4
+        with:
+          name: kakehashi-${{ steps.version.outputs.version }}
+          path: ${{ runner.temp }}/dist/*
+          if-no-files-found: error
+
+      - name: Publish the release
+        if: github.event_name == 'push'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          notes="$RUNNER_TEMP/notes.md"
+          {
+            echo '```sh'
+            echo "go install github.com/SekiroKenjii/kakehashi/tools/cli/cmd/kakehashi@$GITHUB_REF_NAME"
+            echo '```'
+            echo
+            echo "Or take an archive below and check it against \`checksums.txt\`."
+            echo
+            echo "See \`CHANGELOG.cli.md\` for what changed, and \`docs/cli.md\` for the whole command surface."
+          } > "$notes"
+
+          gh release create "$GITHUB_REF_NAME" \
+            --title "CLI v$VERSION" \
+            --notes-file "$notes" \
+            "$RUNNER_TEMP"/dist/*

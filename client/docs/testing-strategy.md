@@ -1,21 +1,21 @@
 # Testing strategy — closing the unit-test gap
 
 > Status: **done (T1–T4).** The host and UI/presentation layers have unit coverage:
-> `Kakehashi.App.Tests` (45) and `Kakehashi.Modules.Auth.UI.Tests` (20) — across `ModuleRegistry`
+> `__APP_NAME__.App.Tests` (45) and `__APP_NAME__.Modules.Auth.UI.Tests` (20) — across `ModuleRegistry`
 > (13), `HomeViewModel` (16), `AppActivityLog` (9), `NavigationService.GetPageKey` (3),
 > `SettingsViewModel` (2), `AppOrchestrator` (2), `AccountViewModel` (16) and
 > `AccountFlyoutViewModel` (4). The windows-TFM unit-test approach (Option A) is the documented
 > default for new modules (CLAUDE.md "Adding a new module" + "View model tests").
 > **Client total: 146 tests across 12 suites** (143 run everywhere, plus 3 that need a backend).
 >
-> The `Catalog` module was removed when the client was ported into Kakehashi, taking its four
+> The `Catalog` module was removed when the client was ported into __APP_TITLE__, taking its four
 > `ProductsViewModel` tests with it. `Notes` replaced it as the reference vertical slice and brought
 > 36 of its own: `NoteDraft` (9), the three command handlers (7), the module through the real
 > mediator (6), and `NotesViewModel` (14).
 >
 > `LiveNotesGatewayTests` (3) is the exception to everything else here: it drives the real
 > `GrpcNotesGateway` over real gRPC into real SQL Server, and is skipped unless
-> `KAKEHASHI_TEST_BACKEND` names a running server. It is the only test that would notice a broken
+> `__APP_NAME_UPPER___TEST_BACKEND` names a running server. It is the only test that would notice a broken
 > migration or a status code the client maps wrongly; the price is that it cannot run on a laptop
 > with nothing started, and a suite that fails when the stack is down trains everyone to ignore it.
 >
@@ -36,12 +36,12 @@
 | `Modules.*.Domain` | 22 | ✅ covered |
 | `Modules.*.Application` (handlers) | 15 | ✅ covered |
 | `Modules.*.IntegrationTests` | 8 | ✅ covered |
-| `Kakehashi.Mediator` | 4 | ✅ covered |
-| `Kakehashi.App.Infrastructure` (backend clients) | 10 | ✅ covered |
-| `Kakehashi.ArchitectureTests` | 7 | ✅ covered |
-| **`Kakehashi.App` (host)** — `ModuleRegistry`, `AppActivityLog`, `NavigationService`, `ThemeService`, `LocalSettingsService`, orchestrators, `StateManager`, view models (`Home`, `Shell`, `Settings`, `Splash`) | **0** | ❌ **none** |
+| `__APP_NAME__.Mediator` | 4 | ✅ covered |
+| `__APP_NAME__.App.Infrastructure` (backend clients) | 10 | ✅ covered |
+| `__APP_NAME__.ArchitectureTests` | 7 | ✅ covered |
+| **`__APP_NAME__.App` (host)** — `ModuleRegistry`, `AppActivityLog`, `NavigationService`, `ThemeService`, `LocalSettingsService`, orchestrators, `StateManager`, view models (`Home`, `Shell`, `Settings`, `Splash`) | **0** | ❌ **none** |
 | **`Modules.*.UI`** — `AccountViewModel`, `ProductsViewModel`, `AccountFlyoutViewModel`, gateways, `OidcInteractiveAuthenticator` | **0** | ❌ **none** |
-| `Kakehashi.UI.Contracts` — `ViewModel` base, the new `ModuleRegistry` contracts | 0 | ❌ none |
+| `__APP_NAME__.UI.Contracts` — `ViewModel` base, the new `ModuleRegistry` contracts | 0 | ❌ none |
 
 So the untested surface is the **presentation + host-composition logic** — exactly where the recent
 work landed (module registry, activity log, home view model). That logic is plain C# (ISender,
@@ -50,19 +50,19 @@ project targets these assemblies.
 
 ## The one real obstacle, and how to clear it
 
-The host (`Kakehashi.App`) and module `.UI` projects are `net10.0-windows` WinUI assemblies
+The host (`__APP_NAME__.App`) and module `.UI` projects are `net10.0-windows` WinUI assemblies
 (`UseWinUI=true`); the existing test projects are plain `net10.0`. A test project must match the
 windows TFM to reference them. Two ways:
 
-- **Option A — windows-TFM test projects (recommended first).** Add `Kakehashi.App.Tests` and
-  `Kakehashi.Modules.<M>.UI.Tests` targeting `net10.0-windows10.0.19041.0`, referencing the
+- **Option A — windows-TFM test projects (recommended first).** Add `__APP_NAME__.App.Tests` and
+  `__APP_NAME__.Modules.<M>.UI.Tests` targeting `net10.0-windows10.0.19041.0`, referencing the
   host/UI projects directly. Test view models and services as plain objects (construct with
   NSubstitute fakes; never instantiate XAML controls). Lowest churn — no production code moves.
   Risk: referencing a `WinExe` host + WinUI-generated code from a test assembly can be finicky;
   validate with one smoke test (`ModuleRegistry`) before fanning out.
-- **Option B — extract testable host services into `Kakehashi.App.Core`.** Move the non-XAML host
+- **Option B — extract testable host services into `__APP_NAME__.App.Core`.** Move the non-XAML host
   services (`ModuleRegistry`, `AppActivityLog`, `NavigationService`, orchestrators, `StateManager`)
-  into a windows-TFM **library** that a plain test project references, leaving `Kakehashi.App` as
+  into a windows-TFM **library** that a plain test project references, leaving `__APP_NAME__.App` as
   thin composition + XAML. Robust and clean, but a real refactor touching DI wiring.
 
 **Recommendation:** start with Option A and prove it on `ModuleRegistry`. If WinUI host-referencing
@@ -98,7 +98,7 @@ not the test.
 
 ## Definition of done (per CLAUDE.md gate)
 
-- New test projects added to `Kakehashi.slnx`; `dotnet test` green including them.
+- New test projects added to `__APP_NAME__.slnx`; `dotnet test` green including them.
 - Architecture tests still green (test projects don't perturb layering).
 - `dotnet format --verify-no-changes` clean.
 - CLAUDE.md "Adding a new module" checklist updated to include the `.UI.Tests` project so new modules
@@ -109,7 +109,7 @@ not the test.
 
 | PR | Contents | Size | State |
 | --- | --- | --- | --- |
-| T1 | `Kakehashi.App.Tests` (Option A) + `ModuleRegistry` tests — proves the approach | small | ✅ done |
+| T1 | `__APP_NAME__.App.Tests` (Option A) + `ModuleRegistry` tests — proves the approach | small | ✅ done |
 | T2 | `HomeViewModel` + `AppActivityLog` tests | small | ✅ done |
-| T3 | `Kakehashi.Modules.Auth.UI.Tests` + `AccountViewModel`; `NavigationService.GetPageKey` | medium | ✅ done |
-| T4 | `SettingsViewModel`, `AccountFlyoutViewModel`, `AppOrchestrator`; CLAUDE.md checklist + view-model-tests note. (Originally also `Kakehashi.Modules.Catalog.UI.Tests` + `ProductsViewModel`, removed with the Catalog module.) | small | ✅ done |
+| T3 | `__APP_NAME__.Modules.Auth.UI.Tests` + `AccountViewModel`; `NavigationService.GetPageKey` | medium | ✅ done |
+| T4 | `SettingsViewModel`, `AccountFlyoutViewModel`, `AppOrchestrator`; CLAUDE.md checklist + view-model-tests note. (Originally also `__APP_NAME__.Modules.Catalog.UI.Tests` + `ProductsViewModel`, removed with the Catalog module.) | small | ✅ done |

@@ -8,8 +8,8 @@ package service
 import (
 	"context"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/account/domain"
 )
 
 // SecurityEvents returns the most recent audit entries.

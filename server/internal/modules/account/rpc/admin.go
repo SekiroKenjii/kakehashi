@@ -1,8 +1,8 @@
 // The administrator's surface, over Connect rather than the plain JSON the /account/* endpoints
 // use. The two are different audiences: those seven serve a caller acting on their own record and
 // answer the client's AccountGateway, this one serves somebody acting on everybody else's and
-// answers a screen. Different audience, different contract, and — the part that matters — a
-// separate route, which is the unit the server puts a permission check on.
+// answers a screen. Different audience, different contract, and a separate route — the unit the
+// server puts a permission check on.
 
 package rpc
 
@@ -14,12 +14,12 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	accountv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/account/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/account/v1/accountv1connect"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	accountv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/account/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/account/v1/accountv1connect"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/account/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // NewAdminRoute builds the Connect handler for AccountAdminService.

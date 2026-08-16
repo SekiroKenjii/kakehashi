@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/client/src/App/Kakehashi.App/Kakehashi.App.csproj",
+        "${workspaceFolder}/client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj",
         "-c",
         "Debug",
         "-p:Platform=x64"

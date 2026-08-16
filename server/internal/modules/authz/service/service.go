@@ -9,9 +9,9 @@ import (
 	"context"
 	"time"
 
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // Store is the persistence these use cases need, declared here rather than in store/.
@@ -40,10 +40,12 @@ type Store interface {
 	InsertAuditEntries(ctx context.Context, entries []domain.AuditEntry) error
 }
 
-// Clock and IDs are injected so tests can pin both.
 type (
+	// Clock is the service's source of time, injected so a test can pin it.
 	Clock func() time.Time
-	IDs   func() string
+
+	// IDs is the service's source of identifiers, injected for the same reason as Clock.
+	IDs func() string
 )
 
 // Service answers what a caller may do, and lets an administrator change it.
@@ -79,9 +81,8 @@ func (s *Service) Resolve(ctx context.Context, subject auth.Subject) (auth.Grant
 
 	grants := make(auth.Grants, len(raw))
 	for key, scope := range raw {
-		// Widest rather than assignment, even though the query already grouped: a scope the
-		// database holds that this build does not recognise must narrow, and Widest is the one
-		// place that rule lives.
+		// Widest, not assignment, even though the query grouped: a stored scope this build does
+		// not recognise must narrow, and Widest is where that rule lives.
 		grants[key] = auth.Widest(grants[key], auth.Scope(scope))
 	}
 	return grants, nil

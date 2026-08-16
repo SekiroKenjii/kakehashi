@@ -1,0 +1,30 @@
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+
+/// <summary>The errors the {{.Module}} module can return.</summary>
+public static class {{.Module}}Errors
+{
+    public static readonly Error TitleRequired =
+        new("{{.Module}}.{{.Entity}}.TitleRequired", "{{articleUpper .Variable}} {{.Variable}} needs a title.");
+
+    public static readonly Error TitleTooLong =
+        new("{{.Module}}.{{.Entity}}.TitleTooLong",
+            $"Titles are limited to {{"{"}}{{.Entity}}Draft.MaxTitleLength} characters.");
+
+    /// <summary>
+    /// The server could not be reached, or answered with something this client cannot act on.
+    /// Distinct from the validation errors above because the remedy is different: wait and retry,
+    /// rather than change what you typed.
+    /// </summary>
+    public static readonly Error RequestFailed =
+        new("{{.Module}}.Gateway.RequestFailed", "Could not reach the {{.ID}} service.");
+
+    public static readonly Error NotFound =
+        new("{{.Module}}.{{.Entity}}.NotFound", "That {{.Variable}} no longer exists.");
+
+    /// <summary>The server refused because this account is not assigned the {{.Module}} module.</summary>
+    public static readonly Error NotAssigned = new(
+        "{{.Module}}.NotAssigned",
+        "Your account is not assigned {{.Module}}. Ask an administrator for access.");
+}

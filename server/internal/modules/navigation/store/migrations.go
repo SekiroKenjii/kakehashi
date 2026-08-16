@@ -1,6 +1,6 @@
 package store
 
-import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
+import "__GO_MODULE__/server/internal/platform/database"
 
 // The schema history, whole, because its value is its order.
 
@@ -9,7 +9,7 @@ import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
 // Never edit one that has shipped: it is keyed by name, so changed SQL will not re-run on a database
 // that already has it and the schema silently diverges. Add another.
 //
-// The corollary, learned the hard way: RENAMING one is editing it. The ledger still holds the old
+// The corollary, learned the hard way: RENAMING one is editing it. The ledger still holds the prior
 // name, so the migration runs a second time against a database that already has its effect. Every
 // migration after the first is therefore written to be safe to re-apply — a guard costs two lines
 // and removes a whole class of "it worked on my machine".

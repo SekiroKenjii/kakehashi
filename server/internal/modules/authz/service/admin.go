@@ -4,9 +4,9 @@ import (
 	"context"
 	"fmt"
 
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // What an administrator does. A different caller from the read in service.go, on a surface the
@@ -134,10 +134,8 @@ func (s *Service) SaveRoleGrants(
 		return SaveResult{}, err
 	}
 
-	// Every key checked against the catalogue first. The catalogue is what the modules declare and
-	// boot reconciles, so a key absent from it is a permission nothing on this server enforces —
-	// and a grant naming one is a row that looks like access and confers none. Worse, it survives
-	// on the role forever, because reconciliation prunes the catalogue and never the grants.
+	// Checked against the catalogue the modules declare: a key absent from it enforces nothing, and
+	// reconciliation prunes the catalogue and never the grants, so the row survives forever.
 	catalogue, err := s.store.Permissions(ctx)
 	if err != nil {
 		return SaveResult{}, err
@@ -169,9 +167,8 @@ func (s *Service) SaveRoleGrants(
 		return SaveResult{}, err
 	}
 
-	// Written after the save, never before: an audit entry describing a change that failed is
-	// worse than no entry, because it is read as fact. Its own failure is swallowed for the reason
-	// the account module swallows its audit failures — losing the record must not undo the change.
+	// After the save, never before: an entry describing a change that failed is read as fact. Its
+	// own failure is swallowed — losing the record must not undo the change.
 	if len(entries) > 0 {
 		s.record(ctx, actor, role, entries)
 	}
@@ -321,7 +318,7 @@ func (s *Service) UpdateRole(
 
 	detail := ""
 	if before != role.Name {
-		// The old name, because after a rename it exists nowhere else to be looked up.
+		// The prior name, because after a rename it exists nowhere else to be looked up.
 		detail = "was " + before
 	}
 	s.record(ctx, actor, role, []auditChange{{domain.ActionRoleEdited, "", detail}})
@@ -348,8 +345,7 @@ func (s *Service) DeleteRole(ctx context.Context, roleID string, actor Actor) er
 		return err
 	}
 
-	// Recorded with the name, because after this there is no row to look it up in — which is the
-	// whole problem with deletion events.
+	// Recorded with the name, because after this there is no row to look it up in.
 	s.record(ctx, actor, role, []auditChange{{domain.ActionRoleDeleted, "", ""}})
 	return nil
 }

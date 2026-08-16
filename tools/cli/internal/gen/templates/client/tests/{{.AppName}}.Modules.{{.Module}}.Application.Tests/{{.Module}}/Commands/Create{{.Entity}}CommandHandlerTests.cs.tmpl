@@ -1,0 +1,69 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Create{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.SharedKernel;
+using NSubstitute;
+using Xunit;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.Tests.{{.Module}}.Commands;
+
+public sealed class Create{{.Entity}}CommandHandlerTests
+{
+    private readonly I{{.Module}}Gateway _{{.ID}} = Substitute.For<I{{.Module}}Gateway>();
+
+    private Create{{.Entity}}CommandHandler CreateHandler()
+    {
+        return new Create{{.Entity}}CommandHandler(_{{.ID}});
+    }
+
+    [Fact]
+    public async Task Handle_ValidCommand_SendsTheTrimmedDraft()
+    {
+        _{{.ID}}.CreateAsync(Arg.Any<{{.Entity}}Draft>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(Sample("Groceries")));
+
+        var result = await CreateHandler()
+            .Handle(new Create{{.Entity}}Command("  Groceries  ", "milk"), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        await _{{.ID}}.Received(1).CreateAsync(
+            Arg.Is<{{.Entity}}Draft>(draft => draft != null && draft.Title == "Groceries" && draft.Body == "milk"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_BlankTitle_FailsWithoutCallingTheServer()
+    {
+        var result = await CreateHandler()
+            .Handle(new Create{{.Entity}}Command("   ", "body"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal({{.Module}}Errors.TitleRequired, result.Error);
+        // Client-side validation exists to save this round trip, so a rejected draft must never
+        // reach the gateway.
+        await _{{.ID}}.DidNotReceive().CreateAsync(
+            Arg.Any<{{.Entity}}Draft>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_GatewayFailure_SurfacesTheError()
+    {
+        _{{.ID}}.CreateAsync(Arg.Any<{{.Entity}}Draft>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Failure<{{.Entity}}Dto>({{.Module}}Errors.RequestFailed));
+
+        var result = await CreateHandler()
+            .Handle(new Create{{.Entity}}Command("Title", "body"), CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal({{.Module}}Errors.RequestFailed, result.Error);
+    }
+
+    private static {{.Entity}}Dto Sample(string title)
+    {
+        return new {{.Entity}}Dto(1, title, "milk", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+    }
+}

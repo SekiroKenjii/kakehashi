@@ -4,9 +4,9 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // applying returns a reconciled service over a fresh store, with notes and users seeded.

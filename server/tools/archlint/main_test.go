@@ -95,26 +95,26 @@ func TestCheck(t *testing.T) {
 		{
 			name: "rpc imports generated code",
 			from: mod + "/internal/modules/notes/rpc",
-			to:   mod + "/internal/gen/kakehashi/notes/v1",
+			to:   mod + "/internal/gen/app/notes/v1",
 		},
 		{
 			name:    "service imports generated code",
 			from:    mod + "/internal/modules/notes/service",
-			to:      mod + "/internal/gen/kakehashi/notes/v1",
+			to:      mod + "/internal/gen/app/notes/v1",
 			blocked: true,
 		},
 		{
 			name:    "module root imports the generated connect package",
 			from:    mod + "/internal/modules/notes",
-			to:      mod + "/internal/gen/kakehashi/notes/v1/notesv1connect",
+			to:      mod + "/internal/gen/app/notes/v1/notesv1connect",
 			blocked: true,
 		},
 		{
 			// protoc-gen-connect-go emits a package that imports its sibling message package.
 			// Nobody wrote that edge and nobody can remove it.
 			name: "generated code imports generated code",
-			from: mod + "/internal/gen/kakehashi/notes/v1/notesv1connect",
-			to:   mod + "/internal/gen/kakehashi/notes/v1",
+			from: mod + "/internal/gen/app/notes/v1/notesv1connect",
+			to:   mod + "/internal/gen/app/notes/v1",
 		},
 
 		// Rule 7 — one module issues tokens.
@@ -177,7 +177,7 @@ func TestCheckReportsEveryEdge(t *testing.T) {
 			ImportPath: mod + "/internal/modules/notes/service",
 			Imports: []string{
 				mod + "/internal/platform/database",
-				mod + "/internal/gen/kakehashi/notes/v1",
+				mod + "/internal/gen/app/notes/v1",
 				mod + "/internal/modules/account/store",
 			},
 		},

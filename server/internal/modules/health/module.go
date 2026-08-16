@@ -13,10 +13,10 @@
 package health
 
 import (
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	healthapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/health/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/health/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/health/service"
+	"__GO_MODULE__/server/internal/app"
+	healthapi "__GO_MODULE__/server/internal/modules/health/api"
+	"__GO_MODULE__/server/internal/modules/health/rpc"
+	"__GO_MODULE__/server/internal/modules/health/service"
 )
 
 // Module is the health feature.

@@ -1,0 +1,121 @@
+package store
+
+import (
+	"context"
+	"database/sql"
+	"errors"
+
+	"{{.GoModule}}/server/internal/modules/{{.ID}}/domain"
+	"{{.GoModule}}/server/internal/platform/errs"
+)
+
+// Every query against {{.ID}}.{{.Entity}}. One file per table is the store package's unit, and this module
+// has one table.
+
+// List returns every {{.Variable}}, most recently updated first.
+func (s *SQLServer) List(ctx context.Context) ([]domain.{{.Entity}}, error) {
+	const q = `
+        SELECT n.Id, n.Title, n.Body, n.CreatedAt, n.UpdatedAt
+        FROM {{.ID}}.{{.Entity}} AS n
+        ORDER BY n.UpdatedAt DESC, n.Id DESC;`
+
+	rows, err := s.db.QueryContext(ctx, q)
+	if err != nil {
+		return nil, errs.Internalf(err, "list {{.ID}}")
+	}
+	defer rows.Close()
+
+	var {{.ID}} []domain.{{.Entity}}
+	for rows.Next() {
+		n, err := scan{{.Entity}}(rows)
+		if err != nil {
+			return nil, err
+		}
+		{{.ID}} = append({{.ID}}, n)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errs.Internalf(err, "list {{.ID}}")
+	}
+	return {{.ID}}, nil
+}
+
+// Get returns the {{.Variable}} with the given ID.
+func (s *SQLServer) Get(ctx context.Context, id int64) (domain.{{.Entity}}, error) {
+	const q = `
+        SELECT n.Id, n.Title, n.Body, n.CreatedAt, n.UpdatedAt
+        FROM {{.ID}}.{{.Entity}} AS n
+        WHERE n.Id = @p1;`
+
+	n, err := scan{{.Entity}}(s.db.QueryRowContext(ctx, q, id))
+	if errors.Is(err, sql.ErrNoRows) {
+		return domain.{{.Entity}}{}, errs.NotFoundf("No {{.Variable}} with ID %d.", id)
+	}
+	if err != nil {
+		return domain.{{.Entity}}{}, err
+	}
+	return n, nil
+}
+
+// Insert stores n and returns it with its assigned ID.
+func (s *SQLServer) Insert(ctx context.Context, n domain.{{.Entity}}) (domain.{{.Entity}}, error) {
+	// OUTPUT INSERTED.id, not a follow-up SELECT: go-mssqldb has no LastInsertId, and OUTPUT stays
+	// correct under concurrent inserts and triggers where SCOPE_IDENTITY() only mostly does.
+	const q = `
+        INSERT INTO {{.ID}}.{{.Entity}} (Title, Body, CreatedAt, UpdatedAt)
+        OUTPUT INSERTED.Id
+        VALUES (@p1, @p2, @p3, @p4);`
+
+	// Truncated to the column's precision and returned that way: otherwise a create answers in
+	// nanoseconds, the next read in milliseconds, and the timestamp appears to change by itself.
+	n.CreatedAt = storable(n.CreatedAt)
+	n.UpdatedAt = storable(n.UpdatedAt)
+
+	var id int64
+	err := s.db.
+		QueryRowContext(ctx, q, n.Title, n.Body, n.CreatedAt, n.UpdatedAt).
+		Scan(&id)
+	if err != nil {
+		return domain.{{.Entity}}{}, errs.Internalf(err, "insert {{.Variable}}")
+	}
+
+	n.ID = id
+	return n, nil
+}
+
+// Update rewrites an existing {{.Variable}}.
+//
+// It takes a pointer so the truncated UpdatedAt goes back to the caller, for the same reason
+// Insert returns the {{.Variable}} it stored.
+func (s *SQLServer) Update(ctx context.Context, n *domain.{{.Entity}}) error {
+	const q = `
+        UPDATE {{.ID}}.{{.Entity}}
+        SET Title = @p1, Body = @p2, UpdatedAt = @p3
+        WHERE Id = @p4;`
+
+	n.UpdatedAt = storable(n.UpdatedAt)
+
+	res, err := s.db.ExecContext(ctx, q, n.Title, n.Body, n.UpdatedAt, n.ID)
+	if err != nil {
+		return errs.Internalf(err, "update {{.Variable}}")
+	}
+
+	affected, err := res.RowsAffected()
+	if err != nil {
+		return errs.Internalf(err, "update {{.Variable}}")
+	}
+	if affected == 0 {
+		return errs.NotFoundf("No {{.Variable}} with ID %d.", n.ID)
+	}
+	return nil
+}
+
+// Delete removes {{article .Variable}} {{.Variable}}. Deleting one that does not exist is not an error: the caller asked for it
+// to be gone, and afterwards it is.
+func (s *SQLServer) Delete(ctx context.Context, id int64) error {
+	const q = `DELETE FROM {{.ID}}.{{.Entity}} WHERE Id = @p1;`
+
+	if _, err := s.db.ExecContext(ctx, q, id); err != nil {
+		return errs.Internalf(err, "delete {{.Variable}}")
+	}
+	return nil
+}

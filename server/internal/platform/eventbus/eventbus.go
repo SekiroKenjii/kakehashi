@@ -1,18 +1,8 @@
 // Package eventbus is the in-process, typed pub/sub the modules use to talk to each other without
-// knowing each other.
-//
-// It exists so a module can announce something happened without holding a reference to whoever
-// cares. When identity records a sign-in, it publishes SignedIn; whether that appends to an
-// activity feed, invalidates a cache, or falls on an empty room is not the identity module's
-// problem.
-//
-// Reach for an event when the publisher does not need an answer. When it does need one ("is this
-// module assigned to that account?"), use a service interface from the module's api package
-// instead. Events are announcements, not requests.
-//
-// This is deliberately not a message queue. Events do not survive a restart and do not cross
-// process boundaries; they decouple modules that are compiled together. Anything that must survive
-// a crash belongs in a table, written in the same transaction as the fact it describes.
+// importing each other. Events are announcements, not requests: a publisher that needs an answer
+// uses a service interface from the other module's api package instead. Events do not survive a
+// restart and do not cross process boundaries; anything that must survive a crash belongs in a
+// table, written in the same transaction as the fact it describes.
 package eventbus
 
 import (

@@ -12,11 +12,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	authzv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/authz/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/authz/v1/authzv1connect"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	authzv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/authz/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/authz/v1/authzv1connect"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // NewRoute builds the Connect handler for AuthzService — the caller's own view of their access.
@@ -37,9 +37,8 @@ func (h *handler) ListMyGrants(
 	ctx context.Context, _ *connect.Request[authzv1.ListMyGrantsRequest],
 ) (*connect.Response[authzv1.ListMyGrantsResponse], error) {
 	if _, ok := auth.SubjectFrom(ctx); !ok {
-		// Unauthenticated rather than an empty list. An account that may do nothing and an expired
-		// token draw the same screen and mean opposite things; only one of them is fixed by
-		// signing in again.
+		// Unauthenticated rather than an empty list: an account that may do nothing and an expired
+		// token draw the same screen, and only one is fixed by signing in again.
 		return nil, errs.Unauthenticatedf("Sign in to see your permissions.")
 	}
 

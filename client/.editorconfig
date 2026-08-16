@@ -1,6 +1,3 @@
-# EditorConfig encoding the Google C# Style Guide.
-# https://google.github.io/styleguide/csharp-style.html
-#
 # This file is the single source of truth for formatting and naming. It is
 # enforced at build time (EnforceCodeStyleInBuild) and gated in CI with
 # `dotnet format --verify-no-changes`.
@@ -29,23 +26,22 @@ indent_size = 4
 # ============================================================================
 [*.cs]
 indent_style = space
-indent_size = 2
-tab_width = 2
-# Google: "Column limit: 100."
-max_line_length = 100
-guidelines = 100
+indent_size = 4
+tab_width = 4
+max_line_length = 120
+guidelines = 120
 
 # ---------------------------------------------------------------------------
 #  using directives
-#  Google: declarations at the top, before namespaces; System first; then
-#  alphabetical.
+#  declarations at the top, before namespaces; System first;
+#  then alphabetical.
 # ---------------------------------------------------------------------------
 dotnet_sort_system_directives_first = true
 dotnet_separate_import_directive_groups = false
 csharp_using_directive_placement = outside_namespace:warning
 
 # ---------------------------------------------------------------------------
-#  'this.' qualification (Google does not require it)
+#  'this.' qualification
 # ---------------------------------------------------------------------------
 dotnet_style_qualification_for_field = false:silent
 dotnet_style_qualification_for_property = false:silent
@@ -60,8 +56,8 @@ dotnet_style_predefined_type_for_member_access = true:warning
 
 # ---------------------------------------------------------------------------
 #  Modifiers
-#  Google: "public protected internal private new abstract virtual override
-#  sealed static readonly extern unsafe volatile async".
+#  "public protected internal private new abstract virtual override sealed
+#  static readonly extern unsafe volatile async".
 # ---------------------------------------------------------------------------
 dotnet_style_require_accessibility_modifiers = for_non_interface_members:warning
 csharp_preferred_modifier_order = public,protected,internal,private,new,abstract,virtual,override,sealed,static,readonly,extern,unsafe,volatile,async:warning
@@ -72,6 +68,7 @@ dotnet_style_readonly_field = true:suggestion
 # ---------------------------------------------------------------------------
 dotnet_style_object_initializer = true:suggestion
 dotnet_style_collection_initializer = true:suggestion
+dotnet_style_prefer_collection_expression = true:suggestion
 dotnet_style_prefer_auto_properties = true:suggestion
 dotnet_style_null_propagation = true:suggestion
 dotnet_style_coalesce_expression = true:suggestion
@@ -81,23 +78,42 @@ dotnet_style_operator_placement_when_wrapping = beginning_of_line
 dotnet_style_namespace_match_folder = true:suggestion
 
 # ---------------------------------------------------------------------------
-#  Namespaces: Google examples use block-scoped (indented) namespaces.
+#  Namespaces
 # ---------------------------------------------------------------------------
-csharp_style_namespace_declarations = block_scoped:warning
+csharp_style_namespace_declarations = file_scoped:warning
 
 # ---------------------------------------------------------------------------
 #  New lines / braces
-#  Google: "No line break before opening brace" (K&R), "No line break between
-#  closing brace and else", "Braces used even when optional".
+#
+#  Allman for what declares or branches, K&R for what evaluates. The four
+#  tokens below are the whole rule; every other construct follows from them:
+#
+#    types             class, interface, struct, record, enum
+#    methods           methods, constructors, finalizers, operators, and
+#                      local functions (there is no local_functions token
+#                      that does anything)
+#    control_blocks    if/else, for, foreach, while, do, try/catch/finally,
+#                      switch statement, using, lock
+#    properties        the property, indexer and event declaration brace —
+#                      NOT the get/set bodies, which are `accessors`
+#
+#  Left out on purpose, so they stay on the line that opens them: accessors,
+#  lambdas, anonymous_methods, anonymous_types, and
+#  object_collection_array_initializers — that last one also governs the
+#  switch expression and the property/recursive patterns.
+#
+#  An unrecognised token here is dropped silently, with no diagnostic, so a
+#  typo reads as "this construct is K&R" rather than as an error.
 # ---------------------------------------------------------------------------
-csharp_new_line_before_open_brace = none
-csharp_new_line_before_else = false
-csharp_new_line_before_catch = false
-csharp_new_line_before_finally = false
+csharp_new_line_before_open_brace = types,methods,control_blocks,properties
+csharp_new_line_before_else = true
+csharp_new_line_before_catch = true
+csharp_new_line_before_finally = true
 csharp_new_line_before_members_in_object_initializers = true
 csharp_new_line_before_members_in_anonymous_types = true
 csharp_new_line_between_query_expression_clauses = true
 csharp_prefer_braces = true:warning
+dotnet_style_allow_blank_line_after_token_in_keyword = return:silent
 
 # ---------------------------------------------------------------------------
 #  Indentation
@@ -111,7 +127,7 @@ csharp_indent_braces = false
 
 # ---------------------------------------------------------------------------
 #  Spacing
-#  Google: "Space after if/for/while etc., and after commas. No space after an
+#  "Space after if/for/while etc., and after commas. No space after an
 #  opening parenthesis or before a closing parenthesis."
 # ---------------------------------------------------------------------------
 csharp_space_after_keywords_in_control_flow_statements = true
@@ -132,9 +148,9 @@ csharp_space_between_method_declaration_empty_parameter_list_parentheses = false
 
 # ---------------------------------------------------------------------------
 #  var usage
-#  Google: prefer var when the type is obvious; avoid for built-in/numeric
-#  types or when the type aids the reader. Kept as suggestions because the
-#  rule is contextual.
+#  prefer var when the type is obvious; avoid for built-in/numeric types or
+#  when the type aids the reader. Kept as suggestions because the rule is
+#  contextual.
 # ---------------------------------------------------------------------------
 csharp_style_var_for_built_in_types = false:suggestion
 csharp_style_var_when_type_is_apparent = true:suggestion
@@ -142,8 +158,8 @@ csharp_style_var_elsewhere = false:silent
 
 # ---------------------------------------------------------------------------
 #  Expression-bodied members
-#  Google: prefer for single-line read-only properties and lambdas; do NOT use
-#  on method definitions.
+#  prefer for single-line read-only properties and lambdas; do NOT use on
+#  method definitions.
 # ---------------------------------------------------------------------------
 csharp_style_expression_bodied_methods = false:warning
 csharp_style_expression_bodied_constructors = false:warning
@@ -155,7 +171,7 @@ csharp_style_expression_bodied_lambdas = true:silent
 csharp_style_expression_bodied_local_functions = false:silent
 
 # ---------------------------------------------------------------------------
-#  Modern C# preferences (reasonable defaults, not dictated by Google)
+#  Modern C# preferences (reasonable defaults, not dictated)
 # ---------------------------------------------------------------------------
 csharp_style_pattern_matching_over_is_with_cast_check = true:suggestion
 csharp_style_pattern_matching_over_as_with_null_check = true:suggestion
@@ -172,16 +188,26 @@ csharp_prefer_static_local_function = true:suggestion
 
 # ---------------------------------------------------------------------------
 #  Diagnostic severities
-#  Whitespace formatting (IDE0055) is verified by `dotnet format` in CI, so it
-#  stays a suggestion in-build to keep day-to-day builds fast and unbrittle.
-#  Naming (IDE1006) is deterministic and easy to satisfy, so it is a warning
-#  (and therefore an error under TreatWarningsAsErrors).
 # ---------------------------------------------------------------------------
-dotnet_diagnostic.IDE0055.severity = suggestion
+dotnet_diagnostic.IDE0055.severity = warning
 dotnet_diagnostic.IDE1006.severity = warning
+dotnet_diagnostic.IDE2003.severity = suggestion
+
+# ---------------------------------------------------------------------------
+#  Layout rules with no .editorconfig option, from client/tools.
+#  Warnings, so TreatWarningsAsErrors makes them build errors. Each ships a
+#  fixer: `dotnet format analyzers` applies them across the solution.
+# ---------------------------------------------------------------------------
+dotnet_diagnostic.KH0001.severity = warning
+dotnet_diagnostic.KH0002.severity = warning
+dotnet_diagnostic.KH0003.severity = warning
+dotnet_diagnostic.KH0004.severity = warning
+dotnet_diagnostic.KH0005.severity = warning
+dotnet_diagnostic.KH0006.severity = warning
+dotnet_diagnostic.KH0007.severity = warning
 
 # ============================================================================
-#  Naming rules (Google)
+#  Naming rules
 # ============================================================================
 
 # -- styles --
@@ -205,7 +231,7 @@ dotnet_naming_rule.interfaces_are_i_prefixed.symbols = interfaces
 dotnet_naming_rule.interfaces_are_i_prefixed.style = interface_style
 dotnet_naming_rule.interfaces_are_i_prefixed.severity = warning
 
-# -- type parameters: TPascalCase (Google is silent; standard .NET convention) --
+# -- type parameters: TPascalCase --
 dotnet_naming_symbols.type_parameters.applicable_kinds = type_parameter
 dotnet_naming_symbols.type_parameters.applicable_accessibilities = *
 dotnet_naming_rule.type_parameters_are_t_prefixed.symbols = type_parameters
@@ -234,7 +260,7 @@ dotnet_naming_rule.public_members_are_pascal_case.style = pascal_case
 dotnet_naming_rule.public_members_are_pascal_case.severity = warning
 
 # -- non-public fields / properties / events: _camelCase --
-#    Google: "private, protected, internal and protected internal fields and
+#    "private, protected, internal and protected internal fields and
 #    properties: _camelCase" (unaffected by const/static/readonly).
 dotnet_naming_symbols.non_public_members.applicable_kinds = field,property,event
 dotnet_naming_symbols.non_public_members.applicable_accessibilities = internal,private,protected,protected_internal,private_protected

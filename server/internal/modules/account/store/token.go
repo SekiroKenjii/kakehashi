@@ -6,8 +6,8 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // InsertToken records an issued token.
@@ -17,9 +17,8 @@ func (s *SQLServer) InsertToken(ctx context.Context, t domain.IssuedToken) error
 
 // RotateToken retires a refresh token and issues its replacement, as one act.
 //
-// The two halves used to be independent statements, and the window between them was the whole
-// problem: a failure after the DELETE and before the INSERT destroyed the user's only refresh
-// token, which is the credential they cannot re-obtain without signing in again. Rotation that can
+// One transaction, because a gap between the DELETE and the INSERT can destroy the user's only
+// refresh token — the credential they cannot re-obtain without signing in again. Rotation that can
 // lose the thing it is rotating is worse than no rotation.
 //
 // An empty retire means "this is the first token of a session", so one method serves both and there

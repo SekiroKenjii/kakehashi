@@ -1,0 +1,608 @@
+name: Scaffold smoke
+
+# This workflow belongs to the template and to nothing else: it builds the CLI, scaffolds a project
+# with it, and runs the gates on the result — the only shape the code is ever compiled in for real.
+# templates/template.json excludes this file and tools/cli, so a scaffolded project keeps ci.yml and
+# neither of these.
+on:
+  push:
+    branches: [main, development]
+  pull_request:
+    branches: [main, development]
+  # A release calls this before it packages anything, and asks for the wider pass: generating and
+  # removing a module is checked on Linux on every push, and on Windows only when it matters.
+  workflow_call:
+    inputs:
+      full:
+        description: Also run the generator smoke on Windows.
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+env:
+  # The scaffold writes outside the checkout, so the template it reads is never the tree it writes.
+  PROJECT_NAME: SmokeApp
+  PROJECT_MODULE: example.com/smokeapp
+
+jobs:
+  # The CLI is its own Go module and gets its own job, per docs/adr/0019. It runs on both operating
+  # systems because it scaffolds on both: a path or process bug specific to Windows should fail here
+  # by name, not three steps into scaffold-client after a NuGet restore.
+  cli:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: tools/cli
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: tools/cli/go.sum
+
+      - name: Build
+        run: go build ./...
+
+      - name: Test
+        run: go test ./...
+
+      - name: Vet
+        run: go vet ./...
+
+      # Formatting and doc comments are a property of the source, so once is enough.
+      - name: Verify formatting
+        if: runner.os == 'Linux'
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal)
+          if [ -n "$unformatted" ]; then
+            echo "these files are not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      # Godoc shape for exported identifiers and package comments, per docs/COMMENTS.md — the same
+      # rules and the same pinned version as the server job.
+      - name: Lint doc comments
+        if: runner.os == 'Linux'
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: v2.12.2
+          working-directory: tools/cli
+
+  scaffold-smoke-server:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      # Before the scaffold, not after: `kakehashi new` regenerates the contract, and buf shells out
+      # to these two. Reading the versions from go.mod works on the placeholder tree — the main
+      # module's own path is not what is being queried.
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
+      # The CLI's own self-check runs here: it refuses to hand over a tree that still carries a
+      # placeholder or names the template, so this step is a gate before the gates. The identity is
+      # for the commit the scaffold makes.
+      - name: Scaffold
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          "$RUNNER_TEMP/kakehashi" new "$PROJECT_NAME" \
+            --module "$PROJECT_MODULE" \
+            --author Smoke \
+            --template-dir . \
+            --dir "$RUNNER_TEMP/project" \
+            --no-input
+
+      # The template it read has to come out of the run unchanged: the scaffold works in a
+      # temporary directory beside the destination and never in the source. --porcelain rather than
+      # `git diff`, because the regression this guards against — a working directory, a cache, a
+      # build output left behind — is untracked, and a diff cannot see it.
+      - name: Verify the template was not modified
+        run: |
+          dirty=$(git status --porcelain)
+          if [ -n "$dirty" ]; then
+            echo "the scaffold changed the template it read:"
+            echo "$dirty"
+            exit 1
+          fi
+
+      # Gate 3, on the tree that can carry it.
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      # The scaffold moves the generated tree with the proto package and regenerates it.
+      # Regenerating again has to reproduce it byte for byte.
+      - name: Verify the generated code matches the schema
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/project/server
+        run: go build ./...
+
+      - name: Vet
+        working-directory: ${{ runner.temp }}/project/server
+        run: go vet ./...
+
+      - name: Test
+        working-directory: ${{ runner.temp }}/project/server
+        run: go test ./...
+
+      # Gate 1. It sees the generated packages only here: in the template their directory begins
+      # with an underscore, which the go tool skips when expanding ./...
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: go run ./tools/archlint
+
+      - name: Verify formatting
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal ./tools)
+          if [ -n "$unformatted" ]; then
+            echo "gofmt would change:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+  scaffold-smoke-client:
+    # WinUI 3 (Windows App SDK) requires Windows to build.
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: client/global.json
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$env:RUNNER_TEMP/kakehashi.exe" ./cmd/kakehashi
+
+      # The scaffold runs dotnet format on the way through, because the root namespace sorts
+      # somewhere new and the using blocks it moved through are out of order until it does.
+      - name: Scaffold
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          & "$env:RUNNER_TEMP/kakehashi.exe" new $env:PROJECT_NAME `
+            --module $env:PROJECT_MODULE `
+            --author Smoke `
+            --template-dir . `
+            --dir "$env:RUNNER_TEMP/project" `
+            --no-input
+          if ($LASTEXITCODE -ne 0) { throw "the scaffold exited $LASTEXITCODE" }
+
+      - name: Restore
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet restore ${{ env.PROJECT_NAME }}.slnx
+
+      - name: Verify formatting
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet format ${{ env.PROJECT_NAME }}.slnx --verify-no-changes --severity warn --no-restore
+
+      # The step above leaves a compiler server holding client/tools' analyzer assemblies open,
+      # and the build below has to write them: without this it fails with CS2012 on its own DLL.
+      - name: Release the analyzer assemblies
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet build-server shutdown
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet build ${{ env.PROJECT_NAME }}.slnx -c Release --no-restore
+
+      # The test projects are unpackaged WinUI executables, so the SDK compiles its bootstrapper
+      # into them as a module initializer, and with no matching runtime installed it calls
+      # Environment.Exit before the first test runs.
+      - name: Install the Windows App Runtime
+        working-directory: ${{ runner.temp }}/project/client
+        run: |
+          $props = [xml](Get-Content Directory.Packages.props)
+          $node = $props.SelectSingleNode("//PackageVersion[@Include='Microsoft.WindowsAppSDK']")
+          $version = $node.Version
+          $channel = ($version -split '\.')[0..1] -join '.'
+          $url = "https://aka.ms/windowsappsdk/$channel/$version/windowsappruntimeinstall-x64.exe"
+          $installer = Join-Path $env:RUNNER_TEMP 'WindowsAppRuntimeInstall.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          & $installer --quiet
+          if ($LASTEXITCODE -ne 0) { throw "the runtime installer exited $LASTEXITCODE" }
+
+      # Gate 2 is inside this run: SmokeApp.ArchitectureTests is one of the suites.
+      - name: Test
+        working-directory: ${{ runner.temp }}/project/client
+        run: dotnet test ${{ env.PROJECT_NAME }}.slnx -c Release --no-build --verbosity normal
+
+  # Removing the example module has to leave a tree that still builds, or --bare is a promise the
+  # template cannot keep.
+  scaffold-smoke-bare:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
+      - name: Scaffold without the example module
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          "$RUNNER_TEMP/kakehashi" new "$PROJECT_NAME" \
+            --module "$PROJECT_MODULE" \
+            --author Smoke \
+            --template-dir . \
+            --dir "$RUNNER_TEMP/project" \
+            --bare \
+            --no-input
+
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      - name: Build
+        working-directory: ${{ runner.temp }}/project/server
+        run: go build ./...
+
+      - name: Test
+        working-directory: ${{ runner.temp }}/project/server
+        run: go test ./...
+
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: go run ./tools/archlint
+
+  # The generator's promise, end to end: a module goes into a project that never had one, the three
+  # gates pass with nothing edited by hand, and taking it back out leaves the tree exactly as it was.
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
+      # The templates are derived from the example module and committed. Deriving them again has to
+      # produce what is committed, or the generator and the example have drifted apart.
+      - name: Verify the generator matches the example module
+        working-directory: tools/cli
+        run: |
+          go run ./cmd/gen-sync
+          cd ../.. && git diff --exit-code -- tools/cli/internal/gen
+
+      - name: Scaffold a project with no module in it
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          "$RUNNER_TEMP/kakehashi" new "$PROJECT_NAME" \
+            --module "$PROJECT_MODULE" \
+            --author Smoke \
+            --template-dir . \
+            --dir "$RUNNER_TEMP/project" \
+            --bare \
+            --no-input
+
+      # The state to come back to. Everything after this is measured against it.
+      - name: Record the tree before the module
+        working-directory: ${{ runner.temp }}/project
+        run: git rev-parse HEAD > "$RUNNER_TEMP/before"
+
+      - name: Add a module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          "$RUNNER_TEMP/kakehashi" add module orders
+
+      # `add module` runs these itself and refuses to finish without them. Running them again here
+      # is the independent check: the gates pass on the tree as it was left, not only inside the
+      # command that wrote it.
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      - name: Verify the generated contract matches the schema
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+
+      - name: Build, vet and test the server
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...
+
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: go run ./tools/archlint
+
+      - name: Verify formatting
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal ./tools)
+          if [ -n "$unformatted" ]; then
+            echo "the generated module is not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Add a page to it
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          "$RUNNER_TEMP/kakehashi" add page orders Backlog
+
+      # Removing takes back what adding wrote, and the page with it: the page's files are inside the
+      # module's own directory, and its registration is in the module's own composition entry point.
+      - name: Remove the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          git add -A
+          git commit -q -m "chore: add orders"
+          "$RUNNER_TEMP/kakehashi" remove module orders
+
+      - name: Verify the tree is what it was before the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          before=$(cat "$RUNNER_TEMP/before")
+          changed=$(git diff --name-only "$before")
+          if [ -n "$changed" ]; then
+            echo "removing the module did not restore the tree:"
+            echo "$changed"
+            git diff "$before" | head -100
+            exit 1
+          fi
+
+      - name: Build and test the server without it
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          go test ./...
+          go run ./tools/archlint
+
+  # The same sequence as `generate`, on the other operating system, written in the other shell: the
+  # bugs this catches are path bugs, and a path bug is exactly what a portable script hides. It runs
+  # for a release rather than for every push, because it costs a Windows runner and the failures it
+  # finds are the ones that must not reach an asset.
+  generate-windows:
+    if: inputs.full
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$env:RUNNER_TEMP/kakehashi.exe" ./cmd/kakehashi
+
+      - name: Scaffold a project with no module in it
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          & "$env:RUNNER_TEMP/kakehashi.exe" new $env:PROJECT_NAME `
+            --module $env:PROJECT_MODULE `
+            --author Smoke `
+            --template-dir . `
+            --dir "$env:RUNNER_TEMP/project" `
+            --bare `
+            --no-input
+          if ($LASTEXITCODE -ne 0) { throw "the scaffold exited $LASTEXITCODE" }
+
+      - name: Record the tree before the module
+        working-directory: ${{ runner.temp }}/project
+        run: git rev-parse HEAD | Out-File -FilePath "$env:RUNNER_TEMP/before" -Encoding ascii
+
+      - name: Add a module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          & "$env:RUNNER_TEMP/kakehashi.exe" add module orders
+          if ($LASTEXITCODE -ne 0) { throw "add module exited $LASTEXITCODE" }
+
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      - name: Verify the generated contract matches the schema
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+          if ($LASTEXITCODE -ne 0) { throw "regenerating changed the committed contract" }
+
+      - name: Build, vet and test the server
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          if ($LASTEXITCODE -ne 0) { throw "go build exited $LASTEXITCODE" }
+          go vet ./...
+          if ($LASTEXITCODE -ne 0) { throw "go vet exited $LASTEXITCODE" }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw "go test exited $LASTEXITCODE" }
+
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go run ./tools/archlint
+          if ($LASTEXITCODE -ne 0) { throw "archlint exited $LASTEXITCODE" }
+
+      - name: Add a page to it
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          & "$env:RUNNER_TEMP/kakehashi.exe" add page orders Backlog
+          if ($LASTEXITCODE -ne 0) { throw "add page exited $LASTEXITCODE" }
+
+      - name: Remove the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          git add -A
+          git commit -q -m "chore: add orders"
+          & "$env:RUNNER_TEMP/kakehashi.exe" remove module orders
+          if ($LASTEXITCODE -ne 0) { throw "remove module exited $LASTEXITCODE" }
+
+      - name: Verify the tree is what it was before the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          $before = (Get-Content "$env:RUNNER_TEMP/before").Trim()
+          $changed = git diff --name-only $before
+          if ($changed) {
+            Write-Host "removing the module did not restore the tree:"
+            Write-Host ($changed -join "`n")
+            throw "the tree did not come back"
+          }
+
+      - name: Build and test the server without it
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          if ($LASTEXITCODE -ne 0) { throw "go build exited $LASTEXITCODE" }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw "go test exited $LASTEXITCODE" }
+          go run ./tools/archlint
+          if ($LASTEXITCODE -ne 0) { throw "archlint exited $LASTEXITCODE" }
+
+  # The rename scripts are the fallback for anyone who starts from the "Use this template" button
+  # rather than from the CLI. Their own self-check is the assertion: it exits non-zero while any
+  # placeholder or identity string survives, which is what rots first when the template grows a file.
+  rename-fallback:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+          github_token: ${{ github.token }}
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Rename in place
+        run: |
+          git config user.email smoke@example.com
+          git config user.name Smoke
+          tools/rename/rename.sh \
+            --app-name "$PROJECT_NAME" \
+            --go-module "$PROJECT_MODULE" \
+            --author Smoke
+
+      - name: Build
+        working-directory: server
+        run: go build ./...

@@ -6,10 +6,9 @@
 // middleware in internal/app/server, so this is where it is read and where its absence is
 // answered. The service below is handed a user id and never learns it was on a network.
 //
-// One runtime dependency worth saying out loud rather than leaving to be discovered: the mux
-// resolves the verifier with TryUse, so this module depends at runtime on some module publishing
-// an auth.Verifier — in practice, account — but never at compile time. If account is ever
-// unmounted, ListActivity answers UNAUTHENTICATED to everyone instead of failing the build. That
+// The mux resolves the verifier with TryUse, so this module depends at runtime on some module
+// publishing an auth.Verifier — in practice, account — but never at compile time. If account is
+// unmounted, ListActivity answers UNAUTHENTICATED to everyone instead of failing the build, which
 // is correct for a per-account feed in a server with no notion of accounts.
 package rpc
 
@@ -24,11 +23,11 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	activityv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/activity/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/activity/v1/activityv1connect"
-	activityapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	activityv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/activity/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/activity/v1/activityv1connect"
+	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	"__GO_MODULE__/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // feed is what this wire layer needs of the service.
@@ -69,21 +68,15 @@ func (h *handler) RecordClientEvent(
 
 	kind := req.Msg.GetKind()
 	if !activityapi.CanReport(kind) {
-		// The message names no kinds. A refusal that listed what is allowed would be a refusal that
-		// taught a caller what else to try, and the client already knows: it sends one of two
-		// constants it was compiled with.
+		// The message names no kinds: listing what is allowed teaches a caller what else to try, and
+		// the client already knows — it sends one of two constants it was compiled with.
 		return nil, errs.Invalidf("That is not something a client may record.")
 	}
 
 	device, ip := callerFacts(req)
 
-	// No session id. These facts belong to an installation rather than to a sign-in — the app was
-	// already updated before anybody authenticated — and naming the session that happened to be open
-	// would imply the two were connected.
-	//
-	// The time is the server's. A client with a wrong clock would otherwise scatter rows through the
-	// history, and a client with a bad intention could slot one between two security events and
-	// change what the sequence appears to say.
+	// No session id: these facts belong to an installation, not a sign-in. The time is the server's,
+	// so a wrong or dishonest client clock cannot scatter or reposition rows in the history.
 	if err := h.svc.Record(ctx, subject.ID, kind, "", device, ip, time.Now()); err != nil {
 		return nil, err
 	}
@@ -95,10 +88,9 @@ func (h *handler) RecordClientEvent(
 // Both are claims rather than facts — a user agent lies freely and an address may be a proxy — which
 // is why they are only ever displayed and never used for a decision.
 //
-// It duplicates the account module's edge helper of the same name, and that is the module boundary
-// working rather than failing: that one reads a *http.Request from a REST handler, this one reads a
-// Connect request, and neither module may import the other. If a second Connect handler ever needs
-// this, it belongs in platform/rpc — one caller is not yet a reason to put it there.
+// It duplicates the account module's edge helper of the same name: that one reads a *http.Request
+// from a REST handler, this one reads a Connect request, and neither module may import the other.
+// If a second Connect handler ever needs this, it moves to platform/rpc.
 func callerFacts(req connect.AnyRequest) (device, ip string) {
 	device = strings.TrimSpace(req.Header().Get("User-Agent"))
 	if len(device) > 256 {
@@ -119,19 +111,12 @@ func callerFacts(req connect.AnyRequest) (device, ip string) {
 func (h *handler) ListActivity(
 	ctx context.Context, req *connect.Request[activityv1.ListActivityRequest],
 ) (*connect.Response[activityv1.ListActivityResponse], error) {
-	// Whose feed this is comes from the verified token and nowhere else. A Subject on the context
-	// was verified — the context key is unforgeable and the middleware is its only writer — so
-	// there is no user id in the request and no way to ask for somebody else's. It is the account
-	// id and not the session id: scoping by session would break the one thing this module exists
-	// to prove, which is that the other machine's sign-in shows up here.
+	// Whose feed this is comes from the verified token and nowhere else, so there is no way to ask
+	// for somebody else's. The account id, not the session: another machine's sign-in belongs here.
 	subject, ok := auth.SubjectFrom(ctx)
 	if !ok {
-		// Not an empty list. An empty feed and an expired token are the same picture on screen and
-		// opposite facts, and collapsing them produces a client that silently shows nothing.
-		//
-		// The check lives here rather than in service/ because identity is transport-borne and is
-		// unpacked at the transport edge. A service that reaches into a request context for its
-		// caller has started knowing it is on a network.
+		// Not an empty list: an empty feed and an expired token are the same picture on screen and
+		// opposite facts. Checked here because identity is transport-borne and unpacked at the edge.
 		return nil, errs.Unauthenticatedf("Sign in to see your activity.")
 	}
 

@@ -1,14 +1,13 @@
-// Account is the module's central aggregate root: who someone is.
 package domain
 
 import (
 	"strings"
 	"time"
-	"unicode/utf16"
 	"unicode/utf8"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/passwords"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/passwords"
+	"__GO_MODULE__/server/internal/platform/text"
 )
 
 // Limits on the fields a user controls. All of them are about the interface rather than the
@@ -24,7 +23,7 @@ const (
 // Account is the entity.
 //
 // PasswordHash is exported for the store to scan into, but it is never the plaintext and never
-// leaves the module: accountapi.User has no such field, and the mapping in service/ is what
+// leaves the module: accountapi.Account has no such field, and the mapping in service/ is what
 // guarantees it.
 type Account struct {
 	ID           string
@@ -49,7 +48,7 @@ type Account struct {
 	UpdatedAt time.Time
 }
 
-// ResetPassword replaces the password without checking the old one.
+// ResetPassword replaces the password without checking the current one.
 //
 // Distinct from the owner's own change, which verifies the current password first. An
 // administrator does not have it — that is why this exists — so the protection here is not a
@@ -74,7 +73,7 @@ func (a *Account) ResetPassword(plainPassword string, now time.Time) error {
 // grant to nothing — a real choice, so it is allowed rather than silently ignored.
 func (a *Account) SetTeam(teamID string, now time.Time) error {
 	trimmed := strings.TrimSpace(teamID)
-	if utf16Len(trimmed) > MaxTeamLength {
+	if text.UTF16Len(trimmed) > MaxTeamLength {
 		return errs.Invalidf("A team is limited to %d characters.", MaxTeamLength)
 	}
 
@@ -110,9 +109,8 @@ func NewAccount(id, email, displayName, plainPassword string, now time.Time) (Ac
 		Email:        normalizedEmail,
 		DisplayName:  name,
 		PasswordHash: hash,
-		// Active from the moment it exists. An account that had to be switched on afterwards is a
-		// second step every caller must remember, and whoever forgets has created an account that
-		// cannot sign in for reasons nothing explains.
+		// Active from the moment it exists: a switch-on step every caller must remember is one
+		// somebody forgets, leaving an account that cannot sign in for no visible reason.
 		IsActive:  true,
 		CreatedAt: now,
 		UpdatedAt: now,
@@ -185,7 +183,7 @@ func (u *Account) UpdateProfile(displayName, phone *string, now time.Time) error
 
 	if phone != nil {
 		trimmed := strings.TrimSpace(*phone)
-		if utf16Len(trimmed) > MaxPhoneLength {
+		if text.UTF16Len(trimmed) > MaxPhoneLength {
 			return errs.Invalidf("Phone numbers are limited to %d characters.", MaxPhoneLength)
 		}
 		u.Phone = trimmed
@@ -196,21 +194,18 @@ func (u *Account) UpdateProfile(displayName, phone *string, now time.Time) error
 }
 
 func normalizeEmail(email string) (string, error) {
-	// Lower-cased and trimmed, because the address is the account's identity and users do not
-	// remember which case they typed. The local part is technically case-sensitive per RFC 5321;
-	// no mail provider anyone uses actually treats it that way, and honouring it would create two
-	// accounts for one person.
+	// Lower-cased: the address is the account's identity. RFC 5321 makes the local part
+	// case-sensitive, but no provider treats it so, and honouring it splits one person into two.
 	trimmed := strings.ToLower(strings.TrimSpace(email))
 
 	if trimmed == "" {
 		return "", errs.Invalidf("An email address is required.")
 	}
-	if utf16Len(trimmed) > MaxEmailLength {
+	if text.UTF16Len(trimmed) > MaxEmailLength {
 		return "", errs.Invalidf("That email address is too long.")
 	}
 
-	// Deliberately not a regular expression. Every address-validating regex is either wrong or
-	// unreadable, and the only real proof an address exists is that mail sent to it arrives. This
+	// Deliberately not a regex: the only proof an address exists is that mail arrives. This
 	// rejects what is obviously not an address and leaves the rest to delivery.
 	at := strings.IndexByte(trimmed, '@')
 	if at <= 0 || at == len(trimmed)-1 || strings.ContainsAny(trimmed, " \t\r\n") {
@@ -226,7 +221,7 @@ func normalizeDisplayName(name string) (string, error) {
 	if trimmed == "" {
 		return "", errs.Invalidf("A display name is required.")
 	}
-	if utf16Len(trimmed) > MaxDisplayNameLength {
+	if text.UTF16Len(trimmed) > MaxDisplayNameLength {
 		return "", errs.Invalidf(
 			"Display names are limited to %d characters.", MaxDisplayNameLength)
 	}
@@ -244,14 +239,4 @@ func checkPasswordStrength(plain string) error {
 			"Passwords must be at least %d characters.", MinPasswordLength)
 	}
 	return nil
-}
-
-// utf16Len is how many units a string takes in an nvarchar column.
-//
-// Not the rune count, which is what these checks used. nvarchar(n) counts UTF-16 code units, and a
-// character outside the Basic Multilingual Plane — an emoji, an old CJK ideograph — takes two of
-// them. Counting runes let a value pass the domain and fail the INSERT, turning a message somebody
-// could act on into an opaque 500 from the driver.
-func utf16Len(s string) int {
-	return len(utf16.Encode([]rune(s)))
 }

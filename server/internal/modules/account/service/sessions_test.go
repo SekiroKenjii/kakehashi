@@ -4,8 +4,8 @@ import (
 	"context"
 	"testing"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 func TestSessionsMarksTheCaller(t *testing.T) {
@@ -51,9 +51,8 @@ func TestRevokeAllSessionsEndsEverything(t *testing.T) {
 	}
 }
 
-// Leaving and being ended are the same delete and two different facts, and only the caller knows
-// which one happened. They were one announcement until now, which is why the activity feed said
-// "signed out" for a session an administrator had ended.
+// Leaving and being ended are the same delete and two different facts, announced as two events —
+// only the caller knows which one happened: docs/adr/0003-signedout-vs-sessionrevoked.md
 func TestLeavingAndBeingEndedAreAnnouncedApart(t *testing.T) {
 	store := newFakeStore()
 	account := store.seed(t, "ada@example.com")

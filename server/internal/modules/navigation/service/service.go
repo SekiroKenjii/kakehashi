@@ -11,8 +11,8 @@ import (
 	"sync"
 	"time"
 
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/domain"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
+	"__GO_MODULE__/server/internal/modules/navigation/domain"
 )
 
 // Store is the persistence these use cases need, declared here rather than in store/.
@@ -117,10 +117,8 @@ func (s *Service) layoutOf(ctx context.Context) (*layout, error) {
 		return s.cached, nil
 	}
 
-	// One snapshot, not two reads. Taken separately, a CreateGroup landing between them produced a
-	// layout whose placements named a heading the groups half had not seen — and Build drops a
-	// destination whose heading it cannot find, so a screen vanished from every pane until the next
-	// write happened to invalidate the cache.
+	// One snapshot, never two reads: a CreateGroup landing between them names a heading the groups
+	// half has not seen, and Build drops a destination whose heading it cannot find.
 	groups, stored, err := s.store.Layout(ctx)
 	if err != nil {
 		return nil, err

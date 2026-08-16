@@ -16,11 +16,11 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/config"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/mongodb"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/rpc"
+	"__GO_MODULE__/server/internal/platform/config"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/eventbus"
+	"__GO_MODULE__/server/internal/platform/mongodb"
+	"__GO_MODULE__/server/internal/platform/rpc"
 )
 
 // Kernel owns the platform services every module is allowed to reach for directly, plus the
@@ -101,10 +101,8 @@ func (k *Kernel) Mount(mods ...Module) {
 // permission. Call it before Routes; a module absent from the list that declares one fails the boot.
 //
 // It lives at the composition root rather than as something a module declares about itself, because
-// exemption is a security decision. A module that could exempt itself would opt out by editing one
-// line of its own file — and the documented way to add a module is to copy an existing one, which is
-// exactly how a stray Public() travels. Named at the root, it is a one-line diff in the file a
-// reviewer already opens to learn what this server is made of.
+// exemption is a security decision: a module that could exempt itself would opt out by editing one
+// line of its own file.
 //
 // It buys a module permission to ask, not blanket exemption: every route it serves still states its
 // own policy, and its administrative surface still names its own permission.
@@ -117,10 +115,9 @@ func (k *Kernel) AllowUnprotectedRoutes(moduleIDs ...string) {
 
 // AccessModules are the modules that actually gate a route on their own <id>.access, in mount order.
 //
-// The authorization module mints its catalogue from this rather than from every mounted module. The
-// difference is not cosmetic: minting one per mounted module produced grantable, official-looking
-// permissions for the four modules nothing checks them on, which an administrator could spend a
-// morning granting to no effect.
+// The authorization module mints its catalogue from this rather than from every mounted module:
+// minting one per mounted module would create grantable permissions that no route checks, which an
+// administrator can grant to no effect.
 func (k *Kernel) AccessModules() []string {
 	var out []string
 	for _, route := range k.Routes() {
@@ -176,9 +173,8 @@ func (k *Kernel) Boot(ctx context.Context) error {
 	for _, m := range k.modules {
 		if s, ok := m.(Starter); ok {
 			if err := s.Start(ctx, k); err != nil {
-				// A fresh deadline, detached from the boot context. Handing the cleanup the very
-				// context whose cancellation may have caused the failure makes every Stop fail
-				// immediately, which is the opposite of shutting down.
+				// Detached from the boot context: handing cleanup the context whose cancellation
+				// caused the failure makes every Stop fail immediately.
 				stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), shutdownGrace)
 				stopErr := k.Shutdown(stopCtx)
 				cancel()
@@ -213,8 +209,8 @@ func (k *Kernel) Boot(ctx context.Context) error {
 // every error it saw: one module refusing to stop must not strand the rest, and an earlier module's
 // failure must not be swallowed by a later one's.
 //
-// It also drops the service registry. Leaving it populated meant a resolved service outlived the
-// module that owned it — a handle to a store whose connections had just been closed.
+// It also drops the service registry, so a resolved service cannot outlive the module that owned
+// it — a handle to a store whose connections are closed.
 func (k *Kernel) Shutdown(ctx context.Context) error {
 	var errs []error
 	for i := len(k.started) - 1; i >= 0; i-- {
@@ -233,14 +229,11 @@ func (k *Kernel) Shutdown(ctx context.Context) error {
 
 // Routes collects the endpoints contributed by every module, in registration order.
 //
-// Unlike the desktop original's Views, these are not sorted. Ordering would imply that an earlier
-// route can shadow a later one, which is not how net/http resolves patterns: the most specific
-// match wins regardless of registration order, and two modules claiming the identical pattern is a
-// design mistake the mux is right to panic on.
+// The routes are not sorted: net/http resolves patterns by specificity regardless of registration
+// order, and two modules claiming the identical pattern is a design mistake the mux panics on.
 func (k *Kernel) Routes() []Route {
-	// Collected once. Two callers now ask — the mux that mounts them, and AccessModules — and a
-	// module's Routes builds handlers, so asking twice would hand the mux one set and the access
-	// question a different, unmounted set.
+	// Collected once: a module's Routes builds handlers, and both callers — the mux that mounts
+	// them, and AccessModules — must see the same set.
 	if k.routes != nil {
 		return k.routes
 	}
@@ -252,15 +245,12 @@ func (k *Kernel) Routes() []Route {
 			continue
 		}
 		for _, route := range c.Routes(k) {
-			// Stamped here, over anything the module put there, because the loop already knows
-			// whose route this is and the module must not get a say. A module that could name
-			// itself could name another, and the name is what decides whose permission applies.
+			// Stamped over whatever the module put there: the name decides whose permission
+			// applies, so a module able to name itself could name another's.
 			route.Module = m.ID()
 
-			// Two refusals, both at boot, both loud. A route with no policy is a route somebody
-			// forgot; a route that checks nothing, from a module the composition root did not
-			// exempt, is a route somebody opened without saying so at the root. Neither is
-			// something to discover from a request that should have been refused.
+			// Two boot-time refusals: a route that declared no policy, and a route that checks
+			// no permission from a module the composition root did not exempt.
 			if route.Policy.Kind() == PolicyUnset {
 				panic(fmt.Sprintf(
 					"app: module %q serves %q with no access policy; state one beside the pattern",
@@ -381,8 +371,8 @@ func TryUse[T any](k *Kernel) (T, bool) {
 	return v.(T), true
 }
 
-// Subscribe registers fn as a listener for events of type E published by any module. It is a thin,
-// kernel-flavoured wrapper over the bus, kept here so a module never has to reach past the kernel.
+// Subscribe registers fn as a listener for events of type E published by any module. It wraps the
+// bus so a module never has to reach past the kernel.
 //
 // fn runs synchronously on the publisher's goroutine, inside the publisher's context. Keep it
 // quick.

@@ -2,16 +2,13 @@
 // to the account module.
 //
 // Every table it touches lives in the account schema, which the kernel creates before the first
-// migration runs. Style follows ktaranov/sqlserver-kit — see platform/database. Two names here are
-// the way they are because of that guide: the entity table is Account (USER is reserved) and the
-// session table is UserSession (SESSION is ODBC-reserved).
+// migration runs. Style follows ktaranov/sqlserver-kit — see platform/database. Two names come
+// from that guide: the entity table is Account (USER is reserved) and the session table is
+// UserSession (SESSION is ODBC-reserved).
 //
-// # Why the provider's state is in the database at all
-//
-// zitadel/oidc's example keeps auth requests, codes and tokens in memory. That works until the
-// process restarts, at which point every signed-in user is signed out and every refresh token is
-// dead. On a desktop client that is worse than it sounds: the token is what survives a reboot, and
-// losing it turns a deploy into a forced re-login for everyone.
+// The provider's state is in the database rather than in memory (zitadel/oidc's example keeps it
+// in memory) because an in-memory store signs every user out on restart: the refresh token is
+// what survives a client reboot, and losing it turns a deploy into a forced re-login for everyone.
 package store
 
 import (
@@ -20,8 +17,8 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/database"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // SQLServer stores account state in the shared database.

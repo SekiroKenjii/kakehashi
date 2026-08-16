@@ -7,10 +7,10 @@ package service
 import (
 	"context"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/account/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/account/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 // Authenticate checks an email and password, recording the attempt either way.
@@ -32,11 +32,8 @@ func (s *Service) Authenticate(
 	}
 
 	if !user.IsActive {
-		// Checked before the password, so a deactivated account is refused without the hash
-		// comparison — and refused with its own message, because "your account has been
-		// deactivated" is actionable and "wrong password" sends someone to the reset form for
-		// nothing. The address is known to exist by the administrator who switched it off, so this
-		// message enumerates nothing that was private.
+		// Before the password, so a deactivated account is refused without the hash comparison and
+		// with its own message: "wrong password" would send someone to the reset form for nothing.
 		s.failed(ctx, user.ID, device, ip)
 		return domain.Account{}, errs.Unauthenticatedf(
 			"This account has been deactivated. Ask an administrator to restore it.")
@@ -91,9 +88,8 @@ func (s *Service) StartSession(
 
 	s.record(ctx, user.ID, kind, device, ip)
 
-	// Best-effort, and after the session exists. A sign-in that succeeded must not be undone
-	// because a reporting column could not be written; the session is the fact, this is the
-	// convenience.
+	// Best-effort, and after the session exists: the session is the fact and this is the
+	// convenience, so a sign-in must not be undone by an unwritable reporting column.
 	_ = s.store.TouchSignIn(ctx, user.ID, now)
 
 	eventbus.Publish(s.bus, ctx, accountapi.SignedIn{
@@ -114,10 +110,8 @@ func (s *Service) CompleteAuthRequest(ctx context.Context, requestID, subject, s
 	return s.store.CompleteAuthRequest(ctx, requestID, subject, sessionID, s.now())
 }
 
-// failed records a rejected attempt and announces it.
-//
-// Both refusals go through here so the audit row and the announcement cannot drift apart — the
-// account page grew its row first, and the feed had no way to know an attempt had happened at all.
+// failed records a rejected attempt and announces it. Both refusals go through here so the audit
+// row and the published event cannot drift apart.
 func (s *Service) failed(ctx context.Context, userID, device, ip string) {
 	s.record(ctx, userID, accountapi.EventFailedSignIn, device, ip)
 	eventbus.Publish(s.bus, ctx, accountapi.FailedSignIn{

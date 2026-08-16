@@ -8,11 +8,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/activity/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	"__GO_MODULE__/server/internal/app"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/modules/activity/domain"
+	"__GO_MODULE__/server/internal/modules/activity/service"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 var happenedAt = time.Date(2026, time.August, 6, 9, 30, 0, 0, time.UTC)
@@ -87,9 +87,8 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 			wantWhere: "laptop", wantIP: "10.0.0.1",
 		},
 		{
-			// One event with an attribute, two kinds. The account module already worked out that this
-			// device is new in order to choose its own audit kind; the feed reads the answer rather
-			// than asking the question again.
+			// One event with an attribute, two kinds: the account module already decided the device
+			// is new, and the feed reads that answer rather than asking again.
 			name: "signed in from a device this account has not used",
 			publish: func(k *app.Kernel) {
 				eventbus.Publish(k.Bus, context.Background(), accountapi.SignedIn{
@@ -111,14 +110,13 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 					UserID: "account-1", SessionID: "session-1", At: happenedAt,
 				})
 			},
-			// No device and no address: the event carries neither, and inventing one would be a row
-			// that lies about where the sign-out came from. The session it ended is carried, which is
-			// what lets a reader see that a burst of these was one session rather than many.
+			// No device and no address: the event carries neither, and inventing one would lie
+			// about where the sign-out came from. The session is carried, so a burst reads as one.
 			wantKind: "SignedOut", wantSession: "session-1", wantWhere: "", wantIP: "",
 		},
 		{
-			// Leaving and being ended are two facts. They arrived as one event until now, so the feed
-			// said "signed out" for a revocation that the account page called a revocation.
+			// Leaving and being ended are two facts and arrive as two events:
+			// docs/adr/0003-signedout-vs-sessionrevoked.md
 			name: "one session revoked",
 			publish: func(k *app.Kernel) {
 				eventbus.Publish(k.Bus, context.Background(), accountapi.SessionRevoked{
@@ -138,9 +136,8 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 			wantKind: "SessionRevoked", wantSession: "", wantWhere: "", wantIP: "",
 		},
 		{
-			// The only row in the feed that says another person acted on your account, so it is its
-			// own kind rather than an attribute: the client picks a label and an icon by kind, and
-			// this is the one that has to look different. It reached the feed not at all until now.
+			// The only row saying another person acted on your account, so its own kind rather than
+			// an attribute: the client picks label and icon by kind.
 			name: "an administrator revoked somebody's session",
 			publish: func(k *app.Kernel) {
 				eventbus.Publish(k.Bus, context.Background(), accountapi.SessionRevoked{
@@ -151,9 +148,8 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 			wantWhere: "", wantIP: "",
 		},
 		{
-			// The one row whose reader is asking "where did that come from" rather than "was that
-			// me", so the device and the address are the point of it. No session: the attempt never
-			// got one.
+			// Read to answer "where did that come from", so device and address are the point.
+			// No session: the attempt never got one.
 			name: "refused attempt",
 			publish: func(k *app.Kernel) {
 				eventbus.Publish(k.Bus, context.Background(), accountapi.FailedSignIn{

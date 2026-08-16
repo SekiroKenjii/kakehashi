@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // What boot does: make the catalogue match what the modules declared, and make sure the roles the
@@ -85,9 +85,7 @@ func (s *Service) grantEverythingToAdmin(ctx context.Context, declared []domain.
 
 	admin.Grants = make(map[string]string, len(declared))
 	for _, p := range declared {
-		// At the widest scope, because the row-level half of a permission is meaningless for the
-		// role whose job is to see everything — and an Admin who could only see their own rows
-		// could not audit anybody.
+		// Widest scope: an Admin who saw only their own rows could audit nobody.
 		if err := admin.Grant(p.Key, domain.ScopeAll); err != nil {
 			return err
 		}

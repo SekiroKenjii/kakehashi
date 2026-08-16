@@ -3,8 +3,8 @@ package service
 import (
 	"context"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // The module's one dependency on another module, and the only file that names it.

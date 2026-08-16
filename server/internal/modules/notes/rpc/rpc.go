@@ -13,9 +13,9 @@ import (
 	"connectrpc.com/connect"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	notesv1 "github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/notes/v1"
-	"github.com/SekiroKenjii/kakehashi/server/internal/gen/kakehashi/notes/v1/notesv1connect"
-	notesapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/notes/api"
+	notesv1 "__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/notes/v1"
+	"__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/notes/v1/notesv1connect"
+	notesapi "__GO_MODULE__/server/internal/modules/notes/api"
 )
 
 // NewRoute builds the Connect handler for NotesService.

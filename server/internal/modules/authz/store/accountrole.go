@@ -4,8 +4,8 @@ import (
 	"context"
 	"time"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/domain"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/modules/authz/domain"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // Who holds which role.
@@ -28,9 +28,8 @@ func (s *SQLServer) RolesOf(ctx context.Context, accountID string) ([]domain.Rol
 func (s *SQLServer) RolesOfAccounts(
 	ctx context.Context, accountIDs []string,
 ) (map[string][]domain.Role, error) {
-	// An empty list asks about everybody. It is the caller the users screen makes — it is already
-	// listing every account — and answering it with an empty map would be answering a different
-	// question from the one asked.
+	// An empty list asks about everybody: it is the call the users screen makes, already listing
+	// every account, so an empty map would answer a different question.
 	where := ""
 	args := make([]any, len(accountIDs))
 	for i, id := range accountIDs {

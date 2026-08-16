@@ -3,10 +3,10 @@ package app
 // Identity of the application, fixed at compile time.
 const (
 	// ID namespaces anything that needs a stable machine-readable name.
-	ID = "kakehashi"
+	ID = "__APP_NAME_LOWER__"
 
 	// Name is for humans: logs, telemetry, the version banner.
-	Name = "Kakehashi"
+	Name = "__APP_TITLE__"
 )
 
 // Build metadata, stamped by the linker.

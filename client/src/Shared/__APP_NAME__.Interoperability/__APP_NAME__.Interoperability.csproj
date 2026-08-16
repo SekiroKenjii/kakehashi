@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Library</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <RootNamespace>__ROOT_NAMESPACE__.Interoperability</RootNamespace>
+    <AssemblyName>__APP_NAME__.Interoperability</AssemblyName>
+    <Platforms>x64;ARM64</Platforms>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <!-- CsWin32 needs a concrete pointer size: a solution-level "Any CPU" build would otherwise
+         compile this as AnyCPU, where 64-bit-only APIs (e.g. SetWindowLongPtr) cannot be
+         generated. The app family only ever runs as x64/ARM64. -->
+    <PlatformTarget Condition="'$(Platform)' != 'ARM64'">x64</PlatformTarget>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Windows.CsWin32" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

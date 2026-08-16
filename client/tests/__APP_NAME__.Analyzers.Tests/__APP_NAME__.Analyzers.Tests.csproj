@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <OutputType>Exe</OutputType>
+    <IsPackable>false</IsPackable>
+    <Platforms>AnyCPU;x64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.CodeAnalysis.CSharp" />
+  </ItemGroup>
+
+  <!-- Referenced as a library, not as an analyzer: these tests drive the analyzers directly. -->
+  <ItemGroup>
+    <ProjectReference
+        Include="..\..\tools\__APP_NAME__.Analyzers\__APP_NAME__.Analyzers.csproj"
+        UndefineProperties="RuntimeIdentifier"
+        AdditionalProperties="Platform=AnyCPU" />
+  </ItemGroup>
+
+</Project>

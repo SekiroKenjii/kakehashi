@@ -27,20 +27,20 @@ ARG DATE=unknown
 RUN CGO_ENABLED=0 GOOS=linux go build \
       -trimpath \
       -ldflags "-s -w \
-        -X github.com/SekiroKenjii/kakehashi/server/internal/app.Version=${VERSION} \
-        -X github.com/SekiroKenjii/kakehashi/server/internal/app.Commit=${COMMIT} \
-        -X github.com/SekiroKenjii/kakehashi/server/internal/app.Date=${DATE}" \
-      -o /out/kakehashi ./cmd/server
+        -X __GO_MODULE__/server/internal/app.Version=${VERSION} \
+        -X __GO_MODULE__/server/internal/app.Commit=${COMMIT} \
+        -X __GO_MODULE__/server/internal/app.Date=${DATE}" \
+      -o /out/__APP_NAME_LOWER__ ./cmd/server
 
 # distroless static: libc-free, shell-free, package-manager-free. Nothing to exploit and nothing to
 # patch, at the cost of not being able to `docker exec` into it and poke around. That trade is
 # right for a server and wrong for a debugging session; use the :debug tag when you need the latter.
 FROM gcr.io/distroless/static-debian12:nonroot
 
-COPY --from=build /out/kakehashi /kakehashi
+COPY --from=build /out/__APP_NAME_LOWER__ /__APP_NAME_LOWER__
 
 # Non-root by default. The port is above 1024 precisely so that it can be.
 USER nonroot:nonroot
 EXPOSE 8080
 
-ENTRYPOINT ["/kakehashi"]
+ENTRYPOINT ["/__APP_NAME_LOWER__"]

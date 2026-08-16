@@ -1,0 +1,9 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>__ROOT_NAMESPACE__.SharedKernel</RootNamespace>
+    <AssemblyName>__APP_NAME__.SharedKernel</AssemblyName>
+  </PropertyGroup>
+
+</Project>

@@ -9,8 +9,8 @@ package service
 import (
 	"context"
 
-	accountapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/account/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/eventbus"
+	accountapi "__GO_MODULE__/server/internal/modules/account/api"
+	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
 // Sessions lists the account's live sessions, marking the caller's own.
@@ -39,9 +39,8 @@ func (s *Service) Sessions(
 
 // SignOut ends the caller's own session because they asked to leave.
 //
-// The same delete as RevokeSession, announced differently. Only the caller knows which of the two
-// this is, so only the caller can say — and a week later "you signed out" and "a session was
-// revoked" are the difference between a reassuring line and one worth acting on.
+// The same delete as RevokeSession, announced differently: only the caller knows which of the two
+// this is, so only the caller can say.
 func (s *Service) SignOut(ctx context.Context, userID, sessionID string) error {
 	ended, err := s.store.DeleteSession(ctx, userID, sessionID)
 	if err != nil {
@@ -59,9 +58,8 @@ func (s *Service) SignOut(ctx context.Context, userID, sessionID string) error {
 }
 
 // RevokeSession ends one session the owner picked off their device list. Revoking one that is
-// already gone succeeds, for the same reason deleting an absent note does — but it announces
-// nothing, because a feed that said "a session was revoked" twice for one revocation would be
-// describing an event that did not happen.
+// already gone succeeds but announces nothing: an event for a delete that removed nothing would
+// put a revocation that did not happen into the feed.
 func (s *Service) RevokeSession(ctx context.Context, userID, sessionID string) error {
 	ended, err := s.store.DeleteSession(ctx, userID, sessionID)
 	if err != nil {

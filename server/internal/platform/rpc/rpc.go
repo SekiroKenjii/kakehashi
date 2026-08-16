@@ -1,9 +1,6 @@
 // Package rpc holds the server's Connect wiring: the options every module's handler is built with,
-// and the interceptor that turns domain errors into wire errors.
-//
-// It exists so that translation happens in exactly one place. Without it, every handler would end
-// up deciding for itself whether a missing row is a 404 or a 500, and they would not all decide
-// the same way.
+// and the interceptor that turns domain errors into wire errors. Translation happens in exactly
+// one place, so every handler maps the same error kind to the same status code.
 package rpc
 
 import (
@@ -13,7 +10,7 @@ import (
 
 	"connectrpc.com/connect"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/errs"
+	"__GO_MODULE__/server/internal/platform/errs"
 )
 
 // HandlerOptions are the options every Connect handler in this server is built with.

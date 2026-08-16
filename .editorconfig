@@ -1,6 +1,6 @@
 # Repository-wide defaults for everything outside client/.
 #
-# client/ carries its own `root = true` .editorconfig encoding the Google C# Style
+# client/ carries its own `root = true` .editorconfig encoding the C# Style
 # Guide; it deliberately stops inheritance so the C# rules stay scoped to the client
 # and never leak onto Go or proto files.
 

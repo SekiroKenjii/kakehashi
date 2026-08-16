@@ -1,0 +1,53 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Update{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.SharedKernel;
+using NSubstitute;
+using Xunit;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.Tests.{{.Module}}.Commands;
+
+public sealed class Update{{.Entity}}CommandHandlerTests
+{
+    private readonly I{{.Module}}Gateway _{{.ID}} = Substitute.For<I{{.Module}}Gateway>();
+
+    private Update{{.Entity}}CommandHandler CreateHandler()
+    {
+        return new Update{{.Entity}}CommandHandler(_{{.ID}});
+    }
+
+    [Fact]
+    public async Task Handle_ValidCommand_SendsTheIdAndTheTrimmedDraft()
+    {
+        _{{.ID}}.UpdateAsync(Arg.Any<long>(), Arg.Any<{{.Entity}}Draft>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Success(
+                new {{.Entity}}Dto(7, "After", "new", DateTimeOffset.UtcNow, DateTimeOffset.UtcNow)));
+
+        var result = await CreateHandler()
+            .Handle(new Update{{.Entity}}Command(7, " After ", "new"), CancellationToken.None);
+
+        Assert.True(result.IsSuccess);
+        await _{{.ID}}.Received(1).UpdateAsync(
+            7,
+            Arg.Is<{{.Entity}}Draft>(draft => draft != null && draft.Title == "After"),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Handle_TitleTooLong_FailsWithoutCallingTheServer()
+    {
+        var command = new Update{{.Entity}}Command(
+            7, new string('a', {{.Entity}}Draft.MaxTitleLength + 1), "body");
+
+        var result = await CreateHandler().Handle(command, CancellationToken.None);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal({{.Module}}Errors.TitleTooLong, result.Error);
+        await _{{.ID}}.DidNotReceive().UpdateAsync(
+            Arg.Any<long>(), Arg.Any<{{.Entity}}Draft>(), Arg.Any<CancellationToken>());
+    }
+}

@@ -94,16 +94,13 @@ type Starter interface {
 	Start(ctx context.Context, k *Kernel) error
 }
 
-// Finalizer is implemented by modules whose work depends on what every other module ended up
-// CONTRIBUTING — its routes, its declarations — rather than on the services it published.
+// Finalizer is implemented by modules whose work depends on what every other module contributed —
+// routes, declarations — rather than on the services it published.
 //
-// Start is not early enough for that and cannot be: it runs module by module, so a module that
-// asked during its own Start would see whatever the ones after it had not done yet. Finalize runs
-// after every Start has returned, which makes questions like "which modules gate on their own
-// access permission" and "which modules own a screen" answerable at all.
-//
-// It is the last stage before the server serves, so it is also the right place to refuse a
-// composition that does not add up.
+// Finalize runs after every Start has returned, so the route table and every module's
+// declarations are complete; Start runs module by module and cannot offer that. Finalize is the
+// last stage before the server serves, so it is also the place to refuse a composition that does
+// not add up.
 type Finalizer interface {
 	Finalize(ctx context.Context, k *Kernel) error
 }
@@ -116,16 +113,12 @@ type Stopper interface {
 }
 
 // RouteContributor is implemented by modules that serve requests. The mux collects every route and
-// mounts it.
-//
-// This is where the desktop original had UIContributor handing the shell its screens. The shape is
-// the same and so is the reason for it: the kernel knows that modules contribute something
-// mountable, and stays ignorant of what any particular one contributes.
+// mounts it; the kernel knows only that modules contribute something mountable, not what any
+// particular one contributes.
 type RouteContributor interface {
 	// Routes is called once, after every module has started, so resolving another module's
-	// service with Use here is safe. The kernel is passed rather than captured because handlers
-	// need k.RPC, and a module that stashed the kernel during Start would be holding it for the
-	// life of the process to read one field.
+	// service with Use here is safe. It receives the kernel because handlers need k.RPC; do not
+	// stash the kernel in Start for that.
 	Routes(k *Kernel) []Route
 }
 
@@ -151,14 +144,9 @@ type Route struct {
 	// Handler serves the pattern.
 	Handler http.Handler
 
-	// Module is the ID of the module that contributed this route.
-	//
-	// A module never sets it: Routes stamps it over whatever was there, from the module it is
-	// currently asking. That is deliberate — this field decides which access policy a request is
-	// checked against, and a value a module could choose for itself is a permission a module could
-	// grant itself.
-	//
-	// The kernel does not read it. Everything above does: internal/app/server uses it to decide
-	// which routes to gate, which is the only reason it exists.
+	// Module is the ID of the module that contributed this route. A module never sets it:
+	// Kernel.Routes stamps it over whatever was there, because this field decides which access
+	// policy a request is checked against, and a module must not choose that for itself.
+	// internal/app/server reads it to decide which routes to gate.
 	Module string
 }

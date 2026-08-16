@@ -1,6 +1,6 @@
 # /new-module
 
-Scaffold a new feature across both halves of Kakehashi: the contract, the Go module that serves it,
+Scaffold a new feature across both halves of __APP_TITLE__: the contract, the Go module that serves it,
 and the WinUI module that calls it. Follow every step in order; all three gates must be green before
 calling the task done.
 
@@ -16,7 +16,7 @@ already exist in either half.
 
 ### 1 — Define the contract
 
-Create `proto/kakehashi/<id>/v1/<id>.proto` with package `kakehashi.<id>.v1`. Then:
+Create `proto/__APP_NAME_LOWER__/<id>/v1/<id>.proto` with package `__APP_NAME_LOWER__.<id>.v1`. Then:
 
 ```sh
 buf lint && buf generate
@@ -92,9 +92,9 @@ See [docs/NAVIGATION.md](../../docs/NAVIGATION.md).
 `client/src/Modules/<Name>/`:
 
 ```
-Kakehashi.Modules.<Name>.Domain        entities, invariants, Result
-Kakehashi.Modules.<Name>.Application   commands/queries + handlers, ports, DTOs
-Kakehashi.Modules.<Name>.UI            pages, view models, the gRPC adapter, IModule
+__APP_NAME__.Modules.<Name>.Domain        entities, invariants, Result
+__APP_NAME__.Modules.<Name>.Application   commands/queries + handlers, ports, DTOs
+__APP_NAME__.Modules.<Name>.UI            pages, view models, the gRPC adapter, IModule
 ```
 
 The gateway port is declared in Application; the adapter that implements it with the generated gRPC
@@ -102,10 +102,10 @@ client lives in UI, registered from `IModule.RegisterServices`.
 
 ### 6 — Register the client module
 
-- Add the three `.csproj` files, plus the test projects, to `client/Kakehashi.slnx`.
-- Add a `<ProjectReference>` to the UI project in `client/src/App/Kakehashi.App/Kakehashi.App.csproj`.
-- Add `new <Name>Module(),` to `client/src/App/Kakehashi.App/Composition/ModuleCatalog.cs`.
-- Add `<Name>LayeringTests.cs` to `Kakehashi.ArchitectureTests`, mirroring `AuthLayeringTests`.
+- Add the three `.csproj` files, plus the test projects, to `client/__APP_NAME__.slnx`.
+- Add a `<ProjectReference>` to the UI project in `client/src/App/__APP_NAME__.App/__APP_NAME__.App.csproj`.
+- Add `new <Name>Module(),` to `client/src/App/__APP_NAME__.App/Composition/ModuleCatalog.cs`.
+- Add `<Name>LayeringTests.cs` to `__APP_NAME__.ArchitectureTests`, mirroring `AuthLayeringTests`.
 - Bump `_shippedModuleCount` in `HomePage.ViewModel.cs` if this module ships with the template.
 
 ### 7 — Verify
@@ -117,9 +117,9 @@ cd server && go build ./... && go test ./... && go run ./tools/archlint
 
 ```pwsh
 cd client
-dotnet build Kakehashi.slnx
-dotnet test Kakehashi.slnx
-dotnet format Kakehashi.slnx --verify-no-changes --severity warn
+dotnet build __APP_NAME__.slnx
+dotnet test __APP_NAME__.slnx
+dotnet format __APP_NAME__.slnx --verify-no-changes --severity warn
 ```
 
 All must exit 0.

@@ -1,6 +1,6 @@
 package store
 
-import "github.com/SekiroKenjii/kakehashi/server/internal/platform/database"
+import "__GO_MODULE__/server/internal/platform/database"
 
 // The schema history, whole, because its value is its order.
 
@@ -75,8 +75,8 @@ func Migrations() []database.Migration {
 
                 /*
                     Deleting a role takes its grants with it, which is the one cascade in this
-                    schema and the one place a cascade is right: a grant on a role that no longer
-                    exists is unreachable by construction.
+                    schema and the one place a cascade is right: a grant on a deleted role is
+                    unreachable by construction.
 
                     There is deliberately no foreign key to authz.Permission. The catalogue is
                     reconciled from what the modules declare at boot, so unmounting a module would
@@ -171,11 +171,9 @@ func Migrations() []database.Migration {
 			Name: "0004_permission_key_rename",
 			SQL: `
                 /*
-                    [Key] was the only bracketed identifier in this schema, and the comment beside it
-                    argued the brackets were worth it because the wire calls the field "key". They
-                    are not: the wire keeps its name either way, and a reserved word in a column name
-                    is a footgun every future query has to remember. PermissionKey also matches what
-                    the referencing table already calls it.
+                    Renames [Key] to PermissionKey. KEY is reserved in T-SQL, so every query has to
+                    bracket it; the wire keeps its own field name either way, and PermissionKey
+                    matches what the referencing table already calls it.
                 */
                 IF COL_LENGTH('authz.Permission', 'PermissionKey') IS NULL
                     EXEC sp_rename 'authz.Permission.[Key]', 'PermissionKey', 'COLUMN';

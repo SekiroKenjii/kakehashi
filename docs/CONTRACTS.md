@@ -5,7 +5,7 @@ What the two halves promise each other, and how those promises are allowed to ch
 ## Where the contract lives
 
 ```text
-proto/kakehashi/<context>/v1/<context>.proto
+proto/__APP_NAME_LOWER__/<context>/v1/<context>.proto
 ```
 
 One directory per bounded context, versioned. Both halves generate from it and neither holds a copy:
@@ -14,7 +14,7 @@ One directory per bounded context, versioned. Both halves generate from it and n
   committed, so a fresh clone builds with no buf installed, and CI regenerates and fails on any
   diff.
 - **Client** — `Grpc.Tools` generates the typed client at build time, straight from `proto/`, into
-  `client/src/Shared/Kakehashi.Contracts`. There is nothing to commit and nothing to keep in sync.
+  `client/src/Shared/__APP_NAME__.Contracts`. There is nothing to commit and nothing to keep in sync.
 
 That one project points at the schema with a relative path:
 
@@ -29,7 +29,7 @@ package more closely: protoc has to run somewhere, and inside a WinUI project it
 RID-specific inner build the Windows App SDK spawns, writing its output under a different
 platform's `obj/` than the compiler reads. A plain library has no inner build. Confinement moves to
 `NotesLayeringTests`, which asserts that no Domain or Application layer references
-`Kakehashi.Contracts` — the same rule the server states as "only `rpc/` may import `internal/gen`"
+`__APP_NAME__.Contracts` — the same rule the server states as "only `rpc/` may import `internal/gen`"
 and enforces with archlint.
 
 That path is the whole reason this is a monorepo. A pull request that changes a field changes both
@@ -56,13 +56,13 @@ like, and an upgrade you cannot force is an upgrade you have to support.
 
 ## Ownership
 
-A context in `proto/` belongs to the module of the same name on each side. `kakehashi.notes.v1` is
+A context in `proto/` belongs to the module of the same name on each side. `__APP_NAME_LOWER__.notes.v1` is
 owned by `server/internal/modules/notes` and `client/src/Modules/Notes`, and nothing else may serve
 or extend it.
 
 Contracts do not import each other. Two `.proto` packages that reference each other are the same
 mistake as two `api` packages that do — a cycle that has not been noticed yet. Shared scalars belong
-in a `kakehashi.common.v1` that depends on nothing.
+in a `__APP_NAME_LOWER__.common.v1` that depends on nothing.
 
 ## What is not in proto, and why
 
@@ -113,7 +113,7 @@ Which one the client uses is `Backend:Protocol` in `appsettings.json`. It defaul
 path exists so that a failing call can be reproduced from a terminal without writing a program:
 
 ```sh
-curl -X POST http://localhost:8080/kakehashi.health.v1.HealthService/Ping \
+curl -X POST http://localhost:8080/__APP_NAME_LOWER__.health.v1.HealthService/Ping \
   -H 'Content-Type: application/json' \
   -d '{"message":"hello"}'
 ```

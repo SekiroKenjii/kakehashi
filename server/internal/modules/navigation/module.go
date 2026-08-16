@@ -4,7 +4,7 @@
 // destinations EXIST is a fact about the build: a destination is a compiled page behind a permission,
 // and no row in a table can conjure one. Where they are ARRANGED is a fact about the deployment:
 // which heading a screen sits under, in what order, under what label. The first belongs in code. The
-// second belonged in code too, until it meant that renaming a heading needed a release.
+// second is data, because renaming a heading must not need a release.
 //
 // So: code declares, the database places, and boot reconciles the two. The reconciliation has one
 // rule worth remembering — a destination with no row is seeded from its declared defaults, a
@@ -26,13 +26,13 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/SekiroKenjii/kakehashi/server/internal/app"
-	authzapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/authz/api"
-	navigationapi "github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/api"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/rpc"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/service"
-	"github.com/SekiroKenjii/kakehashi/server/internal/modules/navigation/store"
-	"github.com/SekiroKenjii/kakehashi/server/internal/platform/auth"
+	"__GO_MODULE__/server/internal/app"
+	authzapi "__GO_MODULE__/server/internal/modules/authz/api"
+	navigationapi "__GO_MODULE__/server/internal/modules/navigation/api"
+	"__GO_MODULE__/server/internal/modules/navigation/rpc"
+	"__GO_MODULE__/server/internal/modules/navigation/service"
+	"__GO_MODULE__/server/internal/modules/navigation/store"
+	"__GO_MODULE__/server/internal/platform/auth"
 )
 
 // systemGroups are the headings this product ships.
@@ -97,10 +97,8 @@ func (m *Module) Finalize(ctx context.Context, k *app.Kernel) error {
 	m.destinations = declared
 	m.svc.WithDestinations(declared...)
 
-	// Optional, and resolved here for the same reason the declarations are: Finalize is the first
-	// point at which another module's service is guaranteed to exist. Without an authorization module
-	// there are no roles, and PreviewLayout says so rather than the boot failing over a screen nobody
-	// in that build can reach anyway.
+	// Finalize is the first point another module's service is guaranteed to exist. Optional: with
+	// no authorization module there are no roles, and PreviewLayout says so rather than failing boot.
 	if grants, ok := app.TryUse[authzapi.Service](k); ok {
 		m.svc.WithRoleGrants(grants)
 	}
@@ -127,9 +125,8 @@ func collect(k *app.Kernel) ([]navigationapi.Destination, error) {
 		}
 
 		for _, d := range contributor.NavigationDestinations() {
-			// Stamped, not claimed. It decides which permission applies when the destination names
-			// none, and a module that could name another's would be granting itself that module's
-			// treatment.
+			// Stamped, never claimed: it decides which permission applies, so a module able to name
+			// another's would be granting itself that module's treatment.
 			d.ModuleID = module.ID()
 
 			if owner, dup := seen[d.ID]; dup {
@@ -147,11 +144,8 @@ func collect(k *app.Kernel) ([]navigationapi.Destination, error) {
 					d.ID, d.DefaultGroup)
 			}
 
-			// The one that is easy to get wrong and impossible to notice: a destination owned by a
-			// module whose routes are not gated on its own access permission, declaring no
-			// permission of its own, falls back to a key nobody holds. The row is drawn disabled
-			// for everybody, forever, and looks like a permissions bug rather than a declaration
-			// that never made sense.
+			// A destination naming no permission, owned by a module nothing gates on its access
+			// key, falls back to a key nobody holds: drawn disabled for everybody, forever.
 			if d.Permission == "" && !slices.Contains(gated, d.ModuleID) {
 				return nil, fmt.Errorf(
 					"destination %q names no permission, and its module %q does not gate any route "+

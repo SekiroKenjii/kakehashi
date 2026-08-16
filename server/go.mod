@@ -1,4 +1,4 @@
-module github.com/SekiroKenjii/kakehashi/server
+module __GO_MODULE__/server
 
 go 1.26.0
 
