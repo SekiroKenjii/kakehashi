@@ -389,11 +389,11 @@ public sealed partial class HomeViewModel : ViewModel
             return;
         }
 
-        var page = module.GetNavigationItems().FirstOrDefault();
+        var pages = module.GetNavigationItems();
 
-        if (page is not null)
+        if (pages.Count > 0)
         {
-            _navigationService.NavigateTo(_navigationService.GetPageKey(page.PageType));
+            _navigationService.NavigateTo(_navigationService.GetPageKey(pages[0].PageType));
         }
     }
 

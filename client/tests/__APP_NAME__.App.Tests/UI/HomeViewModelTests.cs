@@ -90,9 +90,12 @@ public sealed class HomeViewModelTests
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
+        var ids = viewModel.Steps
+            .Select(step => step.Id)
+            .ToArray();
+
         Assert.Equal(
-            ["backend", "module:Notes", "architecture", "addmodule", "remove:Notes"],
-            viewModel.Steps.Select(step => step.Id));
+            new[] { "backend", "module:Notes", "architecture", "addmodule", "remove:Notes" }, ids);
         Assert.Equal(5d, viewModel.StepsTotal);
         Assert.Equal("0 of 5 complete", viewModel.StepsProgressText);
     }
@@ -147,9 +150,11 @@ public sealed class HomeViewModelTests
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-        Assert.Equal(
-            ["backend", "architecture", "addmodule"],
-            viewModel.Steps.Select(step => step.Id));
+        var ids = viewModel.Steps
+            .Select(step => step.Id)
+            .ToArray();
+
+        Assert.Equal(new[] { "backend", "architecture", "addmodule" }, ids);
         Assert.Contains(
             viewModel.Steps,
             step => step.Command == "kakehashi add module orders");
