@@ -14,7 +14,6 @@ using __ROOT_NAMESPACE__.UI.Contracts;
 using __ROOT_NAMESPACE__.UI.Contracts.Services.Platform;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
-using Microsoft.UI.Xaml;
 using NSubstitute;
 using Xunit;
 
@@ -34,6 +33,8 @@ public sealed class HomeViewModelTests
     private readonly INavigationService _navigation = Substitute.For<INavigationService>();
     private readonly IThemeService _theme = Substitute.For<IThemeService>();
     private readonly InMemoryLocalSettings _settings = new();
+    private readonly IClipboardService _clipboard = Substitute.For<IClipboardService>();
+    private readonly INotificationService _notifications = Substitute.For<INotificationService>();
     private readonly IBackendClient _backend = Substitute.For<IBackendClient>();
     private readonly BackendOptions _backendOptions = new();
     private readonly InMemoryLocalSettings _activitySettings = new();
@@ -41,6 +42,7 @@ public sealed class HomeViewModelTests
     private SessionDto _session = new(false, null, null, null, null, []);
     private IReadOnlyList<IModule> _all = [];
     private IReadOnlyList<IModule> _attached = [];
+    private IReadOnlyList<IGettingStartedStep> _moduleSteps = [];
 
     public HomeViewModelTests()
     {
@@ -76,45 +78,210 @@ public sealed class HomeViewModelTests
         Assert.DoesNotContain(",", viewModel.GreetingText);
     }
 
+    /* --- The getting-started checklist --- */
+
     [Fact]
-    public async Task Load_GettingStarted_MarksSignInDoneAndReportsProgress()
+    public async Task Load_Checklist_WithTheExample_IsTheFiveRowsOfTheSpec()
     {
-        _session = new SessionDto(
-            true, "Vo", null, null, DateTimeOffset.UtcNow.AddHours(-1), []);
-        // Exactly what the template ships — Notes, Activity and Auth — so the step is not done.
         _all = [Module("Notes"), Module("Activity"), Module("Auth")];
+        _attached = _all;
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: false)];
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-        Assert.Equal(4, viewModel.Steps.Count);
-        Assert.True(viewModel.Steps.Single(s => s.Id == "signin").IsDone);
-        Assert.False(viewModel.Steps.Single(s => s.Id == "register").IsDone);
-        Assert.Equal(1d, viewModel.StepsProgress);
-        Assert.Equal("1 of 4 complete", viewModel.StepsProgressText);
+        Assert.Equal(
+            ["backend", "module:Notes", "architecture", "addmodule", "remove:Notes"],
+            viewModel.Steps.Select(step => step.Id));
+        Assert.Equal(5d, viewModel.StepsTotal);
+        Assert.Equal("0 of 5 complete", viewModel.StepsProgressText);
+    }
+
+    // The two the spec asks to tick from real state rather than from a click.
+    [Fact]
+    public async Task Load_Checklist_TicksTheBackendAndTheModuleRowFromRealState()
+    {
+        _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)));
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: true)];
+        var viewModel = CreateViewModel(backendConfigured: true);
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.Steps.Single(step => step.Id == "backend").IsDone);
+        Assert.True(viewModel.Steps.Single(step => step.Id == "module:Notes").IsDone);
+        Assert.Equal("2 of 5 complete", viewModel.StepsProgressText);
     }
 
     [Fact]
-    public async Task Load_GettingStarted_ThemeStepDoneWhenThemeNotDefault()
+    public async Task Load_Checklist_BackendRowIsNotDoneWhileNothingAnswers()
     {
-        _theme.Theme.Returns(ElementTheme.Dark);
+        _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<PingResponse>(new InvalidOperationException()));
+        var viewModel = CreateViewModel(backendConfigured: true);
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.False(viewModel.Steps.Single(step => step.Id == "backend").IsDone);
+    }
+
+    // A module that cannot answer — usually because the backend is down — is not done rather than
+    // an exception out of a page load.
+    [Fact]
+    public async Task Load_Checklist_AModuleThatThrowsIsSimplyNotDone()
+    {
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: false, throws: true)];
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-        Assert.True(viewModel.Steps.Single(s => s.Id == "theme").IsDone);
+        Assert.False(viewModel.Steps.Single(step => step.Id == "module:Notes").IsDone);
+    }
+
+    // --bare, and `kakehashi remove module notes`, reach the page the same way: nothing registered
+    // a step, so the rows that were about the example are not there to be about anything.
+    [Fact]
+    public async Task Load_Checklist_WithNoExample_KeepsOnlyTheRowsThatStillApply()
+    {
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.Equal(
+            ["backend", "architecture", "addmodule"],
+            viewModel.Steps.Select(step => step.Id));
+        Assert.Contains(
+            viewModel.Steps,
+            step => step.Command == "kakehashi add module orders");
     }
 
     [Fact]
-    public async Task Load_GettingStarted_RegisterStepDoneWhenExtraModuleComposed()
+    public async Task Load_Checklist_AddModuleRowTicksWhenAModuleWasAdded()
     {
-        // The three shipped modules plus one somebody wrote.
         _all = [Module("Notes"), Module("Activity"), Module("Auth"), Module("Reports")];
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
 
-        Assert.True(viewModel.Steps.Single(s => s.Id == "register").IsDone);
+        Assert.True(viewModel.Steps.Single(step => step.Id == "addmodule").IsDone);
+    }
+
+    [Fact]
+    public async Task Load_Checklist_StopsOfferingToRemoveTheExampleOnceThereIsRealWork()
+    {
+        _all = [Module("Notes"), Module("Activity"), Module("Auth"), Module("Reports")];
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: true)];
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.DoesNotContain(viewModel.Steps, step => step.Id == "remove:Notes");
+    }
+
+    [Fact]
+    public async Task Load_Checklist_RemovalRowCarriesTheUnitIdTheCliTakes()
+    {
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: false)];
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.Equal(
+            "kakehashi remove module notes",
+            viewModel.Steps.Single(step => step.Id == "remove:Notes").Command);
+    }
+
+    [Fact]
+    public async Task CopyStep_PutsTheCommandOnTheClipboardAndTicksTheRow()
+    {
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: false)];
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+        var step = viewModel.Steps.Single(s => s.Id == "addmodule");
+
+        await viewModel.CopyStepCommand.ExecuteAsync(step);
+
+        _clipboard.Received(1).SetText("kakehashi add module orders");
+        Assert.True(viewModel.Steps.Single(s => s.Id == "addmodule").IsDone);
+    }
+
+    [Fact]
+    public async Task CopyStep_ARowWithNoCommand_CopiesNothing()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        await viewModel.CopyStepCommand.ExecuteAsync(
+            viewModel.Steps.Single(step => step.Id == "backend"));
+
+        _clipboard.DidNotReceive().SetText(Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task OpenStep_TheArchitectureRow_TicksItself()
+    {
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        await viewModel.OpenStepCommand.ExecuteAsync(
+            viewModel.Steps.Single(step => step.Id == "architecture"));
+
+        Assert.True(viewModel.Steps.Single(step => step.Id == "architecture").IsDone);
+    }
+
+    [Fact]
+    public async Task OpenStep_AModuleRow_NavigatesToThatModulesFirstPage()
+    {
+        var notes = Module("Notes", navItem: new NavigationItem("Notes", "", typeof(HomePage)));
+        _all = [notes];
+        _attached = [notes];
+        _navigation.GetPageKey(typeof(HomePage)).Returns("Notes");
+        _moduleSteps = [new FakeStarterStep("Notes", isDone: false)];
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        await viewModel.OpenStepCommand.ExecuteAsync(
+            viewModel.Steps.Single(step => step.Id == "module:Notes"));
+
+        _navigation.Received(1).NavigateTo("Notes");
+    }
+
+    [Fact]
+    public async Task RetryBackend_ProbesAgainAndRereadsTheChecklist()
+    {
+        _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(
+                _ => Task.FromException<PingResponse>(new InvalidOperationException()),
+                _ => Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)));
+        var viewModel = CreateViewModel(backendConfigured: true);
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+        Assert.True(viewModel.IsBackendOffline);
+
+        await viewModel.RetryBackendCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.IsBackendConnected);
+        Assert.True(viewModel.Steps.Single(step => step.Id == "backend").IsDone);
+    }
+
+    [Fact]
+    public void Gates_AreTheThreeWithACommandEach()
+    {
+        var viewModel = CreateViewModel();
+
+        Assert.Equal(3, viewModel.Gates.Count);
+        Assert.All(viewModel.Gates, gate => Assert.NotEmpty(gate.Command));
+        Assert.Contains(viewModel.Gates, gate => gate.Name == "archlint");
+        Assert.Contains(viewModel.Gates, gate => gate.Name == "buf breaking");
+    }
+
+    [Fact]
+    public void Copy_PutsAnyCommandOnTheClipboard()
+    {
+        var viewModel = CreateViewModel();
+
+        viewModel.CopyCommand.Execute(viewModel.StartBackendCommand);
+
+        _clipboard.Received(1).SetText("docker compose up -d");
     }
 
     [Fact]
@@ -290,11 +457,14 @@ public sealed class HomeViewModelTests
             _navigation,
             _theme,
             _settings,
+            _clipboard,
+            _notifications,
             _backend,
             new StubOptions<BackendOptions>(_backendOptions),
             configuration,
             new AppActivityLog(_activitySettings),
-            _registry);
+            _registry,
+            _moduleSteps);
     }
 
     private void SeedActivity(int count)
@@ -405,6 +575,36 @@ public sealed class HomeViewModelTests
         Assert.True(row.IsWithheld);
         Assert.False(row.CanAttach);
         Assert.Contains("administrator", row.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A module's own checklist row, as the container would hand one over. Throwing is the case
+    /// that matters: it is what a module does when the backend it asks is not there.
+    /// </summary>
+    private sealed class FakeStarterStep : IGettingStartedStep
+    {
+        private readonly bool _isDone;
+        private readonly bool _throws;
+
+        public FakeStarterStep(string moduleName, bool isDone, bool throws = false)
+        {
+            ModuleName = moduleName;
+            _isDone = isDone;
+            _throws = throws;
+        }
+
+        public string ModuleName { get; }
+
+        public string Title => $"Create something in the {ModuleName} module";
+
+        public string Subtitle => "One round trip through both halves.";
+
+        public Task<bool> IsDoneAsync(CancellationToken cancellationToken)
+        {
+            return _throws
+                ? Task.FromException<bool>(new InvalidOperationException())
+                : Task.FromResult(_isDone);
+        }
     }
 
     private sealed class FakeModule : IModule

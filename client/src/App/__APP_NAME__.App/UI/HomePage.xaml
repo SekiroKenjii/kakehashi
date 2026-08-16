@@ -196,7 +196,7 @@
                                 </Grid.ColumnDefinitions>
                                 <ProgressBar
                                     VerticalAlignment="Center"
-                                    Maximum="4"
+                                    Maximum="{x:Bind ViewModel.StepsTotal, Mode=OneWay}"
                                     Value="{x:Bind ViewModel.StepsProgress, Mode=OneWay}" />
                                 <TextBlock
                                     Grid.Column="1"
@@ -210,74 +210,118 @@
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate x:DataType="ui:GettingStartedStep">
                                         <!--
-                                            A step with nothing to do is not a control. It stays in
-                                            the list because it is a checklist item, but it does not
-                                            take focus and does not answer a click — pressing a
-                                            full-width button and having nothing happen reads as a
-                                            broken app rather than as a step that needs no help.
+                                            The copy button sits beside the row rather than inside
+                                            it: a step whose only action is its command leaves the
+                                            row itself inert, and a button nested in an inert one
+                                            never sees a click.
                                         -->
-                                        <Button
-                                            AutomationProperties.Name="{x:Bind Title}"
-                                            Click="OnStepClick"
-                                            IsHitTestVisible="{x:Bind HasAction}"
-                                            IsTabStop="{x:Bind HasAction}"
-                                            Style="{StaticResource RowButtonStyle}"
-                                            Tag="{x:Bind}">
-                                            <Grid ColumnSpacing="12">
-                                                <Grid.ColumnDefinitions>
-                                                    <ColumnDefinition Width="Auto" />
-                                                    <ColumnDefinition Width="*" />
-                                                    <ColumnDefinition Width="Auto" />
-                                                </Grid.ColumnDefinitions>
-                                                <Grid
-                                                    Width="24"
-                                                    Height="24"
-                                                    VerticalAlignment="Center">
-                                                    <Border
-                                                        BorderBrush="{ThemeResource ControlStrongStrokeColorDefaultBrush}"
-                                                        BorderThickness="1"
-                                                        CornerRadius="12"
-                                                        Visibility="{x:Bind IsNotDone}" />
-                                                    <Border
-                                                        Background="{ThemeResource SystemFillColorSuccessBrush}"
-                                                        CornerRadius="12"
-                                                        Visibility="{x:Bind IsDone}">
-                                                        <FontIcon
-                                                            FontSize="11"
-                                                            Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
-                                                            Glyph="&#xE73E;" />
-                                                    </Border>
-                                                </Grid>
-                                                <StackPanel
-                                                    Grid.Column="1"
-                                                    VerticalAlignment="Center"
-                                                    Spacing="2">
-                                                    <TextBlock
-                                                        FontSize="13"
-                                                        FontWeight="SemiBold"
-                                                        Text="{x:Bind Title}"
-                                                        Visibility="{x:Bind IsNotDone}" />
-                                                    <TextBlock
-                                                        FontSize="13"
-                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                        Text="{x:Bind Title}"
-                                                        TextDecorations="Strikethrough"
-                                                        Visibility="{x:Bind IsDone}" />
-                                                    <TextBlock
+                                        <Grid ColumnSpacing="4">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*" />
+                                                <ColumnDefinition Width="Auto" />
+                                            </Grid.ColumnDefinitions>
+                                            <!--
+                                                A step with nothing to do is not a control. It stays
+                                                in the list because it is a checklist item, but it
+                                                does not take focus and does not answer a click —
+                                                pressing a full-width button and having nothing
+                                                happen reads as a broken app rather than as a step
+                                                that needs no help.
+                                            -->
+                                            <Button
+                                                AutomationProperties.Name="{x:Bind Title}"
+                                                Click="OnStepClick"
+                                                IsHitTestVisible="{x:Bind HasAction}"
+                                                IsTabStop="{x:Bind HasAction}"
+                                                Style="{StaticResource RowButtonStyle}"
+                                                Tag="{x:Bind}">
+                                                <Grid ColumnSpacing="12">
+                                                    <Grid.ColumnDefinitions>
+                                                        <ColumnDefinition Width="Auto" />
+                                                        <ColumnDefinition Width="*" />
+                                                        <ColumnDefinition Width="Auto" />
+                                                    </Grid.ColumnDefinitions>
+                                                    <Grid
+                                                        Width="24"
+                                                        Height="24"
+                                                        VerticalAlignment="Top">
+                                                        <Border
+                                                            BorderBrush="{ThemeResource ControlStrongStrokeColorDefaultBrush}"
+                                                            BorderThickness="1"
+                                                            CornerRadius="12"
+                                                            Visibility="{x:Bind IsNotDone}" />
+                                                        <Border
+                                                            Background="{ThemeResource SystemFillColorSuccessBrush}"
+                                                            CornerRadius="12"
+                                                            Visibility="{x:Bind IsDone}">
+                                                            <FontIcon
+                                                                FontSize="11"
+                                                                Foreground="{ThemeResource TextOnAccentFillColorPrimaryBrush}"
+                                                                Glyph="&#xE73E;" />
+                                                        </Border>
+                                                    </Grid>
+                                                    <StackPanel
+                                                        Grid.Column="1"
+                                                        VerticalAlignment="Center"
+                                                        Spacing="4">
+                                                        <TextBlock
+                                                            FontSize="13"
+                                                            FontWeight="SemiBold"
+                                                            Text="{x:Bind Title}"
+                                                            TextWrapping="Wrap"
+                                                            Visibility="{x:Bind IsNotDone}" />
+                                                        <TextBlock
+                                                            FontSize="13"
+                                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                            Text="{x:Bind Title}"
+                                                            TextDecorations="Strikethrough"
+                                                            TextWrapping="Wrap"
+                                                            Visibility="{x:Bind IsDone}" />
+                                                        <TextBlock
+                                                            FontSize="12"
+                                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                            Text="{x:Bind Subtitle}"
+                                                            TextWrapping="Wrap" />
+                                                        <Border
+                                                            Padding="8,4"
+                                                            HorizontalAlignment="Left"
+                                                            Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                            CornerRadius="4"
+                                                            Visibility="{x:Bind HasCommand}">
+                                                            <TextBlock
+                                                                FontFamily="Cascadia Mono,Consolas"
+                                                                FontSize="12"
+                                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                Text="{x:Bind Command}" />
+                                                        </Border>
+                                                    </StackPanel>
+                                                    <FontIcon
+                                                        Grid.Column="2"
+                                                        VerticalAlignment="Center"
                                                         FontSize="12"
-                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                                        Text="{x:Bind Subtitle}"
-                                                        TextWrapping="Wrap" />
-                                                </StackPanel>
+                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                        Glyph="&#xE76C;"
+                                                        Visibility="{x:Bind ShowsChevron}" />
+                                                </Grid>
+                                            </Button>
+                                            <Button
+                                                Grid.Column="1"
+                                                Padding="7,5"
+                                                VerticalAlignment="Center"
+                                                AutomationProperties.HelpText="{x:Bind Command}"
+                                                AutomationProperties.Name="Copy command"
+                                                Background="Transparent"
+                                                BorderThickness="0"
+                                                Click="OnCopyStepClick"
+                                                Tag="{x:Bind}"
+                                                ToolTipService.ToolTip="Copy command"
+                                                Visibility="{x:Bind HasCommand}">
                                                 <FontIcon
-                                                    Grid.Column="2"
-                                                    VerticalAlignment="Center"
-                                                    FontSize="12"
+                                                    FontSize="13"
                                                     Foreground="{ThemeResource TextFillColorTertiaryBrush}"
-                                                    Glyph="&#xE76C;"
-                                                    Visibility="{x:Bind ShowsChevron}" />
-                                            </Grid>
-                                        </Button>
+                                                    Glyph="&#xE8C8;" />
+                                            </Button>
+                                        </Grid>
                                     </DataTemplate>
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
@@ -501,10 +545,35 @@
                     <!--  Backend status  -->
                     <Border Style="{StaticResource CardStyle}">
                         <StackPanel Spacing="12">
-                            <StackPanel Orientation="Horizontal" Spacing="7">
-                                <FontIcon Glyph="&#xE977;" Style="{StaticResource CaptionIconStyle}" />
-                                <TextBlock Style="{StaticResource CaptionLabelStyle}" Text="BACKEND" />
-                            </StackPanel>
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel Orientation="Horizontal" Spacing="7">
+                                    <FontIcon Glyph="&#xE977;" Style="{StaticResource CaptionIconStyle}" />
+                                    <TextBlock Style="{StaticResource CaptionLabelStyle}" Text="BACKEND" />
+                                </StackPanel>
+                                <Button
+                                    Grid.Column="1"
+                                    Padding="7,4"
+                                    AutomationProperties.Name="Retry"
+                                    Background="Transparent"
+                                    BorderThickness="0"
+                                    Command="{x:Bind ViewModel.RetryBackendCommand}"
+                                    ToolTipService.ToolTip="Check again">
+                                    <StackPanel Orientation="Horizontal" Spacing="6">
+                                        <FontIcon
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Glyph="&#xE72C;" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="Retry" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
                             <Grid ColumnSpacing="12" RowSpacing="10">
                                 <Grid.ColumnDefinitions>
                                     <ColumnDefinition Width="110" />
@@ -585,6 +654,118 @@
                                     Style="{StaticResource StatusValueStyle}"
                                     Text="{x:Bind ViewModel.ClientVersionText}" />
                             </Grid>
+                            <!--
+                                Only while nothing answers. The whole stack is one compose file, so
+                                the fix is a command rather than a page of instructions — and the
+                                Retry above is what confirms it worked.
+                            -->
+                            <StackPanel Spacing="6" Visibility="{x:Bind ViewModel.IsBackendOffline, Mode=OneWay}">
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Nothing is listening. Start the stack, then press Retry."
+                                    TextWrapping="Wrap" />
+                                <Grid ColumnSpacing="4">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+                                    <Border
+                                        Padding="8,5"
+                                        VerticalAlignment="Center"
+                                        Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                        CornerRadius="4">
+                                        <TextBlock
+                                            FontFamily="Cascadia Mono,Consolas"
+                                            FontSize="12"
+                                            IsTextSelectionEnabled="True"
+                                            Text="{x:Bind ViewModel.StartBackendCommand}" />
+                                    </Border>
+                                    <Button
+                                        Grid.Column="1"
+                                        Padding="7,5"
+                                        VerticalAlignment="Center"
+                                        AutomationProperties.Name="Copy command"
+                                        Background="Transparent"
+                                        BorderThickness="0"
+                                        Command="{x:Bind ViewModel.CopyCommand}"
+                                        CommandParameter="{x:Bind ViewModel.StartBackendCommand}"
+                                        ToolTipService.ToolTip="Copy command">
+                                        <FontIcon
+                                            FontSize="13"
+                                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                            Glyph="&#xE8C8;" />
+                                    </Button>
+                                </Grid>
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!--  The three gates  -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Spacing="10">
+                            <StackPanel Orientation="Horizontal" Spacing="7">
+                                <FontIcon Glyph="&#xE73E;" Style="{StaticResource CaptionIconStyle}" />
+                                <TextBlock Style="{StaticResource CaptionLabelStyle}" Text="THE THREE GATES" />
+                            </StackPanel>
+                            <TextBlock
+                                FontSize="12"
+                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                Text="All three run on every push. Run them here first."
+                                TextWrapping="Wrap" />
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.Gates}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="ui:GateItem">
+                                        <StackPanel Padding="0,6" Spacing="4">
+                                            <TextBlock
+                                                FontSize="13"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind Name}"
+                                                TextTrimming="CharacterEllipsis" />
+                                            <TextBlock
+                                                FontSize="12"
+                                                Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                Text="{x:Bind Protects}"
+                                                TextWrapping="Wrap" />
+                                            <Grid ColumnSpacing="4">
+                                                <Grid.ColumnDefinitions>
+                                                    <ColumnDefinition Width="*" />
+                                                    <ColumnDefinition Width="Auto" />
+                                                </Grid.ColumnDefinitions>
+                                                <Border
+                                                    Padding="8,5"
+                                                    VerticalAlignment="Center"
+                                                    Background="{ThemeResource SubtleFillColorSecondaryBrush}"
+                                                    CornerRadius="4">
+                                                    <TextBlock
+                                                        FontFamily="Cascadia Mono,Consolas"
+                                                        FontSize="12"
+                                                        Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                        IsTextSelectionEnabled="True"
+                                                        Text="{x:Bind Command}"
+                                                        TextTrimming="CharacterEllipsis" />
+                                                </Border>
+                                                <Button
+                                                    Grid.Column="1"
+                                                    Padding="7,5"
+                                                    VerticalAlignment="Center"
+                                                    AutomationProperties.HelpText="{x:Bind Name}"
+                                                    AutomationProperties.Name="Copy command"
+                                                    Background="Transparent"
+                                                    BorderThickness="0"
+                                                    Click="OnCopyGateClick"
+                                                    Tag="{x:Bind}"
+                                                    ToolTipService.ToolTip="Copy command">
+                                                    <FontIcon
+                                                        FontSize="13"
+                                                        Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                                                        Glyph="&#xE8C8;" />
+                                                </Button>
+                                            </Grid>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
                         </StackPanel>
                     </Border>
 

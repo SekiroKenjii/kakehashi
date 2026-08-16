@@ -38,6 +38,7 @@ public sealed class NotesModule : IModule
         services.AddBackendGrpcClient<NotesV1.NotesService.NotesServiceClient>();
 
         services.TryAddSingleton<INotesGateway, GrpcNotesGateway>();
+        services.AddTransient<IGettingStartedStep, NotesGettingStartedStep>();
         services.AddTransient<NotesViewModel>();
         services.AddTransient<NotesPage>();
         // kakehashi:module-page-services:begin

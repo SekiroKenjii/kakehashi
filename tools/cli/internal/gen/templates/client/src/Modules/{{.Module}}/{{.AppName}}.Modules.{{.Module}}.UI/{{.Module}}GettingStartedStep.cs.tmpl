@@ -1,0 +1,39 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Queries.Get{{.Module}};
+using {{.RootNamespace}}.UI.Contracts;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI;
+
+/// <summary>
+/// The {{.Module}} module's line on the Home page checklist: create one {{.Variable}}, and watch it
+/// cross both halves. It ticks itself once the server has {{article .Variable}} {{.Variable}} to return.
+/// </summary>
+public sealed class {{.Module}}GettingStartedStep : IGettingStartedStep
+{
+    private readonly ISender _sender;
+
+    public {{.Module}}GettingStartedStep(ISender sender)
+    {
+        ArgumentNullException.ThrowIfNull(sender);
+        _sender = sender;
+    }
+
+    public string ModuleName => "{{.Module}}";
+
+    public string Title => "Create {{article .Variable}} {{.Variable}} in the {{.Module}} module";
+
+    public string Subtitle =>
+        "One round trip through everything: the page, the mediator, gRPC, the server module and "
+            + "its table.";
+
+    /// <summary>Done once {{article .Variable}} {{.Variable}} exists. A server nothing can reach has none.</summary>
+    public async Task<bool> IsDoneAsync(CancellationToken cancellationToken)
+    {
+        var {{.ID}} = await _sender.Send(new Get{{.Module}}Query(), cancellationToken).ConfigureAwait(false);
+
+        return {{.ID}}.IsSuccess && {{.ID}}.Value.Count > 0;
+    }
+}
