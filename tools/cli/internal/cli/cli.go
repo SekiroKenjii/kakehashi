@@ -45,7 +45,7 @@ func Execute() int {
 		SilenceErrors: true,
 	}
 	root.SetFlagErrorFunc(func(_ *cobra.Command, err error) error { return usageError{err: err} })
-	root.AddCommand(newCommand(), doctorCommand(), versionCommand())
+	root.AddCommand(newCommand(), addCommand(), removeCommand(), doctorCommand(), versionCommand())
 
 	command, err := root.ExecuteC()
 	if err == nil {

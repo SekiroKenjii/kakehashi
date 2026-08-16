@@ -1,0 +1,32 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Delete{{.Entity}};
+
+public sealed class Delete{{.Entity}}CommandHandler : IRequestHandler<Delete{{.Entity}}Command, Result>
+{
+    private readonly I{{.Module}}Gateway _{{.ID}};
+
+    public Delete{{.Entity}}CommandHandler(I{{.Module}}Gateway {{.ID}})
+    {
+        ArgumentNullException.ThrowIfNull({{.ID}});
+        _{{.ID}} = {{.ID}};
+    }
+
+    /// <summary>Deletes the {{.Variable}}, without validating the id first.</summary>
+    /// <remarks>
+    /// An id either names {{article .Variable}} {{.Variable}} or does not, and only the server knows which. It treats deleting
+    /// something already gone as success, so a retry after a dropped connection does not surface
+    /// as an error the user has to interpret.
+    /// </remarks>
+    public Task<Result> Handle(Delete{{.Entity}}Command request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        return _{{.ID}}.DeleteAsync(request.Id, cancellationToken);
+    }
+}

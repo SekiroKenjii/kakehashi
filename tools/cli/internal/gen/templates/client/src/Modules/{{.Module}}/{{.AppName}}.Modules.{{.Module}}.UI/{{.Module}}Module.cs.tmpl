@@ -1,0 +1,55 @@
+using System;
+using System.Collections.Generic;
+using {{.RootNamespace}}.App.Infrastructure.DependencyInjection;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.UI.Infrastructure;
+using {{.RootNamespace}}.Modules.{{.Module}}.UI.ViewModels;
+using {{.RootNamespace}}.Modules.{{.Module}}.UI.Views;
+using {{.RootNamespace}}.UI.Contracts;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using {{.Module}}V1 = {{.RootNamespace}}.{{.Module}}.V1;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI;
+
+/// <summary>
+/// Composition entry point for the {{.Module}} module: registers the application layer, the gRPC
+/// client for its own contract, the adapter behind the gateway port, and the page.
+/// </summary>
+public sealed class {{.Module}}Module : IModule
+{
+    public string Name => "{{.Module}}";
+
+    public ModuleDescriptor Descriptor { get; } = new(
+        "{{.Module}}",
+        "The reference feature: a full vertical slice from this page to the server's database.",
+        IsRequired: false,
+        AssignmentId: "{{.ID}}");
+
+    public void RegisterServices(IServiceCollection services)
+    {
+        ArgumentNullException.ThrowIfNull(services);
+
+        services.Add{{.Module}}Application();
+
+        // The host's helper, not a hand-rolled channel, so the token is attached as it is everywhere
+        // else: a module wiring its own client works right up until the server starts checking.
+        services.AddBackendGrpcClient<{{.Module}}V1.{{.Module}}Service.{{.Module}}ServiceClient>();
+
+        services.TryAddSingleton<I{{.Module}}Gateway, Grpc{{.Module}}Gateway>();
+        services.AddTransient<{{.Module}}ViewModel>();
+        services.AddTransient<{{.Module}}Page>();
+        // kakehashi:module-page-services:begin
+        // kakehashi:module-page-services:end
+    }
+
+    public IReadOnlyList<NavigationItem> GetNavigationItems()
+    {
+        return [
+            new NavigationItem("{{.Module}}", "{{.Glyph}}", typeof({{.Module}}Page)) { Id = "{{.ID}}", Group = "Utilities" },
+            // kakehashi:module-page-navigation:begin
+            // kakehashi:module-page-navigation:end
+        ];
+    }
+}

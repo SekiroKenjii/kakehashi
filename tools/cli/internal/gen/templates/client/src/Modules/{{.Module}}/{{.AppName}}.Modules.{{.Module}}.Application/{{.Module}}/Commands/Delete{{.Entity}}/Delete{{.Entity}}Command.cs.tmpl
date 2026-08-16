@@ -1,0 +1,7 @@
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Delete{{.Entity}};
+
+/// <summary>Removes {{article .Variable}} {{.Variable}}. Removing one that is already gone succeeds.</summary>
+public sealed record Delete{{.Entity}}Command(long Id) : IRequest<Result>;

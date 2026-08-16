@@ -1,0 +1,83 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Reflection;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application;
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using Xunit;
+
+namespace {{.RootNamespace}}.ArchitectureTests;
+
+/// <summary>
+/// {{.Module}}-module counterparts to <see cref="LayeringTests"/>. Per-module coverage lives with its
+/// module so that adding or removing one never means editing the shared file.
+/// </summary>
+public sealed class {{.Module}}LayeringTests
+{
+    private static readonly Assembly _{{.ID}}Domain = typeof({{.Entity}}Draft).Assembly;
+    private static readonly Assembly _{{.ID}}Application =
+        typeof({{.Module}}ApplicationServiceCollectionExtensions).Assembly;
+
+    private static IReadOnlyList<string> ReferencedAssemblyNames(Assembly assembly)
+    {
+        return assembly
+            .GetReferencedAssemblies()
+            .Select(reference => reference.Name ?? string.Empty)
+            .ToList();
+    }
+
+    [Fact]
+    public void Domain_DoesNotDependOnApplicationUiHostOrMediator()
+    {
+        var references = ReferencedAssemblyNames(_{{.ID}}Domain);
+
+        Assert.DoesNotContain(
+            references, name => name.Contains(".Application", StringComparison.Ordinal));
+        Assert.DoesNotContain(references, name => name.Contains(".UI", StringComparison.Ordinal));
+        Assert.DoesNotContain(references, name => name.EndsWith(".App", StringComparison.Ordinal));
+        Assert.DoesNotContain(
+            references, name => name.Equals(TestConstants.MediatorAssembly, StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Application_DoesNotDependOnTheUiOrHost()
+    {
+        var references = ReferencedAssemblyNames(_{{.ID}}Application);
+
+        Assert.DoesNotContain(references, name => name.Contains(".UI", StringComparison.Ordinal));
+        Assert.DoesNotContain(references, name => name.EndsWith(".App", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void {{.Module}}Layer_DoesNotDependOnAnotherFeatureModule()
+    {
+        foreach (var assembly in new[] { _{{.ID}}Domain, _{{.ID}}Application })
+        {
+            foreach (var name in ReferencedAssemblyNames(assembly))
+            {
+                if (name.StartsWith(TestConstants.ModulesPrefix, StringComparison.Ordinal))
+                {
+                    Assert.StartsWith(TestConstants.ModulesPrefix + "{{.Module}}.", name);
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void ApplicationAndDomain_DoNotDependOnTheGeneratedContract()
+    {
+        // The client-side statement of the server's rule that only rpc/ may import internal/gen.
+        // A test rather than archlint, because the generated code is one shared project here.
+        foreach (var assembly in new[] { _{{.ID}}Domain, _{{.ID}}Application })
+        {
+            var references = ReferencedAssemblyNames(assembly);
+
+            Assert.DoesNotContain(
+                references, name => name.Equals(TestConstants.ContractsAssembly, StringComparison.Ordinal));
+            Assert.DoesNotContain(
+                references, name => name.StartsWith("Grpc.", StringComparison.Ordinal));
+            Assert.DoesNotContain(
+                references, name => name.Equals("Google.Protobuf", StringComparison.Ordinal));
+        }
+    }
+}

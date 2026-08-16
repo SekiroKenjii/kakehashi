@@ -1,0 +1,14 @@
+using {{.RootNamespace}}.UI.Contracts;
+using CommunityToolkit.Mvvm.ComponentModel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI.ViewModels;
+
+/// <summary>
+/// What the {{.Page}} page shows. Everything it needs from the outside arrives through the
+/// constructor, so the page can be built in a test without a window.
+/// </summary>
+public sealed partial class {{.Page}}PageViewModel : ViewModel
+{
+    [ObservableProperty]
+    public partial string Title { get; set; } = "{{.PageTitle}}";
+}

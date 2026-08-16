@@ -1,0 +1,284 @@
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Create{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Delete{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Update{{.Entity}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Queries.Get{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.UI.ViewModels;
+using {{.RootNamespace}}.SharedKernel;
+using NSubstitute;
+using Xunit;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI.Tests.ViewModels;
+
+/// <summary>
+/// Unit tests for <see cref="{{.Module}}ViewModel"/>: loading, client-side paging, the edit dialog's
+/// keep-open-on-error contract, and delete. The mediator is substituted; no XAML is constructed,
+/// so nothing here needs a UI thread.
+/// </summary>
+public sealed class {{.Module}}ViewModelTests
+{
+    private readonly ISender _sender = Substitute.For<ISender>();
+
+    private static {{.Entity}}Dto {{.Entity}}(long id, string title, string body = "", int minutesAgo = 0)
+    {
+        var moment = DateTimeOffset.UtcNow.AddMinutes(-minutesAgo);
+
+        return new {{.Entity}}Dto(id, title, body, moment, moment);
+    }
+
+    /// <summary>Stubs the {{.ID}} query.</summary>
+    /// <remarks>
+    /// Matches "not null" rather than Arg.Any. ISender.Send is generic, so every setup here
+    /// configures the same method and they are told apart only by the argument matcher — and
+    /// Arg.Any&lt;T&gt;() also matches the null a Received/DidNotReceive verification passes in.
+    /// The symptom is a request of one type answered with another type's Task, cast-failing deep
+    /// inside the proxy.
+    /// </remarks>
+    private void Given{{.Module}}(params {{.Entity}}Dto[] {{.ID}})
+    {
+        _sender.Send(Arg.Is<Get{{.Module}}Query>(query => query != null))
+            .Returns(_ => Task.FromResult(
+                Result.Success<IReadOnlyList<{{.Entity}}Dto>>({{.ID}})));
+    }
+
+    private {{.Module}}ViewModel CreateViewModel()
+    {
+        return new {{.Module}}ViewModel(_sender);
+    }
+
+    [Fact]
+    public async Task Load_PopulatesTheList()
+    {
+        Given{{.Module}}({{.Entity}}(1, "First", "some body"), {{.Entity}}(2, "Second"));
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.Has{{.Module}});
+        Assert.False(viewModel.HasNo{{.Module}});
+        Assert.Equal(2, viewModel.{{.Module}}.Count);
+        Assert.Equal("First", viewModel.{{.Module}}[0].Title);
+    }
+
+    [Fact]
+    public async Task Load_EmptyResult_ShowsTheEmptyState()
+    {
+        Given{{.Module}}();
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.False(viewModel.Has{{.Module}});
+        Assert.True(viewModel.HasNo{{.Module}});
+        Assert.Empty(viewModel.{{.Module}});
+    }
+
+    [Fact]
+    public async Task Load_Failure_ShowsTheErrorAndKeepsWhatWasOnScreen()
+    {
+        Given{{.Module}}({{.Entity}}(1, "Keep me"));
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        _sender.Send(Arg.Is<Get{{.Module}}Query>(query => query != null))
+            .Returns(_ => Task.FromResult(
+                Result.Failure<IReadOnlyList<{{.Entity}}Dto>>({{.Module}}Errors.RequestFailed)));
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.HasError);
+        Assert.Equal({{.Module}}Errors.RequestFailed.Message, viewModel.ErrorMessage);
+        // A backend that blinked must not also wipe the list the user was reading.
+        Assert.Equal("Keep me", Assert.Single(viewModel.{{.Module}}).Title);
+    }
+
+    [Fact]
+    public async Task Load_BodyWithNewlines_CollapsesToASingleLinePreview()
+    {
+        Given{{.Module}}({{.Entity}}(1, "Title", "first line\n\nsecond   line"));
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        // Honouring newlines would make every row a different height and the list would jump.
+        Assert.Equal("first line second line", viewModel.{{.Module}}[0].Preview);
+        Assert.True(viewModel.{{.Module}}[0].HasPreview);
+    }
+
+    [Fact]
+    public async Task Load_EmptyBody_HasNoPreview()
+    {
+        Given{{.Module}}({{.Entity}}(1, "Title", "   "));
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.False(viewModel.{{.Module}}[0].HasPreview);
+        Assert.True(viewModel.{{.Module}}[0].HasNoPreview);
+    }
+
+    [Fact]
+    public async Task Load_SinglePage_HidesThePager()
+    {
+        Given{{.Module}}([.. Enumerable
+            .Range(1, 5)
+            .Select(i => {{.Entity}}(i, $"{{.Entity}} {i}"))]);
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.False(viewModel.HasPaging);
+        Assert.Equal(5, viewModel.{{.Module}}.Count);
+    }
+
+    [Fact]
+    public async Task Load_MoreThanOnePage_PagesFiveAtATime()
+    {
+        Given{{.Module}}([.. Enumerable
+            .Range(1, 12)
+            .Select(i => {{.Entity}}(i, $"{{.Entity}} {i}"))]);
+        var viewModel = CreateViewModel();
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.HasPaging);
+        Assert.Equal(5, viewModel.{{.Module}}.Count);
+        Assert.Equal("1 / 3", viewModel.PageLabel);
+
+        viewModel.NextPageCommand.Execute(parameter: null);
+        Assert.Equal("2 / 3", viewModel.PageLabel);
+        Assert.Equal("{{.Entity}} 6", viewModel.{{.Module}}[0].Title);
+
+        viewModel.NextPageCommand.Execute(parameter: null);
+        Assert.Equal("3 / 3", viewModel.PageLabel);
+        Assert.Equal(2, viewModel.{{.Module}}.Count);
+    }
+
+    [Fact]
+    public async Task NextPage_AtTheEnd_StaysPut()
+    {
+        Given{{.Module}}([.. Enumerable
+            .Range(1, 7)
+            .Select(i => {{.Entity}}(i, $"{{.Entity}} {i}"))]);
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        viewModel.NextPageCommand.Execute(parameter: null);
+        viewModel.NextPageCommand.Execute(parameter: null);
+        viewModel.PrevPageCommand.Execute(parameter: null);
+        viewModel.PrevPageCommand.Execute(parameter: null);
+        viewModel.PrevPageCommand.Execute(parameter: null);
+
+        Assert.Equal("1 / 2", viewModel.PageLabel);
+    }
+
+    [Fact]
+    public async Task Save_New{{.Entity}}_SendsACreateAndReloads()
+    {
+        Given{{.Module}}();
+        _sender.Send(Arg.Is<Create{{.Entity}}Command>(command => command != null))
+            .Returns(_ => Task.FromResult(Result.Success({{.Entity}}(1, "Written"))));
+        var viewModel = CreateViewModel();
+
+        viewModel.PrepareCreate();
+        viewModel.EditTitle = "Written";
+        viewModel.EditBody = "body";
+        var saved = await viewModel.SaveAsync();
+
+        Assert.True(saved);
+        Assert.Null(viewModel.DialogError);
+        await _sender.Received(1).Send(
+            Arg.Is<Create{{.Entity}}Command>(c => c != null && c.Title == "Written" && c.Body == "body"));
+    }
+
+    [Fact]
+    public async Task Save_Rejected_KeepsTheDialogOpenWithTheServersMessage()
+    {
+        Given{{.Module}}();
+        _sender.Send(Arg.Is<Create{{.Entity}}Command>(command => command != null))
+            .Returns(_ => Task.FromResult(Result.Failure<{{.Entity}}Dto>({{.Module}}Errors.TitleRequired)));
+        var viewModel = CreateViewModel();
+
+        viewModel.PrepareCreate();
+        var saved = await viewModel.SaveAsync();
+
+        // False keeps the ContentDialog open, so a rejected title does not cost the user the body
+        // they just typed.
+        Assert.False(saved);
+        Assert.True(viewModel.HasDialogError);
+        Assert.Equal({{.Module}}Errors.TitleRequired.Message, viewModel.DialogError);
+    }
+
+    [Fact]
+    public async Task Save_AfterPrepareEdit_SendsAnUpdateForThat{{.Entity}}()
+    {
+        Given{{.Module}}({{.Entity}}(7, "Before", "old"));
+        _sender.Send(Arg.Is<Update{{.Entity}}Command>(command => command != null))
+            .Returns(_ => Task.FromResult(Result.Success({{.Entity}}(7, "After", "new"))));
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        await viewModel.PrepareEditAsync(viewModel.{{.Module}}[0]);
+        Assert.Equal("Before", viewModel.EditTitle);
+        // The row only carries a preview, so the dialog refetches the full body.
+        Assert.Equal("old", viewModel.EditBody);
+
+        viewModel.EditTitle = "After";
+        var saved = await viewModel.SaveAsync();
+
+        Assert.True(saved);
+        await _sender.Received(1).Send(Arg.Is<Update{{.Entity}}Command>(c => c != null && c.Id == 7));
+    }
+
+    [Fact]
+    public async Task ConfirmDelete_SendsADeleteForThePreparedRow()
+    {
+        Given{{.Module}}({{.Entity}}(3, "Doomed"));
+        _sender.Send(Arg.Is<Delete{{.Entity}}Command>(command => command != null))
+            .Returns(_ => Task.FromResult(Result.Success()));
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        viewModel.PrepareDelete(viewModel.{{.Module}}[0]);
+        Assert.Contains("Doomed", viewModel.DeletePrompt, StringComparison.Ordinal);
+
+        var deleted = await viewModel.ConfirmDeleteAsync();
+
+        Assert.True(deleted);
+        await _sender.Received(1).Send(Arg.Is<Delete{{.Entity}}Command>(c => c != null && c.Id == 3));
+    }
+
+    [Fact]
+    public async Task ConfirmDelete_WithoutAPreparedRow_DoesNothing()
+    {
+        Given{{.Module}}();
+        var viewModel = CreateViewModel();
+
+        var deleted = await viewModel.ConfirmDeleteAsync();
+
+        Assert.False(deleted);
+        await _sender.DidNotReceive().Send(Arg.Any<Delete{{.Entity}}Command>());
+    }
+
+    [Fact]
+    public async Task ConfirmDelete_Failure_ReportsOnThePageNotTheDialog()
+    {
+        Given{{.Module}}({{.Entity}}(3, "Doomed"));
+        _sender.Send(Arg.Is<Delete{{.Entity}}Command>(command => command != null))
+            .Returns(_ => Task.FromResult(Result.Failure({{.Module}}Errors.RequestFailed)));
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        viewModel.PrepareDelete(viewModel.{{.Module}}[0]);
+        var deleted = await viewModel.ConfirmDeleteAsync();
+
+        Assert.False(deleted);
+        Assert.True(viewModel.HasError);
+        Assert.Equal({{.Module}}Errors.RequestFailed.Message, viewModel.ErrorMessage);
+    }
+}

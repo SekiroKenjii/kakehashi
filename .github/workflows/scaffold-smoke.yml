@@ -311,6 +311,132 @@ jobs:
         working-directory: ${{ runner.temp }}/project/server
         run: go run ./tools/archlint
 
+  # The generator's promise, end to end: a module goes into a project that never had one, the three
+  # gates pass with nothing edited by hand, and taking it back out leaves the tree exactly as it was.
+  generate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
+      # The templates are derived from the example module and committed. Deriving them again has to
+      # produce what is committed, or the generator and the example have drifted apart.
+      - name: Verify the generator matches the example module
+        working-directory: tools/cli
+        run: |
+          go run ./cmd/gen-sync
+          cd ../.. && git diff --exit-code -- tools/cli/internal/gen
+
+      - name: Scaffold a project with no module in it
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          "$RUNNER_TEMP/kakehashi" new "$PROJECT_NAME" \
+            --module "$PROJECT_MODULE" \
+            --author Smoke \
+            --template-dir . \
+            --dir "$RUNNER_TEMP/project" \
+            --bare \
+            --no-input
+
+      # The state to come back to. Everything after this is measured against it.
+      - name: Record the tree before the module
+        working-directory: ${{ runner.temp }}/project
+        run: git rev-parse HEAD > "$RUNNER_TEMP/before"
+
+      - name: Add a module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          "$RUNNER_TEMP/kakehashi" add module orders
+
+      # `add module` runs these itself and refuses to finish without them. Running them again here
+      # is the independent check: the gates pass on the tree as it was left, not only inside the
+      # command that wrote it.
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      - name: Verify the generated contract matches the schema
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+
+      - name: Build, vet and test the server
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          go vet ./...
+          go test ./...
+
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: go run ./tools/archlint
+
+      - name: Verify formatting
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          unformatted=$(gofmt -l ./cmd ./internal ./tools)
+          if [ -n "$unformatted" ]; then
+            echo "the generated module is not gofmt'd:"
+            echo "$unformatted"
+            exit 1
+          fi
+
+      - name: Add a page to it
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          "$RUNNER_TEMP/kakehashi" add page orders Backlog
+
+      # Removing takes back what adding wrote, and the page with it: the page's files are inside the
+      # module's own directory, and its registration is in the module's own composition entry point.
+      - name: Remove the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          git add -A
+          git commit -q -m "chore: add orders"
+          "$RUNNER_TEMP/kakehashi" remove module orders
+
+      - name: Verify the tree is what it was before the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          before=$(cat "$RUNNER_TEMP/before")
+          changed=$(git diff --name-only "$before")
+          if [ -n "$changed" ]; then
+            echo "removing the module did not restore the tree:"
+            echo "$changed"
+            git diff "$before" | head -100
+            exit 1
+          fi
+
+      - name: Build and test the server without it
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          go test ./...
+          go run ./tools/archlint
+
   # The rename scripts are the fallback for anyone who starts from the "Use this template" button
   # rather than from the CLI. Their own self-check is the assertion: it exits non-zero while any
   # placeholder or identity string survives, which is what rots first when the template grows a file.

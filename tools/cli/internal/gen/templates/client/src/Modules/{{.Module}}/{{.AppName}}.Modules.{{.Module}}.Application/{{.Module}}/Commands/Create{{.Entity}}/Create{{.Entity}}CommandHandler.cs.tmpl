@@ -1,0 +1,39 @@
+using System;
+using System.Threading;
+using System.Threading.Tasks;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Commands.Create{{.Entity}};
+
+/// <summary>Validates the draft locally, then asks the server to store it.</summary>
+public sealed class Create{{.Entity}}CommandHandler
+    : IRequestHandler<Create{{.Entity}}Command, Result<{{.Entity}}Dto>>
+{
+    private readonly I{{.Module}}Gateway _{{.ID}};
+
+    public Create{{.Entity}}CommandHandler(I{{.Module}}Gateway {{.ID}})
+    {
+        ArgumentNullException.ThrowIfNull({{.ID}});
+        _{{.ID}} = {{.ID}};
+    }
+
+    public async Task<Result<{{.Entity}}Dto>> Handle(
+        Create{{.Entity}}Command request, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        // Fail here and the user sees the problem immediately, on the keystroke rather than after a
+        // round trip. The server checks again regardless — this is a courtesy, not a gate.
+        var draft = {{.Entity}}Draft.Create(request.Title, request.Body);
+
+        if (draft.IsFailure)
+        {
+            return Result.Failure<{{.Entity}}Dto>(draft.Error);
+        }
+
+        return await _{{.ID}}.CreateAsync(draft.Value, cancellationToken).ConfigureAwait(false);
+    }
+}

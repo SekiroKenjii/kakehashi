@@ -1,0 +1,97 @@
+syntax = "proto3";
+
+// {{.Module}}: the reference feature, and the one to copy when adding your own.
+//
+// It is deliberately small and deliberately complete. Every part of the stack a real feature
+// touches is here and nowhere else is: an entity with a rule worth enforcing, a table the module
+// owns, use cases that publish events, a wire mapping, a page. Nothing in it is a special case.
+package {{.ProtoPackage}}.{{.ID}}.v1;
+
+option csharp_namespace = "{{.RootNamespace}}.{{.Module}}.V1";
+
+import "google/protobuf/timestamp.proto";
+
+// {{.Module}}Service is the {{.ID}} module's entire remote surface.
+service {{.Module}}Service {
+  // List{{.Module}} returns every {{.Variable}}, most recently updated first.
+  rpc List{{.Module}}(List{{.Module}}Request) returns (List{{.Module}}Response);
+
+  // Get{{.Entity}} returns one {{.Variable}}, or NOT_FOUND.
+  rpc Get{{.Entity}}(Get{{.Entity}}Request) returns (Get{{.Entity}}Response);
+
+  // Create{{.Entity}} stores a new {{.Variable}}. An empty or whitespace-only title is INVALID_ARGUMENT.
+  rpc Create{{.Entity}}(Create{{.Entity}}Request) returns (Create{{.Entity}}Response);
+
+  // Update{{.Entity}} rewrites {{article .Variable}} {{.Variable}}'s title and body.
+  rpc Update{{.Entity}}(Update{{.Entity}}Request) returns (Update{{.Entity}}Response);
+
+  // Delete{{.Entity}} removes {{article .Variable}} {{.Variable}}.
+  //
+  // Deleting one that is already gone succeeds. The caller asked for it to not exist, and
+  // afterwards it does not; returning NOT_FOUND would make a retried delete look like a failure.
+  rpc Delete{{.Entity}}(Delete{{.Entity}}Request) returns (Delete{{.Entity}}Response);
+}
+
+// {{.Entity}} is {{article .Variable}} {{.Variable}} as callers see it.
+message {{.Entity}} {
+  // Server-assigned identifier.
+  int64 id = 1;
+
+  // A single line, non-empty, at most 120 characters.
+  string title = 2;
+
+  // Free text. May be empty.
+  string body = 3;
+
+  google.protobuf.Timestamp created_at = 4;
+
+  google.protobuf.Timestamp updated_at = 5;
+}
+
+message List{{.Module}}Request {}
+
+message List{{.Module}}Response {
+  // Most recently updated first.
+  //
+  // Unpaged on purpose. Paging is a contract decision that is hard to add later and easy to get
+  // wrong early, and a boilerplate that ships a cursor nobody needs teaches the wrong lesson. When
+  // a real list outgrows one response, add a page_token here and a next_page_token below; both are
+  // additive and neither breaks an existing client.
+  repeated {{.Entity}} {{.ID}} = 1;
+}
+
+message Get{{.Entity}}Request {
+  int64 id = 1;
+}
+
+message Get{{.Entity}}Response {
+  {{.Entity}} {{.Variable}} = 1;
+}
+
+message Create{{.Entity}}Request {
+  string title = 1;
+  string body = 2;
+}
+
+message Create{{.Entity}}Response {
+  {{.Entity}} {{.Variable}} = 1;
+}
+
+message Update{{.Entity}}Request {
+  int64 id = 1;
+  string title = 2;
+  string body = 3;
+}
+
+message Update{{.Entity}}Response {
+  {{.Entity}} {{.Variable}} = 1;
+}
+
+message Delete{{.Entity}}Request {
+  int64 id = 1;
+}
+
+// Delete{{.Entity}}Response is empty, and is a message rather than google.protobuf.Empty so that it has
+// somewhere to grow. Swapping Empty for a real message later is a breaking change; adding a field
+// to this one is not.
+message Delete{{.Entity}}Response {}

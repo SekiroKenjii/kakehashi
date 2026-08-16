@@ -1,0 +1,168 @@
+using System;
+using System.Collections.Generic;
+using System.Threading;
+using System.Threading.Tasks;
+using Grpc.Core;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.Abstractions;
+using {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}};
+using {{.RootNamespace}}.Modules.{{.Module}}.Domain.{{.Module}};
+using {{.RootNamespace}}.SharedKernel;
+using Microsoft.Extensions.Logging;
+using {{.Module}}V1 = {{.RootNamespace}}.{{.Module}}.V1;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.UI.Infrastructure;
+
+/// <summary>
+/// The gRPC adapter behind <see cref="I{{.Module}}Gateway"/>. It is the only class in the module that
+/// knows the wire exists: it maps between the generated messages and the application's DTOs, and
+/// turns transport failures into <see cref="Result"/> failures.
+/// </summary>
+/// <remarks>
+/// The alias is <c>{{.Module}}V1</c> rather than <c>{{.Module}}</c> because inside a <c>{{.RootNamespace}}.*</c>
+/// namespace the identifier <c>{{.Module}}</c> binds to the enclosing <c>{{.RootNamespace}}.Modules.{{.Module}}</c>
+/// namespace before a using alias is ever considered.
+/// </remarks>
+public sealed partial class Grpc{{.Module}}Gateway : I{{.Module}}Gateway
+{
+    private readonly {{.Module}}V1.{{.Module}}Service.{{.Module}}ServiceClient _client;
+    private readonly ILogger<Grpc{{.Module}}Gateway> _logger;
+
+    public Grpc{{.Module}}Gateway(
+        {{.Module}}V1.{{.Module}}Service.{{.Module}}ServiceClient client, ILogger<Grpc{{.Module}}Gateway> logger)
+    {
+        ArgumentNullException.ThrowIfNull(client);
+        ArgumentNullException.ThrowIfNull(logger);
+        _client = client;
+        _logger = logger;
+    }
+
+    public async Task<Result<IReadOnlyList<{{.Entity}}Dto>>> ListAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var reply = await _client
+                .List{{.Module}}Async(new {{.Module}}V1.List{{.Module}}Request(), cancellationToken: cancellationToken)
+                .ResponseAsync
+                .ConfigureAwait(false);
+
+            var {{.ID}} = new List<{{.Entity}}Dto>(reply.{{.Module}}.Count);
+            foreach (var {{.Variable}} in reply.{{.Module}})
+            {
+                {{.ID}}.Add(ToDto({{.Variable}}));
+            }
+
+            return Result.Success<IReadOnlyList<{{.Entity}}Dto>>({{.ID}});
+        }
+        catch (RpcException exception)
+        {
+            return Result.Failure<IReadOnlyList<{{.Entity}}Dto>>(Translate(exception, nameof(ListAsync)));
+        }
+    }
+
+    public async Task<Result<{{.Entity}}Dto>> CreateAsync(
+        {{.Entity}}Draft draft, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        try
+        {
+            var reply = await _client
+                .Create{{.Entity}}Async(
+                    new {{.Module}}V1.Create{{.Entity}}Request { Title = draft.Title, Body = draft.Body },
+                    cancellationToken: cancellationToken)
+                .ResponseAsync
+                .ConfigureAwait(false);
+
+            return Result.Success(ToDto(reply.{{.Entity}}));
+        }
+        catch (RpcException exception)
+        {
+            return Result.Failure<{{.Entity}}Dto>(Translate(exception, nameof(CreateAsync)));
+        }
+    }
+
+    public async Task<Result<{{.Entity}}Dto>> UpdateAsync(
+        long id, {{.Entity}}Draft draft, CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(draft);
+        try
+        {
+            var reply = await _client
+                .Update{{.Entity}}Async(
+                    new {{.Module}}V1.Update{{.Entity}}Request { Id = id, Title = draft.Title, Body = draft.Body },
+                    cancellationToken: cancellationToken)
+                .ResponseAsync
+                .ConfigureAwait(false);
+
+            return Result.Success(ToDto(reply.{{.Entity}}));
+        }
+        catch (RpcException exception)
+        {
+            return Result.Failure<{{.Entity}}Dto>(Translate(exception, nameof(UpdateAsync)));
+        }
+    }
+
+    public async Task<Result> DeleteAsync(long id, CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _client
+                .Delete{{.Entity}}Async(
+                    new {{.Module}}V1.Delete{{.Entity}}Request { Id = id }, cancellationToken: cancellationToken)
+                .ResponseAsync
+                .ConfigureAwait(false);
+
+            return Result.Success();
+        }
+        catch (RpcException exception)
+        {
+            return Result.Failure(Translate(exception, nameof(DeleteAsync)));
+        }
+    }
+
+    private static {{.Entity}}Dto ToDto({{.Module}}V1.{{.Entity}} {{.Variable}})
+    {
+        return new {{.Entity}}Dto(
+            {{.Variable}}.Id,
+            {{.Variable}}.Title,
+            {{.Variable}}.Body,
+            {{.Variable}}.CreatedAt.ToDateTimeOffset(),
+            {{.Variable}}.UpdatedAt.ToDateTimeOffset());
+    }
+
+    /// <summary>Turns a gRPC status into an error the user can be shown.</summary>
+    private Error Translate(RpcException exception, string operation)
+    {
+        switch (exception.StatusCode)
+        {
+            case StatusCode.InvalidArgument:
+                // The server's message is what the domain returned and is written for a user: passing it
+                // through is the difference between naming the limit and "Something went wrong".
+                LogRejected(operation, exception.Status.Detail);
+
+                return new Error({{.Module}}Errors.TitleRequired.Code, exception.Status.Detail);
+
+            case StatusCode.NotFound:
+                return {{.Module}}Errors.NotFound;
+
+            case StatusCode.PermissionDenied:
+                // The server gates whole modules, so this is never about one {{.Variable}}: the account is not
+                // assigned {{.Module}}. Out of the catch-all because it is the one failure a user can act on.
+                return {{.Module}}Errors.NotAssigned;
+
+            default:
+                // Everything else is the network, the server, or a bug — none of which the user can act
+                // on beyond trying again. The detail goes to the log, not the screen.
+                LogFailed(operation, exception.StatusCode, exception);
+
+                return {{.Module}}Errors.RequestFailed;
+        }
+    }
+
+    [LoggerMessage(
+        Level = LogLevel.Information, Message = "{{.Module}} {Operation} was rejected: {Detail}")]
+    private partial void LogRejected(string operation, string detail);
+
+    [LoggerMessage(Level = LogLevel.Warning, Message = "{{.Module}} {Operation} failed with {Status}.")]
+    private partial void LogFailed(string operation, StatusCode status, Exception exception);
+}

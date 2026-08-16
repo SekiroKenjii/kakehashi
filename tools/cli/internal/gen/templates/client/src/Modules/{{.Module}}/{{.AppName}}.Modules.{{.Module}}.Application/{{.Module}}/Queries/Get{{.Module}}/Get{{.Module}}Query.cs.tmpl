@@ -1,0 +1,8 @@
+using System.Collections.Generic;
+using {{.RootNamespace}}.Application.Abstractions.Messaging;
+using {{.RootNamespace}}.SharedKernel;
+
+namespace {{.RootNamespace}}.Modules.{{.Module}}.Application.{{.Module}}.Queries.Get{{.Module}};
+
+/// <summary>Lists every {{.Variable}}, most recently updated first.</summary>
+public sealed record Get{{.Module}}Query : IRequest<Result<IReadOnlyList<{{.Entity}}Dto>>>;

@@ -1,0 +1,83 @@
+// Package domain holds the {{.ID}} module's entities and the rules they enforce.
+//
+// It is the innermost layer: it imports the platform's error types and nothing else. No SQL, no
+// protobuf, no other module. That is what makes the rules in here testable without standing up a
+// database or a server.
+package domain
+
+import (
+	"strings"
+	"time"
+
+	"{{.GoModule}}/server/internal/platform/errs"
+	"{{.GoModule}}/server/internal/platform/text"
+)
+
+// MaxTitleLength caps {{article .Variable}} {{.Variable}}'s title.
+//
+// The limit is about the interface, not the storage: a title is a list row, and a row that runs to
+// three lines stops being a label and starts being the {{.Variable}} itself. The column is sized to match,
+// so a title that passes here always fits.
+const MaxTitleLength = 120
+
+// {{.Entity}} is the entity.
+//
+// Its fields are exported for the store to scan into, but construction goes through New{{.Entity}}, which
+// is where the invariants live. A zero {{.Entity}} is not a valid one.
+type {{.Entity}} struct {
+	ID        int64
+	Title     string
+	Body      string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+}
+
+// New{{.Entity}} builds a valid {{.Variable}}, or explains why it cannot.
+//
+// now is passed in rather than read from the clock so tests can pin it. Reaching for time.Now
+// inside the domain is the fastest way to end up with a test that passes everywhere except at
+// midnight.
+func New{{.Entity}}(title, body string, now time.Time) ({{.Entity}}, error) {
+	title, err := normalizeTitle(title)
+	if err != nil {
+		return {{.Entity}}{}, err
+	}
+
+	return {{.Entity}}{
+		Title:     title,
+		Body:      body,
+		CreatedAt: now,
+		UpdatedAt: now,
+	}, nil
+}
+
+// Rename changes the title, keeping the invariants.
+func (n *{{.Entity}}) Rename(title string, now time.Time) error {
+	title, err := normalizeTitle(title)
+	if err != nil {
+		return err
+	}
+	n.Title = title
+	n.UpdatedAt = now
+	return nil
+}
+
+// Rewrite replaces the body.
+func (n *{{.Entity}}) Rewrite(body string, now time.Time) {
+	n.Body = body
+	n.UpdatedAt = now
+}
+
+func normalizeTitle(title string) (string, error) {
+	title = strings.TrimSpace(title)
+
+	if title == "" {
+		return "", errs.Invalidf("{{articleUpper .Variable}} {{.Variable}} needs a title.")
+	}
+	// Runes, not bytes: len() lets a Vietnamese title through at 40 characters and rejects an
+	// English one at 121.
+	if text.UTF16Len(title) > MaxTitleLength {
+		return "", errs.Invalidf("Titles are limited to %d characters.", MaxTitleLength)
+	}
+	return title, nil
+}

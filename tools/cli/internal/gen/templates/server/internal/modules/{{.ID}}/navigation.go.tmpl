@@ -1,0 +1,26 @@
+package {{.ID}}
+
+import (
+	navigationapi "{{.GoModule}}/server/internal/modules/navigation/api"
+)
+
+// The screen this module owns.
+
+// NavigationDestinations declares the {{.Module}} page.
+//
+// No Permission, which means the module's own {{.ID}}.access — the ordinary case, and the one worth
+// keeping ordinary: the pane's lock and the server's refusal then read the same row, so a screen is
+// locked exactly when its endpoints are.
+func (m *Module) NavigationDestinations() []navigationapi.Destination {
+	return []navigationapi.Destination{
+		{
+			ID:           "{{.ID}}",
+			DefaultTitle: "{{.Module}}",
+			DefaultIcon:  "{{.Icon}}",
+			DefaultGroup: "utilities",
+			DefaultOrder: 10,
+		},
+	}
+}
+
+var _ navigationapi.Contributor = (*Module)(nil)
