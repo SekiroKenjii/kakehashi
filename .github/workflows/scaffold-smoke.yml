@@ -466,6 +466,14 @@ jobs:
           go-version: "1.26"
           cache-dependency-path: server/go.sum
 
+      # On Windows the generator verifies the client too, so this job needs the whole .NET
+      # toolchain the client gate runs on — pinned by global.json rather than whatever the image
+      # happens to ship, for the same reason every other job pins it.
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          global-json-file: client/global.json
+
       - name: Setup buf
         uses: bufbuild/buf-setup-action@v1
         with:
@@ -494,6 +502,24 @@ jobs:
             --bare `
             --no-input
           if ($LASTEXITCODE -ne 0) { throw "the scaffold exited $LASTEXITCODE" }
+
+      # `add module` runs gate 2 itself, and gate 2 is `dotnet test` over the solution: the filter
+      # selects the architecture suite but every test assembly is still loaded, and the WinUI ones
+      # are unpackaged executables whose bootstrapper calls Environment.Exit when no matching
+      # runtime is installed. The runner sees a test process that never answers. Read from the
+      # scaffolded project, which is the tree the gate actually runs against.
+      - name: Install the Windows App Runtime
+        working-directory: ${{ runner.temp }}/project/client
+        run: |
+          $props = [xml](Get-Content Directory.Packages.props)
+          $node = $props.SelectSingleNode("//PackageVersion[@Include='Microsoft.WindowsAppSDK']")
+          $version = $node.Version
+          $channel = ($version -split '\.')[0..1] -join '.'
+          $url = "https://aka.ms/windowsappsdk/$channel/$version/windowsappruntimeinstall-x64.exe"
+          $installer = Join-Path $env:RUNNER_TEMP 'WindowsAppRuntimeInstall.exe'
+          Invoke-WebRequest -Uri $url -OutFile $installer
+          & $installer --quiet
+          if ($LASTEXITCODE -ne 0) { throw "the runtime installer exited $LASTEXITCODE" }
 
       - name: Record the tree before the module
         working-directory: ${{ runner.temp }}/project
