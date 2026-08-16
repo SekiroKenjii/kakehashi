@@ -558,9 +558,8 @@ public sealed partial class HomeViewModel : ViewModel
                     "It leaves nothing behind: the proto, both module trees, the tests and the wiring.",
                     IsMarkedDone(id),
                     HasAction: false,
-                    // The generator derives a module's name by capitalising its unit id, so the id
-                    // this command needs is the name in lower case, for the example and for every
-                    // module `kakehashi add module` writes.
+                    // The name in lower case is the unit id by construction: the generator makes
+                    // the name by capitalising the id.
                     Command: "kakehashi remove module " + module.ModuleName.ToLowerInvariant()));
             }
         }

@@ -14,6 +14,7 @@ using __ROOT_NAMESPACE__.UI.Contracts;
 using __ROOT_NAMESPACE__.UI.Contracts.Services.Platform;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.UI.Xaml.Controls;
 using NSubstitute;
 using Xunit;
 
@@ -30,7 +31,7 @@ public sealed class HomeViewModelTests
     private const string _activityEntriesKey = "App.ActivityLog";
 
     private readonly ISender _sender = Substitute.For<ISender>();
-    private readonly INavigationService _navigation = Substitute.For<INavigationService>();
+    private readonly FakeNavigation _navigation = new();
     private readonly IThemeService _theme = Substitute.For<IThemeService>();
     private readonly InMemoryLocalSettings _settings = new();
     private readonly IClipboardService _clipboard = Substitute.For<IClipboardService>();
@@ -240,7 +241,6 @@ public sealed class HomeViewModelTests
         var notes = Module("Notes", navItem: new NavigationItem("Notes", "", typeof(HomePage)));
         _all = [notes];
         _attached = [notes];
-        _navigation.GetPageKey(typeof(HomePage)).Returns("Notes");
         _moduleSteps = [new FakeStarterStep("Notes", isDone: false)];
         var viewModel = CreateViewModel();
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
@@ -248,7 +248,7 @@ public sealed class HomeViewModelTests
         await viewModel.OpenStepCommand.ExecuteAsync(
             viewModel.Steps.Single(step => step.Id == "module:Notes"));
 
-        _navigation.Received(1).NavigateTo("Notes");
+        Assert.Equal(_navigation.GetPageKey(typeof(HomePage)), _navigation.NavigatedTo);
     }
 
     [Fact]
@@ -580,6 +580,49 @@ public sealed class HomeViewModelTests
         Assert.True(row.IsWithheld);
         Assert.False(row.CanAttach);
         Assert.Contains("administrator", row.Description, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// A stand-in for the navigation service, written by hand rather than substituted.
+    /// </summary>
+    /// <remarks>
+    /// <see cref="INavigationService.NavigateTo"/> takes a <c>params ReadOnlySpan&lt;object&gt;</c>,
+    /// and Castle DynamicProxy — which NSubstitute builds on — cannot emit a valid proxy for a
+    /// ref-struct parameter. A substitute is created without complaint and throws
+    /// <see cref="InvalidProgramException"/> the moment the method is called, so any view-model
+    /// test that actually navigates needs one of these instead.
+    /// </remarks>
+    private sealed class FakeNavigation : INavigationService
+    {
+        /// <summary>The key of the last page navigated to, or null if none was.</summary>
+        public string? NavigatedTo { get; private set; }
+
+        public IObservable<NavigationEvent> OnNavigated { get; } =
+            Substitute.For<IObservable<NavigationEvent>>();
+
+        public bool CanGoBack => false;
+
+        public void Initialize(Frame frame) { }
+
+        public void Register<TPage>() where TPage : Page { }
+
+        public void Register(params ReadOnlySpan<Type> pageTypes) { }
+
+        public string GetPageKey(Type pageType)
+        {
+            return pageType.Name;
+        }
+
+        public bool NavigateTo(string pageKey, params ReadOnlySpan<object> args)
+        {
+            NavigatedTo = pageKey;
+
+            return true;
+        }
+
+        public void GoBack() { }
+
+        public void ClearBackStack() { }
     }
 
     /// <summary>
