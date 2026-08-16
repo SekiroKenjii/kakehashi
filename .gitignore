@@ -76,3 +76,7 @@ appsettings.Development.json
 # harness writes outside the repo by default; this catches a -ShotDir pointed back inside it.
 .claude/skills/ui-testing/ui/
 **/test-results.json
+
+# Release builds. `tools/cli/scripts/build-release.sh` writes here by default, and what it produces
+# is reproducible from a tag rather than kept.
+tools/cli/dist/

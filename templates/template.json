@@ -8,6 +8,7 @@
   "exampleUnits": ["notes"],
   "exclude": [
     "docs/BOILERPLATE.md",
+    "docs/RELEASING.md",
     "docs/pivot",
     "docs/brand",
     "docs/adr/0016-one-example-module-in-the-template.md",
@@ -19,8 +20,14 @@
     "tools/inventory",
     "tools/rename",
     "tools/units",
+    "packaging",
     "templates/template.json",
-    ".github/workflows/scaffold-smoke.yml"
+    "CHANGELOG.template.md",
+    "CHANGELOG.cli.md",
+    ".github/ISSUE_TEMPLATE",
+    ".github/workflows/scaffold-smoke.yml",
+    ".github/workflows/release-template.yml",
+    ".github/workflows/release-cli.yml"
   ],
   "excludeLines": [
     {

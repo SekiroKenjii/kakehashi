@@ -9,6 +9,14 @@ on:
     branches: [main, development]
   pull_request:
     branches: [main, development]
+  # A release calls this before it packages anything, and asks for the wider pass: generating and
+  # removing a module is checked on Linux on every push, and on Windows only when it matters.
+  workflow_call:
+    inputs:
+      full:
+        description: Also run the generator smoke on Windows.
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -436,6 +444,123 @@ jobs:
           go build ./...
           go test ./...
           go run ./tools/archlint
+
+  # The same sequence as `generate`, on the other operating system, written in the other shell: the
+  # bugs this catches are path bugs, and a path bug is exactly what a portable script hides. It runs
+  # for a release rather than for every push, because it costs a Windows runner and the failures it
+  # finds are the ones that must not reach an asset.
+  generate-windows:
+    if: inputs.full
+    runs-on: windows-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Go
+        uses: actions/setup-go@v5
+        with:
+          go-version: "1.26"
+          cache-dependency-path: server/go.sum
+
+      - name: Setup buf
+        uses: bufbuild/buf-setup-action@v1
+        with:
+          version: 1.72.0
+
+      - name: Install the code generators
+        working-directory: server
+        run: |
+          go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
+          go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
+
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$env:RUNNER_TEMP/kakehashi.exe" ./cmd/kakehashi
+
+      - name: Scaffold a project with no module in it
+        run: |
+          git config --global user.email smoke@example.com
+          git config --global user.name Smoke
+          & "$env:RUNNER_TEMP/kakehashi.exe" new $env:PROJECT_NAME `
+            --module $env:PROJECT_MODULE `
+            --author Smoke `
+            --template-dir . `
+            --dir "$env:RUNNER_TEMP/project" `
+            --bare `
+            --no-input
+          if ($LASTEXITCODE -ne 0) { throw "the scaffold exited $LASTEXITCODE" }
+
+      - name: Record the tree before the module
+        working-directory: ${{ runner.temp }}/project
+        run: git rev-parse HEAD | Out-File -FilePath "$env:RUNNER_TEMP/before" -Encoding ascii
+
+      - name: Add a module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          & "$env:RUNNER_TEMP/kakehashi.exe" add module orders
+          if ($LASTEXITCODE -ne 0) { throw "add module exited $LASTEXITCODE" }
+
+      - name: Lint the schema
+        working-directory: ${{ runner.temp }}/project
+        run: buf lint
+
+      - name: Verify the generated contract matches the schema
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          buf generate
+          git diff --exit-code -- server/internal/gen
+          if ($LASTEXITCODE -ne 0) { throw "regenerating changed the committed contract" }
+
+      - name: Build, vet and test the server
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          if ($LASTEXITCODE -ne 0) { throw "go build exited $LASTEXITCODE" }
+          go vet ./...
+          if ($LASTEXITCODE -ne 0) { throw "go vet exited $LASTEXITCODE" }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw "go test exited $LASTEXITCODE" }
+
+      - name: Check module boundaries
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go run ./tools/archlint
+          if ($LASTEXITCODE -ne 0) { throw "archlint exited $LASTEXITCODE" }
+
+      - name: Add a page to it
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          & "$env:RUNNER_TEMP/kakehashi.exe" add page orders Backlog
+          if ($LASTEXITCODE -ne 0) { throw "add page exited $LASTEXITCODE" }
+
+      - name: Remove the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          git add -A
+          git commit -q -m "chore: add orders"
+          & "$env:RUNNER_TEMP/kakehashi.exe" remove module orders
+          if ($LASTEXITCODE -ne 0) { throw "remove module exited $LASTEXITCODE" }
+
+      - name: Verify the tree is what it was before the module
+        working-directory: ${{ runner.temp }}/project
+        run: |
+          $before = (Get-Content "$env:RUNNER_TEMP/before").Trim()
+          $changed = git diff --name-only $before
+          if ($changed) {
+            Write-Host "removing the module did not restore the tree:"
+            Write-Host ($changed -join "`n")
+            throw "the tree did not come back"
+          }
+
+      - name: Build and test the server without it
+        working-directory: ${{ runner.temp }}/project/server
+        run: |
+          go build ./...
+          if ($LASTEXITCODE -ne 0) { throw "go build exited $LASTEXITCODE" }
+          go test ./...
+          if ($LASTEXITCODE -ne 0) { throw "go test exited $LASTEXITCODE" }
+          go run ./tools/archlint
+          if ($LASTEXITCODE -ne 0) { throw "archlint exited $LASTEXITCODE" }
 
   # The rename scripts are the fallback for anyone who starts from the "Use this template" button
   # rather than from the CLI. Their own self-check is the assertion: it exits non-zero while any

@@ -1,0 +1,41 @@
+name: Feature request
+description: Something the boilerplate or the CLI should do and does not
+labels: ["enhancement"]
+body:
+  - type: dropdown
+    id: half
+    attributes:
+      label: Which version line would carry it
+      description: >-
+        The CLI and the template version separately. A capability in the generated code is a
+        template change; a capability in the tool is a CLI change; some are both.
+      options:
+        - The template
+        - The CLI
+        - Both
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What you were trying to do, and what stopped you. Not the solution yet.
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposal
+    attributes:
+      label: What you would like it to do
+    validations:
+      required: true
+
+  - type: textarea
+    id: gates
+    attributes:
+      label: What it would mean for the three gates
+      description: >-
+        Optional, and the question that decides most of these. `archlint`, the client's architecture
+        tests and `buf breaking` are what the boilerplate is for; a feature that weakens one of them
+        is not one we can take.
