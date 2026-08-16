@@ -7,7 +7,7 @@ This repository follows [Gitflow](https://nvie.com/posts/a-successful-git-branch
 
 | Branch | Holds | Who merges into it |
 | --- | --- | --- |
-| `main` | What has been released. Every commit on it is tagged `vX.Y.Z`. | `release/*` and `hotfix/*`, through a pull request |
+| `main` | What has been released. A release commit carries a `template/vX.Y.Z` tag, a `cli/vX.Y.Z` tag, or both. | `release/*` and `hotfix/*`, through a pull request |
 | `development` | Everything finished but not yet released. | `feature/*` and `bugfix/*`, through a pull request |
 
 The model this repository follows names the production branch `master`. This one is **`main`** —
@@ -47,16 +47,33 @@ words additionally fail CI.
 
 ## Cutting a release
 
+This repository publishes **two** things on two independent version lines, so a release tags one or
+the other or both — never a bare `vX.Y.Z`, which no workflow listens for.
+
+| | Tag | Version declared in |
+| --- | --- | --- |
+| Template | `template/vX.Y.Z` | `templates/template.json` → `templateVersion` |
+| CLI | `cli/vX.Y.Z` | `version` in `tools/cli/internal/cli/cli.go` |
+
 ```bash
 git switch development && git pull
-git switch -c release/0.2.0
-# bump the version, write the changelog, fix only what the release itself needs
-gh pr create --base main --title "Release 0.2.0"
-# after it merges:
+git switch -c release/1.1.0
+# bump the versions and the compatibility range, write both changelogs,
+# fix only what the release itself needs
+gh pr create --base main --title "Release 1.1.0"
+# after it merges — template first: the CLI's default resolution needs a published template
 git switch main && git pull
-git tag -a v0.2.0 -m "..." && git push origin v0.2.0
-gh pr create --base development --head main --title "Merge release 0.2.0 back into development"
+git tag -a template/v1.1.0 -m "Template v1.1.0" && git push origin template/v1.1.0
+git tag -a cli/v1.1.0 -m "CLI v1.1.0" && git push origin cli/v1.1.0
+gh pr create --base development --head main --title "Merge release 1.1.0 back into development"
 ```
+
+Pushing the tag is what publishes; nothing releases from a branch. Both workflows also take a
+**dry run** through `workflow_dispatch`, which builds and checks everything a release would carry
+and creates no release — do that before you tag.
+
+The whole procedure, including what the compatibility range means and what to check afterwards, is
+[docs/RELEASING.md](docs/RELEASING.md).
 
 ## A hotfix
 

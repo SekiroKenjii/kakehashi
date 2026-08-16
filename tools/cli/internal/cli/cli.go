@@ -15,7 +15,7 @@ import (
 // version is the CLI's own version, and is what a release build overrides:
 //
 //	go build -ldflags "-X github.com/SekiroKenjii/kakehashi/tools/cli/internal/cli.version=0.2.1"
-var version = "0.1.0"
+var version = "1.0.0"
 
 // The exit codes. A usage error is separated from a failure because a script that wraps this tool
 // treats "you asked for the wrong thing" and "it did not work" differently.

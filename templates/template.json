@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
-  "templateVersion": "0.1.0",
-  "requiresCli": ">=0.1.0 <0.2.0",
+  "templateVersion": "1.0.0",
+  "requiresCli": ">=1.0.0 <2.0.0",
   "markersSchema": 1,
   "unitsSchema": 1,
   "units": "templates/units",

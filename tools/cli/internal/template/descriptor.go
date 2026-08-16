@@ -30,7 +30,7 @@ const MarkersSchema = 1
 // The schema numbers are the other, coarser half of the same question. They catch a template whose
 // format this binary cannot read at all; this catches one it could read and should not, because the
 // two versioned apart.
-const SupportedTemplates = ">=0.1.0 <1.0.0"
+const SupportedTemplates = ">=1.0.0 <2.0.0"
 
 // Descriptor is templates/template.json: the template's own account of its version, the CLI range
 // it works with, and the parts of itself that belong to the template repository rather than to a

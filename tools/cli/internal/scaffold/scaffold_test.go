@@ -44,7 +44,7 @@ func optionsFrom(t *testing.T, in scaffold.Inputs, source string) scaffold.Optio
 	t.Helper()
 	in.Derive(time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC))
 
-	descriptor, err := template.LoadDescriptor(source, "0.1.0")
+	descriptor, err := template.LoadDescriptor(source, "1.1.0")
 	if err != nil {
 		t.Fatalf("LoadDescriptor: %v", err)
 	}
@@ -55,7 +55,7 @@ func optionsFrom(t *testing.T, in scaffold.Inputs, source string) scaffold.Optio
 		Inputs:     in,
 		Origin:     "github.com/SekiroKenjii/kakehashi",
 		Version:    "9.9.9",
-		CLIVersion: "0.1.0",
+		CLIVersion: "1.1.0",
 	}
 }
 
@@ -103,7 +103,7 @@ func TestManifestRecordsTheScaffold(t *testing.T) {
 		t.Errorf("requiresCli = %q, want the descriptor's %q",
 			m.Template.RequiresCLI, opts.Descriptor.RequiresCLI)
 	}
-	if m.CLI.Version != "0.1.0" {
+	if m.CLI.Version != "1.1.0" {
 		t.Errorf("cli = %+v", m.CLI)
 	}
 	if m.Inputs.AppName != "SmokeApp" || m.Inputs.ProtoPackage != "smokeapp" || m.Inputs.WithExample {
