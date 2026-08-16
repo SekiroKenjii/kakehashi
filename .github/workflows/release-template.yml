@@ -1,7 +1,7 @@
 name: Release template
 
 # The template's own release line. It is tagged template/vX.Y.Z, independently of the CLI's
-# cli/vX.Y.Z, because the two ship separately and a project is on the template version it was made
+# tools/cli/vX.Y.Z, because the two ship separately and a project is on the template version it was made
 # with: docs/pivot/06-PHASE-5-RELEASE.md §1.
 #
 # Two ways in, and neither is a branch push. Pushing a template/vX.Y.Z tag releases it; running the

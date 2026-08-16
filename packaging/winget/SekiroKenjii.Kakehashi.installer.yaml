@@ -11,13 +11,13 @@ Commands:
 ReleaseDate: __RELEASE_DATE__
 Installers:
   - Architecture: x64
-    InstallerUrl: https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v__VERSION__/kakehashi___VERSION___Windows_amd64.zip
+    InstallerUrl: https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v__VERSION__/kakehashi___VERSION___Windows_amd64.zip
     InstallerSha256: __SHA256_WINDOWS_AMD64__
     NestedInstallerFiles:
       - RelativeFilePath: kakehashi.exe
         PortableCommandAlias: kakehashi
   - Architecture: arm64
-    InstallerUrl: https://github.com/SekiroKenjii/kakehashi/releases/download/cli/v__VERSION__/kakehashi___VERSION___Windows_arm64.zip
+    InstallerUrl: https://github.com/SekiroKenjii/kakehashi/releases/download/tools/cli/v__VERSION__/kakehashi___VERSION___Windows_arm64.zip
     InstallerSha256: __SHA256_WINDOWS_ARM64__
     NestedInstallerFiles:
       - RelativeFilePath: kakehashi.exe

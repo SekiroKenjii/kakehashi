@@ -1,13 +1,13 @@
 # Changelog — CLI
 
-The CLI's own version line, tagged `cli/vX.Y.Z`. The template has its own:
+The CLI's own version line, tagged `tools/cli/vX.Y.Z`. The template has its own:
 [CHANGELOG.template.md](CHANGELOG.template.md).
 
 Ordinary semantic versioning for a tool. The interesting number is the range of templates a release
 works with — stated by the binary and checked against each template's own `requiresCli`, in both
 directions.
 
-## cli/v1.0.0 — 2026-08-16
+## tools/cli/v1.0.0 — 2026-08-16
 
 | | |
 | --- | --- |
@@ -15,6 +15,10 @@ directions.
 
 The first release, matching `template/v1.0.0`. The two lines start together and are free to diverge
 from here; the range above is what holds them together, and it is checked from both sides.
+
+Published first as `cli/v1.0.0`, which `go install` cannot read: `tools/cli` is a Go module, and Go
+resolves a module's versions only from tags carrying its own directory. Same binary, same version,
+under the tag the tool chain can see — ADR 0022.
 
 ### Added
 

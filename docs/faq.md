@@ -74,7 +74,7 @@ switches it, and it is one line in `appsettings.json` afterwards.
 
 ## Why two version lines?
 
-The CLI and the template ship separately, so they are tagged separately: `cli/vX.Y.Z` and
+The CLI and the template ship separately, so they are tagged separately: `tools/cli/vX.Y.Z` and
 `template/vX.Y.Z`. A project made a year ago is on the template version it was made with, and
 upgrading your CLI must not silently change what a generator writes into it.
 

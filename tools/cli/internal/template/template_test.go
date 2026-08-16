@@ -71,7 +71,7 @@ func newChannelOf(t *testing.T, releases ...stub) *channel {
 		// the client learns to stop.
 		body := []map[string]any{}
 		if r.URL.Query().Get("page") == "1" {
-			body = append(body, map[string]any{"tag_name": "cli/v9.9.9"})
+			body = append(body, map[string]any{"tag_name": "tools/cli/v9.9.9"})
 			for _, release := range releases {
 				body = append(body, map[string]any{
 					"tag_name":   TagPrefix + release.version,

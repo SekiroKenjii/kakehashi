@@ -28,3 +28,4 @@ that supersedes the old one.
 | [0019](0019-cli-lives-in-the-monorepo.md) | The CLI lives in this repository, versioned by tag prefix |
 | [0020](0020-no-second-example-module.md) | No second example module; Notes already touches the event bus |
 | [0021](0021-upgrade-is-a-three-way-merge.md) | `upgrade` reconstructs both versions and patches the difference |
+| [0022](0022-cli-tags-carry-the-module-path.md) | The CLI's tags carry its module path, so `go install` can read them |
