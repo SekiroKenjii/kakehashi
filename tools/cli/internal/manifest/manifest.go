@@ -31,6 +31,11 @@ type Manifest struct {
 type Template struct {
 	Source  string `json:"source"`
 	Version string `json:"version"`
+
+	// RequiresCLI is the template's own half of the compatibility matrix, copied here at scaffold
+	// time. A generator running in this project has no template tree to read it out of — the
+	// project is not one — so without this the check could only run one way.
+	RequiresCLI string `json:"requiresCli,omitempty"`
 }
 
 // CLI records the generator version, which is what tells a bug report which binary produced a tree.

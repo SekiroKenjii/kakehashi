@@ -329,7 +329,7 @@ func TestResolveDirectorySkipsTheReleaseChannel(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	body := fmt.Sprintf(descriptor, "3.4.5", ">=0.1.0")
+	body := fmt.Sprintf(descriptor, "0.4.5", ">=0.1.0")
 	if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(DescriptorName)), []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -341,7 +341,7 @@ func TestResolveDirectorySkipsTheReleaseChannel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Version != "3.4.5" {
+	if resolved.Version != "0.4.5" {
 		t.Errorf("version = %s, want the one the checkout declares", resolved.Version)
 	}
 	if resolved.Dir != dir {

@@ -22,6 +22,16 @@ const DescriptorSchema = 1
 // than silently leaving wiring behind.
 const MarkersSchema = 1
 
+// SupportedTemplates is the range of template versions this CLI understands, and is the CLI's half
+// of the compatibility matrix in docs/pivot/06-PHASE-5-RELEASE.md §1.2. The template's half is its
+// own requiresCli, and both are checked: either side can be the one that moved, and a refusal is
+// only useful if it says which.
+//
+// The schema numbers are the other, coarser half of the same question. They catch a template whose
+// format this binary cannot read at all; this catches one it could read and should not, because the
+// two versioned apart.
+const SupportedTemplates = ">=0.1.0 <1.0.0"
+
 // Descriptor is templates/template.json: the template's own account of its version, the CLI range
 // it works with, and the parts of itself that belong to the template repository rather than to a
 // project made from it. It lives in the template rather than in this binary because the two
@@ -89,6 +99,9 @@ func LoadDescriptor(root, cliVersion string) (*Descriptor, error) {
 	if d.Units == "" {
 		d.Units = "templates/units"
 	}
+	if err := d.supported(); err != nil {
+		return nil, err
+	}
 	if err := d.allows(cliVersion); err != nil {
 		return nil, err
 	}
@@ -99,8 +112,28 @@ func LoadDescriptor(root, cliVersion string) (*Descriptor, error) {
 // every other failure because it is the one worth trying an older release for.
 var ErrIncompatible = errors.New("incompatible template")
 
-// allows checks this CLI against the template's requiresCli range, naming the template version in
-// the refusal: whoever reads it has to know which of the two to move.
+// supported checks the template's version against the range this CLI declares. It is the direction
+// the template cannot state for itself: a template released after this binary knows nothing about
+// what this binary can read.
+func (d *Descriptor) supported() error {
+	allowed, err := semver.ParseRange(SupportedTemplates)
+	if err != nil {
+		return err
+	}
+	have, err := semver.Parse(d.TemplateVersion)
+	if err != nil {
+		return fmt.Errorf("template version %q: %w", d.TemplateVersion, err)
+	}
+	if !allowed.Allows(have) {
+		return fmt.Errorf("%w: this kakehashi works with templates %s and this one is %s — "+
+			"upgrade the CLI, or name an older template with --template-version",
+			ErrIncompatible, SupportedTemplates, d.TemplateVersion)
+	}
+	return nil
+}
+
+// allows checks this CLI against the template's requiresCli range. It is the other direction, and
+// the refusal names the CLI because the CLI is the side that has to move.
 func (d *Descriptor) allows(cliVersion string) error {
 	if d.RequiresCLI == "" {
 		return nil
@@ -115,8 +148,8 @@ func (d *Descriptor) allows(cliVersion string) error {
 		return fmt.Errorf("cli version %q: %w", cliVersion, err)
 	}
 	if !want.Allows(have) {
-		return fmt.Errorf("%w: template %s needs kakehashi %s, this is %s",
-			ErrIncompatible, d.TemplateVersion, d.RequiresCLI, cliVersion)
+		return fmt.Errorf("%w: template %s needs kakehashi %s and this is %s — change the CLI, "+
+			"not the template", ErrIncompatible, d.TemplateVersion, d.RequiresCLI, cliVersion)
 	}
 	return nil
 }
