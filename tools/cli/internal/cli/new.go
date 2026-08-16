@@ -2,6 +2,7 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -41,8 +42,8 @@ func newCommand() *cobra.Command {
 		Use:   "new [app-name]",
 		Short: "Scaffold a project from the template",
 		Long: "Scaffold a project from the template.\n\n" +
-			"With no app name, this opens the wizard, which Phase 4 builds. Until then, pass the\n" +
-			"name and --module.",
+			"With no app name, this opens the wizard. A terminal that cannot prompt is told which\n" +
+			"flags to pass instead.",
 		Args: func(_ *cobra.Command, args []string) error {
 			if len(args) > 1 {
 				return usagef("new takes one app name, got %d", len(args))
@@ -80,12 +81,13 @@ func bind(command *cobra.Command, opts *options) {
 }
 
 func runNew(command *cobra.Command, args []string, opts *options) error {
+	out := command.OutOrStdout()
 	inputs, err := collect(command, args, opts)
 	if err != nil {
 		return err
 	}
 
-	out := command.OutOrStdout()
+	progress := tui.NewProgress(out)
 	log := func(format string, args ...any) {
 		fmt.Fprintf(out, "  %s\n", fmt.Sprintf(format, args...))
 	}
@@ -103,7 +105,8 @@ func runNew(command *cobra.Command, args []string, opts *options) error {
 		return err
 	}
 
-	resolved, err := template.New(template.Client{Log: log}).Resolve(command.Context(), template.Request{
+	fmt.Fprintf(out, "kakehashi: %s <%s>\n", inputs.AppName, inputs.GoModule)
+	resolved, err := template.New(template.Client{Log: log, Step: progress.Step}).Resolve(command.Context(), template.Request{
 		Dir:        opts.templateDir,
 		Version:    opts.templateVersion,
 		Offline:    opts.offline,
@@ -113,7 +116,6 @@ func runNew(command *cobra.Command, args []string, opts *options) error {
 		return err
 	}
 
-	fmt.Fprintf(out, "kakehashi: %s <%s> from template %s\n", inputs.AppName, inputs.GoModule, resolved.Version)
 	if opts.dryRun {
 		plan(out, inputs, dest, resolved)
 	}
@@ -127,45 +129,24 @@ func runNew(command *cobra.Command, args []string, opts *options) error {
 		CLIVersion: version,
 		DryRun:     opts.dryRun,
 		Log:        log,
+		Step:       progress.Step,
 	})
 	if err != nil {
 		return err
 	}
+	progress.Done()
 
-	report(out, result, inputs, opts.dryRun)
+	report(out, result, inputs, resolved.Version, opts.dryRun)
 	return nil
 }
 
-// collect turns the command line into inputs, or explains what is missing. With no app name at all
-// this is where the wizard would take over.
+// collect turns the command line into inputs, or opens the wizard when there is no command line to
+// speak of. Both paths end in the same Derive and the same Validate: a project answered into being
+// and one passed in flags have to be the same project.
 func collect(command *cobra.Command, args []string, opts *options) (scaffold.Inputs, error) {
-	if len(args) == 0 {
-		if opts.noInput {
-			return scaffold.Inputs{}, usagef("--no-input needs an app name and --module")
-		}
-		// Phase 4 fills the wizard in. Until it does there is nothing to fall back to, so the
-		// refusal comes straight back out.
-		_, err := tui.Wizard()
-		return scaffold.Inputs{}, usagef("%v — pass an app name and --module", err)
-	}
-
-	flags := command.Flags()
-	if opts.bare && flags.Changed("with-example") && opts.withExample {
-		return scaffold.Inputs{}, usagef("--bare and --with-example contradict each other")
-	}
-	if opts.module == "" {
-		return scaffold.Inputs{}, usagef("--module is required")
-	}
-
-	inputs := scaffold.Inputs{
-		AppName:      args[0],
-		AppTitle:     opts.title,
-		GoModule:     opts.module,
-		ProtoPackage: opts.protoPackage,
-		Accent:       opts.accent,
-		Author:       opts.author,
-		Auth:         opts.auth,
-		WithExample:  opts.withExample && !opts.bare,
+	inputs, err := answers(command, args, opts)
+	if err != nil {
+		return scaffold.Inputs{}, err
 	}
 	if inputs.Author == "" {
 		inputs.Author = scaffold.GitUserName()
@@ -176,6 +157,67 @@ func collect(command *cobra.Command, args []string, opts *options) (scaffold.Inp
 		return scaffold.Inputs{}, usageError{err: err}
 	}
 	return inputs, nil
+}
+
+// answers is where the inputs came from, and is the only part of collect that differs between the
+// two ways of asking.
+func answers(command *cobra.Command, args []string, opts *options) (scaffold.Inputs, error) {
+	if len(args) == 0 {
+		return wizard(opts)
+	}
+
+	flags := command.Flags()
+	if opts.bare && flags.Changed("with-example") && opts.withExample {
+		return scaffold.Inputs{}, usagef("--bare and --with-example contradict each other")
+	}
+	if opts.module == "" {
+		return scaffold.Inputs{}, usagef("--module is required")
+	}
+
+	return scaffold.Inputs{
+		AppName:      args[0],
+		AppTitle:     opts.title,
+		GoModule:     opts.module,
+		ProtoPackage: opts.protoPackage,
+		Accent:       opts.accent,
+		Author:       opts.author,
+		Auth:         opts.auth,
+		WithExample:  opts.withExample && !opts.bare,
+	}, nil
+}
+
+// wizard opens the seven questions, and refuses in the two cases where asking is not an option:
+// --no-input, and a terminal that cannot prompt. Both refusals name the flags that answer the same
+// questions, because in both cases the reader's next move is to type them.
+func wizard(opts *options) (scaffold.Inputs, error) {
+	if opts.noInput {
+		return scaffold.Inputs{}, usagef("--no-input needs an app name and --module")
+	}
+
+	inputs, err := tui.Wizard(tui.Options{
+		Author:      author(opts.author),
+		Destination: func(appName string) string { return shortestDestination(opts.dir, appName) },
+	})
+	switch {
+	case errors.Is(err, tui.ErrNoTTY):
+		return scaffold.Inputs{}, usageError{err: errors.New(tui.Refusal(""))}
+	case errors.Is(err, tui.ErrCancelled):
+		return scaffold.Inputs{}, errCancelled
+	case err != nil:
+		return scaffold.Inputs{}, err
+	}
+	return inputs, nil
+}
+
+// errCancelled leaves with the failure code and nothing else to say: somebody who closed the wizard
+// knows why it stopped, and does not need the usage printed at them.
+var errCancelled = errors.New("cancelled")
+
+func author(given string) string {
+	if given != "" {
+		return given
+	}
+	return scaffold.GitUserName()
 }
 
 // preflight runs the required checks scaffolding itself depends on. Running them before the fetch
@@ -202,9 +244,19 @@ func destination(dir, appName string) (string, error) {
 	return filepath.Abs(dir)
 }
 
-func report(out io.Writer, result *scaffold.Result, in scaffold.Inputs, dryRun bool) {
-	fmt.Fprintf(out, "  %d files, %d substituted, %d paths renamed\n",
-		result.Files, result.Substituted, result.Renamed)
+// shortestDestination is the same answer as the reader would type it, for the wizard's summary to
+// show before anything has been written.
+func shortestDestination(dir, appName string) string {
+	dest, err := destination(dir, appName)
+	if err != nil {
+		return dir
+	}
+	return shortest(dest)
+}
+
+func report(out io.Writer, result *scaffold.Result, in scaffold.Inputs, templateVersion string, dryRun bool) {
+	fmt.Fprintf(out, "  %d files, %d substituted, %d paths renamed, template %s\n",
+		result.Files, result.Substituted, result.Renamed, templateVersion)
 	if len(result.UnitsRemoved) > 0 {
 		fmt.Fprintf(out, "  removed: %s\n", strings.Join(result.UnitsRemoved, ", "))
 	}
@@ -213,19 +265,13 @@ func report(out io.Writer, result *scaffold.Result, in scaffold.Inputs, dryRun b
 		return
 	}
 
-	where := shortest(result.Dest)
-	fmt.Fprintf(out, `
-  %s is ready in %s
-
-    cd %s
-    docker compose up -d
-    curl http://localhost:8080/healthz
-    dotnet run --project "client/src/App/%s.App/%s.App.csproj" -p:Platform=x64
-`, in.AppTitle, where, where, in.AppName, in.AppName)
-
-	if !result.Committed {
-		fmt.Fprintln(out, "\n  Commit before you start: git add -A && git commit -m \"chore: scaffold\"")
-	}
+	tui.NextSteps(out, tui.Summary{
+		Title:       in.AppTitle,
+		AppName:     in.AppName,
+		Dir:         shortest(result.Dest),
+		WithExample: in.WithExample,
+		Committed:   result.Committed,
+	})
 }
 
 // plan prints what a run would produce, for --dry-run to be readable before the counts arrive.
