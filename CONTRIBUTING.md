@@ -58,19 +58,31 @@ the other or both — never a bare `vX.Y.Z`, which no workflow listens for.
 ```bash
 git switch development && git pull
 git switch -c release/1.1.0
-# bump the versions and the compatibility range, write both changelogs,
+# bump both versions and the compatibility range, write both changelogs,
 # fix only what the release itself needs
 gh pr create --base main --title "Release 1.1.0"
-# after it merges — template first: the CLI's default resolution needs a published template
+```
+
+After it merges, publish from **Actions** — Release template, then Release CLI, each run from `main`
+with the version and **dry run off**. The release creates its own tag, so there is no separate push
+to remember. Template first: the CLI's default resolution needs a published template to find.
+
+Prefer the command line? Tags work exactly as well, and the workflows treat them the same:
+
+```bash
 git switch main && git pull
 git tag -a template/v1.1.0 -m "Template v1.1.0" && git push origin template/v1.1.0
 git tag -a cli/v1.1.0 -m "CLI v1.1.0" && git push origin cli/v1.1.0
+```
+
+Then the second merge:
+
+```bash
 gh pr create --base development --head main --title "Merge release 1.1.0 back into development"
 ```
 
-Pushing the tag is what publishes; nothing releases from a branch. Both workflows also take a
-**dry run** through `workflow_dispatch`, which builds and checks everything a release would carry
-and creates no release — do that before you tag.
+Nothing releases from a branch either way. Leaving **dry run on** builds and checks everything a
+release would carry and publishes none of it — do that first.
 
 The whole procedure, including what the compatibility range means and what to check afterwards, is
 [docs/RELEASING.md](docs/RELEASING.md).
