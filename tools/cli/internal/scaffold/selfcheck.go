@@ -18,14 +18,14 @@ var identityPattern = regexp.MustCompile(`__[A-Z][A-Z0-9_]*__|Kakehashi|kakehash
 //
 //   - the generator's markers, which the CLI reads back in a scaffolded project to add and remove
 //     modules — renaming them would break the tool rather than finish the scaffold;
-//   - the manifest, whose name is the record of where the project came from;
+//   - the manifest and the records beside it, whose names are the tool's own;
 //   - a command somebody is told to run, in a README, a doc comment or a page that offers it.
 //
 // A generated project runs `kakehashi add module` the way it runs `docker compose up`, and saying
 // so is not a leak. Every other spelling of the name still is.
 var toolPattern = regexp.MustCompile(
 	`kakehashi:[a-z0-9-]+:(begin|end)` +
-		`|\.kakehashi\.json` +
+		`|\.kakehashi(\.json|/)` +
 		`|\bkakehashi (new|add|remove|doctor|version|upgrade)\b`)
 
 // reported caps the list in the error: one leak of the template's name is usually hundreds of
