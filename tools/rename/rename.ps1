@@ -96,11 +96,18 @@ $templateOnly = @(
     'docs/adr/0018-database-driven-navigation-stays.md'
     'docs/adr/0019-cli-lives-in-the-monorepo.md'
     'docs/adr/0020-no-second-example-module.md'
+    'docs/RELEASING.md'
     'tools/cli'
     'tools/inventory'
     'tools/units'
+    'packaging'
     'templates/template.json'
+    'CHANGELOG.template.md'
+    'CHANGELOG.cli.md'
+    '.github/ISSUE_TEMPLATE'
     '.github/workflows/scaffold-smoke.yml'
+    '.github/workflows/release-template.yml'
+    '.github/workflows/release-cli.yml'
 )
 foreach ($path in $templateOnly) {
     if (Test-Path $path) { Remove-Item -Recurse -Force $path }
@@ -214,11 +221,15 @@ if (Test-Path '.buf-cache') { Remove-Item -Recurse -Force '.buf-cache' }
 # The paths renamed above are untracked until the next commit, so this walks the working tree
 # rather than asking git what it knows about.
 #
-# "kakehashi:" and ".kakehashi.json" are exempt, and are the only two things that are. They are the
-# generator's namespace, not the application's: the CLI reads them in the scaffolded project to add
-# and remove modules, and renaming them would break the tool rather than finish the rename.
+# The CLI named as a tool is exempt, and is the only thing that is: the generator's markers, the
+# tool's own paths in the project, and a command somebody is told to run. A renamed project runs
+# `kakehashi add module` the way it runs `docker compose up`, and saying so is not the template
+# leaking. Keep this in agreement with toolPattern in tools/cli/internal/scaffold/selfcheck.go.
+#
+# Line-based, where the CLI's check is positional. A line that both runs the tool and names the
+# template gets past this one, and the CLI's is the check that does not.
 $pattern = '__[A-Z][A-Z0-9_]*__|Kakehashi|kakehashi|KAKEHASHI|SekiroKenjii|架け橋'
-$exempt = 'kakehashi:[a-z0-9-]+:(begin|end)|\.kakehashi\.json'
+$exempt = 'kakehashi:[a-z0-9-]+:(begin|end)|\.kakehashi(\.json|/)|\bkakehashi (new|add|remove|doctor|version|upgrade)\b'
 $leftovers = Get-ChildItem -Recurse -File -Force |
     Where-Object { $_.FullName -notlike '*\.git\*' -and $_.FullName -notlike "*$([IO.Path]::DirectorySeparatorChar)tools$([IO.Path]::DirectorySeparatorChar)rename*" } |
     Where-Object { [Array]::IndexOf([System.IO.File]::ReadAllBytes($_.FullName), [byte]0) -lt 0 } |

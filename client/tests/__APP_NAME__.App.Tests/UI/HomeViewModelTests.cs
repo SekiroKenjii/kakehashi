@@ -100,10 +100,10 @@ public sealed class HomeViewModelTests
         Assert.Equal("0 of 5 complete", viewModel.StepsProgressText);
     }
 
-    // The two the spec asks to tick from real state rather than from a click.
     [Fact]
     public async Task Load_Checklist_TicksTheBackendAndTheModuleRowFromRealState()
     {
+        // The two the spec asks to tick from real state rather than from a click.
         _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
             .Returns(Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)));
         _moduleSteps = [new FakeStarterStep("Notes", isDone: true)];
@@ -128,11 +128,11 @@ public sealed class HomeViewModelTests
         Assert.False(viewModel.Steps.Single(step => step.Id == "backend").IsDone);
     }
 
-    // A module that cannot answer — usually because the backend is down — is not done rather than
-    // an exception out of a page load.
     [Fact]
     public async Task Load_Checklist_AModuleThatThrowsIsSimplyNotDone()
     {
+        // A module that cannot answer — usually because the backend is down — is not done rather
+        // than an exception out of a page load.
         _moduleSteps = [new FakeStarterStep("Notes", isDone: false, throws: true)];
         var viewModel = CreateViewModel();
 
@@ -141,11 +141,11 @@ public sealed class HomeViewModelTests
         Assert.False(viewModel.Steps.Single(step => step.Id == "module:Notes").IsDone);
     }
 
-    // --bare, and `kakehashi remove module notes`, reach the page the same way: nothing registered
-    // a step, so the rows that were about the example are not there to be about anything.
     [Fact]
     public async Task Load_Checklist_WithNoExample_KeepsOnlyTheRowsThatStillApply()
     {
+        // --bare, and `kakehashi remove module notes`, reach the page the same way: nothing
+        // registered a step, so the rows about the example are not there to be about anything.
         var viewModel = CreateViewModel();
 
         await viewModel.LoadCommand.ExecuteAsync(parameter: null);
