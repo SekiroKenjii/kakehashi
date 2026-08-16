@@ -14,6 +14,17 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
+## template/v1.0.1 — 2026-08-16
+
+### Fixed
+
+- The shipped documentation named the CLI's tag as `cli/vX.Y.Z`. It is `tools/cli/vX.Y.Z`, because
+  that is the only prefix `go install` reads (ADR 0022). `CONTRIBUTING.md`, `docs/cli.md` and
+  `docs/faq.md` say so.
+
+Documentation only. A project on 1.0.0 gains nothing structural by taking this, and loses nothing by
+not.
+
 ## template/v1.0.0 — 2026-08-16
 
 The first release. The repository is a boilerplate rather than an application: every identity is a

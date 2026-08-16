@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "templateVersion": "1.0.0",
+  "templateVersion": "1.0.1",
   "requiresCli": ">=1.0.0 <2.0.0",
   "markersSchema": 1,
   "unitsSchema": 1,
