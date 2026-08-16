@@ -131,6 +131,12 @@ jobs:
           go install "google.golang.org/protobuf/cmd/protoc-gen-go@$(go list -m -f '{{.Version}}' google.golang.org/protobuf)"
           go install "connectrpc.com/connect/cmd/protoc-gen-connect-go@$(go list -m -f '{{.Version}}' connectrpc.com/connect)"
 
+      # From inside tools/cli, which is its own Go module: the repository root has no go.mod, so
+      # ./tools/cli/cmd/kakehashi is not a package path from there.
+      - name: Build the CLI
+        working-directory: tools/cli
+        run: go build -o "$RUNNER_TEMP/kakehashi" ./cmd/kakehashi
+
       - name: Scaffold from the asset
         env:
           ASSET: ${{ steps.archive.outputs.dir }}/${{ steps.archive.outputs.name }}
@@ -141,7 +147,6 @@ jobs:
           mkdir -p "$unpacked"
           tar -xzf "$ASSET" -C "$unpacked"
 
-          go build -o "$RUNNER_TEMP/kakehashi" ./tools/cli/cmd/kakehashi
           "$RUNNER_TEMP/kakehashi" new AssetCheck \
             --module example.com/assetcheck \
             --author Release \
