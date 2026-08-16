@@ -96,6 +96,7 @@ $templateOnly = @(
     'docs/adr/0018-database-driven-navigation-stays.md'
     'docs/adr/0019-cli-lives-in-the-monorepo.md'
     'docs/adr/0020-no-second-example-module.md'
+    'docs/adr/0022-cli-tags-carry-the-module-path.md'
     'docs/RELEASING.md'
     'tools/cli'
     'tools/inventory'
@@ -122,7 +123,8 @@ function Remove-Lines([string]$File, [string[]]$Patterns) {
 }
 Remove-Lines 'docs/adr/README.md' @(
     '0016-one-example-module', '0017-oidc-provider', '0018-database-driven-navigation',
-    '0019-cli-lives-in-the-monorepo', '0020-no-second-example-module')
+    '0019-cli-lives-in-the-monorepo', '0020-no-second-example-module',
+    '0022-cli-tags-carry-the-module-path')
 Remove-Lines 'README.md' @('docs/brand')
 
 # The scaffold README is the project's. The template's own is about the template.
