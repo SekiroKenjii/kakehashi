@@ -94,6 +94,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          github_token: ${{ github.token }}
 
       # Before the scaffold, not after: `kakehashi new` regenerates the contract, and buf shells out
       # to these two. Reading the versions from go.mod works on the placeholder tree — the main
@@ -198,6 +199,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          github_token: ${{ github.token }}
 
       - name: Install the code generators
         working-directory: server
@@ -280,6 +282,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          github_token: ${{ github.token }}
 
       - name: Install the code generators
         working-directory: server
@@ -337,6 +340,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          github_token: ${{ github.token }}
 
       - name: Install the code generators
         working-directory: server
@@ -466,6 +470,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          github_token: ${{ github.token }}
 
       - name: Install the code generators
         working-directory: server
@@ -581,6 +586,7 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          github_token: ${{ github.token }}
 
       - name: Install the code generators
         working-directory: server

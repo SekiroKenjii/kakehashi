@@ -60,6 +60,10 @@ jobs:
         uses: bufbuild/buf-setup-action@v1
         with:
           version: 1.72.0
+          # Resolving the download for a pinned version is a GitHub API call, and an
+          # unauthenticated one shares a rate limit with every other runner on the same address.
+          # Enough jobs starting at once exhausts it, and the job dies in setup with nothing run.
+          github_token: ${{ github.token }}
 
       # buf's PACKAGE_LOWER_SNAKE_CASE refuses a double underscore, so the template's own package
       # can never pass. scaffold-smoke lints the renamed tree instead.
