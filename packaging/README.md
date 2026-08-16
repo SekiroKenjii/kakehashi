@@ -17,7 +17,7 @@ person's, at least until the CLI has a release cadence worth automating.
 After `cli/vX.Y.Z` is published, its `checksums.txt` has every digest these files need.
 
 ```sh
-version=0.1.0
+version=1.0.0
 gh release download "cli/v$version" --pattern checksums.txt --output - | grep -i windows
 ```
 

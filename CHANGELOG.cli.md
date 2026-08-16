@@ -7,11 +7,14 @@ Ordinary semantic versioning for a tool. The interesting number is the range of 
 works with — stated by the binary and checked against each template's own `requiresCli`, in both
 directions.
 
-## Unreleased
+## cli/v1.0.0 — 2026-08-16
 
 | | |
 | --- | --- |
-| Templates supported | `>=0.1.0 <1.0.0` |
+| Templates supported | `>=1.0.0 <2.0.0` |
+
+The first release, matching `template/v1.0.0`. The two lines start together and are free to diverge
+from here; the range above is what holds them together, and it is checked from both sides.
 
 ### Added
 
@@ -31,7 +34,5 @@ directions.
 - The identity self-check distinguishes the CLI named as a command from the template named as a
   product, so a scaffolded project may tell its reader what to run. The exemption is by position,
   not by line.
-
-## cli/v0.1.0
-
-The first release. `new`, `add module`, `add page`, `remove module`, `doctor`, `version`.
+- `new`, `add module`, `add page`, `remove module`, `doctor` and `version`, with `--dry-run` on the
+  three that write.

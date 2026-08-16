@@ -13,7 +13,7 @@ body:
     attributes:
       label: CLI version
       description: "`kakehashi version` — the first line."
-      placeholder: kakehashi 0.1.0
+      placeholder: kakehashi 1.0.0
     validations:
       required: true
 
@@ -24,7 +24,7 @@ body:
       description: >-
         The `template.version` in `.kakehashi.json`, or "none" if the command failed before a
         project existed.
-      placeholder: 0.1.0
+      placeholder: 1.0.0
     validations:
       required: true
 

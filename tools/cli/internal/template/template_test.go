@@ -47,7 +47,7 @@ func newChannel(t *testing.T, versions ...string) *channel {
 	t.Helper()
 	releases := make([]stub, 0, len(versions))
 	for _, version := range versions {
-		releases = append(releases, stub{version: version, requiresCLI: ">=0.1.0"})
+		releases = append(releases, stub{version: version, requiresCLI: ">=1.1.0"})
 	}
 	return newChannelOf(t, releases...)
 }
@@ -128,17 +128,17 @@ func client(t *testing.T, c *channel) *Client {
 }
 
 func TestResolveFetchesVerifiesAndCaches(t *testing.T) {
-	channel := newChannel(t, "0.1.0", "0.2.0")
+	channel := newChannel(t, "1.1.0", "1.2.0")
 	client := client(t, channel)
 
-	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"})
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Version != "0.2.0" {
-		t.Errorf("version = %s, want 0.2.0", resolved.Version)
+	if resolved.Version != "1.2.0" {
+		t.Errorf("version = %s, want 1.2.0", resolved.Version)
 	}
-	if resolved.Descriptor.TemplateVersion != "0.2.0" {
+	if resolved.Descriptor.TemplateVersion != "1.2.0" {
 		t.Errorf("descriptor = %+v", resolved.Descriptor)
 	}
 	if !strings.HasPrefix(resolved.Dir, client.CacheDir) {
@@ -150,7 +150,7 @@ func TestResolveFetchesVerifiesAndCaches(t *testing.T) {
 
 	// A second run is the cache's whole purpose.
 	served := channel.requests.Load()
-	if _, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"}); err != nil {
+	if _, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"}); err != nil {
 		t.Fatalf("Resolve from cache: %v", err)
 	}
 	if fetched := channel.requests.Load() - served; fetched > 1 {
@@ -160,27 +160,27 @@ func TestResolveFetchesVerifiesAndCaches(t *testing.T) {
 
 // The API returns releases newest-first by date, and a patch to an old line is published last.
 func TestResolvePicksTheHighestVersionNotTheLatestRelease(t *testing.T) {
-	client := client(t, newChannel(t, "0.9.0", "0.10.0", "0.9.1"))
+	client := client(t, newChannel(t, "1.9.0", "1.10.0", "1.9.1"))
 
-	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"})
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Version != "0.10.0" {
-		t.Errorf("version = %s, want 0.10.0", resolved.Version)
+	if resolved.Version != "1.10.0" {
+		t.Errorf("version = %s, want 1.10.0", resolved.Version)
 	}
 }
 
 func TestResolveAcceptsEverySpellingOfAPinnedVersion(t *testing.T) {
-	client := client(t, newChannel(t, "0.1.0", "0.2.0"))
+	client := client(t, newChannel(t, "1.1.0", "1.2.0"))
 
-	for _, pinned := range []string{"0.1.0", "v0.1.0", "template/v0.1.0"} {
-		resolved, err := client.Resolve(context.Background(), Request{Version: pinned, CLIVersion: "0.1.0"})
+	for _, pinned := range []string{"1.1.0", "v1.1.0", "template/v1.1.0"} {
+		resolved, err := client.Resolve(context.Background(), Request{Version: pinned, CLIVersion: "1.1.0"})
 		if err != nil {
 			t.Fatalf("Resolve(%s): %v", pinned, err)
 		}
-		if resolved.Version != "0.1.0" {
-			t.Errorf("Resolve(%s) = %s, want 0.1.0", pinned, resolved.Version)
+		if resolved.Version != "1.1.0" {
+			t.Errorf("Resolve(%s) = %s, want 1.1.0", pinned, resolved.Version)
 		}
 	}
 }
@@ -189,16 +189,16 @@ func TestResolveAcceptsEverySpellingOfAPinnedVersion(t *testing.T) {
 // template. Otherwise a template that raises its floor strands every CLI below it.
 func TestResolveFallsBackToTheNewestCompatibleRelease(t *testing.T) {
 	client := client(t, newChannelOf(t,
-		stub{version: "0.1.0", requiresCLI: ">=0.1.0 <0.2.0"},
-		stub{version: "0.2.0", requiresCLI: ">=0.2.0 <0.3.0"},
-		stub{version: "0.3.0", requiresCLI: ">=0.3.0"},
+		stub{version: "1.1.0", requiresCLI: ">=1.1.0 <1.2.0"},
+		stub{version: "1.2.0", requiresCLI: ">=1.2.0 <1.3.0"},
+		stub{version: "1.3.0", requiresCLI: ">=1.3.0"},
 	))
 
-	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.5"})
+	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.5"})
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Version != "0.1.0" {
+	if resolved.Version != "1.1.0" {
 		t.Errorf("version = %s, want the newest one this CLI can use", resolved.Version)
 	}
 }
@@ -206,16 +206,16 @@ func TestResolveFallsBackToTheNewestCompatibleRelease(t *testing.T) {
 // With nothing in range the refusal has to name a version pair, so the reader knows which of the
 // two to move.
 func TestResolveReportsWhenNoReleaseIsCompatible(t *testing.T) {
-	client := client(t, newChannelOf(t, stub{version: "0.3.0", requiresCLI: ">=0.3.0"}))
+	client := client(t, newChannelOf(t, stub{version: "1.3.0", requiresCLI: ">=1.3.0"}))
 
-	_, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	_, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"})
 	if err == nil {
 		t.Fatal("Resolve accepted a template outside this CLI's range")
 	}
 	if !errors.Is(err, ErrIncompatible) {
 		t.Errorf("error is not an incompatibility: %v", err)
 	}
-	if !strings.Contains(err.Error(), "0.3.0") || !strings.Contains(err.Error(), "0.1.0") {
+	if !strings.Contains(err.Error(), "1.3.0") || !strings.Contains(err.Error(), "1.1.0") {
 		t.Errorf("error %q does not name both versions", err)
 	}
 }
@@ -224,26 +224,26 @@ func TestResolveReportsWhenNoReleaseIsCompatible(t *testing.T) {
 // Either one would make the resolved version depend on who is running the command.
 func TestResolveSkipsDraftsAndPrereleases(t *testing.T) {
 	client := client(t, newChannelOf(t,
-		stub{version: "0.1.0", requiresCLI: ">=0.1.0"},
-		stub{version: "0.2.0", requiresCLI: ">=0.1.0", draft: true},
-		stub{version: "0.3.0", requiresCLI: ">=0.1.0", prerelease: true},
+		stub{version: "1.1.0", requiresCLI: ">=1.1.0"},
+		stub{version: "1.2.0", requiresCLI: ">=1.1.0", draft: true},
+		stub{version: "1.3.0", requiresCLI: ">=1.1.0", prerelease: true},
 	))
 
-	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	resolved, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"})
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Version != "0.1.0" {
+	if resolved.Version != "1.1.0" {
 		t.Errorf("version = %s, want the newest published release", resolved.Version)
 	}
 }
 
 // The version becomes a cache path segment.
 func TestResolveRefusesAPinnedVersionThatIsNotAVersion(t *testing.T) {
-	client := client(t, newChannel(t, "0.1.0"))
+	client := client(t, newChannel(t, "1.1.0"))
 
 	for _, pinned := range []string{"../../../../tmp/evil", "v", "latest"} {
-		if _, err := client.Resolve(context.Background(), Request{Version: pinned, CLIVersion: "0.1.0"}); err == nil {
+		if _, err := client.Resolve(context.Background(), Request{Version: pinned, CLIVersion: "1.1.0"}); err == nil {
 			t.Errorf("Resolve accepted --template-version %q", pinned)
 		}
 	}
@@ -251,9 +251,9 @@ func TestResolveRefusesAPinnedVersionThatIsNotAVersion(t *testing.T) {
 
 // MkdirTemp's suffix is digits, and a killed process leaves the staging directory behind.
 func TestCachedIgnoresAnInterruptedExtraction(t *testing.T) {
-	client := client(t, newChannel(t, "0.1.0"))
+	client := client(t, newChannel(t, "1.1.0"))
 	templates := filepath.Join(client.CacheDir, "templates")
-	for _, name := range []string{"0.1.0", ".extract-3703434504", "notes"} {
+	for _, name := range []string{"1.1.0", ".extract-3703434504", "notes"} {
 		if err := os.MkdirAll(filepath.Join(templates, name), 0o755); err != nil {
 			t.Fatal(err)
 		}
@@ -263,17 +263,17 @@ func TestCachedIgnoresAnInterruptedExtraction(t *testing.T) {
 	if err != nil {
 		t.Fatalf("Cached: %v", err)
 	}
-	if len(cached) != 1 || cached[0] != "0.1.0" {
+	if len(cached) != 1 || cached[0] != "1.1.0" {
 		t.Errorf("Cached = %v, want only the one version", cached)
 	}
 }
 
 func TestResolveRefusesAnArchiveThatDoesNotMatchItsChecksum(t *testing.T) {
-	channel := newChannel(t, "0.1.0")
+	channel := newChannel(t, "1.1.0")
 	channel.corrupt = true
 	client := client(t, channel)
 
-	_, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"})
+	_, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"})
 	if err == nil {
 		t.Fatal("Resolve accepted an archive that does not match its checksum")
 	}
@@ -291,31 +291,31 @@ func TestResolveRefusesAnArchiveThatDoesNotMatchItsChecksum(t *testing.T) {
 }
 
 func TestResolveOffline(t *testing.T) {
-	channel := newChannel(t, "0.1.0")
+	channel := newChannel(t, "1.1.0")
 	client := client(t, channel)
 
-	if _, err := client.Resolve(context.Background(), Request{Offline: true, CLIVersion: "0.1.0"}); err == nil {
+	if _, err := client.Resolve(context.Background(), Request{Offline: true, CLIVersion: "1.1.0"}); err == nil {
 		t.Fatal("Resolve --offline succeeded with an empty cache")
 	}
 
-	if _, err := client.Resolve(context.Background(), Request{CLIVersion: "0.1.0"}); err != nil {
+	if _, err := client.Resolve(context.Background(), Request{CLIVersion: "1.1.0"}); err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
 	channel.Close()
 
-	resolved, err := client.Resolve(context.Background(), Request{Offline: true, CLIVersion: "0.1.0"})
+	resolved, err := client.Resolve(context.Background(), Request{Offline: true, CLIVersion: "1.1.0"})
 	if err != nil {
 		t.Fatalf("Resolve --offline from the cache: %v", err)
 	}
-	if resolved.Version != "0.1.0" {
-		t.Errorf("version = %s, want 0.1.0", resolved.Version)
+	if resolved.Version != "1.1.0" {
+		t.Errorf("version = %s, want 1.1.0", resolved.Version)
 	}
 }
 
 func TestResolveReportsAVersionThatWasNeverReleased(t *testing.T) {
-	client := client(t, newChannel(t, "0.1.0"))
+	client := client(t, newChannel(t, "1.1.0"))
 
-	_, err := client.Resolve(context.Background(), Request{Version: "7.7.7", CLIVersion: "0.1.0"})
+	_, err := client.Resolve(context.Background(), Request{Version: "7.7.7", CLIVersion: "1.1.0"})
 	if err == nil {
 		t.Fatal("Resolve found a version that was never released")
 	}
@@ -329,7 +329,7 @@ func TestResolveDirectorySkipsTheReleaseChannel(t *testing.T) {
 	if err := os.MkdirAll(filepath.Join(dir, "templates"), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	body := fmt.Sprintf(descriptor, "0.4.5", ">=0.1.0")
+	body := fmt.Sprintf(descriptor, "1.4.5", ">=1.1.0")
 	if err := os.WriteFile(filepath.Join(dir, filepath.FromSlash(DescriptorName)), []byte(body), 0o644); err != nil {
 		t.Fatal(err)
 	}
@@ -337,11 +337,11 @@ func TestResolveDirectorySkipsTheReleaseChannel(t *testing.T) {
 	// No channel at all: a directory resolves without one.
 	client := New(Client{Source: "github.com/owner/repo", API: "http://127.0.0.1:0", CacheDir: t.TempDir()})
 
-	resolved, err := client.Resolve(context.Background(), Request{Dir: dir, CLIVersion: "0.1.0"})
+	resolved, err := client.Resolve(context.Background(), Request{Dir: dir, CLIVersion: "1.1.0"})
 	if err != nil {
 		t.Fatalf("Resolve: %v", err)
 	}
-	if resolved.Version != "0.4.5" {
+	if resolved.Version != "1.4.5" {
 		t.Errorf("version = %s, want the one the checkout declares", resolved.Version)
 	}
 	if resolved.Dir != dir {

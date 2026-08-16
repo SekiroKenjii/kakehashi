@@ -14,7 +14,15 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
-## Unreleased
+## template/v1.0.0 — 2026-08-16
+
+The first release. The repository is a boilerplate rather than an application: every identity is a
+placeholder, the example module is one removable unit, and a CLI scaffolds from it.
+
+Starting at 1.0.0 rather than 0.1.0 is a statement about the format, not about maturity. MAJOR here
+means the structure, the markers or the unit format changed such that an older CLI cannot read the
+template — and those are exactly the things a scaffolded project's future upgrade path depends on
+(ADR 0021). Committing to them is the point of the number.
 
 ### Added
 
@@ -27,8 +35,7 @@ not something you have to take: see [docs/faq.md](docs/faq.md).
   rather than inherited from the template repository.
 - `docs/getting-started.md`, `docs/first-module.md`, `docs/remove-example.md`, `docs/cli.md`,
   `docs/gates.md` and `docs/faq.md` ship with a scaffolded project.
-
-## template/v0.1.0
-
-The first release. A WinUI 3 client and a Go server in one repository, with the three gates,
-placeholder identity throughout, and one removable example module.
+- A WinUI 3 client and a Go server in one repository, joined by one Protocol Buffers contract, with
+  the three gates — `archlint`, the client's architecture tests, and `buf breaking` — on every push.
+- Placeholder identity throughout, and rename scripts for anyone starting from the "Use this
+  template" button rather than from the CLI.

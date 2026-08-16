@@ -134,7 +134,7 @@ The one-time list for the first public release. Everything above is per-release;
 - [ ] **Turn on "Use this template"** in the repository settings, and check the README says what to
       run afterwards — `tools/rename/rename.ps1` — for somebody who arrives that way.
 - [ ] **Turn on Discussions**, which the issue-template config links to.
-- [ ] **First tags**: `template/v0.1.0` and `cli/v0.1.0`, in that order. The CLI's default resolution
+- [ ] **First tags**: `template/v1.0.0` and `cli/v1.0.0`, in that order. The CLI's default resolution
       needs a published template to find, so a CLI release without one is a tool with nothing to
       fetch.
 - [ ] **Check the compatibility refusals against the real releases**, in both directions: an old CLI
