@@ -140,6 +140,9 @@ drop_lines README.md docs/brand
 # The scaffold README is the project's. The template's own is about the template.
 [ -f templates/README.scaffold.md ] && mv -f templates/README.scaffold.md README.md
 
+# Same for the licence: the root one is this repository's, and names its author.
+[ -f templates/LICENSE.scaffold ] && mv -f templates/LICENSE.scaffold LICENSE
+
 # ── 3. content ─────────────────────────────────────────────────────────────────────────────────
 substitution=""
 for i in "${!placeholder_names[@]}"; do

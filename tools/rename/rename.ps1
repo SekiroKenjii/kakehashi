@@ -132,6 +132,11 @@ if (Test-Path 'templates/README.scaffold.md') {
     Move-Item -Force 'templates/README.scaffold.md' 'README.md'
 }
 
+# Same for the licence: the root one is this repository's, and names its author.
+if (Test-Path 'templates/LICENSE.scaffold') {
+    Move-Item -Force 'templates/LICENSE.scaffold' 'LICENSE'
+}
+
 # ── 3. content ─────────────────────────────────────────────────────────────────────────────────
 $substituted = 0
 foreach ($file in (git ls-files)) {

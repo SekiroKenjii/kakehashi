@@ -7,6 +7,20 @@ Ordinary semantic versioning for a tool. The interesting number is the range of 
 works with — stated by the binary and checked against each template's own `requiresCli`, in both
 directions.
 
+## tools/cli/v1.0.1 — 2026-08-16
+
+| | |
+| --- | --- |
+| Templates supported | `>=1.0.0 <2.0.0` |
+
+### Fixed
+
+- The `LICENSE` bundled in every download read `Copyright (c) __YEAR__ __AUTHOR__`. The release
+  archives copy the repository's own licence, which was the template's placeholder — so the binary
+  shipped under a licence naming nobody. It names its author now.
+
+The binary itself is unchanged from 1.0.0.
+
 ## tools/cli/v1.0.0 — 2026-08-16
 
 | | |
