@@ -14,6 +14,18 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
+## template/v1.0.2 — 2026-08-16
+
+### Fixed
+
+- `LICENSE` was one file doing two jobs: this repository's licence and the template's placeholder.
+  It is now two. The root one names this repository's author; `templates/LICENSE.scaffold` carries
+  `__YEAR__` and `__AUTHOR__` and is moved into place at scaffold time, the same way
+  `README.scaffold.md` already is.
+
+A scaffolded project gets exactly what it got before — its own name and year in an MIT licence. What
+changes is everything that was reading the root file and finding a placeholder.
+
 ## template/v1.0.1 — 2026-08-16
 
 ### Fixed
