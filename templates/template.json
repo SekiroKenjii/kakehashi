@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "templateVersion": "1.0.1",
+  "templateVersion": "1.0.2",
   "requiresCli": ">=1.0.0 <2.0.0",
   "markersSchema": 1,
   "unitsSchema": 1,
@@ -45,7 +45,8 @@
   ],
   "move": [
     { "from": "templates/README.scaffold.md", "to": "README.md" },
-    { "from": "templates/CLAUDE.scaffold.md", "to": "CLAUDE.md" }
+    { "from": "templates/CLAUDE.scaffold.md", "to": "CLAUDE.md" },
+    { "from": "templates/LICENSE.scaffold", "to": "LICENSE" }
   ],
   "auth": {
     "file": "client/src/App/__APP_NAME__.App/appsettings.json",
