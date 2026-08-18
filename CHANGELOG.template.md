@@ -14,6 +14,29 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
+## template/v1.1.0 — 2026-08-18
+
+| | |
+| --- | --- |
+| Requires CLI | `>=1.0.0 <2.0.0` — unchanged |
+
+### Added
+
+- The Home page's static three-gates card is a live **System card**: server version, uptime, one
+  row per store answering for itself, and the clock skew. Backed by a new `HealthService.System`
+  RPC — additive, so older clients keep working — whose response is bounded to what a public route
+  may say: names from the wiring, `ok` and a latency, never an error string. The health module
+  gains `store/`, holding no tables: only the probes, because touching a database is store/'s alone.
+- Settings offers the **accent choice**: Windows' system accent, or the accent the project was
+  scaffolded with — named in the UI by the app's own title. The wizard's `--accent` answer finally
+  lands somewhere the app reads (`Branding:Accent` in `appsettings.json`); a project whose recorded
+  accent does not parse hides the card rather than offering a switch that cannot switch.
+
+### Fixed
+
+- `docs/getting-started.md` describes the System card in the gates card's place; the gates keep
+  their own page in `docs/gates.md`.
+
 ## template/v1.0.2 — 2026-08-16
 
 ### Fixed
