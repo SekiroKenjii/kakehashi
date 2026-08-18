@@ -67,7 +67,9 @@ public sealed class AccentService : IAccentService
 
     private void Apply()
     {
-        var resources = Application.Current.Resources;
+        // Fully qualified because the root namespace has an Application layer, which shadows the
+        // XAML type's namespace from inside the App project.
+        var resources = Microsoft.UI.Xaml.Application.Current.Resources;
 
         if (Accent == AccentSource.App && _appAccent is Color accent)
         {
