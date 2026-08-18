@@ -9,23 +9,40 @@ using Microsoft.UI.Xaml;
 
 namespace __ROOT_NAMESPACE__.App.UI;
 
-/// <summary>Presents the theme choice as a 0/1/2 index and applies it through the theme service.</summary>
+/// <summary>
+/// Presents the theme choice as a 0/1/2 index and the accent choice as a 0/1 index, and applies
+/// each through its service.
+/// </summary>
 public sealed partial class SettingsViewModel : ViewModel
 {
     private readonly IThemeService _themeService;
+    private readonly IAccentService _accentService;
 
     [ObservableProperty]
     public partial int ThemeIndex { get; set; }
 
-    public SettingsViewModel(IThemeService themeService)
+    [ObservableProperty]
+    public partial int AccentIndex { get; set; }
+
+    /// <summary>
+    /// Whether the accent card is shown at all. A project scaffolded without an accent has one
+    /// working choice, and a switch that cannot switch is not offered.
+    /// </summary>
+    public bool HasAccentChoice { get; }
+
+    public SettingsViewModel(IThemeService themeService, IAccentService accentService)
     {
         ArgumentNullException.ThrowIfNull(themeService);
+        ArgumentNullException.ThrowIfNull(accentService);
         _themeService = themeService;
+        _accentService = accentService;
         ThemeIndex = themeService.Theme switch {
             ElementTheme.Light => 1,
             ElementTheme.Dark => 2,
             _ => 0,
         };
+        AccentIndex = accentService.Accent == AccentSource.App ? 1 : 0;
+        HasAccentChoice = accentService.HasAppAccent;
     }
 
     partial void OnThemeIndexChanged(int value)
@@ -35,6 +52,11 @@ public sealed partial class SettingsViewModel : ViewModel
             2 => ElementTheme.Dark,
             _ => ElementTheme.Default,
         });
+    }
+
+    partial void OnAccentIndexChanged(int value)
+    {
+        _accentService.SetAccent(value == 1 ? AccentSource.App : AccentSource.Windows);
     }
 
     /// <summary>Opens the folder the application writes its log to.</summary>

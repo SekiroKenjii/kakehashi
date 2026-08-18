@@ -30,6 +30,16 @@
                         <ComboBoxItem Content="Dark" />
                     </ComboBox>
                 </controls:SettingsCard>
+                <controls:SettingsCard
+                    Description="Windows follows your system accent. __APP_TITLE__ uses this project's own."
+                    Header="Accent color"
+                    HeaderIcon="{winui:FontIcon Glyph=&#xE771;}"
+                    Visibility="{x:Bind ViewModel.HasAccentChoice}">
+                    <ComboBox MinWidth="150" SelectedIndex="{x:Bind ViewModel.AccentIndex, Mode=TwoWay}">
+                        <ComboBoxItem Content="Windows" />
+                        <ComboBoxItem Content="__APP_TITLE__" />
+                    </ComboBox>
+                </controls:SettingsCard>
 
                 <!--  General settings  -->
                 <TextBlock
