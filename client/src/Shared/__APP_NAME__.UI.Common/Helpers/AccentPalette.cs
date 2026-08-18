@@ -29,6 +29,7 @@ public static class AccentPalette
     public static bool TryParse(string? hex, out Color color)
     {
         color = default;
+
         if (hex is not { Length: 7 } || hex[0] != '#')
         {
             return false;
