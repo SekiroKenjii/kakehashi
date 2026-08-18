@@ -11,7 +11,7 @@ import (
 var pinned = time.Date(2026, time.August, 5, 12, 0, 0, 0, time.UTC)
 
 func TestPingEchoesTheMessage(t *testing.T) {
-	svc := New(func() time.Time { return pinned })
+	svc := New(func() time.Time { return pinned }, "dev", nil)
 
 	status, err := svc.Ping(context.Background(), "hello")
 
@@ -27,7 +27,7 @@ func TestPingReportsTheClockInUTC(t *testing.T) {
 	// A clock in another zone, to prove the service normalises rather than passing it through: the
 	// wire type is defined as UTC, and a server in Asia/Ho_Chi_Minh must not report local time.
 	saigon := time.FixedZone("ICT", 7*60*60)
-	svc := New(func() time.Time { return pinned.In(saigon) })
+	svc := New(func() time.Time { return pinned.In(saigon) }, "dev", nil)
 
 	status, err := svc.Ping(context.Background(), "")
 	if err != nil {
@@ -45,7 +45,7 @@ func TestPingReportsTheClockInUTC(t *testing.T) {
 func TestNewDefaultsToTheWallClock(t *testing.T) {
 	before := time.Now().UTC()
 
-	status, err := New(nil).Ping(context.Background(), "")
+	status, err := New(nil, "dev", nil).Ping(context.Background(), "")
 	if err != nil {
 		t.Fatalf("Ping returned an error: %v", err)
 	}

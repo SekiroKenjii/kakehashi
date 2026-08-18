@@ -127,7 +127,7 @@ what you read in this repository is what compiles after the rename.
 | `__ROOT_NAMESPACE__` | C# root namespace | `__APP_NAME__` |
 | `__GO_MODULE__` | Go module path; the server is `__GO_MODULE__/server` | required |
 | `__PROTO_PACKAGE__` | proto package root and its directory | lowercased name |
-| `__ACCENT__` | accent colour | `#E34234` |
+| `__ACCENT__` | accent colour | `#C4513C` |
 | `__AUTHOR__`, `__YEAR__` | LICENSE and MSIX publisher | git config, this year |
 
 Two things are deliberately **not** placeholders. `kakehashi:<section>:begin` markers and

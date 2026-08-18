@@ -75,6 +75,182 @@ func (x *PingRequest) GetMessage() string {
 	return ""
 }
 
+// SystemRequest carries nothing. It exists because every method needs a request type, and reusing
+// another method's request couples two calls that evolve separately.
+type SystemRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SystemRequest) Reset() {
+	*x = SystemRequest{}
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SystemRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemRequest) ProtoMessage() {}
+
+func (x *SystemRequest) ProtoReflect() protoreflect.Message {
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemRequest.ProtoReflect.Descriptor instead.
+func (*SystemRequest) Descriptor() ([]byte, []int) {
+	return file____PROTO_PACKAGE___health_v1_health_proto_rawDescGZIP(), []int{1}
+}
+
+// SystemResponse describes the running process and the dependencies it answers with.
+type SystemResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// What the binary was built as. "dev" when nothing was injected at build time.
+	Version string `protobuf:"bytes,1,opt,name=version,proto3" json:"version,omitempty"`
+	// When the process started. Clients render the difference from server_time as uptime rather
+	// than trusting their own clock for it.
+	StartedAt *timestamppb.Timestamp `protobuf:"bytes,2,opt,name=started_at,json=startedAt,proto3" json:"started_at,omitempty"`
+	// The server's clock when it answered, for the same reason Ping carries it.
+	ServerTime *timestamppb.Timestamp `protobuf:"bytes,3,opt,name=server_time,json=serverTime,proto3" json:"server_time,omitempty"`
+	// One entry per dependency the process needs, in the server's own order.
+	Dependencies  []*Dependency `protobuf:"bytes,4,rep,name=dependencies,proto3" json:"dependencies,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SystemResponse) Reset() {
+	*x = SystemResponse{}
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SystemResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SystemResponse) ProtoMessage() {}
+
+func (x *SystemResponse) ProtoReflect() protoreflect.Message {
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SystemResponse.ProtoReflect.Descriptor instead.
+func (*SystemResponse) Descriptor() ([]byte, []int) {
+	return file____PROTO_PACKAGE___health_v1_health_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SystemResponse) GetVersion() string {
+	if x != nil {
+		return x.Version
+	}
+	return ""
+}
+
+func (x *SystemResponse) GetStartedAt() *timestamppb.Timestamp {
+	if x != nil {
+		return x.StartedAt
+	}
+	return nil
+}
+
+func (x *SystemResponse) GetServerTime() *timestamppb.Timestamp {
+	if x != nil {
+		return x.ServerTime
+	}
+	return nil
+}
+
+func (x *SystemResponse) GetDependencies() []*Dependency {
+	if x != nil {
+		return x.Dependencies
+	}
+	return nil
+}
+
+// Dependency is one thing the server needs and whether it answered just now.
+type Dependency struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// A display name chosen by the server's wiring, for example "SQL Server". Not an address.
+	Name string `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
+	// Whether the dependency answered within the server's own deadline.
+	Ok bool `protobuf:"varint,2,opt,name=ok,proto3" json:"ok,omitempty"`
+	// How long the answer took, in milliseconds. Meaningless when ok is false.
+	LatencyMs     int64 `protobuf:"varint,3,opt,name=latency_ms,json=latencyMs,proto3" json:"latency_ms,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *Dependency) Reset() {
+	*x = Dependency{}
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[3]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *Dependency) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*Dependency) ProtoMessage() {}
+
+func (x *Dependency) ProtoReflect() protoreflect.Message {
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[3]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use Dependency.ProtoReflect.Descriptor instead.
+func (*Dependency) Descriptor() ([]byte, []int) {
+	return file____PROTO_PACKAGE___health_v1_health_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *Dependency) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *Dependency) GetOk() bool {
+	if x != nil {
+		return x.Ok
+	}
+	return false
+}
+
+func (x *Dependency) GetLatencyMs() int64 {
+	if x != nil {
+		return x.LatencyMs
+	}
+	return 0
+}
+
 // PingResponse carries the echoed message and the server's view of the current time.
 type PingResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -92,7 +268,7 @@ type PingResponse struct {
 
 func (x *PingResponse) Reset() {
 	*x = PingResponse{}
-	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[1]
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -104,7 +280,7 @@ func (x *PingResponse) String() string {
 func (*PingResponse) ProtoMessage() {}
 
 func (x *PingResponse) ProtoReflect() protoreflect.Message {
-	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[1]
+	mi := &file____PROTO_PACKAGE___health_v1_health_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -117,7 +293,7 @@ func (x *PingResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PingResponse.ProtoReflect.Descriptor instead.
 func (*PingResponse) Descriptor() ([]byte, []int) {
-	return file____PROTO_PACKAGE___health_v1_health_proto_rawDescGZIP(), []int{1}
+	return file____PROTO_PACKAGE___health_v1_health_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *PingResponse) GetMessage() string {
@@ -140,13 +316,28 @@ const file____PROTO_PACKAGE___health_v1_health_proto_rawDesc = "" +
 	"\n" +
 	"(__PROTO_PACKAGE__/health/v1/health.proto\x12\x1b__PROTO_PACKAGE__.health.v1\x1a\x1fgoogle/protobuf/timestamp.proto\"'\n" +
 	"\vPingRequest\x12\x18\n" +
-	"\amessage\x18\x01 \x01(\tR\amessage\"e\n" +
+	"\amessage\x18\x01 \x01(\tR\amessage\"\x0f\n" +
+	"\rSystemRequest\"\xef\x01\n" +
+	"\x0eSystemResponse\x12\x18\n" +
+	"\aversion\x18\x01 \x01(\tR\aversion\x129\n" +
+	"\n" +
+	"started_at\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\tstartedAt\x12;\n" +
+	"\vserver_time\x18\x03 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
+	"serverTime\x12K\n" +
+	"\fdependencies\x18\x04 \x03(\v2'.__PROTO_PACKAGE__.health.v1.DependencyR\fdependencies\"O\n" +
+	"\n" +
+	"Dependency\x12\x12\n" +
+	"\x04name\x18\x01 \x01(\tR\x04name\x12\x0e\n" +
+	"\x02ok\x18\x02 \x01(\bR\x02ok\x12\x1d\n" +
+	"\n" +
+	"latency_ms\x18\x03 \x01(\x03R\tlatencyMs\"e\n" +
 	"\fPingResponse\x12\x18\n" +
 	"\amessage\x18\x01 \x01(\tR\amessage\x12;\n" +
 	"\vserver_time\x18\x02 \x01(\v2\x1a.google.protobuf.TimestampR\n" +
-	"serverTime2l\n" +
+	"serverTime2\xcf\x01\n" +
 	"\rHealthService\x12[\n" +
-	"\x04Ping\x12(.__PROTO_PACKAGE__.health.v1.PingRequest\x1a).__PROTO_PACKAGE__.health.v1.PingResponseB\xf0\x01\n" +
+	"\x04Ping\x12(.__PROTO_PACKAGE__.health.v1.PingRequest\x1a).__PROTO_PACKAGE__.health.v1.PingResponse\x12a\n" +
+	"\x06System\x12*.__PROTO_PACKAGE__.health.v1.SystemRequest\x1a+.__PROTO_PACKAGE__.health.v1.SystemResponseB\xf0\x01\n" +
 	"\x1fcom.__PROTO_PACKAGE__.health.v1B\vHealthProtoP\x01ZF__GO_MODULE__/server/internal/gen/__PROTO_PACKAGE__/health/v1;healthv1\xa2\x02\x03_HX\xaa\x02\x16PROTOPACKAGE.Health.V1\xca\x02\x16PROTOPACKAGE\\Health\\V1\xe2\x02\"PROTOPACKAGE\\Health\\V1\\GPBMetadata\xea\x02\x18PROTOPACKAGE::Health::V1b\x06proto3"
 
 var (
@@ -161,21 +352,29 @@ func file____PROTO_PACKAGE___health_v1_health_proto_rawDescGZIP() []byte {
 	return file____PROTO_PACKAGE___health_v1_health_proto_rawDescData
 }
 
-var file____PROTO_PACKAGE___health_v1_health_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file____PROTO_PACKAGE___health_v1_health_proto_msgTypes = make([]protoimpl.MessageInfo, 5)
 var file____PROTO_PACKAGE___health_v1_health_proto_goTypes = []any{
 	(*PingRequest)(nil),           // 0: __PROTO_PACKAGE__.health.v1.PingRequest
-	(*PingResponse)(nil),          // 1: __PROTO_PACKAGE__.health.v1.PingResponse
-	(*timestamppb.Timestamp)(nil), // 2: google.protobuf.Timestamp
+	(*SystemRequest)(nil),         // 1: __PROTO_PACKAGE__.health.v1.SystemRequest
+	(*SystemResponse)(nil),        // 2: __PROTO_PACKAGE__.health.v1.SystemResponse
+	(*Dependency)(nil),            // 3: __PROTO_PACKAGE__.health.v1.Dependency
+	(*PingResponse)(nil),          // 4: __PROTO_PACKAGE__.health.v1.PingResponse
+	(*timestamppb.Timestamp)(nil), // 5: google.protobuf.Timestamp
 }
 var file____PROTO_PACKAGE___health_v1_health_proto_depIdxs = []int32{
-	2, // 0: __PROTO_PACKAGE__.health.v1.PingResponse.server_time:type_name -> google.protobuf.Timestamp
-	0, // 1: __PROTO_PACKAGE__.health.v1.HealthService.Ping:input_type -> __PROTO_PACKAGE__.health.v1.PingRequest
-	1, // 2: __PROTO_PACKAGE__.health.v1.HealthService.Ping:output_type -> __PROTO_PACKAGE__.health.v1.PingResponse
-	2, // [2:3] is the sub-list for method output_type
-	1, // [1:2] is the sub-list for method input_type
-	1, // [1:1] is the sub-list for extension type_name
-	1, // [1:1] is the sub-list for extension extendee
-	0, // [0:1] is the sub-list for field type_name
+	5, // 0: __PROTO_PACKAGE__.health.v1.SystemResponse.started_at:type_name -> google.protobuf.Timestamp
+	5, // 1: __PROTO_PACKAGE__.health.v1.SystemResponse.server_time:type_name -> google.protobuf.Timestamp
+	3, // 2: __PROTO_PACKAGE__.health.v1.SystemResponse.dependencies:type_name -> __PROTO_PACKAGE__.health.v1.Dependency
+	5, // 3: __PROTO_PACKAGE__.health.v1.PingResponse.server_time:type_name -> google.protobuf.Timestamp
+	0, // 4: __PROTO_PACKAGE__.health.v1.HealthService.Ping:input_type -> __PROTO_PACKAGE__.health.v1.PingRequest
+	1, // 5: __PROTO_PACKAGE__.health.v1.HealthService.System:input_type -> __PROTO_PACKAGE__.health.v1.SystemRequest
+	4, // 6: __PROTO_PACKAGE__.health.v1.HealthService.Ping:output_type -> __PROTO_PACKAGE__.health.v1.PingResponse
+	2, // 7: __PROTO_PACKAGE__.health.v1.HealthService.System:output_type -> __PROTO_PACKAGE__.health.v1.SystemResponse
+	6, // [6:8] is the sub-list for method output_type
+	4, // [4:6] is the sub-list for method input_type
+	4, // [4:4] is the sub-list for extension type_name
+	4, // [4:4] is the sub-list for extension extendee
+	0, // [0:4] is the sub-list for field type_name
 }
 
 func init() { file____PROTO_PACKAGE___health_v1_health_proto_init() }
@@ -189,7 +388,7 @@ func file____PROTO_PACKAGE___health_v1_health_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file____PROTO_PACKAGE___health_v1_health_proto_rawDesc), len(file____PROTO_PACKAGE___health_v1_health_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   5,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

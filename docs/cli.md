@@ -33,7 +33,7 @@ kakehashi new OrderDesk --module github.com/you/orderdesk        # flags
 | `--module` | — | **required** without the wizard. The server's Go module path. |
 | `--title` | the app name | What the window and the Home page call it. |
 | `--proto-package` | the app name, lower case | The proto root package. |
-| `--accent` | `#E34234` | Six hex digits after a hash. |
+| `--accent` | `#C4513C` | Six hex digits after a hash. |
 | `--author` | `git config user.name` | Copyright holder. |
 | `--auth` | `inapp` | `inapp` or `browser`. |
 | `--with-example` | `true` | Keep the example module. |

@@ -19,7 +19,7 @@ param(
     [string]$AppTitle,
     [string]$ProtoPackage,
     [string]$RootNamespace,
-    [string]$Accent = '#E34234',
+    [string]$Accent = '#C4513C',
     [string]$Author,
     [string]$Year
 )

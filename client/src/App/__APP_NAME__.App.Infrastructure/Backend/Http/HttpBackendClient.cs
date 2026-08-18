@@ -39,4 +39,21 @@ public sealed class HttpBackendClient : IBackendClient
         return result
             ?? throw new InvalidOperationException("The backend returned an empty ping response.");
     }
+
+    public async Task<SystemResponse> SystemAsync(
+        SystemRequest request, CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+
+        using var response =
+            await _httpClient.PostAsJsonAsync("system", request, cancellationToken).ConfigureAwait(false);
+        response.EnsureSuccessStatusCode();
+
+        var result = await response.Content
+            .ReadFromJsonAsync<SystemResponse>(cancellationToken)
+            .ConfigureAwait(false);
+
+        return result
+            ?? throw new InvalidOperationException("The backend returned an empty system response.");
+    }
 }

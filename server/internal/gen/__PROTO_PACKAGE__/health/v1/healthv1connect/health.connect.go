@@ -41,6 +41,8 @@ const (
 const (
 	// HealthServicePingProcedure is the fully-qualified name of the HealthService's Ping RPC.
 	HealthServicePingProcedure = "/__PROTO_PACKAGE__.health.v1.HealthService/Ping"
+	// HealthServiceSystemProcedure is the fully-qualified name of the HealthService's System RPC.
+	HealthServiceSystemProcedure = "/__PROTO_PACKAGE__.health.v1.HealthService/System"
 )
 
 // HealthServiceClient is a client for the __PROTO_PACKAGE__.health.v1.HealthService service.
@@ -51,6 +53,14 @@ type HealthServiceClient interface {
 	// status code being returned by something in front of the server, which is exactly the failure a
 	// reverse proxy in the wrong mode produces.
 	Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error)
+	// System is the storage-readiness check Ping deliberately is not: it reports the process's
+	// version, when it started, and whether each dependency answers.
+	//
+	// The route is public, like Ping, so the response is bounded to what a stranger may know:
+	// dependency names come from the server's own wiring and an unreachable dependency reports
+	// ok = false and nothing else — never an error string, which is where connection strings and
+	// internal hostnames leak from.
+	System(context.Context, *connect.Request[v1.SystemRequest]) (*connect.Response[v1.SystemResponse], error)
 }
 
 // NewHealthServiceClient constructs a client for the __PROTO_PACKAGE__.health.v1.HealthService
@@ -70,17 +80,29 @@ func NewHealthServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithSchema(healthServiceMethods.ByName("Ping")),
 			connect.WithClientOptions(opts...),
 		),
+		system: connect.NewClient[v1.SystemRequest, v1.SystemResponse](
+			httpClient,
+			baseURL+HealthServiceSystemProcedure,
+			connect.WithSchema(healthServiceMethods.ByName("System")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // healthServiceClient implements HealthServiceClient.
 type healthServiceClient struct {
-	ping *connect.Client[v1.PingRequest, v1.PingResponse]
+	ping   *connect.Client[v1.PingRequest, v1.PingResponse]
+	system *connect.Client[v1.SystemRequest, v1.SystemResponse]
 }
 
 // Ping calls __PROTO_PACKAGE__.health.v1.HealthService.Ping.
 func (c *healthServiceClient) Ping(ctx context.Context, req *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error) {
 	return c.ping.CallUnary(ctx, req)
+}
+
+// System calls __PROTO_PACKAGE__.health.v1.HealthService.System.
+func (c *healthServiceClient) System(ctx context.Context, req *connect.Request[v1.SystemRequest]) (*connect.Response[v1.SystemResponse], error) {
+	return c.system.CallUnary(ctx, req)
 }
 
 // HealthServiceHandler is an implementation of the __PROTO_PACKAGE__.health.v1.HealthService
@@ -92,6 +114,14 @@ type HealthServiceHandler interface {
 	// status code being returned by something in front of the server, which is exactly the failure a
 	// reverse proxy in the wrong mode produces.
 	Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error)
+	// System is the storage-readiness check Ping deliberately is not: it reports the process's
+	// version, when it started, and whether each dependency answers.
+	//
+	// The route is public, like Ping, so the response is bounded to what a stranger may know:
+	// dependency names come from the server's own wiring and an unreachable dependency reports
+	// ok = false and nothing else — never an error string, which is where connection strings and
+	// internal hostnames leak from.
+	System(context.Context, *connect.Request[v1.SystemRequest]) (*connect.Response[v1.SystemResponse], error)
 }
 
 // NewHealthServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -107,10 +137,18 @@ func NewHealthServiceHandler(svc HealthServiceHandler, opts ...connect.HandlerOp
 		connect.WithSchema(healthServiceMethods.ByName("Ping")),
 		connect.WithHandlerOptions(opts...),
 	)
+	healthServiceSystemHandler := connect.NewUnaryHandler(
+		HealthServiceSystemProcedure,
+		svc.System,
+		connect.WithSchema(healthServiceMethods.ByName("System")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/__PROTO_PACKAGE__.health.v1.HealthService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case HealthServicePingProcedure:
 			healthServicePingHandler.ServeHTTP(w, r)
+		case HealthServiceSystemProcedure:
+			healthServiceSystemHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -122,4 +160,8 @@ type UnimplementedHealthServiceHandler struct{}
 
 func (UnimplementedHealthServiceHandler) Ping(context.Context, *connect.Request[v1.PingRequest]) (*connect.Response[v1.PingResponse], error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("__PROTO_PACKAGE__.health.v1.HealthService.Ping is not implemented"))
+}
+
+func (UnimplementedHealthServiceHandler) System(context.Context, *connect.Request[v1.SystemRequest]) (*connect.Response[v1.SystemResponse], error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("__PROTO_PACKAGE__.health.v1.HealthService.System is not implemented"))
 }
