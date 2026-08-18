@@ -76,11 +76,17 @@ turned `docker compose up -d` into what read as an em dash and an invalid flag.
 
 2000×1080, the first thing in the README, full width. [`kakehashi-banner.svg`](kakehashi-banner.svg).
 
-It is a product shot in the mark's world: paper sky, clouds, the sun pooling behind the lockup, and
-the editor window in the middle holding the repository's real
-`proto/kakehashi/activity/v1/activity.proto`. The panels around it state numbers that are true —
-six modules, sixty-one archlint packages, ninety days of retention. Nothing on it is a placeholder,
-because a banner that overstates is the first thing a reader learns not to trust.
+It is the pivot said as a picture, in the mark's world: paper sky, clouds, the lockup and the claim
+on the left — *Boilerplate + CLI* — and on the right a terminal carrying the tool's real output,
+`kakehashi new` through its five ticks and `kakehashi add module orders` through the three gates.
+Below the terminal, one card per gate: archlint, ArchitectureTests, buf breaking, each with what it
+protects. The pills state numbers that are true — two halves, one contract, three gates. Nothing on
+it is a placeholder, because a banner that overstates is the first thing a reader learns not to
+trust.
+
+The previous banner was a product shot of the app era — an editor window holding the activity proto,
+panels counting modules and retention. It described the artifact; this one describes the capability,
+which is what the repository now is.
 
 Three constraints, all of them mechanical rather than aesthetic:
 
