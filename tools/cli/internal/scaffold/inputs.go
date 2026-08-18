@@ -15,8 +15,8 @@ const (
 	AuthNone    = "none"
 )
 
-// DefaultAccent is the template's own vermilion.
-const DefaultAccent = "#E34234"
+// DefaultAccent is the brand's torii vermilion, the red the mark's gate is lacquered in.
+const DefaultAccent = "#C4513C"
 
 // Inputs is what a project is named and coloured. Every field ends up substituted into the tree,
 // and the set is recorded in the manifest so a later upgrade can reproduce this scaffold.

@@ -38,6 +38,10 @@ import (
 	"__GO_MODULE__/server/internal/platform/logging"
 )
 
+// version is what the health module's System reports the binary as. A release build overwrites it
+// with -ldflags "-X main.version=..."; a plain `go build` reports dev, which is the truth.
+var version = "dev"
+
 func main() {
 	log := logging.FromEnv()
 
@@ -98,7 +102,7 @@ func run(ctx context.Context, log *slog.Logger) error {
 func modules() []app.Module {
 	return []app.Module{
 		// kakehashi:module-registrations:begin
-		health.New(),
+		health.New(version),
 		// kakehashi:unit-notes:begin
 		notes.New(),
 		// kakehashi:unit-notes:end

@@ -269,14 +269,71 @@ public sealed class HomeViewModelTests
     }
 
     [Fact]
-    public void Gates_AreTheThreeWithACommandEach()
+    public async Task Load_BackendAnswers_FillsTheSystemCard()
     {
-        var viewModel = CreateViewModel();
+        _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)));
+        var startedAt = DateTimeOffset.UtcNow.AddHours(-3);
+        _backend.SystemAsync(Arg.Any<SystemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new SystemResponse(
+                "1.0.1",
+                startedAt,
+                DateTimeOffset.UtcNow,
+                [new SystemDependency("SQL Server", true, 2), new SystemDependency("MongoDB", false, 0)])));
+        var viewModel = CreateViewModel(backendConfigured: true);
 
-        Assert.Equal(3, viewModel.Gates.Count);
-        Assert.All(viewModel.Gates, gate => Assert.NotEmpty(gate.Command));
-        Assert.Contains(viewModel.Gates, gate => gate.Name == "archlint");
-        Assert.Contains(viewModel.Gates, gate => gate.Name == "buf breaking");
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.HasSystemStatus);
+        // Server, two dependencies, server clock — in that order.
+        Assert.Equal(4, viewModel.SystemRows.Count);
+        Assert.StartsWith("1.0.1", viewModel.SystemRows[0].Value);
+        Assert.True(viewModel.SystemRows[1].ShowsOkDot);
+        Assert.True(viewModel.SystemRows[2].ShowsFailDot);
+        Assert.Equal("Not answering", viewModel.SystemRows[2].Value);
+    }
+
+    [Fact]
+    public async Task Load_SystemUnavailable_LeavesTheCardEmpty()
+    {
+        // A reachable backend without the System endpoint — an older server — must not break the
+        // probe: the Backend card says Connected and the System card keeps its empty state.
+        _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)));
+        _backend.SystemAsync(Arg.Any<SystemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(Task.FromException<SystemResponse>(new InvalidOperationException()));
+        var viewModel = CreateViewModel(backendConfigured: true);
+
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+
+        Assert.True(viewModel.IsBackendConnected);
+        Assert.False(viewModel.HasSystemStatus);
+        Assert.Empty(viewModel.SystemRows);
+    }
+
+    [Fact]
+    public async Task RetryBackend_AfterAnOutage_EmptiesThenRefillsTheSystemCard()
+    {
+        _backend.PingAsync(Arg.Any<PingRequest>(), Arg.Any<CancellationToken>())
+            .Returns(
+                _ => Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)),
+                _ => Task.FromException<PingResponse>(new InvalidOperationException()),
+                _ => Task.FromResult(new PingResponse("home", DateTimeOffset.UtcNow)));
+        _backend.SystemAsync(Arg.Any<SystemRequest>(), Arg.Any<CancellationToken>())
+            .Returns(_ => Task.FromResult(new SystemResponse(
+                "dev", DateTimeOffset.UtcNow.AddMinutes(-5), DateTimeOffset.UtcNow,
+                [new SystemDependency("SQL Server", true, 1)])));
+        var viewModel = CreateViewModel(backendConfigured: true);
+        await viewModel.LoadCommand.ExecuteAsync(parameter: null);
+        Assert.True(viewModel.HasSystemStatus);
+
+        await viewModel.RetryBackendCommand.ExecuteAsync(parameter: null);
+        Assert.False(viewModel.HasSystemStatus);
+        Assert.Empty(viewModel.SystemRows);
+
+        await viewModel.RetryBackendCommand.ExecuteAsync(parameter: null);
+        Assert.True(viewModel.HasSystemStatus);
+        Assert.NotEmpty(viewModel.SystemRows);
     }
 
     [Fact]

@@ -7,6 +7,18 @@ Ordinary semantic versioning for a tool. The interesting number is the range of 
 works with — stated by the binary and checked against each template's own `requiresCli`, in both
 directions.
 
+## tools/cli/v1.1.0 — 2026-08-18
+
+| | |
+| --- | --- |
+| Templates supported | `>=1.0.0 <2.0.0` — unchanged |
+
+### Changed
+
+- The default `--accent` is torii `#C4513C`, the red the mark's gate is lacquered in, replacing the
+  retired shu `#E34234`. Only the default moves: a project that chose its accent keeps it, and with
+  template 1.1.0 the value now reaches the app's Settings as a choice rather than only the record.
+
 ## tools/cli/v1.0.1 — 2026-08-16
 
 | | |

@@ -36,10 +36,14 @@ public sealed record GettingStartedStep(
 }
 
 /// <summary>
-/// One of the three architecture gates, as the Home page lists them: what it protects, and the
-/// command that runs it.
+/// One row of the System card: a label, a value, and — for a dependency — whether it answered.
 /// </summary>
-public sealed record GateItem(string Name, string Protects, string Command);
+public sealed record SystemRow(string Label, string Value, bool HasIndicator, bool IsOk)
+{
+    public bool ShowsOkDot => HasIndicator && IsOk;
+
+    public bool ShowsFailDot => HasIndicator && !IsOk;
+}
 
 /// <param name="IsWithheld">
 /// An administrator has not assigned this module to the account. The tile is drawn locked rather
@@ -164,6 +168,10 @@ public sealed partial class HomeViewModel : ViewModel
     public partial string BackendStatusText { get; set; }
 
     [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(HasNoSystemStatus))]
+    public partial bool HasSystemStatus { get; set; }
+
+    [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(HasNoActivity))]
     public partial bool HasActivity { get; set; }
 
@@ -238,23 +246,10 @@ public sealed partial class HomeViewModel : ViewModel
     public ObservableCollection<GettingStartedStep> Steps { get; } = [];
 
     /// <summary>
-    /// The three gates, and how to run each. They are listed on the Home page because a developer
-    /// who meets them on the first run meets them before their first pull request rather than in it.
+    /// The System card's rows, rebuilt on every successful probe. Empty until the backend answers,
+    /// and emptied again when it stops: stale rows would claim a liveness nobody checked.
     /// </summary>
-    public IReadOnlyList<GateItem> Gates { get; } = [
-        new GateItem(
-            "archlint",
-            "Module boundaries inside the Go server.",
-            "cd server && go run ./tools/archlint"),
-        new GateItem(
-            "__APP_NAME__.ArchitectureTests",
-            "The three layers inside the WinUI client.",
-            "cd client && dotnet test __APP_NAME__.slnx"),
-        new GateItem(
-            "buf breaking",
-            "The contract between the two halves.",
-            "buf breaking --against \".git#branch=main\""),
-    ];
+    public ObservableCollection<SystemRow> SystemRows { get; } = [];
 
     public ObservableCollection<ModuleCardItem> ModuleCards { get; } = [];
 
@@ -263,6 +258,8 @@ public sealed partial class HomeViewModel : ViewModel
     public ObservableCollection<DetachedModuleListItem> DetachedModules { get; } = [];
 
     public bool HasNoActivity => !HasActivity;
+
+    public bool HasNoSystemStatus => !HasSystemStatus;
 
     public bool HasNoDetachedModules => !HasDetachedModules;
 
@@ -701,17 +698,67 @@ public sealed partial class HomeViewModel : ViewModel
             stopwatch.Stop();
             BackendStatusText = $"Connected · {stopwatch.ElapsedMilliseconds}ms";
             IsBackendConnected = true;
+            await RefreshSystemAsync(timeout.Token);
         }
         catch (Exception)
         {
             // Any transport failure (offline, timeout, TLS, DNS) renders as the offline state.
             BackendStatusText = "Offline";
             IsBackendOffline = true;
+            SystemRows.Clear();
+            HasSystemStatus = false;
         }
         finally
         {
             IsBackendNeutral = !IsBackendConnected && !IsBackendOffline;
         }
+    }
+
+    /// <summary>Rebuilds the System card from the backend's answer, or empties it.</summary>
+    private async Task RefreshSystemAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            var system = await _backendClient.SystemAsync(new SystemRequest(), cancellationToken);
+            SystemRows.Clear();
+            // Uptime from the server's two clocks, not this machine's: skew belongs in its own row.
+            var uptime = FormatDuration(system.ServerTimeUtc - system.StartedAtUtc);
+            SystemRows.Add(new SystemRow("Server", $"{system.Version} · up {uptime}", false, false));
+            foreach (var dependency in system.Dependencies)
+            {
+                SystemRows.Add(new SystemRow(
+                    dependency.Name,
+                    dependency.IsOk ? $"Connected · {dependency.LatencyMs} ms" : "Not answering",
+                    HasIndicator: true,
+                    IsOk: dependency.IsOk));
+            }
+
+            var skew = system.ServerTimeUtc - DateTimeOffset.UtcNow;
+            SystemRows.Add(new SystemRow(
+                "Server clock", $"{skew.TotalSeconds:+0.0;-0.0} s vs local", false, false));
+            HasSystemStatus = true;
+        }
+        catch (Exception)
+        {
+            // An older server has no System endpoint; a failing one has no answer worth showing.
+            SystemRows.Clear();
+            HasSystemStatus = false;
+        }
+    }
+
+    private static string FormatDuration(TimeSpan span)
+    {
+        if (span < TimeSpan.Zero)
+        {
+            span = TimeSpan.Zero;
+        }
+
+        return span switch {
+            { TotalDays: >= 1 } => $"{(int)span.TotalDays}d {span.Hours}h",
+            { TotalHours: >= 1 } => $"{(int)span.TotalHours}h {span.Minutes}m",
+            { TotalMinutes: >= 1 } => $"{(int)span.TotalMinutes}m",
+            _ => $"{(int)span.TotalSeconds}s",
+        };
     }
 
     private void LoadActivity()

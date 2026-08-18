@@ -14,17 +14,28 @@ import (
 // time.Now, and that is the only place the real clock is read.
 type Clock func() time.Time
 
-// Service is the healthapi.Service implementation.
-type Service struct {
-	now Clock
+// Store is the persistence seam System checks and nothing here reads: one probe per store the
+// process depends on.
+type Store interface {
+	PingSQL(ctx context.Context) error
+	PingMongo(ctx context.Context) error
 }
 
-// New builds the service. Pass nil for clock to use the wall clock.
-func New(clock Clock) *Service {
+// Service is the healthapi.Service implementation.
+type Service struct {
+	now       Clock
+	store     Store
+	version   string
+	startedAt time.Time
+}
+
+// New builds the service. Pass nil for clock to use the wall clock. The service's construction is
+// the process start it reports: the kernel builds modules once, at boot.
+func New(clock Clock, version string, store Store) *Service {
 	if clock == nil {
 		clock = time.Now
 	}
-	return &Service{now: clock}
+	return &Service{now: clock, store: store, version: version, startedAt: clock().UTC()}
 }
 
 // Ping echoes the message back with the server's clock.
