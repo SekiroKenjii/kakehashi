@@ -24,12 +24,53 @@ service HealthService {
   // status code being returned by something in front of the server, which is exactly the failure a
   // reverse proxy in the wrong mode produces.
   rpc Ping(PingRequest) returns (PingResponse);
+
+  // System is the storage-readiness check Ping deliberately is not: it reports the process's
+  // version, when it started, and whether each dependency answers.
+  //
+  // The route is public, like Ping, so the response is bounded to what a stranger may know:
+  // dependency names come from the server's own wiring and an unreachable dependency reports
+  // ok = false and nothing else — never an error string, which is where connection strings and
+  // internal hostnames leak from.
+  rpc System(SystemRequest) returns (SystemResponse);
 }
 
 // PingRequest carries an arbitrary string for the server to echo.
 message PingRequest {
   // Any value. The server returns it unchanged; an empty string is valid.
   string message = 1;
+}
+
+// SystemRequest carries nothing. It exists because every method needs a request type, and reusing
+// another method's request couples two calls that evolve separately.
+message SystemRequest {}
+
+// SystemResponse describes the running process and the dependencies it answers with.
+message SystemResponse {
+  // What the binary was built as. "dev" when nothing was injected at build time.
+  string version = 1;
+
+  // When the process started. Clients render the difference from server_time as uptime rather
+  // than trusting their own clock for it.
+  google.protobuf.Timestamp started_at = 2;
+
+  // The server's clock when it answered, for the same reason Ping carries it.
+  google.protobuf.Timestamp server_time = 3;
+
+  // One entry per dependency the process needs, in the server's own order.
+  repeated Dependency dependencies = 4;
+}
+
+// Dependency is one thing the server needs and whether it answered just now.
+message Dependency {
+  // A display name chosen by the server's wiring, for example "SQL Server". Not an address.
+  string name = 1;
+
+  // Whether the dependency answered within the server's own deadline.
+  bool ok = 2;
+
+  // How long the answer took, in milliseconds. Meaningless when ok is false.
+  int64 latency_ms = 3;
 }
 
 // PingResponse carries the echoed message and the server's view of the current time.

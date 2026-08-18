@@ -13,4 +13,8 @@ public interface IBackendClient
 {
     /// <summary>Calls the backend's health/echo endpoint.</summary>
     Task<PingResponse> PingAsync(PingRequest request, CancellationToken cancellationToken = default);
+
+    /// <summary>Reads the backend's system status: version, uptime, and each dependency.</summary>
+    Task<SystemResponse> SystemAsync(
+        SystemRequest request, CancellationToken cancellationToken = default);
 }

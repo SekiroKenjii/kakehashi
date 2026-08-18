@@ -66,14 +66,6 @@ public sealed partial class HomePage : Page
         }
     }
 
-    private void OnCopyGateClick(object sender, RoutedEventArgs e)
-    {
-        if ((sender as FrameworkElement)?.Tag is GateItem gate)
-        {
-            ViewModel.CopyCommand.Execute(gate.Command);
-        }
-    }
-
     private void OnModuleCardClick(object sender, RoutedEventArgs e)
     {
         if ((sender as FrameworkElement)?.Tag is ModuleCardItem module)

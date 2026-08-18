@@ -64,4 +64,29 @@ func (h *handler) Ping(
 	}), nil
 }
 
+func (h *handler) System(
+	ctx context.Context, _ *connect.Request[healthv1.SystemRequest],
+) (*connect.Response[healthv1.SystemResponse], error) {
+	status, err := h.svc.System(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	deps := make([]*healthv1.Dependency, 0, len(status.Dependencies))
+	for _, dep := range status.Dependencies {
+		deps = append(deps, &healthv1.Dependency{
+			Name:      dep.Name,
+			Ok:        dep.OK,
+			LatencyMs: dep.Latency.Milliseconds(),
+		})
+	}
+
+	return connect.NewResponse(&healthv1.SystemResponse{
+		Version:      status.Version,
+		StartedAt:    timestamppb.New(status.StartedAt),
+		ServerTime:   timestamppb.New(status.ServerTime),
+		Dependencies: deps,
+	}), nil
+}
+
 var _ healthv1connect.HealthServiceHandler = (*handler)(nil)

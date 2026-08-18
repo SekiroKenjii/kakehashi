@@ -1,3 +1,4 @@
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using __ROOT_NAMESPACE__.App.Infrastructure.Backend.Contracts;
@@ -34,5 +35,20 @@ public sealed class GrpcBackendClient : IBackendClient
             .ConfigureAwait(false);
 
         return new PingResponse(reply.Message, reply.ServerTime.ToDateTimeOffset());
+    }
+
+    public async Task<SystemResponse> SystemAsync(
+        SystemRequest request, CancellationToken cancellationToken = default)
+    {
+        var reply = await _client
+            .SystemAsync(new HealthV1.SystemRequest(), cancellationToken: cancellationToken)
+            .ResponseAsync
+            .ConfigureAwait(false);
+
+        return new SystemResponse(
+            reply.Version,
+            reply.StartedAt.ToDateTimeOffset(),
+            reply.ServerTime.ToDateTimeOffset(),
+            [.. reply.Dependencies.Select(d => new SystemDependency(d.Name, d.Ok, d.LatencyMs))]);
     }
 }

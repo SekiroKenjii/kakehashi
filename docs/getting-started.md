@@ -84,8 +84,12 @@ meet rather than a splash screen.
   answers. The example module's row ticks when there is a note in the database — which means writing
   one is the fastest way to prove the whole path works, from a WinUI page through the mediator, over
   gRPC, into a SQL Server table. The remaining rows are commands with a copy button.
-- **The three gates** — what each protects and how to run it. Running them once now is how they stop
-  being a surprise in your first pull request.
+- **System** — what the server is and what it stands on: version, uptime, and a row per store that
+  answers for itself. When `docker compose up -d` finishes, this is where you watch SQL Server and
+  MongoDB come up — and if one goes down later, its row goes red while Backend still says Connected.
+
+The three gates themselves are documented in [gates.md](gates.md) — running them once now is how
+they stop being a surprise in your first pull request.
 
 ## 5. Write a note
 

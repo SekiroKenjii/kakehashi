@@ -111,6 +111,11 @@ func Open(ctx context.Context, opts Options) (*DB, error) {
 	return &DB{client: client, database: client.Database(opts.Database)}, nil
 }
 
+// Ping answers whether the server responds, without touching any collection.
+func (db *DB) Ping(ctx context.Context) error {
+	return db.client.Ping(ctx, nil)
+}
+
 // Collection returns a handle to one of a module's collections.
 func (db *DB) Collection(name string) *mongo.Collection {
 	return db.database.Collection(name)
