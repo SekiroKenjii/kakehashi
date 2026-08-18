@@ -96,6 +96,7 @@ internal static class AppHost
             provider => provider.GetRequiredService<AppActivityLog>());
         services.AddSingleton<INavigationService, NavigationService>();
         services.AddSingleton<IThemeService, ThemeService>();
+        services.AddSingleton<IAccentService, AccentService>();
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFileSaveService, FileSaveService>();
