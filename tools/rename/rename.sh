@@ -19,7 +19,7 @@ tools/rename/rename.sh --app-name <PascalCase> --go-module <path> [options]
   --app-title       window and package display name             default: --app-name
   --proto-package   proto root, ^[a-z][a-z0-9_]*$               default: lowercased --app-name
   --root-namespace  C# root namespace                           default: --app-name
-  --accent          six-digit hex colour                        default: #E34234
+  --accent          six-digit hex colour                        default: #C4513C
   --author          LICENSE and package author                  default: git config user.name
   --year            LICENSE copyright year                      default: this year
 USAGE
@@ -29,7 +29,7 @@ USAGE
 die() { echo "rename: $*" >&2; exit 1; }
 
 app_name=""; go_module=""; app_title=""; proto_package=""; root_namespace=""
-accent="#E34234"; author=""; year=""
+accent="#C4513C"; author=""; year=""
 
 while [ $# -gt 0 ]; do
     case "$1" in
