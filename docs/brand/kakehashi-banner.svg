@@ -1,6 +1,6 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1080" width="2000" height="1080" role="img" aria-label="Kakehashi — 架け橋. A WinUI 3 client, a Go backend, one contract the build enforces.">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2000 1080" width="2000" height="1080" role="img" aria-label="Kakehashi — 架け橋. Boilerplate + CLI: a WinUI 3 client, a Go server, one contract, three gates.">
   <title>Kakehashi</title>
-  <desc>架け橋 — the bridge you build across. A WinUI 3 client, a Go backend, and one contract checked against both halves.</desc>
+  <desc>架け橋 — the bridge you build across. Boilerplate + CLI: scaffold a WinUI 3 client and a Go server, generate modules across both halves, and keep three architecture gates green.</desc>
 
   <defs>
     <radialGradient id="sun" cx="0.5" cy="0.5" r="0.5">
@@ -11,14 +11,6 @@
       <stop offset="0" stop-color="#C4513C" stop-opacity="0.10" />
       <stop offset="1" stop-color="#C4513C" stop-opacity="0" />
     </radialGradient>
-    <linearGradient id="num" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#E0A24A" />
-      <stop offset="1" stop-color="#C4513C" />
-    </linearGradient>
-    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1">
-      <stop offset="0" stop-color="#1B1C20" />
-      <stop offset="1" stop-color="#131418" />
-    </linearGradient>
     <pattern id="dotgrid" width="30" height="30" patternUnits="userSpaceOnUse">
       <circle cx="1.5" cy="1.5" r="1.4" fill="#E4D3B9" />
     </pattern>
@@ -63,190 +55,89 @@
   <!-- paper -->
   <rect width="2000" height="1080" fill="#F4EADB" />
   <rect width="2000" height="1080" fill="url(#dotgrid)" opacity="0.5" />
-  <ellipse cx="1000" cy="300" rx="860" ry="420" fill="url(#sun)" />
-  <ellipse cx="1000" cy="640" rx="1120" ry="480" fill="url(#shu)" />
+  <ellipse cx="640" cy="300" rx="860" ry="420" fill="url(#sun)" />
+  <ellipse cx="1440" cy="620" rx="1120" ry="480" fill="url(#shu)" />
 
-  <!-- clouds where the reference scatters squares -->
+  <!-- clouds -->
   <g fill="#ECDECA">
-    <g><circle cx="150" cy="150" r="24"/><circle cx="186" cy="132" r="32"/><circle cx="224" cy="148" r="23"/><rect x="122" y="141" width="130" height="29" rx="14"/></g>
-    <g><circle cx="1806" cy="188" r="20"/><circle cx="1842" cy="172" r="28"/><circle cx="1878" cy="182" r="24"/><rect x="1784" y="180" width="120" height="26" rx="13"/></g>
-    <g><circle cx="322" cy="392" r="12"/><circle cx="339" cy="384" r="15"/><circle cx="356" cy="392" r="11"/><rect x="308" y="388" width="62" height="15" rx="7.5"/></g>
-    <g><circle cx="1666" cy="368" r="12"/><circle cx="1683" cy="360" r="15"/><circle cx="1700" cy="368" r="11"/><rect x="1652" y="364" width="62" height="15" rx="7.5"/></g>
+    <g><circle cx="150" cy="130" r="24"/><circle cx="186" cy="112" r="32"/><circle cx="224" cy="128" r="23"/><rect x="122" y="121" width="130" height="29" rx="14"/></g>
+    <g><circle cx="1706" cy="96" r="20"/><circle cx="1742" cy="80" r="28"/><circle cx="1778" cy="90" r="24"/><rect x="1684" y="88" width="120" height="26" rx="13"/></g>
+    <g><circle cx="322" cy="712" r="12"/><circle cx="339" cy="704" r="15"/><circle cx="356" cy="712" r="11"/><rect x="308" y="708" width="62" height="15" rx="7.5"/></g>
+    <g><circle cx="586" cy="936" r="12"/><circle cx="603" cy="928" r="15"/><circle cx="620" cy="936" r="11"/><rect x="572" y="932" width="62" height="15" rx="7.5"/></g>
   </g>
 
-  <!-- ── lockup: the badge, the tile, the name in both scripts, the claim ───────────────── -->
+  <!-- ── left: the lockup and the claim ─────────────────────────────────────────────────── -->
+  <use href="#tile" transform="translate(128,148) scale(0.3577)" />
+  <text x="336" y="230" font-weight="700" font-size="64" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="2">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-2">&#160;Kakehashi</tspan></text>
+  <text x="338" y="284" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="30" fill="#8B7B66">The bridge you build across</text>
+
+  <text x="128" y="432" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="35" fill="#5C5142"><tspan font-weight="700" fill="#1F2125">Boilerplate + CLI.</tspan> A WinUI 3 client, a Go server,</text>
+  <text x="128" y="484" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="35" fill="#5C5142">one contract &#8212; scaffolded in a minute,</text>
+  <text x="128" y="536" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="35" fill="#5C5142">grown a module at a time.</text>
+
+  <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="27">
+    <rect x="128" y="600" width="152" height="54" rx="12" fill="#1F2125" />
+    <text x="204" y="636" text-anchor="middle" fill="#F4EADB">2 halves</text>
+    <rect x="300" y="600" width="180" height="54" rx="12" fill="#1F2125" />
+    <text x="390" y="636" text-anchor="middle" fill="#F4EADB">1 contract</text>
+    <rect x="500" y="600" width="152" height="54" rx="12" fill="#C4513C" />
+    <text x="576" y="636" text-anchor="middle" fill="#F4EADB">3 gates</text>
+  </g>
+
+  <!-- ── right: the terminal, which is the product ──────────────────────────────────────── -->
   <g>
-    <rect x="896" y="72" width="208" height="40" rx="20" fill="#EFE2CE" stroke="#D9C6AA" />
-    <circle cx="922" cy="92" r="5" fill="#3E9E63" />
-    <text x="941" y="98" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-weight="600" font-size="15" letter-spacing="4.5" fill="#5B5346">SEKIROKENJII</text>
+    <rect x="1016" y="164" width="864" height="330" rx="22" fill="#3A2F21" opacity="0.14" />
+    <rect x="1024" y="152" width="848" height="330" rx="20" fill="#17181B" stroke="#0B0B0F" />
+    <path d="M 1024 192 L 1872 192" stroke="#0B0B0F" stroke-width="1" />
+    <rect x="1024" y="152" width="848" height="40" rx="20" fill="#1C1E20" />
+    <rect x="1024" y="172" width="848" height="20" fill="#1C1E20" />
+    <circle cx="1054" cy="172" r="7" fill="#3A3D42" />
+    <circle cx="1078" cy="172" r="7" fill="#3A3D42" />
+    <circle cx="1102" cy="172" r="7" fill="#3A3D42" />
+    <g font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-size="25">
+      <text x="1064" y="248" fill="#D8CDBC"><tspan fill="#8B7B66">$</tspan> kakehashi new OrderDesk</text>
+      <text x="1064" y="302" fill="#7FB069">&#10003; <tspan fill="#D8CDBC">fetch&#160;&#160;</tspan>&#10003; <tspan fill="#D8CDBC">verify&#160;&#160;</tspan>&#10003; <tspan fill="#D8CDBC">apply&#160;&#160;</tspan>&#10003; <tspan fill="#D8CDBC">check&#160;&#160;</tspan>&#10003; <tspan fill="#D8CDBC">git</tspan></text>
+      <text x="1064" y="374" fill="#D8CDBC"><tspan fill="#8B7B66">$</tspan> kakehashi add module orders</text>
+      <text x="1064" y="428" fill="#D8CDBC">archlint <tspan fill="#7FB069">&#10003;</tspan>&#160;&#160;ArchitectureTests <tspan fill="#7FB069">&#10003;</tspan>&#160;&#160;buf breaking <tspan fill="#7FB069">&#10003;</tspan></text>
+    </g>
   </g>
-  <use href="#tile" transform="translate(422,148) scale(0.29)" />
-  <text x="602" y="259" font-weight="700" font-size="128" fill="#1F2125"><tspan font-family="'Yu Gothic UI','Noto Sans JP','Hiragino Sans','Meiryo',sans-serif" letter-spacing="4">架け橋</tspan><tspan font-family="'Segoe UI Variable Display','Segoe UI',system-ui,Arial,sans-serif" letter-spacing="-3">&#160;Kakehashi</tspan></text>
-  <text x="1000" y="342" text-anchor="middle" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="27" fill="#8B7B66">The High-Performance bridge you build across</text>
 
-  <!-- ── the editor window, cropped by the bottom edge like the reference ───────────────── -->
+  <!-- ── the three gates, one card each ─────────────────────────────────────────────────── -->
   <g>
-    <rect x="392" y="446" width="1216" height="700" rx="24" fill="#3A2F21" opacity="0.16" />
-    <rect x="384" y="454" width="1232" height="700" rx="30" fill="#3A2F21" opacity="0.10" />
-    <rect x="400" y="440" width="1200" height="700" rx="18" fill="#15171C" stroke="#2B2824" />
-    <!-- chrome -->
-    <circle cx="436" cy="470" r="6.5" fill="#3A3E46" />
-    <circle cx="460" cy="470" r="6.5" fill="#3A3E46" />
-    <circle cx="484" cy="470" r="6.5" fill="#3A3E46" />
-    <rect x="810" y="456" width="380" height="30" rx="15" fill="#0F1114" stroke="#22242B" />
-    <text x="1000" y="476" text-anchor="middle" font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-size="15" fill="#8A8D95">SekiroKenjii/kakehashi</text>
-    <rect x="401" y="499" width="1198" height="1" fill="#1F2127" />
-
-    <!-- activity bar -->
-    <rect x="401" y="500" width="55" height="580" fill="#0C0E12" />
-    <rect x="401" y="510" width="3" height="34" fill="#E6E7E9" />
-    <g stroke="#B9BCC2" stroke-width="2" fill="none">
-      <rect x="420" y="518" width="14" height="18" rx="2" />
-      <rect x="426" y="513" width="14" height="18" rx="2" />
+    <rect x="1024" y="660" width="266" height="230" rx="16" fill="#FBF5EA" stroke="#E0D3BC" />
+    <rect x="1040" y="660" width="234" height="6" rx="3" fill="#C4513C" />
+    <g transform="translate(1052,694) scale(2)" fill="none">
+      <rect x="2" y="4" width="14" height="22" rx="3" stroke="#C4513C" stroke-width="2.5" />
+      <rect x="28" y="4" width="14" height="22" rx="3" stroke="#C4513C" stroke-width="2.5" />
+      <path d="M22 1v28" stroke="#1C1E20" stroke-width="2.5" stroke-linecap="round" />
     </g>
-    <circle cx="446" cy="536" r="8.5" fill="#C4513C" />
-    <text x="446" y="540.5" text-anchor="middle" font-family="'Segoe UI',Arial,sans-serif" font-weight="700" font-size="11" fill="#FFFFFF">1</text>
-    <g stroke="#6E7480" stroke-width="2" fill="none">
-      <circle cx="427" cy="578" r="8" />
-      <path d="M433 584 L441 592" />
-      <circle cx="422" cy="634" r="3.6" />
-      <circle cx="422" cy="662" r="3.6" />
-      <path d="M422 638 L422 658" />
-      <circle cx="437" cy="641" r="3.6" />
-      <path d="M422 652 Q422 645 433 644" />
-      <path d="M423 704 L440 713 L423 722 Z" />
-      <rect x="420" y="758" width="9" height="9" />
-      <rect x="432" y="758" width="9" height="9" />
-      <rect x="420" y="770" width="9" height="9" />
-      <rect x="433" y="771" width="8" height="8" transform="rotate(12 437 775)" />
-    </g>
+    <text x="1052" y="806" font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-weight="700" font-size="26" fill="#1F2125">archlint</text>
+    <text x="1052" y="840" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="20" fill="#8B7B66">Module boundaries</text>
+    <text x="1052" y="866" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="20" fill="#8B7B66">in the Go server</text>
 
-    <!-- explorer -->
-    <rect x="456" y="500" width="270" height="580" fill="#101216" />
-    <text x="476" y="548" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="13" letter-spacing="1.8" fill="#8B909A">EXPLORER</text>
-    <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="15">
-      <path d="M476 581 L484 581 L480 587 Z" fill="#8F939B" />
-      <text x="494" y="589" font-size="13" font-weight="600" letter-spacing="0.8" fill="#C8CACE">KAKEHASHI</text>
-      <path d="M492 615 L500 615 L496 621 Z" fill="#8F939B" />
-      <text x="510" y="623" fill="#AEB2B9">proto</text>
-      <path d="M508 647 L516 647 L512 653 Z" fill="#8F939B" />
-      <text x="526" y="655" fill="#AEB2B9">kakehashi/activity/v1</text>
-      <rect x="460" y="664" width="262" height="32" rx="6" fill="#1D2026" />
-      <rect x="542" y="672" width="12" height="14" rx="2" fill="none" stroke="#C4513C" stroke-width="1.6" />
-      <text x="564" y="686" fill="#E8E9EB">activity.proto</text>
-      <rect x="542" y="704" width="12" height="14" rx="2" fill="none" stroke="#5A5F68" stroke-width="1.6" />
-      <text x="564" y="718" fill="#8F939B">navigation.proto</text>
-      <path d="M494 742 L500 746 L494 750 Z" fill="#8F939B" />
-      <text x="510" y="751" fill="#8F939B">server/internal/modules</text>
-      <path d="M494 774 L500 778 L494 782 Z" fill="#8F939B" />
-      <text x="510" y="783" fill="#8F939B">client/src/Modules</text>
-      <path d="M494 806 L500 810 L494 814 Z" fill="#8F939B" />
-      <text x="510" y="815" fill="#8F939B">docs</text>
-      <rect x="494" y="836" width="12" height="14" rx="2" fill="none" stroke="#5A5F68" stroke-width="1.6" />
-      <text x="516" y="850" fill="#8F939B">docker-compose.yml</text>
-      <rect x="494" y="868" width="12" height="14" rx="2" fill="none" stroke="#5A5F68" stroke-width="1.6" />
-      <text x="516" y="882" fill="#8F939B">CONTRIBUTING.md</text>
+    <rect x="1314" y="660" width="266" height="230" rx="16" fill="#FBF5EA" stroke="#E0D3BC" />
+    <rect x="1330" y="660" width="234" height="6" rx="3" fill="#C4513C" />
+    <g transform="translate(1342,694) scale(2)" fill="none">
+      <rect x="8" y="2" width="28" height="6" rx="2" stroke="#C4513C" stroke-width="2.5" />
+      <rect x="8" y="12" width="28" height="6" rx="2" stroke="#C4513C" stroke-width="2.5" />
+      <rect x="8" y="22" width="28" height="6" rx="2" stroke="#1C1E20" stroke-width="2.5" />
     </g>
+    <text x="1342" y="806" font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-weight="700" font-size="24" fill="#1F2125">ArchitectureTests</text>
+    <text x="1342" y="840" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="20" fill="#8B7B66">The three layers</text>
+    <text x="1342" y="866" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="20" fill="#8B7B66">in the WinUI client</text>
 
-    <!-- tabs -->
-    <rect x="726" y="500" width="874" height="46" fill="#101216" />
-    <rect x="726" y="500" width="220" height="46" fill="#16181E" />
-    <circle cx="750" cy="523" r="5" fill="#C4513C" />
-    <text x="766" y="529" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="15" fill="#E6E7E9">activity.proto</text>
-    <text x="968" y="529" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="15" fill="#7C818A"><tspan fill="#4EC9B0">{}</tspan>&#160;&#160;module.go</text>
-
-    <!-- editor -->
-    <rect x="726" y="546" width="874" height="534" fill="#16181E" />
-    <g font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-size="18">
-      <g fill="#4A4E57" text-anchor="end">
-        <text x="768" y="584">30</text><text x="768" y="617">31</text><text x="768" y="650">32</text><text x="768" y="683">33</text><text x="768" y="716">34</text><text x="768" y="749">35</text><text x="768" y="782">36</text><text x="768" y="815">37</text><text x="768" y="848">38</text><text x="768" y="881">39</text><text x="768" y="914">40</text><text x="768" y="947">41</text><text x="768" y="980">42</text><text x="768" y="1013">43</text><text x="768" y="1046">44</text><text x="768" y="1079">45</text>
-      </g>
-      <text x="792" y="584" xml:space="preserve" fill="#6A9955">// ActivityService is the activity module's entire remote surface.</text>
-      <text x="792" y="617" xml:space="preserve"><tspan fill="#569CD6">service </tspan><tspan fill="#4EC9B0">ActivityService </tspan><tspan fill="#C9CBD1">{</tspan></text>
-      <text x="792" y="650" xml:space="preserve" fill="#6A9955">  // ListActivity returns the caller's own entries, newest first.</text>
-      <text x="792" y="683" xml:space="preserve"><tspan fill="#C9CBD1">  </tspan><tspan fill="#569CD6">rpc </tspan><tspan fill="#DCDCAA">ListActivity</tspan><tspan fill="#C9CBD1">(</tspan><tspan fill="#4EC9B0">ListActivityRequest</tspan><tspan fill="#C9CBD1">) </tspan><tspan fill="#569CD6">returns</tspan><tspan fill="#C9CBD1"> (</tspan><tspan fill="#4EC9B0">ListActivityResponse</tspan><tspan fill="#C9CBD1">);</tspan></text>
-      <text x="792" y="716" xml:space="preserve" fill="#C9CBD1"> </text>
-      <text x="792" y="749" xml:space="preserve" fill="#6A9955">  // Report one thing the client knows about itself and</text>
-      <text x="792" y="782" xml:space="preserve" fill="#6A9955">  // the server cannot observe.</text>
-      <text x="792" y="815" xml:space="preserve"><tspan fill="#C9CBD1">  </tspan><tspan fill="#569CD6">rpc </tspan><tspan fill="#DCDCAA">RecordClientEvent</tspan><tspan fill="#C9CBD1">(</tspan><tspan fill="#4EC9B0">RecordClientEventRequest</tspan><tspan fill="#C9CBD1">)</tspan></text>
-      <text x="792" y="848" xml:space="preserve"><tspan fill="#C9CBD1">      </tspan><tspan fill="#569CD6">returns</tspan><tspan fill="#C9CBD1"> (</tspan><tspan fill="#4EC9B0">RecordClientEventResponse</tspan><tspan fill="#C9CBD1">);</tspan></text>
-      <text x="792" y="881" xml:space="preserve" fill="#C9CBD1">}</text>
-      <text x="792" y="914" xml:space="preserve" fill="#C9CBD1"> </text>
-      <text x="792" y="947" xml:space="preserve" fill="#6A9955">// Entry is one thing that happened.</text>
-      <text x="792" y="980" xml:space="preserve"><tspan fill="#569CD6">message </tspan><tspan fill="#4EC9B0">Entry </tspan><tspan fill="#C9CBD1">{</tspan></text>
-      <text x="792" y="1013" xml:space="preserve"><tspan fill="#C9CBD1">  </tspan><tspan fill="#569CD6">string </tspan><tspan fill="#9CDCFE">kind </tspan><tspan fill="#C9CBD1">= </tspan><tspan fill="#B5CEA8">1</tspan><tspan fill="#C9CBD1">;</tspan></text>
-      <text x="792" y="1046" xml:space="preserve"><tspan fill="#C9CBD1">  </tspan><tspan fill="#569CD6">string </tspan><tspan fill="#9CDCFE">device </tspan><tspan fill="#C9CBD1">= </tspan><tspan fill="#B5CEA8">2</tspan><tspan fill="#C9CBD1">;</tspan></text>
-      <text x="792" y="1079" xml:space="preserve"><tspan fill="#C9CBD1">  </tspan><tspan fill="#569CD6">string </tspan><tspan fill="#9CDCFE">ip_address </tspan><tspan fill="#C9CBD1">= </tspan><tspan fill="#B5CEA8">3</tspan><tspan fill="#C9CBD1">;</tspan></text>
+    <rect x="1604" y="660" width="266" height="230" rx="16" fill="#FBF5EA" stroke="#E0D3BC" />
+    <rect x="1620" y="660" width="234" height="6" rx="3" fill="#C4513C" />
+    <g transform="translate(1632,694) scale(2)" fill="none">
+      <path d="M12 3 5 15l7 12" stroke="#C4513C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M32 3l7 12-7 12" stroke="#C4513C" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" />
+      <circle cx="22" cy="15" r="3" fill="#1C1E20" />
     </g>
+    <text x="1632" y="806" font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-weight="700" font-size="26" fill="#1F2125">buf breaking</text>
+    <text x="1632" y="840" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="20" fill="#8B7B66">The contract</text>
+    <text x="1632" y="866" font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif" font-size="20" fill="#8B7B66">between the halves</text>
   </g>
 
-  <!-- ── floating cards, left column ─────────────────────────────────────────────────────── -->
-  <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif">
-    <rect x="154" y="478" width="320" height="174" rx="20" fill="#3A2F21" opacity="0.18" />
-    <rect x="148" y="486" width="332" height="174" rx="26" fill="#3A2F21" opacity="0.10" />
-    <rect x="158" y="470" width="312" height="174" rx="16" fill="url(#card)" stroke="#2B2824" />
-    <text x="184" y="512" font-size="18" fill="#9BA0AA">One repository</text>
-    <text x="184" y="586" font-weight="700" font-size="72" fill="url(#num)">2</text>
-    <text x="238" y="586" font-size="26" fill="#C9CBCF">halves</text>
-    <text x="184" y="622" font-size="15" fill="#767B84">WinUI 3 client · Go server</text>
-
-    <!-- the little debug toolbar -->
-    <rect x="154" y="684" width="260" height="52" rx="14" fill="#3A2F21" opacity="0.18" />
-    <rect x="158" y="676" width="252" height="52" rx="12" fill="#14161B" stroke="#2B2824" />
-    <g stroke="#7C818A" stroke-width="2.4" fill="none">
-      <path d="M186 692 L186 712 M195 692 L195 712" />
-      <path d="M230 694 L246 702 L230 710 Z" />
-      <path d="M282 694 L282 710 M276 704 L282 711 L288 704" />
-      <path d="M322 710 L322 694 M316 700 L322 693 L328 700" />
-      <circle cx="358" cy="702" r="9" stroke="#7BC97C" />
-    </g>
-    <rect x="382" y="695" width="14" height="14" rx="3" fill="#C4513C" />
-
-    <!-- server console, cropped by the bottom like the reference's debug console -->
-    <rect x="86" y="788" width="380" height="360" rx="20" fill="#3A2F21" opacity="0.20" />
-    <rect x="90" y="780" width="372" height="360" rx="16" fill="#101216" stroke="#2B2824" />
-    <text x="116" y="818" font-size="13" letter-spacing="1.8" fill="#8B909A">SERVER CONSOLE</text>
-    <g font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace" font-size="15">
-      <text x="116" y="854" xml:space="preserve"><tspan fill="#8A8D95">$ </tspan><tspan fill="#C9CBD1">docker compose up -d</tspan></text>
-      <text x="116" y="884" xml:space="preserve"><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#8A8D95"> mssql healthy   </tspan><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#8A8D95"> mongo healthy</tspan></text>
-      <text x="116" y="914" xml:space="preserve" fill="#7BC97C">booted · 6 modules · :8080</text>
-      <text x="116" y="944" xml:space="preserve" fill="#6E7480">grpc · grpc-web · json, one port</text>
-      <text x="116" y="974" xml:space="preserve" fill="#6E7480">oidc issuer ready · in-app sign-in</text>
-      <text x="116" y="1004" xml:space="preserve" fill="#6E7480">activity retention · 90 days</text>
-      <rect x="116" y="1022" width="9" height="18" fill="#C4513C" />
-    </g>
-  </g>
-
-  <!-- ── floating cards, right column ────────────────────────────────────────────────────── -->
-  <g font-family="'Segoe UI Variable Text','Segoe UI',system-ui,Arial,sans-serif">
-    <rect x="1526" y="478" width="320" height="174" rx="20" fill="#3A2F21" opacity="0.18" />
-    <rect x="1520" y="486" width="332" height="174" rx="26" fill="#3A2F21" opacity="0.10" />
-    <rect x="1530" y="470" width="312" height="174" rx="16" fill="url(#card)" stroke="#2B2824" />
-    <text x="1556" y="512" font-size="18" fill="#9BA0AA">Green before merge</text>
-    <text x="1556" y="586" font-weight="700" font-size="72" fill="url(#num)">3</text>
-    <text x="1610" y="586" font-size="26" fill="#C9CBCF">gates</text>
-    <text x="1556" y="622" font-size="15" fill="#767B84">archlint · arch-tests · buf breaking</text>
-
-    <!-- the gates panel, where the reference lists branches -->
-    <rect x="1556" y="704" width="360" height="310" rx="20" fill="#3A2F21" opacity="0.20" />
-    <rect x="1560" y="696" width="352" height="310" rx="16" fill="#131418" stroke="#2B2824" />
-    <g stroke="#7C818A" stroke-width="1.8" fill="none">
-      <circle cx="1590" cy="734" r="4" /><circle cx="1590" cy="752" r="4" /><path d="M1590 738 L1590 748" />
-      <circle cx="1590" cy="830" r="4" /><circle cx="1590" cy="848" r="4" /><path d="M1590 834 L1590 844" />
-      <circle cx="1590" cy="926" r="4" /><circle cx="1590" cy="944" r="4" /><path d="M1590 930 L1590 940" />
-    </g>
-    <g font-family="Consolas,'Cascadia Code','Cascadia Mono',Menlo,monospace">
-      <rect x="1612" y="726" width="98" height="30" rx="7" fill="#1D2026" />
-      <text x="1626" y="747" font-size="15" fill="#D3D5D9">archlint</text>
-      <text x="1612" y="786" font-size="13" xml:space="preserve"><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#767B84"> 61 packages, no violations</tspan></text>
-
-      <rect x="1612" y="822" width="188" height="30" rx="7" fill="#1D2026" />
-      <text x="1626" y="843" font-size="15" fill="#D3D5D9">architecture-tests</text>
-      <text x="1612" y="882" font-size="13" xml:space="preserve"><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#767B84"> three layers, no leaks</tspan></text>
-
-      <rect x="1612" y="918" width="132" height="30" rx="7" fill="#1D2026" />
-      <text x="1626" y="939" font-size="15" fill="#D3D5D9">buf breaking</text>
-      <text x="1612" y="978" font-size="13" xml:space="preserve"><tspan fill="#7BC97C">&#10003;</tspan><tspan fill="#767B84"> the wire stays compatible</tspan></text>
-    </g>
-  </g>
+  <!-- ground -->
+  <rect x="0" y="1028" width="2000" height="52" fill="#17181B" />
 </svg>
