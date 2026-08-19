@@ -14,6 +14,25 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
+## template/v1.1.1 — 2026-08-19
+
+| | |
+| --- | --- |
+| Requires CLI | `>=1.0.0 <2.0.0` — unchanged |
+
+### Fixed
+
+- The Account page was locked for every account that ever signed in, administrators included, and
+  no administrator action could unlock it. The client withheld any module missing its
+  `<module>.access` grant, and the account module's routes are deliberately not gated on
+  `account.access` — signing in cannot require a permission you only have after signing in — so the
+  key it waited for is one the server never mints and no role can hold. A required module is no
+  longer the administrator's to withhold.
+
+The Home page card was the visible symptom: `LOCKED`, with the click swallowed. The page itself
+stayed reachable from the navigation pane's account row and the account flyout, which is why the
+pane and the card disagreed.
+
 ## template/v1.1.0 — 2026-08-18
 
 | | |
