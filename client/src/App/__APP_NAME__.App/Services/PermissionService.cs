@@ -84,6 +84,36 @@ public sealed partial class PermissionService : IPermissionService
 
     public event EventHandler? GrantsChanged;
 
+    /// <summary>Whether this grant set withholds the module.</summary>
+    /// <remarks>
+    /// Public and static because it is the decision in this class worth pinning, and the call that
+    /// feeds it cannot be substituted — the generated client returns <c>AsyncUnaryCall</c>, which
+    /// no substitute constructs cleanly. Untested, this rule locked every account, administrators
+    /// included, out of its own account page.
+    /// <para>
+    /// A required module is never withheld, whatever the grants say. Its routes are not gated on
+    /// <c>&lt;module&gt;.access</c> — signing in cannot require a permission you only have after
+    /// signing in — so the key it would wait for is one the server never mints and no administrator
+    /// can assign, which locks the module for everybody forever. The account module's own
+    /// <c>navigation.go</c> steps around that trap for its navigation destination; this is the same
+    /// trap one layer up.
+    /// </para>
+    /// </remarks>
+    public static bool Withholds(
+        ModuleDescriptor descriptor, IReadOnlyDictionary<string, string> grants)
+    {
+        ArgumentNullException.ThrowIfNull(descriptor);
+        ArgumentNullException.ThrowIfNull(grants);
+
+        // Required is not the administrator's to withhold: see the remarks above.
+        if (descriptor.IsRequired || descriptor.AssignmentId is not { } id)
+        {
+            return false;
+        }
+
+        return !grants.ContainsKey($"{id}.access");
+    }
+
     public bool Allows(string permissionKey)
     {
         return _grants.ContainsKey(permissionKey);
@@ -122,11 +152,9 @@ public sealed partial class PermissionService : IPermissionService
             var withheld = new List<string>();
             foreach (var module in _registry.All)
             {
-                var serverId = module.Descriptor.AssignmentId;
-
-                if (serverId is not null && !grants.ContainsKey($"{serverId}.access"))
+                if (module.Descriptor.AssignmentId is { } id && Withholds(module.Descriptor, grants))
                 {
-                    withheld.Add(serverId);
+                    withheld.Add(id);
                 }
             }
 
