@@ -90,6 +90,14 @@ public sealed partial class PermissionService : IPermissionService
     /// feeds it cannot be substituted — the generated client returns <c>AsyncUnaryCall</c>, which
     /// no substitute constructs cleanly. Untested, this rule locked every account, administrators
     /// included, out of its own account page.
+    /// <para>
+    /// A required module is never withheld, whatever the grants say. Its routes are not gated on
+    /// <c>&lt;module&gt;.access</c> — signing in cannot require a permission you only have after
+    /// signing in — so the key it would wait for is one the server never mints and no administrator
+    /// can assign, which locks the module for everybody forever. The account module's own
+    /// <c>navigation.go</c> steps around that trap for its navigation destination; this is the same
+    /// trap one layer up.
+    /// </para>
     /// </remarks>
     public static bool Withholds(
         ModuleDescriptor descriptor, IReadOnlyDictionary<string, string> grants)
@@ -97,11 +105,7 @@ public sealed partial class PermissionService : IPermissionService
         ArgumentNullException.ThrowIfNull(descriptor);
         ArgumentNullException.ThrowIfNull(grants);
 
-        // A required module is never withheld, whatever the grants say. Its routes are not gated on
-        // <module>.access — signing in cannot require a permission you only have after signing in —
-        // so the key it would wait for is one the server never mints and no administrator can
-        // assign. The account module's own navigation.go steps around that trap; this is the same
-        // trap, one layer up.
+        // Required is not the administrator's to withhold: see the remarks above.
         if (descriptor.IsRequired || descriptor.AssignmentId is not { } id)
         {
             return false;

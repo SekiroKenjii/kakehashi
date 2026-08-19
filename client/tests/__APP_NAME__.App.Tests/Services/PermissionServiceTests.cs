@@ -21,9 +21,8 @@ public sealed class PermissionServiceTests
     [Fact]
     public void ARequiredModuleIsNeverWithheld()
     {
-        // The regression: the account module is required and carries an assignment id, but nothing
-        // server-side mints account.access — no route checks it, so it is not in the catalogue and
-        // no administrator can assign it. Waiting for it locked the account page for everybody.
+        // The regression: nothing server-side mints account.access, so waiting for it locked the
+        // account page for everybody — administrators included, since it is not assignable at all.
         var account = new ModuleDescriptor(
             "Account", "Identity and sessions.", IsRequired: true, AssignmentId: "account");
 
