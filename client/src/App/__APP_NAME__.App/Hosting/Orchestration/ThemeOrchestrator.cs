@@ -16,7 +16,7 @@ public sealed class ThemeOrchestrator : IStartupOrchestrator
         _themeService = themeService;
     }
 
-    public int Order => 30;
+    public int Order => StartupOrder.Theme;
 
     public string Name => nameof(ThemeOrchestrator);
 

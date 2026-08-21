@@ -20,7 +20,7 @@ public sealed class AccentOrchestrator : IStartupOrchestrator
         _accentService = accentService;
     }
 
-    public int Order => 5;
+    public int Order => StartupOrder.Accent;
 
     public string Name => nameof(AccentOrchestrator);
 

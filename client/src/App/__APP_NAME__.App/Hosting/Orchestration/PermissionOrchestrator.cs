@@ -29,7 +29,7 @@ public sealed class PermissionOrchestrator : IStartupOrchestrator
         _layout = layout;
     }
 
-    public int Order => 17;
+    public int Order => StartupOrder.Permission;
 
     public string Name => nameof(PermissionOrchestrator);
 
