@@ -135,6 +135,7 @@ internal static class AppHost
     {
         services.AddSingleton<StartupContext>();
         services.AddSingleton<AppOrchestrator>();
+        services.AddSingleton<IStartupOrchestrator, AccentOrchestrator>();
         services.AddSingleton<IStartupOrchestrator, SplashOrchestrator>();
         services.AddSingleton<IStartupOrchestrator, AuthenticationOrchestrator>();
         services.AddSingleton<IStartupOrchestrator, PermissionOrchestrator>();
