@@ -1,6 +1,10 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
+using System.Threading.Tasks;
 using __ROOT_NAMESPACE__.App.Plugins;
+using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.App.UI;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.SharedKernel;
@@ -27,6 +31,7 @@ public sealed class PluginsViewModelTests : IDisposable
     private readonly IModuleRegistry _modules = Substitute.For<IModuleRegistry>();
     private readonly IFileOpenService _files = Substitute.For<IFileOpenService>();
     private readonly IDialogService _dialogs = Substitute.For<IDialogService>();
+    private readonly IPluginCatalogService _catalogService = Substitute.For<IPluginCatalogService>();
     private readonly PluginCatalog _catalog = new();
 
     public void Dispose()
@@ -42,7 +47,8 @@ public sealed class PluginsViewModelTests : IDisposable
         var installer = new PluginInstaller(new PluginPaths(_root), publisher: string.Empty);
         var scaffolder = new PluginScaffolder(_root);
 
-        return new PluginsViewModel(_modules, _catalog, installer, _files, _dialogs, scaffolder);
+        return new PluginsViewModel(
+            _modules, _catalog, installer, _files, _dialogs, scaffolder, _catalogService);
     }
 
     private static IModule Module(string name, string display, bool required)
@@ -250,5 +256,156 @@ public sealed class PluginsViewModelTests : IDisposable
         Assert.Equal("2", cards["Modules"].Value);
         Assert.Equal("1", cards["Unofficial"].Value);
         Assert.Equal($"v{PluginSdkVersion.Current}", cards["Host SDK"].Value);
+    }
+
+    private static CatalogPlugin Offered(string id, string version)
+    {
+        return new CatalogPlugin(
+            id, "Weather", "Tells you the weather.", "Somebody Else",
+            version, "1.0", 2 * 1024 * 1024, new string('a', 64), DateTimeOffset.UtcNow);
+    }
+
+    private void Offers(params CatalogPlugin[] plugins)
+    {
+        _catalogService
+            .ListAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Success<IReadOnlyList<CatalogPlugin>>(plugins));
+    }
+
+    [Fact]
+    public async Task LoadCatalog_ShowsWhatTheDeploymentOffers()
+    {
+        Compose();
+        Offers(Offered("weather", "1.0.0"));
+
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCatalogAsync();
+
+        Assert.Single(viewModel.CatalogItems);
+        Assert.Equal(CatalogItemState.Available, viewModel.CatalogItems[0].State);
+        Assert.True(viewModel.CatalogItems[0].CanInstall);
+    }
+
+    /// <summary>
+    /// A row that offers to install what is already here would download it, prompt for it and stage
+    /// it over itself — so the state the installation is in decides what the row offers.
+    /// </summary>
+    [Fact]
+    public async Task LoadCatalog_WhatIsAlreadyInstalledIsNotOfferedAgain()
+    {
+        Compose();
+        AddInstalled("weather", "Weather", nameof(PluginTrustLevel.Unofficial));
+        Offers(Offered("weather", "1.0.0"));
+
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCatalogAsync();
+
+        Assert.Equal(CatalogItemState.Installed, viewModel.CatalogItems[0].State);
+        Assert.False(viewModel.CatalogItems[0].CanInstall);
+    }
+
+    [Fact]
+    public async Task LoadCatalog_ANewerVersionIsAnUpdate()
+    {
+        Compose();
+        AddInstalled("weather", "Weather", nameof(PluginTrustLevel.Unofficial));
+        Offers(Offered("weather", "1.1.0"));
+
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCatalogAsync();
+
+        Assert.Equal(CatalogItemState.UpdateAvailable, viewModel.CatalogItems[0].State);
+        Assert.True(viewModel.CatalogItems[0].CanInstall);
+    }
+
+    /// <summary>Downloading the same thing twice before a restart would stage it over itself.</summary>
+    [Fact]
+    public async Task LoadCatalog_WhatIsAlreadyStagedIsNotOfferedAgain()
+    {
+        Compose();
+        _catalog.AddAwaitingRestart(new PluginRecord {
+            PluginID = "weather",
+            DisplayName = "Weather",
+            StagedVersion = "1.1.0",
+        });
+        Offers(Offered("weather", "1.1.0"));
+
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCatalogAsync();
+
+        Assert.Equal(CatalogItemState.Staged, viewModel.CatalogItems[0].State);
+        Assert.False(viewModel.CatalogItems[0].CanInstall);
+    }
+
+    [Fact]
+    public async Task LoadCatalog_AServerRefusalIsSaidWhereTheListWouldBe()
+    {
+        Compose();
+        _catalogService
+            .ListAsync(Arg.Any<CancellationToken>())
+            .Returns(Result.Failure<IReadOnlyList<CatalogPlugin>>(
+                new Error("Unavailable", "The plugin catalog could not be reached.")));
+
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCatalogAsync();
+
+        Assert.Empty(viewModel.CatalogItems);
+        Assert.True(viewModel.HasCatalogMessage);
+        Assert.Equal("The plugin catalog could not be reached.", viewModel.CatalogMessage);
+    }
+
+    [Fact]
+    public async Task LoadCatalog_AnEmptyCatalogSaysSoRatherThanShowingNothing()
+    {
+        Compose();
+        Offers();
+
+        var viewModel = CreateViewModel();
+        await viewModel.LoadCatalogAsync();
+
+        Assert.True(viewModel.HasCatalogMessage);
+    }
+
+    /// <summary>
+    /// A download that did not arrive intact must not reach the prompt: the prompt is where a user
+    /// decides to run code, and there is nothing there to decide about.
+    /// </summary>
+    [Fact]
+    public async Task PrepareInstallFromCatalog_ARefusedDownloadNeverOpensThePrompt()
+    {
+        Compose();
+        var offered = Offered("weather", "1.0.0");
+        _catalogService
+            .DownloadAsync(offered, Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(Result.Failure(new Error(
+                "Plugin.Download.DigestMismatch", "What arrived is not what the catalog published.")));
+
+        var viewModel = CreateViewModel();
+        var prepared = await viewModel.PrepareInstallFromCatalogAsync(
+            new CatalogListItem(offered, CatalogItemState.Available));
+
+        Assert.False(prepared);
+        Assert.Null(viewModel.Pending);
+        Assert.True(viewModel.HasError);
+    }
+
+    [Fact]
+    public void Tab_ShowsExactlyOneOfTheThree()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+
+        Assert.True(viewModel.ShowingInstalled);
+
+        foreach (var tab in new[] { "Installed", "Browse catalog", "Develop" })
+        {
+            viewModel.Tab = tab;
+
+            var showing = new[] {
+                viewModel.ShowingInstalled, viewModel.ShowingBrowse, viewModel.ShowingDevelop,
+            };
+
+            Assert.Single(showing, shown => shown);
+        }
     }
 }
