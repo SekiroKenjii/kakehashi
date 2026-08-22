@@ -39,5 +39,10 @@ public static class HostNavigation
             Group = "Administration",
             RequiredPermission = PermissionKeys.ManageNavigation,
         },
+        new NavigationItem("Plugins", "", typeof(PluginsPage)) {
+            Id = "plugins.library",
+            Group = "Administration",
+            RequiredPermission = PermissionKeys.ManagePlugins,
+        },
     ];
 }
