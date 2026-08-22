@@ -46,6 +46,15 @@ const (
 	// entire list the client write path accepts — see ClientReportableKinds.
 	KindAppUpdated   = "AppUpdated"
 	KindThemeChanged = "ThemeChanged"
+
+	// KindPluginInstalled is a package this deployment's own catalog offered.
+	KindPluginInstalled = "PluginInstalled"
+
+	// KindPluginSideloaded is a package that came from anywhere else. Its own kind rather than an
+	// attribute of KindPluginInstalled because clients pick a label and an icon by kind, and this
+	// is the one a reader acts on: a plugin runs with the whole application's privileges, and
+	// nobody this deployment answers for chose to offer this one.
+	KindPluginSideloaded = "PluginSideloaded"
 )
 
 // clientReportable is the closed set of kinds a client may report about itself. The server never
@@ -97,6 +106,8 @@ var categories = map[string]string{
 	KindSessionRevokedByAdmin: CategorySecurity,
 	KindAppUpdated:            CategorySystem,
 	KindThemeChanged:          CategorySystem,
+	KindPluginInstalled:       CategorySystem,
+	KindPluginSideloaded:      CategorySecurity,
 }
 
 // CategoryOf answers which chip an entry belongs under. An unrecognised kind — newer than this
