@@ -99,6 +99,28 @@
     <PackageReference Include="WinUIEx" />
   </ItemGroup>
 
+  <!--
+    The plugin project templates, embedded rather than copied: an application that can scaffold a
+    plugin has to be able to do it from wherever it was installed. LogicalName is explicit so the
+    name the scaffolder asks for does not depend on the root namespace.
+
+    None of these is named for the extension it produces. A resource whose file name contains ".cs"
+    is dropped from the compilation in this project - it survives to the item list and is missing
+    from the assembly - so the template is named for what it is and the scaffolder decides where it
+    lands.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Plugins\Templates\Manifest.tmpl" LogicalName="Templates.Manifest.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\DirectoryBuildProps.tmpl" LogicalName="Templates.DirectoryBuildProps.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\Readme.tmpl" LogicalName="Templates.Readme.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\GitIgnore.tmpl" LogicalName="Templates.GitIgnore.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\ModuleProject.tmpl" LogicalName="Templates.ModuleProject.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\ModuleEntryPoint.tmpl" LogicalName="Templates.ModuleEntryPoint.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\PageMarkup.tmpl" LogicalName="Templates.PageMarkup.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\PageCodeBehind.tmpl" LogicalName="Templates.PageCodeBehind.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\PageViewModel.tmpl" LogicalName="Templates.PageViewModel.tmpl" />
+  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\__APP_NAME__.App.Infrastructure\__APP_NAME__.App.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.Interoperability\__APP_NAME__.Interoperability.csproj" />

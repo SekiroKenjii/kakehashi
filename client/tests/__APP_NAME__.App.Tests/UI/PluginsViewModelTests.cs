@@ -40,8 +40,9 @@ public sealed class PluginsViewModelTests : IDisposable
     private PluginsViewModel CreateViewModel()
     {
         var installer = new PluginInstaller(new PluginPaths(_root), publisher: string.Empty);
+        var scaffolder = new PluginScaffolder(_root);
 
-        return new PluginsViewModel(_modules, _catalog, installer, _files, _dialogs);
+        return new PluginsViewModel(_modules, _catalog, installer, _files, _dialogs, scaffolder);
     }
 
     private static IModule Module(string name, string display, bool required)

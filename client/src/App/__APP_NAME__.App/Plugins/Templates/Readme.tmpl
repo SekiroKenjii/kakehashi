@@ -1,0 +1,45 @@
+# {{DisplayName}}
+
+A plugin for __APP_TITLE__, built against host SDK v{{HostSdk}}.
+
+## Build
+
+```sh
+dotnet build {{AssemblyName}}/{{AssemblyName}}.csproj -p:Platform=x64
+```
+
+The project references the application's assemblies from the directory it was scaffolded against, so
+it compiles against exactly the ones it will be loaded beside. `Private=false` on every one of them:
+the host already has these, and a package carrying its own copies would load a second set of the
+types the host is holding.
+
+Two of them, deliberately. The application's shared controls — its page header, its cards — are
+available at runtime, but referring to them by path brings their whole package graph into this
+project to restore. A starter project uses the framework's own controls; add the reference and its
+packages when you want the shared ones.
+
+## What is where
+
+| | |
+| --- | --- |
+| `manifest.json` | what the package declares, and the only thing read before any of its code runs |
+| `{{AssemblyName}}/{{Module}}Module.cs` | the entry point the host activates |
+| `{{AssemblyName}}/Views/` | pages, whose compiled XAML goes into this assembly's own resource index |
+
+`DisableEmbeddedXbf` is set to `false` in the project file. That is what puts the compiled XAML in
+the resource index the host loads; without it the pages build and then cannot be found at runtime.
+
+## Rules the host enforces at load
+
+- A page type's name ends in `Page`, and its key — the name without that suffix — may not be one the
+  application already answers to.
+- `RegisterServices` is additive. A registration that removes or replaces something the host
+  registered is rolled back and the plugin does not load.
+- The manifest's `minHostSdk` is checked before the assembly is opened, so a package built against a
+  later host is refused with a sentence rather than failing inside XAML.
+
+## Install it
+
+Build, then package the output and install it from the application's Plugins screen. It loads at the
+next launch: a plugin's services are registered while the container is still open, which is earlier
+than any screen exists.

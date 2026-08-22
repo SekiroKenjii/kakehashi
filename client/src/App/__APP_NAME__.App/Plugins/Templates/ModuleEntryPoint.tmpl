@@ -1,0 +1,43 @@
+using System.Collections.Generic;
+using {{RootNamespace}}.ViewModels;
+using {{RootNamespace}}.Views;
+using __ROOT_NAMESPACE__.UI.Contracts;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {{RootNamespace}};
+
+/// <summary>The {{DisplayName}} module.</summary>
+public sealed class {{Module}}Module : IModule
+{
+    /// <summary>The name the host keys attachment by. It matches the manifest.</summary>
+    public string Name => "{{Module}}";
+
+    public ModuleDescriptor Descriptor => new(
+        "{{DisplayName}}",
+        "Describe what this module is for.",
+        IsRequired: false);
+
+    public void RegisterServices(IServiceCollection services)
+    {
+        // Additive only. Removing or replacing what the host registered is refused at load.
+        services.AddTransient<{{Module}}PageViewModel>();
+        services.AddTransient<{{Module}}Page>();
+    }
+
+    /// <summary>
+    /// The screens this module adds.
+    /// </summary>
+    /// <remarks>
+    /// Id is left empty on purpose. A destination with an id is one the deployment arranges from
+    /// the server's navigation table, and a plugin has no row there; an empty id keeps the entry
+    /// placed by this client, under the heading Group names.
+    /// </remarks>
+    public IReadOnlyList<NavigationItem> GetNavigationItems()
+    {
+        return [
+            new NavigationItem("{{DisplayName}}", "\uE7C3", typeof({{Module}}Page)) {
+                Group = "Utilities",
+            },
+        ];
+    }
+}

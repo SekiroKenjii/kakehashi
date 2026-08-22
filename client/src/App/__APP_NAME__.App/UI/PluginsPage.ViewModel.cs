@@ -83,6 +83,7 @@ public sealed partial class PluginsViewModel : ViewModel
     private readonly PluginInstaller _installer;
     private readonly IFileOpenService _files;
     private readonly IDialogService _dialogs;
+    private readonly PluginScaffolder _scaffolder;
 
     private List<PluginListItem> _all = [];
 
@@ -91,6 +92,9 @@ public sealed partial class PluginsViewModel : ViewModel
 
     [ObservableProperty]
     private string _filter = _allFilter;
+
+    [ObservableProperty]
+    private string _tab = "Installed";
 
     [ObservableProperty]
     private string _errorMessage = string.Empty;
@@ -107,18 +111,21 @@ public sealed partial class PluginsViewModel : ViewModel
         PluginCatalog catalog,
         PluginInstaller installer,
         IFileOpenService files,
-        IDialogService dialogs)
+        IDialogService dialogs,
+        PluginScaffolder scaffolder)
     {
         ArgumentNullException.ThrowIfNull(modules);
         ArgumentNullException.ThrowIfNull(catalog);
         ArgumentNullException.ThrowIfNull(installer);
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(dialogs);
+        ArgumentNullException.ThrowIfNull(scaffolder);
         _modules = modules;
         _catalog = catalog;
         _installer = installer;
         _files = files;
         _dialogs = dialogs;
+        _scaffolder = scaffolder;
     }
 
     public ObservableCollection<PluginListItem> Items { get; } = [];
@@ -129,6 +136,11 @@ public sealed partial class PluginsViewModel : ViewModel
         [_allFilter, "Built-in", "Verified", "Unofficial", "Disabled"];
 
     public bool HasError => ErrorMessage.Length > 0;
+
+    /// <summary>Which tab the page is showing. The strip is the only thing that sets it.</summary>
+    public bool ShowingDevelop => Tab == "Develop";
+
+    public bool ShowingInstalled => !ShowingDevelop;
 
     /// <summary>Whether anything is waiting for the application to be restarted.</summary>
     public bool RestartRequired => _catalog.RestartRequired;
@@ -321,6 +333,12 @@ public sealed partial class PluginsViewModel : ViewModel
     partial void OnSearchTextChanged(string value) => Apply();
 
     partial void OnFilterChanged(string value) => Apply();
+
+    partial void OnTabChanged(string value)
+    {
+        OnPropertyChanged(nameof(ShowingDevelop));
+        OnPropertyChanged(nameof(ShowingInstalled));
+    }
 
     partial void OnConsentGivenChanged(bool value) => OnPropertyChanged(nameof(CanInstallPending));
 

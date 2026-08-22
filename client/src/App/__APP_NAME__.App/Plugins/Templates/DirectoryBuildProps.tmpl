@@ -1,0 +1,19 @@
+<Project>
+
+  <!--
+    Where this plugin's host lives. The generated projects reference the application's assemblies
+    from here rather than from a package feed: the application ships them beside its executable, and
+    a plugin has to compile against the exact ones it will be loaded next to.
+  -->
+  <PropertyGroup>
+    <HostDirectory>{{HostDirectory}}</HostDirectory>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>disable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+</Project>
