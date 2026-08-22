@@ -7,6 +7,7 @@ import (
 	"__GO_MODULE__/server/internal/app"
 	accountapi "__GO_MODULE__/server/internal/modules/account/api"
 	activityapi "__GO_MODULE__/server/internal/modules/activity/api"
+	pluginsapi "__GO_MODULE__/server/internal/modules/plugins/api"
 )
 
 // The module's entire foreign surface: this is the only file under internal/modules/activity/ that
@@ -18,7 +19,7 @@ import (
 // editing notesapi for this module's benefit. When a note event carries an actor field, its
 // closures land in this file.
 
-// subscribe registers this module's interest in the account module's facts.
+// subscribe registers this module's interest in the facts other modules publish.
 //
 // From Register rather than Start. Subscriptions are permanent — there is no Unsubscribe — so
 // they are made once, at mount, never from a request handler. Register's ban on resolving other
@@ -56,6 +57,16 @@ func (m *Module) subscribe(k *app.Kernel) {
 	})
 	app.Subscribe(k, func(ctx context.Context, e accountapi.PasswordChanged) {
 		m.record(ctx, e.UserID, activityapi.KindPasswordChanged, "", "", "", e.At)
+	})
+
+	// The source becomes the kind rather than a field, and a source this build does not recognise
+	// reads as the louder one: docs/ACTIVITY.md says why, and why neither row names the plugin.
+	app.Subscribe(k, func(ctx context.Context, e pluginsapi.Installed) {
+		kind := activityapi.KindPluginSideloaded
+		if e.Source == pluginsapi.SourceCatalog {
+			kind = activityapi.KindPluginInstalled
+		}
+		m.record(ctx, e.UserID, kind, "", "", "", e.At)
 	})
 }
 

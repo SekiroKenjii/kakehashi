@@ -19,4 +19,6 @@ public static class ActivityKinds
     public const string PasswordChanged = "PasswordChanged";
     public const string AppUpdated = "AppUpdated";
     public const string ThemeChanged = "ThemeChanged";
+    public const string PluginInstalled = "PluginInstalled";
+    public const string PluginSideloaded = "PluginSideloaded";
 }
