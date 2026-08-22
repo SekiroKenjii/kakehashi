@@ -21,7 +21,7 @@ public sealed class AuthenticationOrchestrator : IStartupOrchestrator
         _gates = gates;
     }
 
-    public int Order => 15;
+    public int Order => StartupOrder.Authentication;
 
     public string Name => nameof(AuthenticationOrchestrator);
 

@@ -18,7 +18,7 @@ public sealed class ShellOrchestrator : IStartupOrchestrator
         _context = context;
     }
 
-    public int Order => 20;
+    public int Order => StartupOrder.Shell;
 
     public string Name => nameof(ShellOrchestrator);
 

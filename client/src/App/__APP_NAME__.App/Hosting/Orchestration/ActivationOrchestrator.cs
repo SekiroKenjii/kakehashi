@@ -13,7 +13,7 @@ public sealed class ActivationOrchestrator : IStartupOrchestrator
         _context = context;
     }
 
-    public int Order => 40;
+    public int Order => StartupOrder.Activation;
 
     public string Name => nameof(ActivationOrchestrator);
 
