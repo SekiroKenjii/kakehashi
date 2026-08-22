@@ -1,0 +1,314 @@
+<Page
+    x:Class="__ROOT_NAMESPACE__.App.UI.PluginsPage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:behaviors="using:__ROOT_NAMESPACE__.UI.Common.Behaviors"
+    xmlns:controls="using:__ROOT_NAMESPACE__.UI.Common.Controls"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:local="using:__ROOT_NAMESPACE__.App.UI"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    behaviors:NavigationViewHeaderBehavior.HeaderMode="Never"
+    mc:Ignorable="d">
+
+    <Page.Resources>
+        <Style x:Key="CardStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource CardBackgroundFillColorDefaultBrush}" />
+            <Setter Property="BorderBrush" Value="{ThemeResource CardStrokeColorDefaultBrush}" />
+            <Setter Property="BorderThickness" Value="1" />
+            <Setter Property="CornerRadius" Value="8" />
+        </Style>
+        <Style x:Key="BadgeStyle" TargetType="Border">
+            <Setter Property="Background" Value="{ThemeResource SubtleFillColorSecondaryBrush}" />
+            <Setter Property="CornerRadius" Value="10" />
+            <Setter Property="Padding" Value="9,3" />
+            <Setter Property="VerticalAlignment" Value="Center" />
+        </Style>
+        <Style x:Key="MonoTextStyle" TargetType="TextBlock">
+            <Setter Property="FontFamily" Value="Cascadia Mono,Consolas" />
+            <Setter Property="FontSize" Value="12" />
+            <Setter Property="Foreground" Value="{ThemeResource TextFillColorTertiaryBrush}" />
+        </Style>
+    </Page.Resources>
+
+    <Grid Padding="24,12,24,20" RowSpacing="12">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <controls:PageHeader
+            Grid.Row="0"
+            Section="Administration"
+            Title="Plugins">
+            <StackPanel Orientation="Horizontal" Spacing="2">
+                <Button
+                    AutomationProperties.Name="Install from file"
+                    Click="OnInstallFromFileClick"
+                    Style="{StaticResource AccentToolbarButtonStyle}">
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <FontIcon FontSize="14" Glyph="&#xE7B8;" />
+                        <TextBlock Text="Install from file" />
+                    </StackPanel>
+                </Button>
+                <Border Style="{StaticResource CommandBarDividerStyle}" />
+                <Button
+                    AutomationProperties.Name="Refresh"
+                    Command="{x:Bind ViewModel.LoadCommand}"
+                    Style="{StaticResource ToolbarButtonStyle}"
+                    ToolTipService.ToolTip="Refresh">
+                    <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                </Button>
+            </StackPanel>
+        </controls:PageHeader>
+
+        <InfoBar
+            Grid.Row="1"
+            IsClosable="False"
+            IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+            Severity="Error" />
+
+        <!--
+            Staged work never touches what is running, so this is the only place the difference is
+            visible: the change is real, and it is not in effect yet.
+        -->
+        <InfoBar
+            Grid.Row="2"
+            IsClosable="False"
+            IsOpen="{x:Bind ViewModel.RestartRequired, Mode=OneWay}"
+            Message="{x:Bind ViewModel.RestartMessage, Mode=OneWay}"
+            Severity="Warning"
+            Title="Restart required">
+            <InfoBar.ActionButton>
+                <Button
+                    AutomationProperties.Name="Restart now"
+                    Click="OnRestartClick"
+                    Content="Restart now" />
+            </InfoBar.ActionButton>
+        </InfoBar>
+
+        <ItemsRepeater Grid.Row="3" ItemsSource="{x:Bind ViewModel.StatCards}">
+            <ItemsRepeater.ItemTemplate>
+                <DataTemplate x:DataType="controls:StatCard">
+                    <controls:StatCardView Card="{x:Bind}" />
+                </DataTemplate>
+            </ItemsRepeater.ItemTemplate>
+            <ItemsRepeater.Layout>
+                <UniformGridLayout
+                    ItemsStretch="Fill"
+                    MaximumRowsOrColumns="4"
+                    MinColumnSpacing="12"
+                    Orientation="Horizontal" />
+            </ItemsRepeater.Layout>
+        </ItemsRepeater>
+
+        <Border Grid.Row="4" Style="{StaticResource CardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid
+                    Grid.Row="0"
+                    Padding="12,10"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,0,1"
+                    ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+
+                    <AutoSuggestBox
+                        Grid.Column="0"
+                        Width="260"
+                        AutomationProperties.AutomationId="PluginSearch"
+                        AutomationProperties.Name="Search modules"
+                        PlaceholderText="Search modules..."
+                        QueryIcon="Find"
+                        Text="{x:Bind ViewModel.SearchText, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+
+                    <SelectorBar
+                        x:Name="FilterBar"
+                        Grid.Column="1"
+                        VerticalAlignment="Center"
+                        SelectionChanged="OnFilterChanged">
+                        <SelectorBarItem x:Name="FilterAll" Text="All" />
+                        <SelectorBarItem Text="Built-in" />
+                        <SelectorBarItem Text="Verified" />
+                        <SelectorBarItem Text="Unofficial" />
+                        <SelectorBarItem Text="Disabled" />
+                    </SelectorBar>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.Items}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="local:PluginListItem">
+                                <Grid
+                                    Padding="14,12"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind DisplayName}" />
+                                            <TextBlock
+                                                Style="{StaticResource MonoTextStyle}"
+                                                Text="{x:Bind Version}"
+                                                VerticalAlignment="Center" />
+                                            <Border Style="{StaticResource BadgeStyle}">
+                                                <TextBlock FontSize="12" Text="{x:Bind OriginLabel}" />
+                                            </Border>
+                                            <Border
+                                                Style="{StaticResource BadgeStyle}"
+                                                Visibility="{x:Bind local:PluginsPage.HasText(StagedVersion)}">
+                                                <TextBlock FontSize="12" Text="{x:Bind local:PluginsPage.StagedLabel(StagedVersion)}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock
+                                            FontSize="13"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind Description}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind Meta}" />
+                                        <TextBlock
+                                            FontSize="12"
+                                            Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                                            Text="{x:Bind Warning}"
+                                            TextWrapping="Wrap"
+                                            Visibility="{x:Bind local:PluginsPage.HasText(Warning)}" />
+                                    </StackPanel>
+
+                                    <StackPanel
+                                        Grid.Column="1"
+                                        Orientation="Horizontal"
+                                        Spacing="4"
+                                        VerticalAlignment="Center">
+                                        <ToggleSwitch
+                                            AutomationProperties.Name="Enabled"
+                                            IsEnabled="{x:Bind CanToggle}"
+                                            IsOn="{x:Bind IsEnabled}"
+                                            OffContent=""
+                                            OnContent=""
+                                            Tag="{x:Bind}"
+                                            Toggled="OnToggled" />
+                                        <Button
+                                            AutomationProperties.Name="Remove"
+                                            Click="OnUninstallClick"
+                                            IsEnabled="{x:Bind CanUninstall}"
+                                            Style="{StaticResource ToolbarButtonStyle}"
+                                            Tag="{x:Bind}"
+                                            ToolTipService.ToolTip="Remove">
+                                            <FontIcon FontSize="14" Glyph="&#xE74D;" />
+                                        </Button>
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!--
+            The page's own disclaimer, and it is not decoration: a plugin runs in this process with
+            everything this process can do, and the only defence anybody has is the decision they
+            make before installing one.
+        -->
+        <StackPanel
+            Grid.Row="5"
+            Orientation="Horizontal"
+            Spacing="8">
+            <FontIcon
+                FontSize="14"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Glyph="&#xE946;" />
+            <TextBlock
+                FontSize="12"
+                Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                Text="Plugins run with the same privileges as the application. Only install packages from sources you trust."
+                TextWrapping="Wrap" />
+        </StackPanel>
+
+        <!--
+            Declared here rather than shown through IDialogService: it is a form with validation —
+            the primary button is gated on the checkbox — and the codebase drives that shape from
+            the code-behind with a deferral.
+        -->
+        <ContentDialog
+            x:Name="InstallDialog"
+            Closed="OnInstallDialogClosed"
+            CloseButtonText="Cancel"
+            DefaultButton="Primary"
+            PrimaryButtonClick="OnInstallDialogPrimary"
+            PrimaryButtonText="Install plugin"
+            Title="Review plugin before installing">
+            <ScrollViewer MaxHeight="460">
+                <StackPanel Spacing="12">
+                    <StackPanel Spacing="2">
+                        <TextBlock FontSize="18" FontWeight="SemiBold" Text="{x:Bind ViewModel.PendingName, Mode=OneWay}" />
+                        <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind ViewModel.PendingSummary, Mode=OneWay}" />
+                    </StackPanel>
+
+                    <StackPanel Spacing="6">
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Author" />
+                        <TextBlock Text="{x:Bind ViewModel.PendingAuthor, Mode=OneWay}" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="SHA-256" />
+                        <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind ViewModel.PendingDigest, Mode=OneWay}" TextWrapping="Wrap" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Signature" />
+                        <TextBlock Text="{x:Bind ViewModel.PendingSignature, Mode=OneWay}" TextWrapping="Wrap" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Adds to navigation" />
+                        <TextBlock Text="{x:Bind ViewModel.PendingNavigation, Mode=OneWay}" TextWrapping="Wrap" />
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Requires host SDK" />
+                        <TextBlock Text="{x:Bind ViewModel.PendingHostSdk, Mode=OneWay}" />
+                    </StackPanel>
+
+                    <!--
+                        The four sentences that say what installing this actually means. They are
+                        literals here, where a reviewer reading the markup sees them, and they are
+                        shown only for a package this application cannot vouch for.
+                    -->
+                    <Border
+                        Background="{ThemeResource SystemFillColorCriticalBackgroundBrush}"
+                        CornerRadius="6"
+                        Padding="14"
+                        Visibility="{x:Bind ViewModel.ConsentRequired, Mode=OneWay}">
+                        <StackPanel Spacing="6">
+                            <TextBlock FontWeight="SemiBold" Text="This plugin is not verified" />
+                            <TextBlock FontSize="13" TextWrapping="Wrap" Text="It runs with the same privileges as __APP_TITLE__ itself — there is no sandbox." />
+                            <TextBlock FontSize="13" TextWrapping="Wrap" Text="It can read your local files, session tokens, and call the backend as you." />
+                            <TextBlock FontSize="13" TextWrapping="Wrap" Text="Its code has not been reviewed by the __APP_TITLE__ team." />
+                            <TextBlock FontSize="13" TextWrapping="Wrap" Text="Install only if you trust the author and the download source." />
+                        </StackPanel>
+                    </Border>
+
+                    <StackPanel Spacing="2" Visibility="{x:Bind ViewModel.ConsentRequired, Mode=OneWay}">
+                        <CheckBox
+                            AutomationProperties.Name="I understand the risks"
+                            Content="I understand the risks and I trust the source of this package"
+                            IsChecked="{x:Bind ViewModel.ConsentGiven, Mode=TwoWay}" />
+                        <TextBlock
+                            FontSize="12"
+                            Foreground="{ThemeResource TextFillColorTertiaryBrush}"
+                            Text="Required to enable Install. This choice is recorded with the installation."
+                            TextWrapping="Wrap" />
+                    </StackPanel>
+                </StackPanel>
+            </ScrollViewer>
+        </ContentDialog>
+    </Grid>
+</Page>

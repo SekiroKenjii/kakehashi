@@ -105,6 +105,12 @@ internal static class AppHost
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFileSaveService, FileSaveService>();
+        services.AddSingleton<IFileOpenService, FileOpenService>();
+
+        // The publisher is read from the running executable, so a build that cannot vouch for
+        // itself vouches for nothing: every package is unofficial and every install is asked about.
+        services.AddSingleton(_ => new PluginInstaller(
+            PluginPaths.Default, PluginTrust.PublisherOf(Environment.ProcessPath ?? string.Empty)));
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IMainWindowProvider, MainWindowProvider>();
         services.AddSingleton<IShellOverlay, ShellOverlayService>();
@@ -127,6 +133,7 @@ internal static class AppHost
         services.AddTransient<NavigationLayoutViewModel>();
         services.AddTransient<NavigationLayoutPage>();
         services.AddTransient<UsersPage>();
+        services.AddTransient<PluginsPage>();
 
         services.AddTransient<ShellViewModel>();
         services.AddTransient<SplashViewModel>();
@@ -134,6 +141,7 @@ internal static class AppHost
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<RolePermissionsViewModel>();
         services.AddTransient<UsersViewModel>();
+        services.AddTransient<PluginsViewModel>();
     }
 
     private static void AddOrchestrators(IServiceCollection services)
