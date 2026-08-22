@@ -1,0 +1,13 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <RootNamespace>__ROOT_NAMESPACE__.PluginSdk.Abstractions</RootNamespace>
+    <AssemblyName>__APP_NAME__.PluginSdk.Abstractions</AssemblyName>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
