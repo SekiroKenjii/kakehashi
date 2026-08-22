@@ -41,4 +41,23 @@ public sealed class FileOpenService : IFileOpenService
 
         return file?.Path;
     }
+
+    public async Task<string?> PickFolderAsync()
+    {
+        if (_windows.MainWindow is not { } window)
+        {
+            return null;
+        }
+
+        var picker = new FolderPicker { SuggestedStartLocation = PickerLocationId.Desktop };
+
+        // A folder picker with no filter shows nothing at all, which reads as a broken dialog.
+        picker.FileTypeFilter.Add("*");
+
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(window));
+
+        var folder = await picker.PickSingleFolderAsync();
+
+        return folder?.Path;
+    }
 }

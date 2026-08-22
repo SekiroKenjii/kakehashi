@@ -16,4 +16,9 @@ public interface IFileOpenService : IUiContractService, ISingletonDependency
     /// <param name="fileTypeLabel">What the type is called in the dialog, e.g. "Plugin package".</param>
     /// <param name="extension">The extension, dot included, e.g. ".plugin".</param>
     Task<string?> PickFileAsync(string fileTypeLabel, string extension);
+
+    /// <summary>
+    /// Shows a folder dialog and returns the chosen path, or null when the user cancelled.
+    /// </summary>
+    Task<string?> PickFolderAsync();
 }

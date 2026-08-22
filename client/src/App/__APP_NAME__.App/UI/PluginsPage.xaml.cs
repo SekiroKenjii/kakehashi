@@ -43,6 +43,21 @@ public sealed partial class PluginsPage : Page
         ViewModel.Filter = sender.SelectedItem?.Text ?? "All";
     }
 
+    private void OnTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    {
+        ViewModel.Tab = sender.SelectedItem?.Text ?? "Installed";
+    }
+
+    private async void OnBrowseLocationClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.BrowseForLocationAsync();
+    }
+
+    private void OnCreateProjectClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CreateProject();
+    }
+
     private async void OnInstallFromFileClick(object sender, RoutedEventArgs e)
     {
         if (await ViewModel.PrepareInstallFromFileAsync())

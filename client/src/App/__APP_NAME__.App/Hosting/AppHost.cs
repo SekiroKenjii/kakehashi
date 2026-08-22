@@ -107,8 +107,12 @@ internal static class AppHost
         services.AddSingleton<IFileSaveService, FileSaveService>();
         services.AddSingleton<IFileOpenService, FileOpenService>();
 
-        // The publisher is read from the running executable, so a build that cannot vouch for
-        // itself vouches for nothing: every package is unofficial and every install is asked about.
+        // A generated project references the assemblies beside this executable, so it compiles
+        // against exactly the ones it will be loaded next to.
+        services.AddSingleton(_ => new PluginScaffolder(AppContext.BaseDirectory));
+
+        // A build that cannot vouch for itself vouches for nothing: every package is then
+        // unofficial, and every install is asked about.
         services.AddSingleton(_ => new PluginInstaller(
             PluginPaths.Default, PluginTrust.PublisherOf(Environment.ProcessPath ?? string.Empty)));
         services.AddSingleton<INotificationService, NotificationService>();

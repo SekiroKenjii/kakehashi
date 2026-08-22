@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>{{RootNamespace}}</RootNamespace>
+    <AssemblyName>{{AssemblyName}}</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Platforms>x64;ARM64</Platforms>
+
+    <!--
+      This is what puts the compiled XAML in this assembly's own resource index, which is the file
+      the host loads to make these pages resolvable. Without it the pages build and then cannot be
+      found at runtime.
+    -->
+    <DisableEmbeddedXbf>false</DisableEmbeddedXbf>
+
+    <!-- The XAML type generator emits a reference to a property the Windows App SDK deprecated. -->
+    <NoWarn>CS0612;CS0618</NoWarn>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" Version="10.0.0" />
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="2.3.1" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.28000.2526" />
+  </ItemGroup>
+
+  <!--
+    Private=false on every one: the host already has these, and a package that carried its own copies
+    would load a second set of the types the host is holding. The packaging tool refuses a package
+    that ships one.
+
+    Two references, deliberately. The application's shared controls are available too, but referring
+    to them by path brings their whole package graph into this project to restore — so a starter
+    project uses the framework's own controls and an author who wants the shared ones adds that
+    reference themselves.
+  -->
+  <ItemGroup>
+    <Reference Include="__APP_NAME__.SharedKernel">
+      <HintPath>$(HostDirectory)\__APP_NAME__.SharedKernel.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+    <Reference Include="__APP_NAME__.UI.Contracts">
+      <HintPath>$(HostDirectory)\__APP_NAME__.UI.Contracts.dll</HintPath>
+      <Private>false</Private>
+    </Reference>
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,23 @@
+using System;
+using {{RootNamespace}}.ViewModels;
+using Microsoft.UI.Xaml.Controls;
+
+namespace {{RootNamespace}}.Views;
+
+/// <summary>The {{DisplayName}} screen.</summary>
+/// <remarks>
+/// An ordinary page. Its compiled XAML lives in this assembly's own resource index and the host
+/// makes that index resolvable before this type is ever constructed, so InitializeComponent needs
+/// no help — see docs/PLUGINS.md.
+/// </remarks>
+public sealed partial class {{Module}}Page : Page
+{
+    public {{Module}}Page({{Module}}PageViewModel viewModel)
+    {
+        ArgumentNullException.ThrowIfNull(viewModel);
+        ViewModel = viewModel;
+        InitializeComponent();
+    }
+
+    public {{Module}}PageViewModel ViewModel { get; }
+}
