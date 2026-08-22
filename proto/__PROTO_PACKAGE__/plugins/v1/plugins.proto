@@ -1,0 +1,202 @@
+syntax = "proto3";
+
+// Plugins: the catalog a deployment offers, and the artifacts behind it.
+//
+// A plugin is an assembly set built somewhere else, so everything here is about deciding whether
+// to run it: what the deployment offers, what each version weighs, what its bytes hash to, and
+// which host it needs. The artifacts move over this contract rather than from a static route,
+// which keeps them on the mux every other request already goes through.
+package __PROTO_PACKAGE__.plugins.v1;
+
+option csharp_namespace = "__ROOT_NAMESPACE__.Plugins.V1";
+
+import "google/protobuf/timestamp.proto";
+
+// PluginService is what a signed-in client may ask of the catalog.
+service PluginService {
+  // ListPlugins returns the listed plugins, each with its newest version that is not yanked.
+  rpc ListPlugins(ListPluginsRequest) returns (ListPluginsResponse);
+
+  // GetPlugin returns one plugin and every version of it still on offer, or NOT_FOUND.
+  rpc GetPlugin(GetPluginRequest) returns (GetPluginResponse);
+
+  // DownloadPluginVersion streams one version's bytes.
+  //
+  // Streamed because a package is far larger than a message is meant to be, and chunked so a
+  // client can hash as it writes rather than holding the whole artifact in memory first.
+  rpc DownloadPluginVersion(DownloadPluginVersionRequest) returns (stream DownloadPluginVersionResponse);
+
+  // ReportInstalled records that this account installed a version.
+  //
+  // The request decides almost nothing: the account comes from the token and the time from the
+  // server's clock. A version this catalog does not have is INVALID_ARGUMENT, which is what keeps
+  // a client from writing a fact about a package nobody published.
+  rpc ReportInstalled(ReportInstalledRequest) returns (ReportInstalledResponse);
+}
+
+// PluginAdminService is the surface that changes what is on offer.
+service PluginAdminService {
+  // PublishPluginVersion uploads a package. The first message carries the metadata and every
+  // message after it carries bytes.
+  rpc PublishPluginVersion(stream PublishPluginVersionRequest) returns (PublishPluginVersionResponse);
+
+  // YankPluginVersion withdraws a version without deleting it.
+  //
+  // Withdrawn rather than removed: an account that already installed it keeps working, and the
+  // catalog stops offering it. Deleting would make an installed version unexplainable.
+  rpc YankPluginVersion(YankPluginVersionRequest) returns (YankPluginVersionResponse);
+
+  // SetPluginListed shows or hides a whole plugin.
+  rpc SetPluginListed(SetPluginListedRequest) returns (SetPluginListedResponse);
+}
+
+// Plugin is one offering in the catalog.
+message Plugin {
+  // The catalog identity: lower case, digits and single hyphens. Stable across versions.
+  string plugin_id = 1;
+
+  string display_name = 2;
+
+  string description = 3;
+
+  // Who the deployment says publishes this. Not a signature: what signed the assemblies is on the
+  // artifact, and the client checks it.
+  string publisher = 4;
+
+  // Whether the catalog offers it at all.
+  bool is_listed = 5;
+
+  google.protobuf.Timestamp created_at = 6;
+
+  google.protobuf.Timestamp updated_at = 7;
+}
+
+// PluginVersion is one published package.
+message PluginVersion {
+  string plugin_id = 1;
+
+  // major.minor.patch.
+  string version = 2;
+
+  // The oldest host SDK this package runs on, major.minor.
+  string min_host_sdk = 3;
+
+  int64 size_in_bytes = 4;
+
+  // Lower-case hex SHA-256 of the whole archive, which the client checks before it extracts.
+  string sha256 = 5;
+
+  // Withdrawn: still downloadable by an account that has it, never offered.
+  bool is_yanked = 6;
+
+  google.protobuf.Timestamp published_at = 7;
+}
+
+// InstallSource is where a client says a package came from.
+enum InstallSource {
+  INSTALL_SOURCE_UNSPECIFIED = 0;
+
+  // From this catalog.
+  INSTALL_SOURCE_CATALOG = 1;
+
+  // Downloaded from a URL the user gave.
+  INSTALL_SOURCE_URL = 2;
+
+  // A file the user already had.
+  INSTALL_SOURCE_FILE = 3;
+}
+
+message ListPluginsRequest {}
+
+message ListPluginsResponse {
+  repeated Plugin plugins = 1;
+
+  // The newest version on offer for each plugin above, in the same order.
+  repeated PluginVersion latest = 2;
+}
+
+message GetPluginRequest {
+  string plugin_id = 1;
+}
+
+message GetPluginResponse {
+  Plugin plugin = 1;
+
+  // Newest first.
+  repeated PluginVersion versions = 2;
+}
+
+message DownloadPluginVersionRequest {
+  string plugin_id = 1;
+
+  string version = 2;
+}
+
+message DownloadPluginVersionResponse {
+  // One chunk of the archive, in order.
+  bytes chunk = 1;
+}
+
+message ReportInstalledRequest {
+  string plugin_id = 1;
+
+  string version = 2;
+
+  InstallSource source = 3;
+}
+
+// ReportInstalledResponse is empty, and is a message rather than google.protobuf.Empty so that it
+// has somewhere to grow.
+message ReportInstalledResponse {}
+
+message PublishPluginVersionRequest {
+  oneof payload {
+    // Exactly once, first.
+    PublishPluginVersionHeader header = 1;
+
+    // Every message after the header.
+    bytes chunk = 2;
+  }
+}
+
+// PublishPluginVersionHeader is everything about the upload that is not its bytes.
+message PublishPluginVersionHeader {
+  string plugin_id = 1;
+
+  string display_name = 2;
+
+  string description = 3;
+
+  string publisher = 4;
+
+  string version = 5;
+
+  string min_host_sdk = 6;
+
+  // What the uploader says the archive hashes to. The server hashes what it received and refuses
+  // a mismatch, so this is a check rather than a claim.
+  string sha256 = 7;
+}
+
+message PublishPluginVersionResponse {
+  PluginVersion version = 1;
+}
+
+message YankPluginVersionRequest {
+  string plugin_id = 1;
+
+  string version = 2;
+
+  // False puts a withdrawn version back on offer.
+  bool is_yanked = 3;
+}
+
+message YankPluginVersionResponse {}
+
+message SetPluginListedRequest {
+  string plugin_id = 1;
+
+  bool is_listed = 2;
+}
+
+message SetPluginListedResponse {}
