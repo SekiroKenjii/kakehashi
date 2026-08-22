@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RootNamespace>__ROOT_NAMESPACE__.PluginSdk.Xaml</RootNamespace>
+    <AssemblyName>__APP_NAME__.PluginSdk.Xaml</AssemblyName>
+    <UseWinUI>true</UseWinUI>
+    <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
+    <Platforms>x64;ARM64</Platforms>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+  </ItemGroup>
+
+</Project>
