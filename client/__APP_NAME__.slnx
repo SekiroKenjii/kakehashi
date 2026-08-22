@@ -68,6 +68,7 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
     <Project Path="src/Shared/__APP_NAME__.Mediator/__APP_NAME__.Mediator.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.PluginSdk.Abstractions/__APP_NAME__.PluginSdk.Abstractions.csproj" />
     <Project Path="src/Shared/__APP_NAME__.PluginSdk.Xaml/__APP_NAME__.PluginSdk.Xaml.csproj">
       <Platform Solution="*|x64" Project="x64" />
     </Project>
@@ -91,6 +92,7 @@
     </Project>
     <Project Path="tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj" />
     <Project Path="tests/__APP_NAME__.Mediator.Tests/__APP_NAME__.Mediator.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.PluginSdk.Abstractions.Tests/__APP_NAME__.PluginSdk.Abstractions.Tests.csproj" />
     <!-- kakehashi:module-test-projects:begin -->
     <Project Path="tests/__APP_NAME__.Modules.Auth.Application.Tests/__APP_NAME__.Modules.Auth.Application.Tests.csproj" />
     <Project Path="tests/__APP_NAME__.Modules.Auth.Domain.Tests/__APP_NAME__.Modules.Auth.Domain.Tests.csproj" />
