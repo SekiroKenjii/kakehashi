@@ -46,6 +46,38 @@ public sealed class PluginPackage : IDisposable
 
     public PluginManifest Manifest { get; }
 
+    /// <summary>Everything under lib/, named the way the manifest names it.</summary>
+    public IReadOnlyList<string> LibraryFiles => [.. _archive.Entries
+        .Select(entry => entry.FullName)
+        .Where(name => name.StartsWith(LibraryFolder, StringComparison.Ordinal) && !name.EndsWith('/'))
+        .Select(name => name[LibraryFolder.Length..])];
+
+    /// <summary>
+    /// Reads one file out of lib/, or nothing where the package does not hold it.
+    /// </summary>
+    /// <remarks>
+    /// Into memory, because a compressed entry's stream cannot seek and every reader of one of
+    /// these needs to. An assembly is small; the size of the whole archive is capped elsewhere.
+    /// </remarks>
+    public MemoryStream? ReadLibraryFile(string name)
+    {
+        var entry = _archive.GetEntry(LibraryFolder + name);
+
+        if (entry is null)
+        {
+            return null;
+        }
+        var copy = new MemoryStream();
+
+        using (var content = entry.Open())
+        {
+            content.CopyTo(copy);
+        }
+        copy.Position = 0;
+
+        return copy;
+    }
+
     public static Result<PluginPackage> Open(string path)
     {
         ArgumentException.ThrowIfNullOrEmpty(path);

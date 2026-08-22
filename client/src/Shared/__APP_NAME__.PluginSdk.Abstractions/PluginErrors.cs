@@ -26,6 +26,9 @@ public static class PluginErrors
         "Plugin.Package.WindowsRuntimeComponent",
         "The package contains a .winmd. Plugins may ship managed assemblies only.");
 
+    public static readonly Error AssemblyUnreadable = new(
+        "Plugin.Content.AssemblyUnreadable", "That file is not a managed assembly.");
+
     public static Error SchemaVersionUnsupported(int declared, int supported)
     {
         return new Error(
@@ -130,5 +133,80 @@ public static class PluginErrors
         return new Error(
             "Plugin.Compatibility.HostTooOld",
             $"Requires host SDK v{required} — this build is v{host}.");
+    }
+
+    /// <summary>
+    /// Only the entry assembly has to be readable. A package legitimately carries native libraries
+    /// its build brought along, and refusing one of those would refuse a package that works.
+    /// </summary>
+    public static Error EntryAssemblyUnreadable(string file)
+    {
+        return new Error(
+            "Plugin.Content.EntryAssemblyUnreadable",
+            $"'{file}' is what the manifest names as the entry assembly, and it is not a managed one.");
+    }
+
+    public static Error ModuleTypeMissing(string typeName)
+    {
+        return new Error(
+            "Plugin.Content.ModuleTypeMissing",
+            $"The manifest names '{typeName}', which the entry assembly does not declare.");
+    }
+
+    /// <summary>
+    /// The type is there and the host could not mount it, which is a different mistake from naming
+    /// one that is not: the fix is an interface rather than a spelling.
+    /// </summary>
+    public static Error ModuleTypeNotAModule(string typeName)
+    {
+        return new Error(
+            "Plugin.Content.ModuleTypeNotAModule", $"'{typeName}' does not implement IModule.");
+    }
+
+    /// <summary>
+    /// The failure this catches is silent: the pages build, and then nothing can find them, because
+    /// the index that holds their compiled markup was never packed.
+    /// </summary>
+    public static Error ResourceIndexUndeclared(string assembly)
+    {
+        return new Error(
+            "Plugin.Content.ResourceIndexUndeclared",
+            $"'{assembly}' carries compiled XAML, and no resource index for it is declared in priFiles.");
+    }
+
+    public static Error NavigationPageMissing(string pageName)
+    {
+        return new Error(
+            "Plugin.Content.NavigationPageMissing",
+            $"The manifest adds '{pageName}' to navigation, and no page of that name is in the package.");
+    }
+
+    /// <summary>
+    /// A plugin's own strings do not resolve: the lookup walks resource subtrees, and a subtree
+    /// miss raises nothing the host can answer — so the label renders empty in front of a user.
+    /// </summary>
+    public static Error LocalizedMarkup(string file)
+    {
+        return new Error(
+            "Plugin.Content.LocalizedMarkup",
+            $"'{file}' uses x:Uid. A plugin reads its own strings in code instead.");
+    }
+
+    public static Error ProjectManifestMissing(string directory)
+    {
+        return new Error(
+            "Plugin.Project.ManifestMissing", $"'{directory}' has no manifest.json.");
+    }
+
+    public static Error BuildOutputMissing(string entryAssembly, string directory)
+    {
+        return new Error(
+            "Plugin.Project.BuildOutputMissing",
+            $"No '{entryAssembly}' under any bin/ in '{directory}'. Build the project first.");
+    }
+
+    public static Error OutputUnwritable(string reason)
+    {
+        return new Error("Plugin.Project.OutputUnwritable", reason);
     }
 }
