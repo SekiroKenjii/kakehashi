@@ -1,0 +1,333 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Install Plugin — Review &amp; Consent</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #2b2b2b;
+    --primary-hover: #1a1a1a;
+    --text-primary: rgba(0,0,0,0.8956);
+    --text-secondary: rgba(0,0,0,0.6063);
+    --text-tertiary: rgba(0,0,0,0.4458);
+    --bg-card: rgba(255,255,255,0.85);
+    --bg-subtle: rgba(0,0,0,0.0373);
+    --bg-subtle-hover: rgba(0,0,0,0.0586);
+    --stroke: rgba(0,0,0,0.0578);
+    --stroke-2: rgba(0,0,0,0.1);
+    --control-fill: rgba(255,255,255,0.7);
+    --control-stroke: rgba(0,0,0,0.0578);
+    --control-stroke-bottom: rgba(0,0,0,0.1622);
+    --success: #107c10;
+    --success-bg: #dff6dd;
+    --warning: #ca5010;
+    --warning-bg: #fff4ce;
+    --danger: #c42b1c;
+    --danger-bg: #fde7e9;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+  body {
+    font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at top right, #ece6f8 0%, transparent 55%),
+      radial-gradient(ellipse at bottom left, #e8e2f5 0%, transparent 50%),
+      linear-gradient(135deg, #f2f0f7 0%, #ece9f3 100%);
+    min-height: 100vh;
+    padding: 24px;
+    color: var(--text-primary);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .icon {
+    width: 16px; height: 16px;
+    display: inline-block; flex-shrink: 0;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    vertical-align: middle;
+  }
+  .backdrop {
+    position: fixed; inset: 0;
+    background: rgba(20,16,30,0.35);
+    backdrop-filter: blur(2px);
+  }
+  .dialog {
+    position: relative;
+    width: 620px; max-width: 95vw;
+    background: rgba(252,252,253,0.98);
+    border: 1px solid rgba(255,255,255,0.6);
+    border-radius: 10px;
+    box-shadow: 0 40px 80px rgba(30,20,60,0.35);
+    overflow: hidden;
+  }
+  .dialog-header {
+    display: flex; align-items: center; gap: 10px;
+    padding: 18px 22px 14px;
+  }
+  .dialog-title { font-size: 17px; font-weight: 700; letter-spacing: -0.2px; flex: 1; }
+  .dialog-close {
+    width: 30px; height: 30px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-secondary);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .dialog-close:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .dialog-close .icon { width: 13px; height: 13px; }
+  .dialog-body { padding: 0 22px 6px; max-height: 72vh; overflow-y: auto; }
+
+  /* Package summary */
+  .pkg-card {
+    display: flex; gap: 14px;
+    padding: 14px 16px;
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    margin-bottom: 12px;
+  }
+  .pkg-icon {
+    width: 48px; height: 48px; border-radius: 11px;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .pkg-icon .icon { width: 22px; height: 22px; }
+  .pkg-name-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .pkg-name { font-size: 15.5px; font-weight: 700; }
+  .pkg-version { font-size: 12px; font-family: 'Cascadia Mono', Consolas, monospace; color: var(--text-secondary); }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 8px; border-radius: 9px;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .badge .icon { width: 10px; height: 10px; }
+  .badge.unofficial { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(202,80,16,0.3); }
+  .pkg-id { font-size: 11.5px; font-family: 'Cascadia Mono', Consolas, monospace; color: var(--text-tertiary); margin-top: 2px; }
+
+  .detail-grid {
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-md);
+    padding: 6px 16px;
+    margin-bottom: 12px;
+  }
+  .detail-row {
+    display: grid; grid-template-columns: 150px 1fr;
+    gap: 12px; padding: 8px 0;
+    font-size: 12.5px;
+    border-bottom: 1px solid var(--stroke);
+    align-items: center;
+  }
+  .detail-row:last-child { border-bottom: none; }
+  .detail-key { color: var(--text-secondary); display: flex; align-items: center; gap: 7px; }
+  .detail-key .icon { width: 13px; height: 13px; color: var(--text-tertiary); }
+  .detail-val { min-width: 0; }
+  .detail-val.mono { font-family: 'Cascadia Mono', Consolas, monospace; font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .detail-val .copy-btn {
+    border: none; background: transparent; cursor: pointer;
+    color: var(--text-tertiary); padding: 2px; margin-left: 4px;
+    border-radius: 3px; vertical-align: middle;
+  }
+  .detail-val .copy-btn:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .detail-val .copy-btn .icon { width: 12px; height: 12px; }
+  .sig-bad { color: var(--danger); font-weight: 600; display: flex; align-items: center; gap: 6px; }
+  .sig-bad .icon { width: 13px; height: 13px; }
+  .perm-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 11px; font-weight: 600;
+    font-family: 'Cascadia Mono', Consolas, monospace;
+    background: white; border: 1px solid var(--stroke-2);
+    padding: 2px 9px; border-radius: 9px;
+  }
+  .perm-chip .icon { width: 11px; height: 11px; color: var(--text-tertiary); }
+
+  /* Warning card */
+  .warn-card {
+    background: linear-gradient(135deg, rgba(196,43,28,0.06), rgba(202,80,16,0.05));
+    border: 1px solid rgba(196,43,28,0.28);
+    border-radius: var(--radius-md);
+    padding: 14px 16px;
+    margin-bottom: 12px;
+  }
+  .warn-head {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13.5px; font-weight: 700;
+    color: var(--danger);
+    margin-bottom: 8px;
+  }
+  .warn-head .icon { width: 16px; height: 16px; }
+  .warn-list { list-style: none; }
+  .warn-list li {
+    display: flex; gap: 8px;
+    font-size: 12.5px; color: var(--text-primary);
+    line-height: 1.5; padding: 3px 0;
+  }
+  .warn-list li .dot {
+    width: 5px; height: 5px; border-radius: 50%;
+    background: var(--danger); margin-top: 7px; flex-shrink: 0;
+  }
+  .warn-list li strong { font-weight: 700; }
+
+  /* Consent */
+  .consent-row {
+    display: flex; align-items: flex-start; gap: 10px;
+    padding: 12px 14px;
+    background: var(--bg-card);
+    border: 1px solid var(--stroke-2);
+    border-radius: var(--radius-md);
+    margin-bottom: 14px;
+    cursor: pointer;
+  }
+  .checkbox {
+    width: 18px; height: 18px;
+    border-radius: 4px;
+    background: var(--primary);
+    border: 1px solid var(--primary);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: white; flex-shrink: 0; margin-top: 1px;
+  }
+  .checkbox .icon { width: 12px; height: 12px; stroke-width: 2.4; }
+  .consent-text { font-size: 13px; font-weight: 600; line-height: 1.45; }
+  .consent-sub { font-size: 11.5px; color: var(--text-tertiary); font-weight: 400; margin-top: 2px; }
+
+  .dialog-footer {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 22px 18px;
+    border-top: 1px solid var(--stroke);
+    background: rgba(255,255,255,0.5);
+  }
+  .footer-hint { font-size: 11.5px; color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; }
+  .footer-hint .icon { width: 13px; height: 13px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 7px 16px; font-size: 13px; font-family: inherit;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary); cursor: pointer; min-height: 32px;
+  }
+  .btn:hover { background: var(--bg-subtle-hover); }
+  .btn.primary { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+  .btn.primary:hover { background: var(--primary-hover); }
+  .btn .icon { color: inherit; width: 13px; height: 13px; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-markdown" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M5 15V9l2.5 3L10 9v6M15 9v6M15 15l-2-2.5M15 15l2-2.5"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/></symbol>
+    <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></symbol>
+    <symbol id="i-hash" viewBox="0 0 24 24"><path d="M4 9h16M4 15h16M10 3 8 21M16 3l-2 18"/></symbol>
+    <symbol id="i-copy" viewBox="0 0 24 24"><rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/></symbol>
+    <symbol id="i-cert" viewBox="0 0 24 24"><circle cx="12" cy="9" r="6"/><path d="m8.5 14-1.5 7 5-3 5 3-1.5-7"/></symbol>
+    <symbol id="i-shield" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-lock" viewBox="0 0 24 24"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></symbol>
+    <symbol id="i-layout" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 3v18M3 9h6"/></symbol>
+    <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 5 5L20 7"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 22V12"/></symbol>
+    <symbol id="i-scale" viewBox="0 0 24 24"><path d="M12 3v18M8 21h8"/><path d="m5 7 7-3 7 3"/><path d="M3 12a3 3 0 0 0 6 0L6 7zM15 12a3 3 0 0 0 6 0l-3-5z"/></symbol>
+  </defs>
+</svg>
+
+<div class="backdrop"></div>
+
+<div class="dialog">
+  <div class="dialog-header">
+    <div class="dialog-title">Review plugin before installing</div>
+    <button class="dialog-close"><svg class="icon"><use href="#i-close"/></svg></button>
+  </div>
+
+  <div class="dialog-body">
+
+    <!-- Package summary -->
+    <div class="pkg-card">
+      <div class="pkg-icon"><svg class="icon"><use href="#i-markdown"/></svg></div>
+      <div style="min-width:0;">
+        <div class="pkg-name-row">
+          <span class="pkg-name">Markdown Editor</span>
+          <span class="pkg-version">v0.9.1</span>
+          <span class="badge unofficial"><svg class="icon"><use href="#i-warn"/></svg> Unofficial</span>
+        </div>
+        <div class="pkg-id">Kakehashi.Modules.MarkdownEditor · 4.6 MB · markdown-editor-0.9.1.kkpkg</div>
+      </div>
+    </div>
+
+    <!-- Details -->
+    <div class="detail-grid">
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-user"/></svg> Author</div>
+        <div class="detail-val">npham-dev</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-link"/></svg> Source</div>
+        <div class="detail-val mono">https://github.com/npham-dev/kakehashi-markdown/releases</div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-hash"/></svg> SHA-256</div>
+        <div class="detail-val mono">9f2a4c…e81b07 <button class="copy-btn"><svg class="icon"><use href="#i-copy"/></svg></button></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-cert"/></svg> Signature</div>
+        <div class="detail-val"><span class="sig-bad"><svg class="icon"><use href="#i-warn"/></svg> Unknown publisher — not signed by Kakehashi</span></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-layout"/></svg> Adds to navigation</div>
+        <div class="detail-val">"Markdown" screen under <strong>Utilities</strong></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-shield"/></svg> Declared permission</div>
+        <div class="detail-val"><span class="perm-chip"><svg class="icon"><use href="#i-lock"/></svg> markdown.access</span></div>
+      </div>
+      <div class="detail-row">
+        <div class="detail-key"><svg class="icon"><use href="#i-package"/></svg> Requires host SDK</div>
+        <div class="detail-val">v1.1 or later — <span style="color:var(--success);font-weight:600;">compatible</span> (host is v1.1)</div>
+      </div>
+    </div>
+
+    <!-- Warning -->
+    <div class="warn-card">
+      <div class="warn-head">
+        <svg class="icon"><use href="#i-warn"/></svg>
+        This plugin is not verified
+      </div>
+      <ul class="warn-list">
+        <li><span class="dot"></span><span>It runs <strong>with the same privileges as Kakehashi itself</strong> — there is no sandbox.</span></li>
+        <li><span class="dot"></span><span>It can read your local files, session tokens, and call the backend <strong>as you</strong>.</span></li>
+        <li><span class="dot"></span><span>Its code has <strong>not been reviewed</strong> by the Kakehashi team.</span></li>
+        <li><span class="dot"></span><span>Install only if you trust the author and the download source.</span></li>
+      </ul>
+    </div>
+
+    <!-- Consent -->
+    <div class="consent-row">
+      <span class="checkbox"><svg class="icon"><use href="#i-check"/></svg></span>
+      <div>
+        <div class="consent-text">I understand the risks and I trust the source of this package</div>
+        <div class="consent-sub">Required to enable Install. This choice is recorded in the activity log.</div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dialog-footer">
+    <div class="footer-hint">
+      <svg class="icon"><use href="#i-shield-check"/></svg>
+      <span>Verified publishers install without this prompt</span>
+    </div>
+    <div style="display:flex;gap:8px;">
+      <button class="btn">Cancel</button>
+      <button class="btn primary"><svg class="icon"><use href="#i-package"/></svg> Install plugin</button>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

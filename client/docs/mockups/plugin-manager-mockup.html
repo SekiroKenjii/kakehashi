@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Plugins — Installed</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --primary: #2b2b2b;
+    --primary-hover: #1a1a1a;
+    --text-primary: rgba(0,0,0,0.8956);
+    --text-secondary: rgba(0,0,0,0.6063);
+    --text-tertiary: rgba(0,0,0,0.4458);
+    --bg-card: rgba(255,255,255,0.85);
+    --bg-card-2: rgba(255,255,255,0.55);
+    --bg-subtle: rgba(0,0,0,0.0373);
+    --bg-subtle-hover: rgba(0,0,0,0.0586);
+    --stroke: rgba(0,0,0,0.0578);
+    --stroke-2: rgba(0,0,0,0.1);
+    --control-fill: rgba(255,255,255,0.7);
+    --control-stroke: rgba(0,0,0,0.0578);
+    --control-stroke-bottom: rgba(0,0,0,0.1622);
+    --success: #107c10;
+    --success-bg: #dff6dd;
+    --warning: #ca5010;
+    --warning-bg: #fff4ce;
+    --danger: #c42b1c;
+    --danger-bg: #fde7e9;
+    --radius-sm: 4px;
+    --radius-md: 6px;
+    --radius-lg: 8px;
+  }
+  body {
+    font-family: 'Segoe UI Variable Text', 'Segoe UI', system-ui, sans-serif;
+    background:
+      radial-gradient(ellipse at top right, #ece6f8 0%, transparent 55%),
+      radial-gradient(ellipse at bottom left, #e8e2f5 0%, transparent 50%),
+      linear-gradient(135deg, #f2f0f7 0%, #ece9f3 100%);
+    min-height: 100vh;
+    padding: 24px;
+    color: var(--text-primary);
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .icon {
+    width: 16px; height: 16px;
+    display: inline-block; flex-shrink: 0;
+    fill: none; stroke: currentColor;
+    stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round;
+    vertical-align: middle;
+  }
+  .window {
+    max-width: 1480px; margin: 0 auto;
+    background: rgba(250,250,251,0.92);
+    backdrop-filter: blur(60px) saturate(125%);
+    border: 1px solid rgba(255,255,255,0.5);
+    border-radius: 8px;
+    box-shadow: 0 32px 64px rgba(40,30,70,0.14), inset 0 1px 0 rgba(255,255,255,0.7);
+    overflow: hidden;
+    display: grid;
+    grid-template-columns: 64px 1fr;
+  }
+  .titlebar {
+    grid-column: 1 / -1;
+    height: 40px;
+    display: flex; align-items: center; justify-content: space-between;
+    padding-left: 12px;
+  }
+  .titlebar-left { display: flex; align-items: center; gap: 12px; font-size: 13px; }
+  .titlebar-left .nav-btn {
+    width: 32px; height: 32px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+  }
+  .titlebar-left .nav-btn:hover { background: var(--bg-subtle-hover); }
+  .app-badge {
+    width: 24px; height: 24px; border-radius: 6px;
+    background: var(--primary);
+    display: flex; align-items: center; justify-content: center;
+  }
+  .app-badge .bars { display: flex; flex-direction: column; gap: 2px; align-items: flex-start; }
+  .app-badge .bars .bar { height: 2.5px; background: white; border-radius: 2px; }
+  .app-badge .bars .bar:nth-child(1) { width: 11px; }
+  .app-badge .bars .bar:nth-child(2) { width: 7px; }
+  .app-badge .bars .bar:nth-child(3) { width: 9px; }
+  .app-title { font-weight: 600; }
+  .app-channel { color: var(--text-tertiary); font-size: 12px; }
+  .titlebar-controls { display: flex; height: 40px; }
+  .titlebar-controls button {
+    width: 46px; height: 40px; border: none; background: transparent;
+    color: var(--text-primary); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .titlebar-controls button:hover { background: var(--bg-subtle-hover); }
+  .titlebar-controls button.close:hover { background: var(--danger); color: white; }
+  .titlebar-controls .icon { width: 10px; height: 10px; stroke-width: 1.2; }
+
+  .nav-rail { display: flex; flex-direction: column; align-items: center; padding: 8px 0 12px; gap: 4px; }
+  .nav-item {
+    width: 44px; height: 40px; border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-secondary); position: relative;
+  }
+  .nav-item:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .nav-item.active { background: var(--bg-subtle); color: var(--text-primary); }
+  .nav-item.active::before {
+    content: ''; position: absolute; left: -10px; top: 10px; bottom: 10px;
+    width: 3px; background: var(--primary); border-radius: 2px;
+  }
+  .nav-item .icon { width: 18px; height: 18px; }
+  .nav-spacer { flex: 1; }
+  .nav-avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: var(--primary); color: white;
+    font-size: 12px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; position: relative; margin-bottom: 4px;
+  }
+  .nav-avatar .presence {
+    position: absolute; bottom: -1px; right: -1px;
+    width: 10px; height: 10px; border-radius: 50%;
+    background: var(--success); border: 2px solid #fafafb;
+  }
+
+  .content { padding: 4px 24px 24px; overflow-y: auto; max-height: calc(100vh - 110px); }
+  .page-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; gap: 16px; }
+  .breadcrumb { display: flex; align-items: center; gap: 2px; font-size: 14px; }
+  .breadcrumb .crumb { padding: 5px 8px; border-radius: var(--radius-sm); color: var(--text-secondary); cursor: pointer; }
+  .breadcrumb .crumb:hover { background: var(--bg-subtle-hover); }
+  .breadcrumb .crumb.active { color: var(--text-primary); font-weight: 600; }
+  .breadcrumb .sep { color: var(--text-tertiary); display: inline-flex; align-items: center; }
+  .breadcrumb .sep .icon { width: 12px; height: 12px; }
+  .commandbar {
+    display: flex; gap: 2px;
+    background: var(--bg-card); border: 1px solid var(--stroke);
+    border-radius: var(--radius-md); padding: 2px;
+  }
+  .cmd-btn {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 12px; border: none; background: transparent;
+    border-radius: var(--radius-sm);
+    font-family: inherit; font-size: 13px;
+    color: var(--text-primary); cursor: pointer;
+    min-height: 28px;
+  }
+  .cmd-btn:hover { background: var(--bg-subtle-hover); }
+  .cmd-btn .icon { color: var(--text-secondary); width: 14px; height: 14px; }
+  .cmd-btn.primary { background: var(--primary); color: white; }
+  .cmd-btn.primary:hover { background: var(--primary-hover); }
+  .cmd-btn.primary .icon { color: white; }
+  .cmd-divider { width: 1px; background: var(--stroke); margin: 4px 2px; }
+
+  .main-col { max-width: 1080px; }
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    overflow: hidden;
+  }
+
+  /* Pivot */
+  .pivot { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--stroke); }
+  .pivot-item { padding: 9px 14px 11px; font-size: 14px; color: var(--text-secondary); cursor: pointer; position: relative; }
+  .pivot-item:hover { color: var(--text-primary); }
+  .pivot-item.active { color: var(--text-primary); font-weight: 600; }
+  .pivot-item.active::after {
+    content: ''; position: absolute; left: 14px; right: 14px; bottom: 0; height: 3px;
+    background: var(--primary); border-radius: 2px 2px 0 0;
+  }
+  .pivot-item .count {
+    font-size: 11px; background: var(--bg-subtle);
+    padding: 0 6px; border-radius: 8px; margin-left: 4px;
+    border: 1px solid var(--stroke); color: var(--text-secondary);
+  }
+
+  /* Pending restart banner */
+  .restart-banner {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 10px 16px;
+    background: linear-gradient(135deg, rgba(202,80,16,0.1), rgba(242,154,77,0.06));
+    border: 1px solid rgba(202,80,16,0.25);
+    border-radius: var(--radius-md);
+    margin-bottom: 14px;
+  }
+  .restart-info { display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--warning); font-weight: 600; }
+  .restart-info .icon { width: 15px; height: 15px; }
+  .restart-info .normal { color: var(--text-secondary); font-weight: 400; }
+  .restart-info .normal strong { color: var(--text-primary); font-weight: 600; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px;
+    padding: 6px 12px; font-size: 13px; font-family: inherit;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    color: var(--text-primary); cursor: pointer; min-height: 30px;
+  }
+  .btn:hover { background: var(--bg-subtle-hover); }
+  .btn.primary { background: var(--primary); color: white; border-color: var(--primary); font-weight: 600; }
+  .btn.primary:hover { background: var(--primary-hover); }
+  .btn .icon { color: inherit; width: 13px; height: 13px; }
+
+  /* Summary strip */
+  .stats-strip { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 14px; }
+  .stat-card {
+    background: var(--bg-card);
+    border: 1px solid var(--stroke);
+    border-radius: var(--radius-lg);
+    padding: 13px 16px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .stat-icon {
+    width: 34px; height: 34px; border-radius: 8px;
+    background: var(--bg-subtle); color: var(--text-secondary);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .stat-icon .icon { width: 16px; height: 16px; }
+  .stat-icon.warn { background: var(--warning-bg); color: var(--warning); }
+  .stat-icon.ok { background: var(--success-bg); color: var(--success); }
+  .stat-label { font-size: 11px; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.4px; margin-bottom: 1px; }
+  .stat-value { font-size: 17px; font-weight: 700; line-height: 1.15; }
+  .stat-value.warn { color: var(--warning); }
+  .stat-sub { font-size: 11px; color: var(--text-tertiary); }
+
+  /* Filter */
+  .filter-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; flex-wrap: wrap; }
+  .search-box {
+    display: flex; align-items: center; gap: 8px;
+    padding: 6px 10px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-bottom: 1px solid var(--control-stroke-bottom);
+    border-radius: var(--radius-sm);
+    width: 260px;
+  }
+  .search-box .icon { color: var(--text-secondary); width: 14px; height: 14px; }
+  .search-box input { flex: 1; border: none; background: transparent; outline: none; font-family: inherit; font-size: 13px; }
+  .chip {
+    padding: 5px 12px; font-size: 12.5px;
+    background: var(--control-fill);
+    border: 1px solid var(--control-stroke);
+    border-radius: 14px; cursor: pointer;
+    color: var(--text-secondary); font-weight: 600;
+  }
+  .chip:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+  /* Module rows */
+  .module-row {
+    display: flex; gap: 14px;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--stroke);
+    align-items: flex-start;
+  }
+  .module-row:last-child { border-bottom: none; }
+  .module-row:hover { background: var(--bg-subtle-hover); }
+  .module-row.disabled-row { opacity: 0.55; }
+  .module-icon {
+    width: 42px; height: 42px; border-radius: 10px;
+    background: var(--primary); color: white;
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+  }
+  .module-icon .icon { width: 20px; height: 20px; }
+  .module-icon.outline { background: white; border: 1px solid var(--stroke-2); color: var(--text-primary); }
+  .module-body { flex: 1; min-width: 0; }
+  .module-title-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .module-name { font-size: 14.5px; font-weight: 700; }
+  .module-version { font-size: 12px; color: var(--text-secondary); font-family: 'Cascadia Mono', Consolas, monospace; }
+  .badge {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 1px 8px; border-radius: 9px;
+    font-size: 10px; font-weight: 700;
+    letter-spacing: 0.3px; text-transform: uppercase;
+  }
+  .badge .icon { width: 10px; height: 10px; }
+  .badge.builtin { background: var(--bg-subtle); color: var(--text-secondary); border: 1px solid var(--stroke-2); }
+  .badge.verified { background: var(--success-bg); color: var(--success); border: 1px solid rgba(16,124,16,0.25); }
+  .badge.unofficial { background: var(--warning-bg); color: var(--warning); border: 1px solid rgba(202,80,16,0.3); }
+  .badge.update { background: white; color: var(--text-primary); border: 1px solid var(--stroke-2); }
+  .module-desc { font-size: 12.5px; color: var(--text-secondary); margin-top: 3px; line-height: 1.45; }
+  .module-meta {
+    font-size: 11px; color: var(--text-tertiary);
+    margin-top: 5px;
+    font-family: 'Cascadia Mono', Consolas, monospace;
+    display: flex; gap: 10px; flex-wrap: wrap;
+  }
+  .module-warnline {
+    display: flex; align-items: center; gap: 6px;
+    margin-top: 6px;
+    font-size: 11.5px;
+    color: var(--warning);
+    font-weight: 600;
+  }
+  .module-warnline .icon { width: 12px; height: 12px; }
+  .module-actions { display: flex; align-items: center; gap: 8px; flex-shrink: 0; padding-top: 4px; }
+  .toggle {
+    width: 40px; height: 21px;
+    background: var(--success);
+    border-radius: 11px; position: relative; cursor: pointer; flex-shrink: 0;
+  }
+  .toggle::after {
+    content: ''; position: absolute;
+    width: 15px; height: 15px; background: white; border-radius: 50%;
+    top: 3px; right: 3px;
+  }
+  .toggle.off { background: rgba(0,0,0,0.25); }
+  .toggle.off::after { right: auto; left: 3px; }
+  .icon-btn {
+    width: 30px; height: 30px;
+    border: none; background: transparent;
+    border-radius: var(--radius-sm); cursor: pointer;
+    color: var(--text-secondary);
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  .icon-btn:hover { background: var(--bg-subtle-hover); color: var(--text-primary); }
+  .icon-btn .icon { width: 15px; height: 15px; }
+
+  .footer-note {
+    display: flex; align-items: center; gap: 8px;
+    margin-top: 12px;
+    font-size: 12px;
+    color: var(--text-tertiary);
+  }
+  .footer-note .icon { width: 13px; height: 13px; }
+  .footer-note a { color: var(--text-primary); font-weight: 600; cursor: pointer; text-decoration: none; }
+  .footer-note a:hover { text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="i-back" viewBox="0 0 24 24"><path d="M19 12H5M12 19l-7-7 7-7"/></symbol>
+    <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 6h16M4 12h16M4 18h16"/></symbol>
+    <symbol id="i-close" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6 6 18"/></symbol>
+    <symbol id="i-minimize" viewBox="0 0 24 24"><path d="M5 12h14"/></symbol>
+    <symbol id="i-maximize" viewBox="0 0 24 24"><rect x="4" y="4" width="16" height="16" rx="1"/></symbol>
+    <symbol id="i-home" viewBox="0 0 24 24"><path d="m3 10 9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></symbol>
+    <symbol id="i-notes" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></symbol>
+    <symbol id="i-activity" viewBox="0 0 24 24"><path d="M22 12h-4l-3 9L9 3l-3 9H2"/></symbol>
+    <symbol id="i-people" viewBox="0 0 24 24"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17.5" cy="9" r="2.5"/><path d="M16 15.5a5.5 5.5 0 0 1 5.5 4.5"/></symbol>
+    <symbol id="i-puzzle" viewBox="0 0 24 24"><path d="M10 3h4a1 1 0 0 1 1 1v2a2 2 0 1 0 4 0V5a1 1 0 0 1 1-1h0a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-1a2 2 0 1 0-4 0v1a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1v-4a1 1 0 0 0-1-1H3a1 1 0 0 1-1-1v0a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1V4a1 1 0 0 1 1-1z"/></symbol>
+    <symbol id="i-settings" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 0 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 0 1-4 0v-.1a1.7 1.7 0 0 0-1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 0 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 0 1 0-4h.1a1.7 1.7 0 0 0 1.5-1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 0 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3 1.7 1.7 0 0 0 1-1.5V3a2 2 0 0 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 0 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8 1.7 1.7 0 0 0 1.5 1H21a2 2 0 0 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></symbol>
+    <symbol id="i-chevron-right" viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></symbol>
+    <symbol id="i-plus" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></symbol>
+    <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+    <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></symbol>
+    <symbol id="i-package" viewBox="0 0 24 24"><path d="m12 2 9 5v10l-9 5-9-5V7z"/><path d="m3 7 9 5 9-5M12 22V12"/></symbol>
+    <symbol id="i-link" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7 0l3-3a5 5 0 0 0-7-7l-1 1"/><path d="M14 11a5 5 0 0 0-7 0l-3 3a5 5 0 0 0 7 7l1-1"/></symbol>
+    <symbol id="i-warn" viewBox="0 0 24 24"><path d="M12 3 2 20h20z"/><path d="M12 10v4M12 17v.5"/></symbol>
+    <symbol id="i-shield-check" viewBox="0 0 24 24"><path d="M12 2 4 6v6c0 5 3.5 9 8 10 4.5-1 8-5 8-10V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+    <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></symbol>
+    <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="19" cy="12" r="1.3" fill="currentColor"/></symbol>
+    <symbol id="i-cloud" viewBox="0 0 24 24"><path d="M17.5 19a4.5 4.5 0 0 0 0-9 6 6 0 0 0-11.6 1.5A4 4 0 0 0 6 19z"/></symbol>
+    <symbol id="i-markdown" viewBox="0 0 24 24"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M5 15V9l2.5 3L10 9v6M15 9v6M15 15l-2-2.5M15 15l2-2.5"/></symbol>
+    <symbol id="i-chart" viewBox="0 0 24 24"><path d="M3 21h18M6 17V9M11 17V5M16 17v-6M21 17V8"/></symbol>
+    <symbol id="i-info" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 8h.01M11 12h1v5h1"/></symbol>
+    <symbol id="i-restart" viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></symbol>
+  </defs>
+</svg>
+
+<div class="window">
+  <div class="titlebar">
+    <div class="titlebar-left">
+      <button class="nav-btn"><svg class="icon"><use href="#i-back"/></svg></button>
+      <button class="nav-btn"><svg class="icon"><use href="#i-menu"/></svg></button>
+      <div class="app-badge"><div class="bars"><div class="bar"></div><div class="bar"></div><div class="bar"></div></div></div>
+      <span class="app-title">Kakehashi</span>
+      <span class="app-channel">Experimental</span>
+    </div>
+    <div class="titlebar-controls">
+      <button><svg class="icon"><use href="#i-minimize"/></svg></button>
+      <button><svg class="icon"><use href="#i-maximize"/></svg></button>
+      <button class="close"><svg class="icon"><use href="#i-close"/></svg></button>
+    </div>
+  </div>
+
+  <div class="nav-rail">
+    <button class="nav-item"><svg class="icon"><use href="#i-home"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-notes"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-activity"/></svg></button>
+    <button class="nav-item"><svg class="icon"><use href="#i-people"/></svg></button>
+    <button class="nav-item active"><svg class="icon"><use href="#i-puzzle"/></svg></button>
+    <div class="nav-spacer"></div>
+    <div class="nav-avatar">KA<div class="presence"></div></div>
+    <button class="nav-item"><svg class="icon"><use href="#i-settings"/></svg></button>
+  </div>
+
+  <div class="content">
+    <div class="page-head">
+      <div class="breadcrumb">
+        <span class="crumb">Kakehashi</span>
+        <span class="sep"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+        <span class="crumb">Administration</span>
+        <span class="sep"><svg class="icon"><use href="#i-chevron-right"/></svg></span>
+        <span class="crumb active">Plugins</span>
+      </div>
+      <div class="commandbar">
+        <button class="cmd-btn primary"><svg class="icon"><use href="#i-package"/></svg> Install from file</button>
+        <button class="cmd-btn"><svg class="icon"><use href="#i-link"/></svg> From URL</button>
+        <div class="cmd-divider"></div>
+        <button class="cmd-btn"><svg class="icon"><use href="#i-download"/></svg> Check for updates</button>
+        <button class="cmd-btn"><svg class="icon"><use href="#i-refresh"/></svg></button>
+      </div>
+    </div>
+
+    <div class="main-col">
+
+      <div class="pivot">
+        <div class="pivot-item active">Installed <span class="count">5</span></div>
+        <div class="pivot-item">Browse catalog</div>
+        <div class="pivot-item">Develop</div>
+      </div>
+
+      <!-- Pending restart -->
+      <div class="restart-banner">
+        <div class="restart-info">
+          <svg class="icon"><use href="#i-warn"/></svg>
+          <span>Restart required</span>
+          <span class="normal">— <strong>Weather 1.3.0</strong> is staged; the running <strong>1.2.0</strong> fully unloads on next launch</span>
+        </div>
+        <div style="display:flex;gap:6px;">
+          <button class="btn">Later</button>
+          <button class="btn primary"><svg class="icon"><use href="#i-restart"/></svg> Restart now</button>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="stats-strip">
+        <div class="stat-card">
+          <div class="stat-icon"><svg class="icon"><use href="#i-puzzle"/></svg></div>
+          <div>
+            <div class="stat-label">Modules</div>
+            <div class="stat-value">5</div>
+            <div class="stat-sub">3 built-in · 2 plugins</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon"><svg class="icon"><use href="#i-download"/></svg></div>
+          <div>
+            <div class="stat-label">Updates</div>
+            <div class="stat-value">1</div>
+            <div class="stat-sub">staged for restart</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon warn"><svg class="icon"><use href="#i-warn"/></svg></div>
+          <div>
+            <div class="stat-label">Unofficial</div>
+            <div class="stat-value warn">1</div>
+            <div class="stat-sub">runs unreviewed code</div>
+          </div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-icon ok"><svg class="icon"><use href="#i-shield-check"/></svg></div>
+          <div>
+            <div class="stat-label">Host SDK</div>
+            <div class="stat-value">v1.1</div>
+            <div class="stat-sub">plugin contract version</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Filter -->
+      <div class="filter-bar">
+        <div class="search-box">
+          <svg class="icon"><use href="#i-search"/></svg>
+          <input placeholder="Search modules...">
+        </div>
+        <div class="chip active">All</div>
+        <div class="chip">Built-in</div>
+        <div class="chip">Verified</div>
+        <div class="chip">Unofficial</div>
+        <div class="chip">Disabled</div>
+      </div>
+
+      <!-- Module list -->
+      <div class="card">
+
+        <!-- Built-in -->
+        <div class="module-row">
+          <div class="module-icon outline"><svg class="icon"><use href="#i-notes"/></svg></div>
+          <div class="module-body">
+            <div class="module-title-row">
+              <span class="module-name">Notes</span>
+              <span class="module-version">v1.1.2</span>
+              <span class="badge builtin">Built-in</span>
+            </div>
+            <div class="module-desc">Reference notes module — ships with the host and doubles as the generator source of truth.</div>
+            <div class="module-meta">
+              <span>Kakehashi.Modules.Notes</span><span>·</span><span>part of host build</span>
+            </div>
+          </div>
+          <div class="module-actions">
+            <div class="toggle"></div>
+            <button class="icon-btn"><svg class="icon"><use href="#i-more"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Verified plugin, staged update -->
+        <div class="module-row">
+          <div class="module-icon"><svg class="icon"><use href="#i-cloud"/></svg></div>
+          <div class="module-body">
+            <div class="module-title-row">
+              <span class="module-name">Weather</span>
+              <span class="module-version">v1.2.0</span>
+              <span class="badge verified"><svg class="icon"><use href="#i-shield-check"/></svg> Verified</span>
+              <span class="badge update">1.3.0 staged</span>
+            </div>
+            <div class="module-desc">Local weather dashboard with forecast tiles. Signed by Kakehashi Team.</div>
+            <div class="module-meta">
+              <span>Kakehashi.Modules.Weather</span><span>·</span><span>2.1 MB</span><span>·</span><span>installed 2026-05-20</span><span>·</span><span>from catalog</span>
+            </div>
+          </div>
+          <div class="module-actions">
+            <div class="toggle"></div>
+            <button class="icon-btn"><svg class="icon"><use href="#i-more"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Unofficial plugin -->
+        <div class="module-row">
+          <div class="module-icon"><svg class="icon"><use href="#i-markdown"/></svg></div>
+          <div class="module-body">
+            <div class="module-title-row">
+              <span class="module-name">Markdown Editor</span>
+              <span class="module-version">v0.9.1</span>
+              <span class="badge unofficial"><svg class="icon"><use href="#i-warn"/></svg> Unofficial</span>
+            </div>
+            <div class="module-desc">Split-view markdown editor with live preview. Author: npham-dev.</div>
+            <div class="module-meta">
+              <span>Kakehashi.Modules.MarkdownEditor</span><span>·</span><span>4.6 MB</span><span>·</span><span>installed 2026-06-01</span><span>·</span><span>sideloaded</span>
+            </div>
+            <div class="module-warnline">
+              <svg class="icon"><use href="#i-warn"/></svg>
+              <span>Unsigned — runs with full application privileges. Installed at your own risk.</span>
+            </div>
+          </div>
+          <div class="module-actions">
+            <div class="toggle"></div>
+            <button class="icon-btn"><svg class="icon"><use href="#i-more"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Built-in -->
+        <div class="module-row">
+          <div class="module-icon outline"><svg class="icon"><use href="#i-activity"/></svg></div>
+          <div class="module-body">
+            <div class="module-title-row">
+              <span class="module-name">Activity</span>
+              <span class="module-version">v1.1.2</span>
+              <span class="badge builtin">Built-in</span>
+            </div>
+            <div class="module-desc">Account activity timeline with security events and audit detail.</div>
+            <div class="module-meta">
+              <span>Kakehashi.Modules.Activity</span><span>·</span><span>part of host build</span>
+            </div>
+          </div>
+          <div class="module-actions">
+            <div class="toggle"></div>
+            <button class="icon-btn"><svg class="icon"><use href="#i-more"/></svg></button>
+          </div>
+        </div>
+
+        <!-- Disabled plugin -->
+        <div class="module-row disabled-row">
+          <div class="module-icon"><svg class="icon"><use href="#i-chart"/></svg></div>
+          <div class="module-body">
+            <div class="module-title-row">
+              <span class="module-name">Reports</span>
+              <span class="module-version">v1.0.4</span>
+              <span class="badge verified"><svg class="icon"><use href="#i-shield-check"/></svg> Verified</span>
+            </div>
+            <div class="module-desc">Scheduled report builder with export to PDF and Excel.</div>
+            <div class="module-meta">
+              <span>Kakehashi.Modules.Reports</span><span>·</span><span>3.2 MB</span><span>·</span><span>disabled — soft-detached, hidden from navigation</span>
+            </div>
+          </div>
+          <div class="module-actions">
+            <div class="toggle off"></div>
+            <button class="icon-btn"><svg class="icon"><use href="#i-more"/></svg></button>
+          </div>
+        </div>
+
+      </div>
+
+      <div class="footer-note">
+        <svg class="icon"><use href="#i-info"/></svg>
+        <span>Plugins run with the same privileges as the application. Only install packages from sources you trust.</span>
+        <a>Learn about plugin security →</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+</body>
+</html>

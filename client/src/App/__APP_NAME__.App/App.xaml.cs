@@ -34,9 +34,8 @@ public sealed partial class App : Microsoft.UI.Xaml.Application
 
     public App()
     {
-        // Before InitializeComponent, and it cannot move later: the framework asks for its resource
-        // manager once per UI thread while it starts, which is earlier than OnLaunched. The plugin
-        // packages themselves are added long afterwards — the fallback is consulted per lookup.
+        // Before InitializeComponent and never later: the framework asks for its resource manager
+        // once per UI thread as it starts, which is earlier than OnLaunched.
         _pluginXaml.Attach(this);
         InitializeComponent();
 

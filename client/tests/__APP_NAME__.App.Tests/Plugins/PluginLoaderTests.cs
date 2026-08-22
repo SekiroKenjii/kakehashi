@@ -165,7 +165,7 @@ public sealed class PluginLoaderTests : IDisposable
         Assert.Equal(["Weather"], keys.ToArray());
     }
 
-    // A stand-in for a page type: the loader only ever reads the name.
+    /// <summary>A stand-in for a page type: the loader only ever reads the name.</summary>
     private sealed class WeatherPage
     {
     }
