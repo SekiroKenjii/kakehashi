@@ -72,6 +72,7 @@
             HorizontalAlignment="Left"
             SelectionChanged="OnTabChanged">
             <SelectorBarItem x:Name="TabInstalled" Text="Installed" />
+            <SelectorBarItem Text="Browse catalog" />
             <SelectorBarItem Text="Develop" />
         </SelectorBar>
 
@@ -240,7 +241,116 @@
             </Grid>
         </Border>
 
-        <!--  The Develop tab. Shares row 5 with the installed list; one of the two is visible.  -->
+        <!--
+            The Browse tab. A catalog row says who published a package and what it weighs; what
+            signed it is on the artifact, so the same prompt a file install shows is what decides it.
+        -->
+        <Border
+            Grid.Row="5"
+            Style="{StaticResource CardStyle}"
+            Visibility="{x:Bind ViewModel.ShowingBrowse, Mode=OneWay}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+
+                <Grid
+                    Grid.Row="0"
+                    Padding="12,10"
+                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                    BorderThickness="0,0,0,1"
+                    ColumnSpacing="8">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*" />
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="Auto" />
+                    </Grid.ColumnDefinitions>
+
+                    <TextBlock
+                        Grid.Column="0"
+                        VerticalAlignment="Center"
+                        FontWeight="SemiBold"
+                        Text="Offered by this deployment" />
+
+                    <ProgressRing
+                        Grid.Column="1"
+                        Width="18"
+                        Height="18"
+                        IsActive="{x:Bind ViewModel.IsCatalogBusy, Mode=OneWay}" />
+
+                    <Button
+                        Grid.Column="2"
+                        AutomationProperties.Name="Refresh the catalog"
+                        Command="{x:Bind ViewModel.LoadCatalogCommand}"
+                        Style="{StaticResource ToolbarButtonStyle}"
+                        ToolTipService.ToolTip="Refresh the catalog">
+                        <FontIcon FontSize="14" Glyph="&#xE72C;" />
+                    </Button>
+                </Grid>
+
+                <ScrollViewer Grid.Row="1">
+                    <ItemsRepeater ItemsSource="{x:Bind ViewModel.CatalogItems}">
+                        <ItemsRepeater.ItemTemplate>
+                            <DataTemplate x:DataType="local:CatalogListItem">
+                                <Grid
+                                    Padding="14,12"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
+                                    BorderThickness="0,0,0,1"
+                                    ColumnSpacing="12">
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*" />
+                                        <ColumnDefinition Width="Auto" />
+                                    </Grid.ColumnDefinitions>
+
+                                    <StackPanel Grid.Column="0" Spacing="4">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                FontWeight="SemiBold"
+                                                Text="{x:Bind Plugin.DisplayName}" />
+                                            <TextBlock
+                                                VerticalAlignment="Center"
+                                                Style="{StaticResource MonoTextStyle}"
+                                                Text="{x:Bind Plugin.Version}" />
+                                            <Border Style="{StaticResource BadgeStyle}">
+                                                <TextBlock FontSize="12" Text="{x:Bind StateLabel}" />
+                                            </Border>
+                                        </StackPanel>
+                                        <TextBlock
+                                            FontSize="13"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind Plugin.Description}"
+                                            TextWrapping="Wrap" />
+                                        <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind Meta}" TextWrapping="Wrap" />
+                                    </StackPanel>
+
+                                    <Button
+                                        Grid.Column="1"
+                                        VerticalAlignment="Center"
+                                        AutomationProperties.Name="Install"
+                                        Click="OnCatalogInstallClick"
+                                        Content="Install"
+                                        IsEnabled="{x:Bind CanInstall}"
+                                        Tag="{x:Bind}" />
+                                </Grid>
+                            </DataTemplate>
+                        </ItemsRepeater.ItemTemplate>
+                    </ItemsRepeater>
+                </ScrollViewer>
+
+                <TextBlock
+                    Grid.Row="1"
+                    Margin="14,16"
+                    VerticalAlignment="Top"
+                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                    Text="{x:Bind ViewModel.CatalogMessage, Mode=OneWay}"
+                    TextWrapping="Wrap"
+                    Visibility="{x:Bind ViewModel.HasCatalogMessage, Mode=OneWay}" />
+            </Grid>
+        </Border>
+
+        <!--  The Develop tab. The three tabs share row 5, and exactly one of them is visible.  -->
         <Grid
             Grid.Row="5"
             ColumnSpacing="12"

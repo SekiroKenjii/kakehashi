@@ -3,10 +3,12 @@ using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.Globalization;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using __ROOT_NAMESPACE__.App.Plugins;
+using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.UI.Common.Controls;
 using __ROOT_NAMESPACE__.UI.Contracts;
@@ -77,6 +79,11 @@ public sealed partial class PluginsViewModel : ViewModel
         "Unsigned — runs with full application privileges. Installed at your own risk.";
 
     private const string _allFilter = "All";
+    private const string _fileSource = "File";
+    private const string _catalogSource = "Catalog";
+    private const string _installedTab = "Installed";
+    private const string _browseTab = "Browse catalog";
+    private const string _developTab = "Develop";
 
     private readonly IModuleRegistry _modules;
     private readonly PluginCatalog _catalog;
@@ -84,8 +91,12 @@ public sealed partial class PluginsViewModel : ViewModel
     private readonly IFileOpenService _files;
     private readonly IDialogService _dialogs;
     private readonly PluginScaffolder _scaffolder;
+    private readonly IPluginCatalogService _catalogService;
 
     private List<PluginListItem> _all = [];
+
+    /// <summary>Where the package in the prompt came from, which the installation records.</summary>
+    private string _pendingSource = _fileSource;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -94,7 +105,7 @@ public sealed partial class PluginsViewModel : ViewModel
     private string _filter = _allFilter;
 
     [ObservableProperty]
-    private string _tab = "Installed";
+    private string _tab = _installedTab;
 
     [ObservableProperty]
     private string _errorMessage = string.Empty;
@@ -112,7 +123,8 @@ public sealed partial class PluginsViewModel : ViewModel
         PluginInstaller installer,
         IFileOpenService files,
         IDialogService dialogs,
-        PluginScaffolder scaffolder)
+        PluginScaffolder scaffolder,
+        IPluginCatalogService catalogService)
     {
         ArgumentNullException.ThrowIfNull(modules);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -120,12 +132,14 @@ public sealed partial class PluginsViewModel : ViewModel
         ArgumentNullException.ThrowIfNull(files);
         ArgumentNullException.ThrowIfNull(dialogs);
         ArgumentNullException.ThrowIfNull(scaffolder);
+        ArgumentNullException.ThrowIfNull(catalogService);
         _modules = modules;
         _catalog = catalog;
         _installer = installer;
         _files = files;
         _dialogs = dialogs;
         _scaffolder = scaffolder;
+        _catalogService = catalogService;
     }
 
     public ObservableCollection<PluginListItem> Items { get; } = [];
@@ -138,9 +152,11 @@ public sealed partial class PluginsViewModel : ViewModel
     public bool HasError => ErrorMessage.Length > 0;
 
     /// <summary>Which tab the page is showing. The strip is the only thing that sets it.</summary>
-    public bool ShowingDevelop => Tab == "Develop";
+    public bool ShowingInstalled => Tab == _installedTab;
 
-    public bool ShowingInstalled => !ShowingDevelop;
+    public bool ShowingBrowse => Tab == _browseTab;
+
+    public bool ShowingDevelop => Tab == _developTab;
 
     /// <summary>Whether anything is waiting for the application to be restarted.</summary>
     public bool RestartRequired => _catalog.RestartRequired;
@@ -228,52 +244,51 @@ public sealed partial class PluginsViewModel : ViewModel
     public async Task<bool> PrepareInstallFromFileAsync()
     {
         ErrorMessage = string.Empty;
+        OnPropertyChanged(nameof(HasError));
         var path = await _files.PickFileAsync("Plugin package", PluginPaths.PackageExtension);
 
-        if (path is null)
-        {
-            return false;
-        }
-        var inspected = _installer.Inspect(path);
-
-        if (inspected.IsFailure)
-        {
-            ErrorMessage = inspected.Error.Message;
-            OnPropertyChanged(nameof(HasError));
-
-            return false;
-        }
-        ConsentGiven = false;
-        Pending = inspected.Value;
-        OnPropertyChanged(nameof(ConsentRequired));
-        OnPropertyChanged(nameof(CanInstallPending));
-
-        return true;
+        return path is not null && Prepare(path, _fileSource);
     }
 
     /// <summary>Accepts the package the dialog is showing. False keeps the dialog open.</summary>
-    public bool ConfirmInstall()
+    /// <remarks>
+    /// A catalog install is reported to the deployment that offered it, which is what puts it in
+    /// the account's history. The report happens after the package is staged and cannot undo it:
+    /// the install is a fact on this machine whether or not the server heard about it.
+    /// </remarks>
+    public async Task<bool> ConfirmInstallAsync()
     {
         if (Pending is null)
         {
             return false;
         }
-        var committed = _installer.Commit(Pending, ConsentGiven, "File");
+        var manifest = Pending.Manifest;
+        var committed = _installer.Commit(Pending, ConsentGiven, _pendingSource);
 
         if (committed.IsFailure)
         {
-            ErrorMessage = committed.Error.Message;
-            OnPropertyChanged(nameof(HasError));
-
-            return false;
+            return Refuse(committed.Error.Message);
         }
         _catalog.AddAwaitingRestart(new PluginRecord {
-            PluginID = Pending.Manifest.Id,
-            DisplayName = Pending.Manifest.DisplayName,
-            StagedVersion = Pending.Manifest.Version,
+            PluginID = manifest.Id,
+            DisplayName = manifest.DisplayName,
+            StagedVersion = manifest.Version,
         });
         Pending = null;
         Load();
+
+        if (_pendingSource == _catalogSource)
+        {
+            var reported = await _catalogService.ReportInstalledAsync(
+                manifest.Id, manifest.Version, CancellationToken.None);
+
+            if (reported.IsFailure)
+            {
+                ErrorMessage = $"{manifest.DisplayName} {manifest.Version} is staged and loads on "
+                    + $"the next launch. The catalog was not told: {reported.Error.Message}";
+                OnPropertyChanged(nameof(HasError));
+            }
+        }
 
         return true;
     }
@@ -336,8 +351,9 @@ public sealed partial class PluginsViewModel : ViewModel
 
     partial void OnTabChanged(string value)
     {
-        OnPropertyChanged(nameof(ShowingDevelop));
         OnPropertyChanged(nameof(ShowingInstalled));
+        OnPropertyChanged(nameof(ShowingBrowse));
+        OnPropertyChanged(nameof(ShowingDevelop));
     }
 
     partial void OnConsentGivenChanged(bool value) => OnPropertyChanged(nameof(CanInstallPending));
@@ -352,6 +368,31 @@ public sealed partial class PluginsViewModel : ViewModel
         {
             OnPropertyChanged(name);
         }
+    }
+
+    /// <summary>Opens a package and holds it for the prompt, however it arrived.</summary>
+    private bool Prepare(string packagePath, string source)
+    {
+        var inspected = _installer.Inspect(packagePath);
+
+        if (inspected.IsFailure)
+        {
+            return Refuse(inspected.Error.Message);
+        }
+        _pendingSource = source;
+        ConsentGiven = false;
+        Pending = inspected.Value;
+
+        return true;
+    }
+
+    /// <summary>Puts a reason on the page, and answers no.</summary>
+    private bool Refuse(string message)
+    {
+        ErrorMessage = message;
+        OnPropertyChanged(nameof(HasError));
+
+        return false;
     }
 
     private static string Describe(PluginNavigationEntry entry)

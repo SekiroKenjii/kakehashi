@@ -43,9 +43,16 @@ public sealed partial class PluginsPage : Page
         ViewModel.Filter = sender.SelectedItem?.Text ?? "All";
     }
 
-    private void OnTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
+    private async void OnTabChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs args)
     {
         ViewModel.Tab = sender.SelectedItem?.Text ?? "Installed";
+
+        // Read when it is looked at rather than at load: the catalog is a round trip, and the tab
+        // most people open the page for does not need one.
+        if (ViewModel.ShowingBrowse)
+        {
+            await ViewModel.LoadCatalogAsync();
+        }
     }
 
     private async void OnBrowseLocationClick(object sender, RoutedEventArgs e)
@@ -66,11 +73,31 @@ public sealed partial class PluginsPage : Page
         }
     }
 
-    private void OnInstallDialogPrimary(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    private async void OnCatalogInstallClick(object sender, RoutedEventArgs e)
     {
-        // Cancelling the click keeps the dialog open, which is what a refused install needs: the
-        // reason lands on the page behind it and the user can still see what they were agreeing to.
-        args.Cancel = !ViewModel.ConfirmInstall();
+        if (sender is Button { Tag: CatalogListItem item }
+            && await ViewModel.PrepareInstallFromCatalogAsync(item))
+        {
+            await InstallDialog.ShowAsync();
+        }
+    }
+
+    private async void OnInstallDialogPrimary(ContentDialog sender, ContentDialogButtonClickEventArgs args)
+    {
+        // A deferral because accepting a catalog package reports it, and the dialog would otherwise
+        // close before the answer arrived.
+        var deferral = args.GetDeferral();
+
+        try
+        {
+            // Cancelling the click keeps the dialog open, so a refused install leaves its reason on
+            // the page behind it with what they were agreeing to still on screen.
+            args.Cancel = !await ViewModel.ConfirmInstallAsync();
+        }
+        finally
+        {
+            deferral.Complete();
+        }
     }
 
     private void OnInstallDialogClosed(ContentDialog sender, ContentDialogClosedEventArgs args)

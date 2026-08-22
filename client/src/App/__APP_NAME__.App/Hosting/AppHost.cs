@@ -23,6 +23,7 @@ using Microsoft.Extensions.Logging;
 using AccountV1 = __ROOT_NAMESPACE__.Account.V1;
 using AuthzV1 = __ROOT_NAMESPACE__.Authz.V1;
 using NavigationV1 = __ROOT_NAMESPACE__.Navigation.V1;
+using PluginsV1 = __ROOT_NAMESPACE__.Plugins.V1;
 
 namespace __ROOT_NAMESPACE__.App.Hosting;
 
@@ -110,6 +111,10 @@ internal static class AppHost
         // A generated project references the assemblies beside this executable, so it compiles
         // against exactly the ones it will be loaded next to.
         services.AddSingleton(_ => new PluginScaffolder(AppContext.BaseDirectory));
+
+        // The catalog client is the host's too: it feeds the screen that governs every module.
+        services.AddBackendGrpcClient<PluginsV1.PluginService.PluginServiceClient>();
+        services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
 
         // A build that cannot vouch for itself vouches for nothing: every package is then
         // unofficial, and every install is asked about.
