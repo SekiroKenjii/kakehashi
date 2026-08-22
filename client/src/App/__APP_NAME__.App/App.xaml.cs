@@ -4,6 +4,7 @@ using System.Threading.Tasks;
 using __ROOT_NAMESPACE__.App.Hosting;
 using __ROOT_NAMESPACE__.App.Hosting.Orchestration;
 using __ROOT_NAMESPACE__.App.UI;
+using __ROOT_NAMESPACE__.PluginSdk.Xaml;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using __ROOT_NAMESPACE__.UI.Contracts.Services;
 using Microsoft.Extensions.DependencyInjection;
@@ -25,12 +26,18 @@ namespace __ROOT_NAMESPACE__.App;
 /// </remarks>
 public sealed partial class App : Microsoft.UI.Xaml.Application
 {
+    private readonly PluginXamlHost _pluginXaml = new();
+
     private IHost? _host;
     private WindowEx? _window;
     private UIElement? _appTitleBar;
 
     public App()
     {
+        // Before InitializeComponent, and it cannot move later: the framework asks for its resource
+        // manager once per UI thread while it starts, which is earlier than OnLaunched. The plugin
+        // packages themselves are added long afterwards — the fallback is consulted per lookup.
+        _pluginXaml.Attach(this);
         InitializeComponent();
 
         UnhandledException += OnUnhandledException;
@@ -128,7 +135,7 @@ public sealed partial class App : Microsoft.UI.Xaml.Application
     {
         try
         {
-            _host = AppHost.Build();
+            _host = AppHost.Build(_pluginXaml);
 
             // Make the container available to the few shared UI types the XAML runtime constructs via
             // new() (e.g. NavigationViewHeaderBehavior), which cannot use constructor injection.

@@ -74,6 +74,13 @@
     </AppxManifest>
   </ItemGroup>
 
+  <!-- The plugin loader resolves types in assemblies that do not exist when this is published, so
+       trimming cannot see them. Stated rather than left to a default, because turning it on would
+       break every plugin at runtime and nothing would say why. -->
+  <PropertyGroup>
+    <PublishTrimmed>false</PublishTrimmed>
+  </PropertyGroup>
+
   <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" />
     <PackageReference Include="CommunityToolkit.WinUI.Animations" />
@@ -95,6 +102,7 @@
   <ItemGroup>
     <ProjectReference Include="..\__APP_NAME__.App.Infrastructure\__APP_NAME__.App.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.Interoperability\__APP_NAME__.Interoperability.csproj" />
+    <ProjectReference Include="..\..\Shared\__APP_NAME__.PluginSdk.Abstractions\__APP_NAME__.PluginSdk.Abstractions.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.PluginSdk.Xaml\__APP_NAME__.PluginSdk.Xaml.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.UI.Common\__APP_NAME__.UI.Common.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.UI.Contracts\__APP_NAME__.UI.Contracts.csproj" />
