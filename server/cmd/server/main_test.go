@@ -64,6 +64,7 @@ func TestTheFeatureModulesAreNotExempt(t *testing.T) {
 		// kakehashi:unit-activity:begin
 		"activity",
 		// kakehashi:unit-activity:end
+		"plugins",
 		// kakehashi:module-ids:end
 	} {
 		if slices.Contains(unprotectedRouteModules, id) {

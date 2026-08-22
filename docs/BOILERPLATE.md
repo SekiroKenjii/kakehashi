@@ -89,6 +89,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `proto/__PROTO_PACKAGE__/authz/v1/` | CORE | |
 | `proto/__PROTO_PACKAGE__/health/v1/` | CORE | |
 | `proto/__PROTO_PACKAGE__/navigation/v1/` | CORE | |
+| `proto/__PROTO_PACKAGE__/plugins/v1/` | CORE | |
 | `proto/__PROTO_PACKAGE__/notes/v1/` | EXAMPLE | unit `notes` |
 
 ### server/
@@ -109,12 +110,14 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `server/internal/gen/__PROTO_PACKAGE__/authz/v1/` | CORE | |
 | `server/internal/gen/__PROTO_PACKAGE__/health/v1/` | CORE | |
 | `server/internal/gen/__PROTO_PACKAGE__/navigation/v1/` | CORE | |
+| `server/internal/gen/__PROTO_PACKAGE__/plugins/v1/` | CORE | generated |
 | `server/internal/gen/__PROTO_PACKAGE__/notes/v1/` | EXAMPLE | unit `notes` |
 | `server/internal/modules/account/` | CORE | the OpenID Connect provider — D2 |
 | `server/internal/modules/activity/` | EXAMPLE | unit `activity` |
 | `server/internal/modules/authz/` | CORE | the permission mechanism — D2 |
 | `server/internal/modules/health/` | CORE | |
 | `server/internal/modules/navigation/` | CORE | four modules implement its `Contributor` contract — D3 |
+| `server/internal/modules/plugins/` | CORE | the plugin catalog and its artifacts |
 | `server/internal/modules/notes/` | EXAMPLE | unit `notes` |
 | `server/internal/platform/` | CORE | |
 | `server/tools/archlint/` | CORE | gate 1. Its fixtures name `notes`; Phase 1 makes them synthetic |
