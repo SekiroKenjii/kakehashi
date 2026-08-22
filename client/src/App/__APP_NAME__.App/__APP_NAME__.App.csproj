@@ -95,6 +95,7 @@
   <ItemGroup>
     <ProjectReference Include="..\__APP_NAME__.App.Infrastructure\__APP_NAME__.App.Infrastructure.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.Interoperability\__APP_NAME__.Interoperability.csproj" />
+    <ProjectReference Include="..\..\Shared\__APP_NAME__.PluginSdk.Xaml\__APP_NAME__.PluginSdk.Xaml.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.UI.Common\__APP_NAME__.UI.Common.csproj" />
     <ProjectReference Include="..\..\Shared\__APP_NAME__.UI.Contracts\__APP_NAME__.UI.Contracts.csproj" />
     <!-- kakehashi:module-projects:begin -->
