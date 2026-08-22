@@ -201,6 +201,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj` | CORE (M) | marker: `module-projects` |
 | `client/tests/__APP_NAME__.ArchitectureTests/NotesLayeringTests.cs` | EXAMPLE | unit `notes` |
 | `client/tests/__APP_NAME__.Mediator.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.PluginSdk.Abstractions.Tests/` | CORE | |
 | `client/tests/__APP_NAME__.Modules.Activity.Application.Tests/` | EXAMPLE | unit `activity` |
 | `client/tests/__APP_NAME__.Modules.Activity.UI.Tests/` | EXAMPLE | unit `activity` |
 | `client/tests/__APP_NAME__.Modules.Auth.Application.Tests/` | CORE | |
