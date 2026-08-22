@@ -68,6 +68,9 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
     <Project Path="src/Shared/__APP_NAME__.Mediator/__APP_NAME__.Mediator.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.PluginSdk.Xaml/__APP_NAME__.PluginSdk.Xaml.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
     <Project Path="src/Shared/__APP_NAME__.SharedKernel/__APP_NAME__.SharedKernel.csproj" />
     <Project Path="src/Shared/__APP_NAME__.UI.Common/__APP_NAME__.UI.Common.csproj">
       <Platform Solution="*|x64" Project="x64" />
