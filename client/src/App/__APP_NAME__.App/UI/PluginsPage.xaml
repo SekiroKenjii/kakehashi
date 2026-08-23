@@ -452,36 +452,6 @@
 
             <ScrollViewer Grid.Column="1">
                 <StackPanel Spacing="12">
-                    <Border Style="{StaticResource CardStyle}">
-                        <StackPanel Padding="20" Spacing="8">
-                            <TextBlock FontWeight="SemiBold" Text="Generated structure" />
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.GeneratedStructure, Mode=OneWay}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="x:String">
-                                        <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind}" TextWrapping="Wrap" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
-                    <Border Style="{StaticResource CardStyle}">
-                        <StackPanel Padding="20" Spacing="8">
-                            <TextBlock FontWeight="SemiBold" Text="After scaffolding" />
-                            <ItemsControl ItemsSource="{x:Bind ViewModel.NextSteps}">
-                                <ItemsControl.ItemTemplate>
-                                    <DataTemplate x:DataType="x:String">
-                                        <TextBlock
-                                            FontSize="13"
-                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                            Text="{x:Bind}"
-                                            TextWrapping="Wrap" />
-                                    </DataTemplate>
-                                </ItemsControl.ItemTemplate>
-                            </ItemsControl>
-                        </StackPanel>
-                    </Border>
-
                     <!--
                         Acts on a project that has already been built, which is why it takes its own
                         path rather than the one the form above is still being filled in with.
@@ -549,6 +519,37 @@
                             </StackPanel>
                         </StackPanel>
                     </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Padding="20" Spacing="8">
+                            <TextBlock FontWeight="SemiBold" Text="Generated structure" />
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.GeneratedStructure, Mode=OneWay}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <TextBlock Style="{StaticResource MonoTextStyle}" Text="{x:Bind}" TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Padding="20" Spacing="8">
+                            <TextBlock FontWeight="SemiBold" Text="After scaffolding" />
+                            <ItemsControl ItemsSource="{x:Bind ViewModel.NextSteps}">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate x:DataType="x:String">
+                                        <TextBlock
+                                            FontSize="13"
+                                            Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                            Text="{x:Bind}"
+                                            TextWrapping="Wrap" />
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </Border>
+
                 </StackPanel>
             </ScrollViewer>
         </Grid>
