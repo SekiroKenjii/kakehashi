@@ -16,26 +16,23 @@ nothing left to enforce.
 
 | It can | It cannot |
 | --- | --- |
-| register services into the host's container | remove a service the host registered |
-| add screens to the navigation pane | replace a screen a module or the host pane declares |
+| register services into the host's container | remove or register over a service the host registered |
+| add screens to the navigation pane | replace a screen this build already answers to |
 | ship compiled XAML, `x:Bind`, code-behind and its own XAML types | resolve its own `.resw` strings through `x:Uid` |
 | use host `{StaticResource}` styles and `{ThemeResource}` | be unloaded without restarting |
 | be turned off and on instantly, like any module | have its screens rearranged from the Navigation screen |
 
-The refusals are not conventions. A `RegisterServices` that removes anything is rolled back whole
-against a snapshot taken before it ran — though *shadowing* is a different move and is not caught: a
-plugin that registers its own `INavigationService` removes nothing, and plugin modules register
-last, so its descriptor is the one a single-service resolution returns. The check compares what is
-still present, not what would resolve.
+The refusals are not conventions, and there are three ways a registration could stop being additive.
+Removing an entry is caught against a snapshot. Registering a service type the host already provides
+is caught by name — removal is not required to substitute one, because the container resolves the
+last descriptor and a plugin registers last. Throwing is caught by a filter. Any of the three rolls
+the whole registration back and becomes a row.
 
- and a page whose key collides with one this build already
-answers to is a load failure with the key named on the row.
-
-The reserved set is built from the compiled-in modules' navigation items and the host's pane
-entries. `HomePage` and `SettingsPage` are in neither — the shell registers those two by hand after
-the loader has run — so a plugin shipping a class of either name is not refused. It does not take
-the screen either: the shell registers last and last writer wins, so the plugin's own nav item ends
-up opening the host's page. Worth knowing, and worth closing.
+A page whose key collides with one this build already answers to is a load failure with the key
+named on the row. The reserved keys come from the compiled-in modules' navigation items, the host's
+pane entries, and the two screens the shell registers without a pane item of their own — Home and
+Settings. The key is matched the way the navigation service matches it, because one derived by a
+different rule would not be the one that collides.
 
 ## The lifecycle, and why a restart
 
@@ -61,24 +58,22 @@ A crash between the delete and the move leaves the staged copy where the next la
 step 2 repeats. So **installing takes effect at the next launch, and removing happens at the start
 of one**, and the screen's "Restart required" banner is the literal truth rather than a caution.
 
-The window that is *not* covered is between the move and the state file being written: the new
-version is on disk under a version the record does not yet name, and every later launch faults on
-both halves. Pressing Remove on the faulted row is the way out. Closing it needs the state written
-before the move rather than after.
+A crash between the move and the state file being written is covered from the other side: the next
+launch finds the staged directory gone and the new one present, and adopts what is on disk rather
+than faulting on both halves. An uninstall whose files are still held open keeps its record, so the
+launch after that tries again instead of orphaning the directory.
 
 Turning a loaded plugin off and on is instant: it is the same attach/detach a compiled-in module
 has, and nothing is loaded or unloaded by it.
 
-A plugin that will not load is a row with a reason rather than an exception, and an unreadable state
-file means no plugins rather than no application. **Three calls into plugin-authored code are not
-guarded**, though, and a plugin that throws from any of them takes startup down with it: its
-`GetNavigationItems()` while page keys are claimed, its `RegisterServices`, and the constructor of
-its generated XAML metadata provider. The module's own constructor *is* guarded. Closing the other
-three is the difference between the design's intent and what it currently does.
+Nothing here throws. A plugin that will not load is a row with a reason, an unreadable state file
+means no plugins rather than no application, and every call into plugin-authored code — its module
+constructor, its `GetNavigationItems()`, its `RegisterServices`, and the constructor of its
+generated XAML metadata provider — is made inside a filter that turns an exception into that row.
 
-`Plugins:Enabled: false` in `appsettings.json` is the switch for when even that is not enough. It
-loads nothing and says nothing: the screen still offers to install and uninstall, and a package
-staged while it is off waits for a launch that will not load it.
+`Plugins:Enabled: false` in `appsettings.json` is the switch for when even that is not enough. The
+screen says so rather than showing an empty list: installing still works and nothing will load what
+it stages until the switch goes back.
 
 ## Trust
 
@@ -103,16 +98,19 @@ executable, and anything short of a valid signature there — unsigned, expired,
 every package Unofficial and asks about all of them. That is the correct behaviour, not a degraded
 one.
 
-Three things the model knows and does not yet say. Revocation is not checked (`WTD_REVOKE_NONE`), so
-a revoked certificate reads as valid. The precise status — tampered, expired, distrusted — is
-computed and then collapsed to Verified or Unofficial, so a modified package signed by this
-application's own publisher is described as "signed by somebody else" and names that publisher. And
-the row in the list says "Unsigned" for anything unverified, including a package with a perfectly
-good signature from another author, where the prompt gets it right.
+**Unofficial is not one thing, and the screen says which.** The verdict collapses eight statuses
+into two, so the status is kept beside it: unsigned, signed by another publisher, and *modified
+since it was signed* read differently in the prompt and on the row, because the last of those is the
+one that is not merely unvouched-for.
 
-**Every unofficial install asks, every time.** The record keeps the identity, the digest and the
-answer, and `PluginInstaller.AlreadyConsented` exists to compare them — but nothing calls it, so a
-byte-identical reinstall prompts again. Erring toward asking, and worth wiring up.
+One thing the model does not check: revocation (`WTD_REVOKE_NONE`), so a certificate revoked after
+it was issued still reads as valid. Turning it on makes verification depend on reaching a CRL or
+OCSP responder, which is a decision about what an offline install should do.
+
+**Consent is keyed on the identity and the digest together.** Different bytes are a different
+package whatever its version says, so an update is a fresh decision and the prompt returns — while a
+reinstall of exactly what was already agreed to does not ask again. A prompt that appears when
+nothing has changed is one people learn to click through.
 
 A catalog download is checked against the digest the catalog published, before anything opens the
 archive, and bytes that do not match are deleted rather than inspected. That digest is the server's
@@ -143,7 +141,7 @@ repeats what the module also declares in code.
 `navigation` exists so the install prompt can say *"adds a 'Markdown' screen under Utilities"*
 **without executing the plugin**. The runtime truth still comes from `GetNavigationItems()`.
 
-`callsPermission` is **disclosure, never a gate** — see
+`callsPermission` is shown in the install prompt as **disclosure, never a gate** — see
 [ADR 0025](adr/0025-a-plugins-declared-permission-is-disclosure.md). Nothing stored client-side may
 be read as authorization; the server refuses what a plugin is not entitled to ask for, at the one
 place that sees every request. A plugin's navigation items carry no `RequiredPermission` at all,

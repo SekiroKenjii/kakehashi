@@ -1,3 +1,4 @@
+using System;
 using __ROOT_NAMESPACE__.SharedKernel;
 
 namespace __ROOT_NAMESPACE__.App.Plugins;
@@ -57,13 +58,35 @@ public static class PluginLoadErrors
     }
 
     /// <summary>
-    /// A module's registration is additive. Removing or replacing something the host registered
-    /// would let a plugin substitute its own navigation, its own token store, its own anything.
+    /// A module's registration is additive. Removing something the host registered would let a
+    /// plugin substitute its own navigation, its own token store, its own anything.
     /// </summary>
     public static Error RegistrationRemovedServices(string moduleName)
     {
         return new Error(
             "Plugin.Load.RegistrationRemovedServices",
-            $"'{moduleName}' tried to remove or replace a service this application registered.");
+            $"'{moduleName}' tried to remove a service this application registered.");
+    }
+
+    /// <summary>
+    /// Registering a service the host already registered is how a plugin substitutes one without
+    /// removing anything: the container resolves the last descriptor, and a plugin registers last.
+    /// </summary>
+    public static Error RegistrationShadowedService(string moduleName, string serviceType)
+    {
+        return new Error(
+            "Plugin.Load.RegistrationShadowedService",
+            $"'{moduleName}' registered its own '{serviceType}', which this application already provides.");
+    }
+
+    /// <summary>
+    /// A plugin's own code threw. Named here rather than allowed to escape, because a plugin that
+    /// stops the application from starting is the outcome the whole design exists to avoid.
+    /// </summary>
+    public static Error Threw(string member, Exception exception)
+    {
+        ArgumentNullException.ThrowIfNull(exception);
+
+        return new Error("Plugin.Load.Threw", $"{member} threw {exception.GetType().Name}: {exception.Message}");
     }
 }

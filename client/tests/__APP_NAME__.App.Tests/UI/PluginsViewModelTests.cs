@@ -69,7 +69,8 @@ public sealed class PluginsViewModelTests : IDisposable
         _modules.IsAttached(Arg.Any<string>()).Returns(true);
     }
 
-    private void AddInstalled(string id, string moduleName, string signature, string version = "1.0.0")
+    private void AddInstalled(
+        string id, string moduleName, string signature, string version = "1.0.0", string status = "")
     {
         _catalog.Add(new LoadedPlugin(
             new PluginRecord {
@@ -77,6 +78,7 @@ public sealed class PluginsViewModelTests : IDisposable
                 DisplayName = moduleName,
                 InstalledVersion = version,
                 Signature = signature,
+                SignatureStatus = status,
                 Source = "File",
                 SizeInBytes = 2 * 1024 * 1024,
             },
@@ -208,6 +210,70 @@ public sealed class PluginsViewModelTests : IDisposable
         _ = _modules.Received(1).Detach("Auth");
         Assert.True(viewModel.HasError);
         Assert.Equal("Required.", viewModel.ErrorMessage);
+    }
+
+    /// <summary>
+    /// Unsigned and modified-since-signed are both Unofficial and are not the same news, so the row
+    /// says which. Saying "Unsigned" about a validly signed package is the drift worth catching.
+    /// </summary>
+    [Theory]
+    [InlineData("Unsigned", nameof(PluginsViewModel.UnsignedWarning))]
+    [InlineData("Valid", nameof(PluginsViewModel.OtherPublisherWarning))]
+    [InlineData("Tampered", nameof(PluginsViewModel.TamperedWarning))]
+    public void Load_TheRowSaysWhichKindOfUnofficialItIs(string status, string expected)
+    {
+        Compose();
+        AddInstalled("weather", "Weather", nameof(PluginTrustLevel.Unofficial), status: status);
+
+        var viewModel = CreateViewModel();
+        viewModel.Load();
+
+        var warnings = new Dictionary<string, string>(StringComparer.Ordinal) {
+            [nameof(PluginsViewModel.UnsignedWarning)] = PluginsViewModel.UnsignedWarning,
+            [nameof(PluginsViewModel.OtherPublisherWarning)] = PluginsViewModel.OtherPublisherWarning,
+            [nameof(PluginsViewModel.TamperedWarning)] = PluginsViewModel.TamperedWarning,
+        };
+
+        Assert.Equal(warnings[expected], viewModel.Items[0].Warning);
+    }
+
+    /// <summary>
+    /// An answer already on the record is an answer. Asking again for bytes that have not changed
+    /// teaches people to click through the one prompt that matters.
+    /// </summary>
+    [Fact]
+    public async Task PrepareInstall_DoesNotAskTwiceForTheSameBytes()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+        _files.PickFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(WriteUnsignedPackage());
+        _ = await viewModel.PrepareInstallFromFileAsync();
+        viewModel.ConsentGiven = true;
+        _ = await viewModel.ConfirmInstallAsync();
+
+        Assert.True(await viewModel.PrepareInstallFromFileAsync());
+        Assert.False(viewModel.ConsentRequired);
+        Assert.True(viewModel.CanInstallPending);
+    }
+
+    /// <summary>Turned off, the screen says so rather than showing an empty list.</summary>
+    [Fact]
+    public void PluginsDisabled_FollowsWhatTheDeploymentDecided()
+    {
+        Compose();
+
+        Assert.False(CreateViewModel().PluginsDisabled);
+
+        var off = new PluginsViewModel(
+            _modules,
+            new PluginCatalog { Disabled = true },
+            new PluginInstaller(new PluginPaths(_root), publisher: string.Empty),
+            _files,
+            _dialogs,
+            new PluginScaffolder(_root),
+            _catalogService);
+
+        Assert.True(off.PluginsDisabled);
     }
 
     /// <summary>

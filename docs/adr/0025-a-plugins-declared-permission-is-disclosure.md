@@ -22,16 +22,11 @@ symptom — an installed plugin whose page never appears — points at nothing.
 visible to whoever installed it, and the server refuses whatever its code is not entitled to ask
 for, at the one place that sees every request.
 
-**The manifest field is named `callsPermission`, and what it is for is disclosure.** If it is shown,
-it belongs beside the author, the digest and the screens the package adds — as a description of what
-the package will be talking to, never as a claim that the host will stop it.
+**The manifest field is named `callsPermission` and reads as disclosure.** The install prompt lists
+it beside the author, the digest and the screens the package adds, and says in the same breath that
+this application does not enforce it.
 
 ## Consequences
-
-The field is currently parsed and not displayed: the prompt lists the author, the digest, the
-signature, the screens and the host version, and no permission row. So the decision holds in the
-direction that matters — nothing treats it as a gate — and the disclosure half is unbuilt rather
-than wrong.
 
 The install prompt is honest about what it is: a description of a package, and a decision about
 whether to run code. It is not a policy engine, and nothing on it should be read as one.

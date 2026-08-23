@@ -10,10 +10,18 @@ using __ROOT_NAMESPACE__.UI.Contracts;
 
 namespace __ROOT_NAMESPACE__.App.Plugins;
 
+/// <summary>A module a plugin contributed, with the identity it is filed under.</summary>
+/// <remarks>
+/// The id travels with the module because composition can still refuse one, and a refusal filed
+/// under the module's name is a row the state file cannot be looked up by — the two vocabularies
+/// differ, so uninstalling it would find nothing.
+/// </remarks>
+public sealed record PluginModule(string PluginID, IModule Module);
+
 /// <summary>What one launch made of the installed plugins.</summary>
 /// <param name="Modules">The modules to compose, in the order they loaded.</param>
 /// <param name="Catalog">What loaded, what did not, and what is waiting for a restart.</param>
-public sealed record PluginLoadResult(IReadOnlyList<IModule> Modules, PluginCatalog Catalog);
+public sealed record PluginLoadResult(IReadOnlyList<PluginModule> Modules, PluginCatalog Catalog);
 
 /// <summary>
 /// Brings installed plugins into this composition.
@@ -24,9 +32,9 @@ public sealed record PluginLoadResult(IReadOnlyList<IModule> Modules, PluginCata
 /// rather than immediately, and why a removal happens here: this is the one moment the files are
 /// not yet open.
 /// <para>
-/// A plugin that cannot be loaded becomes a row with a reason on it and the application starts
-/// without it. Three calls into the plugin's own code are still unguarded — GetNavigationItems
-/// here, RegisterServices in AppHost, and its XAML provider's constructor: docs/PLUGINS.md.
+/// Nothing here throws. A plugin that cannot be loaded becomes a row with a reason on it and the
+/// application starts without it — including one that throws from its own code, because every call
+/// into a plugin is made inside a filter that turns the exception into that row.
 /// </para>
 /// </remarks>
 public static class PluginLoader
@@ -52,7 +60,7 @@ public static class PluginLoader
         Settle(paths, state, catalog);
 
         var taken = new HashSet<string>(reservedPageKeys, StringComparer.Ordinal);
-        var modules = new List<IModule>();
+        var modules = new List<PluginModule>();
 
         foreach (var record in state.Records)
         {
@@ -68,7 +76,7 @@ public static class PluginLoader
 
                 continue;
             }
-            modules.Add(module!);
+            modules.Add(new PluginModule(record.PluginID, module!));
             catalog.Add(new LoadedPlugin(record, loaded.Value));
         }
 
@@ -78,16 +86,25 @@ public static class PluginLoader
     /// <summary>
     /// The page keys a build owns before any plugin is loaded.
     /// </summary>
+    /// <param name="items">Every pane destination, whether a module's or the host's.</param>
+    /// <param name="pages">
+    /// The screens registered without a pane item of their own. They answer to a key like any
+    /// other, so leaving them out would let a plugin claim one.
+    /// </param>
     /// <remarks>
-    /// The type name without its "Page" suffix, which is how the navigation service derives a key —
-    /// though it compares the suffix case-insensitively and this compares it exactly.
+    /// The type name without its "Page" suffix, matched the way the navigation service matches it:
+    /// a key derived by a different rule would not be the one that collides.
     /// </remarks>
-    public static IReadOnlyCollection<string> PageKeysOf(IEnumerable<NavigationItem> items)
+    public static IReadOnlyCollection<string> PageKeysOf(
+        IEnumerable<NavigationItem> items, IEnumerable<Type> pages)
     {
         ArgumentNullException.ThrowIfNull(items);
+        ArgumentNullException.ThrowIfNull(pages);
 
         return [.. items
-            .Select(item => KeyOf(item.PageType))
+            .Select(item => item.PageType)
+            .Concat(pages)
+            .Select(KeyOf)
             .Where(key => key.Length > 0)];
     }
 
@@ -96,8 +113,8 @@ public static class PluginLoader
     /// </summary>
     /// <remarks>
     /// Both happen before a single assembly is loaded, which is the only moment the files are not
-    /// held open. A promotion that fails leaves the staged copy where the next launch finds it; one
-    /// that succeeds and is not recorded does not, which docs/PLUGINS.md states as an open window.
+    /// held open. A promotion that fails leaves the staged copy where the next launch finds it, and
+    /// one that moved without being recorded is adopted from the disk on the next.
     /// </remarks>
     private static void Settle(PluginPaths paths, PluginState state, PluginCatalog catalog)
     {
@@ -107,10 +124,16 @@ public static class PluginLoader
         {
             if (record.PendingRemove)
             {
-                Delete(paths.InstalledRoot(record.PluginID));
-                Delete(paths.StagedRoot(record.PluginID));
-                state.Remove(record.PluginID);
-                changed = true;
+                var removed = Delete(paths.InstalledRoot(record.PluginID))
+                    & Delete(paths.StagedRoot(record.PluginID));
+
+                // The record goes only once the files have. One still held open keeps its record,
+                // so the next launch tries again rather than orphaning the directory forever.
+                if (removed)
+                {
+                    state.Remove(record.PluginID);
+                    changed = true;
+                }
 
                 continue;
             }
@@ -147,12 +170,14 @@ public static class PluginLoader
     {
         if (!Directory.Exists(staged))
         {
-            return false;
+            // The move happened and the record was never written — the one window a crash can land
+            // in. What is on disk is the answer, so adopt it rather than faulting forever.
+            return Directory.Exists(installed);
         }
 
         try
         {
-            Delete(paths.InstalledRoot(record.PluginID));
+            _ = Delete(paths.InstalledRoot(record.PluginID));
             var parent = Path.GetDirectoryName(installed);
 
             if (parent is not null)
@@ -160,7 +185,7 @@ public static class PluginLoader
                 Directory.CreateDirectory(parent);
             }
             Directory.Move(staged, installed);
-            Delete(paths.StagedRoot(record.PluginID));
+            _ = Delete(paths.StagedRoot(record.PluginID));
 
             return true;
         }
@@ -292,11 +317,26 @@ public static class PluginLoader
     /// Refuses a plugin whose pages would take a key this build already answers to, and reserves
     /// the ones it may have.
     /// </summary>
+    /// <remarks>
+    /// The plugin's own code answers what those pages are, so the call is made inside a filter: a
+    /// module that throws from it is a row with a reason rather than an application that will not
+    /// start.
+    /// </remarks>
     private static Result ClaimPageKeys(IModule module, HashSet<string> taken)
     {
+        IReadOnlyList<NavigationItem> items;
+
+        try
+        {
+            items = [.. module.GetNavigationItems()];
+        }
+        catch (Exception exception)
+        {
+            return Result.Failure(PluginLoadErrors.Threw(nameof(IModule.GetNavigationItems), exception));
+        }
         var keys = new List<string>();
 
-        foreach (var item in module.GetNavigationItems())
+        foreach (var item in items)
         {
             var key = KeyOf(item.PageType);
 
@@ -326,12 +366,17 @@ public static class PluginLoader
         const string suffix = "Page";
         var name = pageType.Name;
 
-        return name.Length > suffix.Length && name.EndsWith(suffix, StringComparison.Ordinal)
+        return name.Length > suffix.Length && name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
             ? name[..^suffix.Length]
             : string.Empty;
     }
 
-    private static void Delete(string directory)
+    /// <summary>Removes a directory if it is there, and says whether it is gone.</summary>
+    /// <remarks>
+    /// Never throws: failing here would strand the application on a plugin it is trying to be rid
+    /// of. The answer is what lets the caller keep the record and try again next launch.
+    /// </remarks>
+    private static bool Delete(string directory)
     {
         try
         {
@@ -339,11 +384,12 @@ public static class PluginLoader
             {
                 Directory.Delete(directory, recursive: true);
             }
+
+            return true;
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            // Failing here would strand the application on a plugin it is trying to be rid of. The
-            // record goes either way, so a directory still held open is orphaned rather than retried.
+            return false;
         }
     }
 }

@@ -75,7 +75,7 @@ public sealed partial class ShellPage : Page
     private void OnShellPageLoaded(object sender, RoutedEventArgs e)
     {
         _navigationService.Initialize(NavFrame);
-        _navigationService.Register(typeof(HomePage), typeof(SettingsPage));
+        _navigationService.Register([.. HostNavigation.ShellPages]);
         foreach (var item in HostNavigation.Items)
         {
             _navigationService.Register(item.PageType);

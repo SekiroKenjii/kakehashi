@@ -125,6 +125,11 @@ Recorded so nobody re-derives them. All were invisible to the 271 unit tests.
 - **A `Button` wrapping the row hid the eye inside it.** This one was found by the harness *after* a
   fix, which is the argument for keeping it: the same run that confirmed the row had become reachable
   reported that five visibility controls had gone.
+- **The Develop tab's Check and Pack buttons were off the bottom of their column.** Every assertion
+  about them passed — UIA finds a control that has been scrolled out of view and reports it at 0x0.
+  The screenshot showed a column with two reference cards and no action, and `isOffscreen` in the
+  JSON tree confirmed it. There is now an assertion on that flag, because "offered" and "reachable"
+  are different claims and only one of them was being made.
 
 ## Extending it
 
@@ -140,17 +145,23 @@ runs, `Find1` resolves one selector by name and type, and `Choose` works a Combo
 
 ## Known failures
 
-The suite stands at **75 passed, 1 failed** on a clean run. Do not spend time re-diagnosing these:
+The suite stands at **87 passed, 2 failed** on a clean run against a freshly seeded database. Do not
+spend time re-diagnosing these:
 
 - **`a heading can be moved down`** — headings offer "move up" only. Every ordering is still
   reachable with repeated "up", so this is an asymmetry rather than a trap, and it is recorded
   rather than fixed.
 
-- **The Users and Role permissions sections can report empty** (`0 rows`, `0 roles`, and the command
-  buttons "not found") when the run reaches them straight after the Navigation section's staging,
-  dialog and discard sequence. Inspecting those pages by hand immediately afterwards shows every
-  control present and correctly named, so this is the harness reading a page that has not settled
-  rather than a defect. Re-run those two sections on their own to confirm before believing them.
+- **`Load more is a named, reachable control`** — a fresh database has nine activity entries and the
+  page holds fifty, so there is no next page and no button. It passes against a database with real
+  history. Check the footer ("9 events · kept for 90 days") before believing the other reading.
+
+**The Users and Role permissions sections were recorded here as reporting empty**, and that was not
+a settling problem: `AllOf` parsed the *printed* tree, and winapp writes SGR colour escapes between
+the type and the name even when its output is captured — so the branch that reads a name never
+matched and every element came back nameless. Four checks failed because of it, and the note here
+blamed the pages. `AllOf` reads the JSON tree now. If a check that reads names starts failing across
+unrelated pages, suspect the helper before the pages.
 
 A second check, `no page has an unnamed interactive control`, failed for a long time over Home,
 Users and Role permissions. It passes now, and it is worth keeping green: it is the cheapest guard

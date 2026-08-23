@@ -32,7 +32,8 @@ context is what microsoft-ui-xaml#3888 reports breaking XAML user controls; remo
 restart, so isolation would buy nothing but a second way for type identity to go wrong.
 
 **A refusal is data, not an exception.** A plugin that will not load becomes a row with a reason on
-the Plugins screen; an unreadable state file means no plugins rather than no application. The loader
+the Plugins screen; an unreadable state file means no plugins rather than no application. Every call
+into plugin-authored code is made inside a filter, so a plugin that throws is a row too. The loader
 runs before the container exists, so it cannot log — faults are data on `PluginCatalog`, which the
 Plugins screen reads.
 
@@ -51,8 +52,8 @@ every plugin at runtime rather than at build.
 
 `Plugins:Enabled` in configuration is the kill switch, defaulting to `true`. Zero plugins is a
 no-op, so the default costs nothing and a fresh scaffold shows the feature exists. Off, it loads
-nothing and says nothing — the screen still offers to install, which is a rough edge rather than a
-decision. MSIX is untested rather than refused: `%LOCALAPPDATA%` and `ms-appx` both change meaning
+nothing and the screen says so, because installing still works and a package staged against a switch
+that is off waits for a launch that will not load it. MSIX is untested rather than refused: `%LOCALAPPDATA%` and `ms-appx` both change meaning
 there, and v1 supports unpackaged only.
 
 A plugin cannot substitute a host service. `AddModules` snapshots the collection, calls
@@ -60,10 +61,12 @@ A plugin cannot substitute a host service. `AddModules` snapshots the collection
 missing — which is stronger than any static check of the plugin's code, because it observes the
 result rather than the source.
 
-Two things this decision does not yet buy, and both are stated in `docs/PLUGINS.md` rather than
-implied away. Calls into plugin-authored code are guarded for the module's constructor and not for
-`GetNavigationItems`, `RegisterServices` or the generated XAML provider's constructor, so a plugin
-that throws from one of those still reaches the exception window. And the state file is written
-after the promotion rather than before, which leaves one crash window in which a plugin's files are
-present under a version its record does not name. Neither is inherent to loading at startup; both
-are work the shape above makes possible rather than prevents.
+Nor can it register over one. Removal is not required to substitute a service — the container
+resolves the last descriptor and a plugin registers last — so a registration naming a service type
+the host already provides is refused by name.
+
+The state file is written after the promotion rather than before, which would leave a plugin's files
+present under a version its record does not name. Rather than order the two writes, the next launch
+reads the disk: a staged directory that is gone and an installed one that is there is a promotion
+that happened, and it is adopted. Recovery from what is on disk is cheaper to keep right than an
+ordering nothing enforces.

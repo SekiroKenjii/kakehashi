@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.App.Services;
+using __ROOT_NAMESPACE__.Interoperability;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.UI.Common.Controls;
 using __ROOT_NAMESPACE__.UI.Contracts;
@@ -78,6 +79,14 @@ public sealed partial class PluginsViewModel : ViewModel
     public const string UnsignedWarning =
         "Unsigned — runs with full application privileges. Installed at your own risk.";
 
+    /// <summary>A valid signature from somebody this application does not answer for.</summary>
+    public const string OtherPublisherWarning =
+        "Signed by another publisher — runs with full application privileges. Installed at your own risk.";
+
+    /// <summary>The one that is not merely unvouched-for: these bytes are not the ones signed.</summary>
+    public const string TamperedWarning =
+        "Modified since it was signed — runs with full application privileges. Installed at your own risk.";
+
     private const string _allFilter = "All";
     private const string _fileSource = "File";
     private const string _catalogSource = "Catalog";
@@ -97,6 +106,9 @@ public sealed partial class PluginsViewModel : ViewModel
 
     /// <summary>Where the package in the prompt came from, which the installation records.</summary>
     private string _pendingSource = _fileSource;
+
+    /// <summary>Whether these exact bytes have been agreed to before, read once when they open.</summary>
+    private bool _pendingConsented;
 
     [ObservableProperty]
     private string _searchText = string.Empty;
@@ -158,6 +170,9 @@ public sealed partial class PluginsViewModel : ViewModel
 
     public bool ShowingDevelop => Tab == _developTab;
 
+    /// <summary>Whether this deployment turned the feature off, which the screen says out loud.</summary>
+    public bool PluginsDisabled => _catalog.Disabled;
+
     /// <summary>Whether anything is waiting for the application to be restarted.</summary>
     public bool RestartRequired => _catalog.RestartRequired;
 
@@ -185,8 +200,12 @@ public sealed partial class PluginsViewModel : ViewModel
         }
     }
 
-    /// <summary>The consent prompt is only shown for what this application cannot vouch for.</summary>
-    public bool ConsentRequired => Pending is not null && Pending.Trust.Level != PluginTrustLevel.Verified;
+    /// <summary>
+    /// The consent prompt is only shown for what this application cannot vouch for, and not twice
+    /// for the same bytes: an answer already on the record is an answer.
+    /// </summary>
+    public bool ConsentRequired =>
+        Pending is not null && Pending.Trust.Level != PluginTrustLevel.Verified && !_pendingConsented;
 
     public bool CanInstallPending => Pending is not null && (!ConsentRequired || ConsentGiven);
 
@@ -204,11 +223,7 @@ public sealed partial class PluginsViewModel : ViewModel
     /// <summary>Who signed it, said plainly rather than as a status name.</summary>
     public string PendingSignature => Pending is null
         ? string.Empty
-        : Pending.Trust.Level == PluginTrustLevel.Verified
-            ? $"Signed by this application's publisher — {Pending.Trust.Signer}"
-            : Pending.Trust.Signer.Length == 0
-                ? "Unsigned — nobody vouches for this package"
-                : $"Signed by somebody else — {Pending.Trust.Signer}";
+        : Describe(Pending.Trust);
 
     /// <summary>The screens it adds, which is the part a user can check against what they expected.</summary>
     public string PendingNavigation
@@ -222,6 +237,11 @@ public sealed partial class PluginsViewModel : ViewModel
             return string.Join(", ", Pending.Manifest.Navigation.Select(Describe));
         }
     }
+
+    /// <summary>What the package says it will be talking to, which is disclosure and not a gate.</summary>
+    public string PendingCalls => Pending is null || Pending.Manifest.CallsPermission.Length == 0
+        ? "Nothing it declares."
+        : $"Endpoints gated by {Pending.Manifest.CallsPermission}. This application does not enforce that.";
 
     public string PendingHostSdk => Pending is null
         ? string.Empty
@@ -365,6 +385,7 @@ public sealed partial class PluginsViewModel : ViewModel
         foreach (var name in new[] {
             nameof(PendingName), nameof(PendingSummary), nameof(PendingAuthor), nameof(PendingDigest),
             nameof(PendingSignature), nameof(PendingNavigation), nameof(PendingHostSdk),
+            nameof(PendingCalls),
             nameof(ConsentRequired), nameof(CanInstallPending),
         })
         {
@@ -382,6 +403,7 @@ public sealed partial class PluginsViewModel : ViewModel
             return Refuse(inspected.Error.Message);
         }
         _pendingSource = source;
+        _pendingConsented = _installer.AlreadyConsented(inspected.Value);
         ConsentGiven = false;
         Pending = inspected.Value;
 
@@ -395,6 +417,48 @@ public sealed partial class PluginsViewModel : ViewModel
         OnPropertyChanged(nameof(HasError));
 
         return false;
+    }
+
+    /// <summary>
+    /// What the trust provider said, in words.
+    /// </summary>
+    /// <remarks>
+    /// The verdict collapses eight statuses into two, and the difference between "nobody signed
+    /// this" and "somebody signed this and then it changed" is the whole of what a reader acts on.
+    /// </remarks>
+    private static string Describe(PluginTrustVerdict trust)
+    {
+        if (trust.Level == PluginTrustLevel.Verified)
+        {
+            return $"Signed by this application's publisher — {trust.Signer}";
+        }
+
+        return trust.Signature switch {
+            SignatureStatus.Unsigned => "Unsigned — nobody vouches for this package",
+            SignatureStatus.Tampered =>
+                $"Modified since it was signed — it no longer matches what {Signer(trust)} signed",
+            SignatureStatus.Expired => $"Signed by {Signer(trust)} with a certificate that has expired",
+            SignatureStatus.Revoked => $"Signed by {Signer(trust)} with a revoked certificate",
+            SignatureStatus.Distrusted => $"Signed by {Signer(trust)}, whose certificate is distrusted",
+            SignatureStatus.UntrustedRoot => $"Signed by {Signer(trust)}, by an authority this machine does not trust",
+            SignatureStatus.Valid => $"Signed by somebody else — {trust.Signer}",
+            _ => "This machine could not read the signature",
+        };
+    }
+
+    private static string Signer(PluginTrustVerdict trust)
+    {
+        return trust.Signer.Length == 0 ? "its signer" : trust.Signer;
+    }
+
+    /// <summary>What a row says about a package, which is what the prompt said when it was installed.</summary>
+    private static string WarningFor(PluginRecord record)
+    {
+        return record.SignatureStatus switch {
+            nameof(SignatureStatus.Tampered) => TamperedWarning,
+            nameof(SignatureStatus.Valid) => OtherPublisherWarning,
+            _ => UnsignedWarning,
+        };
     }
 
     private static string Describe(PluginNavigationEntry entry)
@@ -458,7 +522,7 @@ public sealed partial class PluginsViewModel : ViewModel
                 $"v{record.InstalledVersion}",
                 manifest.Description,
                 string.Join(" · ", parts.Where(part => part.Length > 0)),
-                verified ? string.Empty : UnsignedWarning,
+                verified ? string.Empty : WarningFor(record),
                 verified ? PluginOrigin.Verified : PluginOrigin.Unofficial,
                 record.StagedVersion,
                 _modules.IsAttached(manifest.ModuleName),

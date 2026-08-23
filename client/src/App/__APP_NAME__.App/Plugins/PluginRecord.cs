@@ -39,11 +39,20 @@ public sealed record PluginRecord
     public string Signature { get; set; } = string.Empty;
 
     /// <summary>
+    /// What the trust provider actually said, which the verdict collapses.
+    /// </summary>
+    /// <remarks>
+    /// Unsigned and modified-since-signed are both Unofficial and are not the same news, so the row
+    /// and the prompt read this rather than inferring from the verdict.
+    /// </remarks>
+    public string SignatureStatus { get; set; } = string.Empty;
+
+    /// <summary>
     /// Whether the user accepted the risk of an unverified package.
     /// </summary>
     /// <remarks>
-    /// Keyed by the identity, the version and the digest together: change any of the three and the
-    /// package is not the one that was agreed to, so the question is asked again.
+    /// Keyed by the identity and the digest together: different bytes are a different package
+    /// whatever its version says, so the question is asked again.
     /// </remarks>
     public bool ConsentGiven { get; set; }
 

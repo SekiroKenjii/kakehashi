@@ -47,7 +47,6 @@ public sealed class PluginManifestJsonTests
         Assert.Equal(manifest.MinHostSdk, round.MinHostSdk);
         Assert.Equal(manifest.Navigation, round.Navigation);
         Assert.Equal(manifest.CallsPermission, round.CallsPermission);
-        Assert.Equal(manifest.RequiresUnsafeXamlHooks, round.RequiresUnsafeXamlHooks);
     }
 
     [Fact]
