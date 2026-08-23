@@ -67,7 +67,9 @@ const (
 type PluginServiceClient interface {
 	// ListPlugins returns the listed plugins, each with its newest version that is not yanked.
 	ListPlugins(context.Context, *connect.Request[v1.ListPluginsRequest]) (*connect.Response[v1.ListPluginsResponse], error)
-	// GetPlugin returns one plugin and every version of it still on offer, or NOT_FOUND.
+	// GetPlugin returns one plugin and every version of it, withdrawn ones included, newest first,
+	// or NOT_FOUND. An administrator has to see a withdrawn version to put it back, so is_yanked
+	// carries the distinction rather than the list.
 	GetPlugin(context.Context, *connect.Request[v1.GetPluginRequest]) (*connect.Response[v1.GetPluginResponse], error)
 	// DownloadPluginVersion streams one version's bytes.
 	//
@@ -77,8 +79,8 @@ type PluginServiceClient interface {
 	// ReportInstalled records that this account installed a version.
 	//
 	// The request decides almost nothing: the account comes from the token and the time from the
-	// server's clock. A version this catalog does not have is INVALID_ARGUMENT, which is what keeps
-	// a client from writing a fact about a package nobody published.
+	// server's clock. A version this catalog does not have is NOT_FOUND, which is what keeps a
+	// client from writing a fact about a package nobody published.
 	ReportInstalled(context.Context, *connect.Request[v1.ReportInstalledRequest]) (*connect.Response[v1.ReportInstalledResponse], error)
 }
 
@@ -153,7 +155,9 @@ func (c *pluginServiceClient) ReportInstalled(ctx context.Context, req *connect.
 type PluginServiceHandler interface {
 	// ListPlugins returns the listed plugins, each with its newest version that is not yanked.
 	ListPlugins(context.Context, *connect.Request[v1.ListPluginsRequest]) (*connect.Response[v1.ListPluginsResponse], error)
-	// GetPlugin returns one plugin and every version of it still on offer, or NOT_FOUND.
+	// GetPlugin returns one plugin and every version of it, withdrawn ones included, newest first,
+	// or NOT_FOUND. An administrator has to see a withdrawn version to put it back, so is_yanked
+	// carries the distinction rather than the list.
 	GetPlugin(context.Context, *connect.Request[v1.GetPluginRequest]) (*connect.Response[v1.GetPluginResponse], error)
 	// DownloadPluginVersion streams one version's bytes.
 	//
@@ -163,8 +167,8 @@ type PluginServiceHandler interface {
 	// ReportInstalled records that this account installed a version.
 	//
 	// The request decides almost nothing: the account comes from the token and the time from the
-	// server's clock. A version this catalog does not have is INVALID_ARGUMENT, which is what keeps
-	// a client from writing a fact about a package nobody published.
+	// server's clock. A version this catalog does not have is NOT_FOUND, which is what keeps a
+	// client from writing a fact about a package nobody published.
 	ReportInstalled(context.Context, *connect.Request[v1.ReportInstalledRequest]) (*connect.Response[v1.ReportInstalledResponse], error)
 }
 

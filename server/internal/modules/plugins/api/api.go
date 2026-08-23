@@ -80,7 +80,7 @@ type Service interface {
 	Download(ctx context.Context, pluginID, version string, w io.Writer) error
 
 	// RecordInstall stores that userID installed a version. A version this catalog does not have
-	// fails with an errs.Invalid error, which is what stops a client asserting a package nobody
+	// fails with an errs.NotFound error, which is what stops a client asserting a package nobody
 	// published.
 	RecordInstall(ctx context.Context, userID, pluginID, version, source string) error
 
