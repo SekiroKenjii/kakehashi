@@ -2,7 +2,6 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
-using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.SharedKernel;
 
@@ -174,7 +173,6 @@ public sealed partial class PluginsViewModel
     {
         ScaffoldResult = string.Empty;
         ErrorMessage = string.Empty;
-        OnPropertyChanged(nameof(HasError));
 
         var written = _scaffolder.Create(new PluginProjectRequest(
             NewModuleName, NewDisplayName, NewIcon, NewLocation, WithSamplePage));
@@ -182,7 +180,6 @@ public sealed partial class PluginsViewModel
         if (written.IsFailure)
         {
             ErrorMessage = written.Error.Message;
-            OnPropertyChanged(nameof(HasError));
 
             return;
         }

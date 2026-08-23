@@ -17,14 +17,6 @@ namespace __ROOT_NAMESPACE__.App.UI;
 public static class HostNavigation
 {
     /// <summary>
-    /// Home is not here: it is the one fixed destination, and the shell owns it.
-    /// </summary>
-    /// <remarks>
-    /// Each names the destination the deployment files it under, so where these screens sit — and
-    /// what they are called — is decided once, on the server, for every client. <c>Group</c> is only
-    /// the fallback for a client that has not been able to ask.
-    /// </remarks>
-    /// <summary>
     /// The two screens the shell registers itself, which have no pane item of their own.
     /// </summary>
     /// <remarks>
@@ -34,6 +26,15 @@ public static class HostNavigation
     /// </remarks>
     public static IReadOnlyList<Type> ShellPages { get; } = [typeof(HomePage), typeof(SettingsPage)];
 
+    /// <summary>
+    /// The host's own pane destinations. Home is not here: it is the one fixed destination, and the
+    /// shell owns it.
+    /// </summary>
+    /// <remarks>
+    /// Each names the destination the deployment files it under, so where these screens sit — and
+    /// what they are called — is decided once, on the server, for every client. <c>Group</c> is only
+    /// the fallback for a client that has not been able to ask.
+    /// </remarks>
     public static IReadOnlyList<NavigationItem> Items { get; } = [
         new NavigationItem("Users", "", typeof(UsersPage)) {
             Id = "account.users",
