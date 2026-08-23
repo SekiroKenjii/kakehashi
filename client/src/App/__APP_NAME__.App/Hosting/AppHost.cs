@@ -189,6 +189,7 @@ internal static class AppHost
                 continue;
             }
             services.AddSingleton(plugin.Module);
+            plugins.Catalog.Add(plugin.Loaded);
         }
     }
 
@@ -215,7 +216,10 @@ internal static class AppHost
             .SelectMany(module => module.GetNavigationItems())
             .Concat(HostNavigation.Items);
         var reserved = PluginLoader.PageKeysOf(declared, HostNavigation.ShellPages);
+        var names = ModuleCatalog.Modules
+            .Select(module => module.Name)
+            .ToArray();
 
-        return PluginLoader.LoadAll(PluginPaths.Default, pluginXaml, reserved);
+        return PluginLoader.LoadAll(PluginPaths.Default, pluginXaml, reserved, names);
     }
 }

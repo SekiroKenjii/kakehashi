@@ -59,10 +59,29 @@ public sealed class PluginState
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
+            // Set aside rather than left where the next install writes over it: what is in there is
+            // the only record of what somebody installed, and it is worth more than a clean start.
             records.Clear();
+            SetAside(paths.StateFile);
         }
 
         return new PluginState(paths.StateFile, records);
+    }
+
+    /// <summary>Renames a state file that could not be read, so the next write does not bury it.</summary>
+    private static void SetAside(string path)
+    {
+        try
+        {
+            if (File.Exists(path))
+            {
+                File.Move(path, path + ".unreadable", overwrite: true);
+            }
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            // Nothing here is load-bearing: the records are already empty either way.
+        }
     }
 
     public PluginRecord? Find(string pluginID)
@@ -96,8 +115,15 @@ public sealed class PluginState
                 .OrderBy(record => record.PluginID, StringComparer.Ordinal)
                 .ToArray();
 
-            using var stream = File.Create(_path);
-            JsonSerializer.Serialize(stream, ordered, PluginStateJsonContext.Default.PluginRecordArray);
+            // Written beside and moved over, because File.Create truncates before a byte is
+            // serialized: a kill between the two leaves the file this method exists to keep.
+            var temporary = _path + ".writing";
+
+            using (var stream = File.Create(temporary))
+            {
+                JsonSerializer.Serialize(stream, ordered, PluginStateJsonContext.Default.PluginRecordArray);
+            }
+            File.Move(temporary, _path, overwrite: true);
 
             return true;
         }

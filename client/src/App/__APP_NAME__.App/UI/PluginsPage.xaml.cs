@@ -70,14 +70,14 @@ public sealed partial class PluginsPage : Page
         await ViewModel.BrowseForProjectAsync();
     }
 
-    private void OnCheckProjectClick(object sender, RoutedEventArgs e)
+    private async void OnCheckProjectClick(object sender, RoutedEventArgs e)
     {
-        ViewModel.CheckProject();
+        await ViewModel.CheckProjectAsync();
     }
 
-    private void OnPackProjectClick(object sender, RoutedEventArgs e)
+    private async void OnPackProjectClick(object sender, RoutedEventArgs e)
     {
-        ViewModel.PackProject();
+        await ViewModel.PackProjectAsync();
     }
 
     private async void OnInstallFromFileClick(object sender, RoutedEventArgs e)
@@ -90,7 +90,7 @@ public sealed partial class PluginsPage : Page
 
     private async void OnCatalogInstallClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: CatalogListItem item }
+        if (sender is Button { DataContext: CatalogListItem item }
             && await ViewModel.PrepareInstallFromCatalogAsync(item))
         {
             await InstallDialog.ShowAsync();
@@ -122,9 +122,10 @@ public sealed partial class PluginsPage : Page
 
     private void OnToggled(object sender, RoutedEventArgs e)
     {
-        // The switch reports the state the user just put it in, and the view model rebuilds the row
-        // from what the registry actually did — so a refused change snaps back rather than lying.
-        if (sender is ToggleSwitch { Tag: PluginListItem item } toggle && toggle.IsOn != item.IsEnabled)
+        // From the row's own data context rather than a second binding on the switch: the root's
+        // properties are assigned before any child's, so a rebind cannot be read as a toggle.
+        if (sender is ToggleSwitch { DataContext: PluginListItem item } toggle
+            && toggle.IsOn != item.IsEnabled)
         {
             ViewModel.Toggle(item);
         }
@@ -132,7 +133,7 @@ public sealed partial class PluginsPage : Page
 
     private async void OnUninstallClick(object sender, RoutedEventArgs e)
     {
-        if (sender is Button { Tag: PluginListItem item })
+        if (sender is Button { DataContext: PluginListItem item })
         {
             await ViewModel.UninstallAsync(item);
         }

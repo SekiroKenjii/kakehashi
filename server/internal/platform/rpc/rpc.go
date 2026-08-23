@@ -18,7 +18,7 @@ import (
 //	path, handler := healthv1connect.NewHealthServiceHandler(svc, k.RPC...)
 func HandlerOptions(log *slog.Logger) []connect.HandlerOption {
 	return []connect.HandlerOption{
-		connect.WithInterceptors(errorInterceptor(log)),
+		connect.WithInterceptors(errorInterceptor{log: log}),
 	}
 }
 
@@ -28,34 +28,58 @@ func HandlerOptions(log *slog.Logger) []connect.HandlerOption {
 // Handlers therefore return plain errors from their service layer and never construct a
 // *connect.Error themselves. That is the point: a service is not supposed to know it is being
 // called over a network, and the moment it starts choosing status codes, it does.
-func errorInterceptor(log *slog.Logger) connect.Interceptor {
-	return connect.UnaryInterceptorFunc(func(next connect.UnaryFunc) connect.UnaryFunc {
-		return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
-			res, err := next(ctx, req)
-			if err == nil {
-				return res, nil
-			}
+//
+// A full Interceptor rather than connect.UnaryInterceptorFunc, whose WrapStreamingHandler is
+// documented as a no-op: a streaming procedure that went through that one would answer with its
+// internal message and an unknown code.
+type errorInterceptor struct {
+	log *slog.Logger
+}
 
-			// Already shaped for the wire, by this interceptor on a nested call or by Connect
-			// itself (a codec failure, a request that exceeded the size limit). Leave it alone.
-			var alreadyWire *connect.Error
-			if errors.As(err, &alreadyWire) {
-				return nil, err
-			}
-
-			kind := errs.KindOf(err)
-			if kind == errs.Internal {
-				// The only kind worth a log line. The rest are the caller's mistakes, and logging
-				// those at error level trains everyone to ignore the error log.
-				log.ErrorContext(ctx, "rpc failed",
-					"procedure", req.Spec().Procedure,
-					"error", err,
-				)
-			}
-
-			return nil, connect.NewError(codeFor(kind), errors.New(errs.PublicMessage(err)))
+func (i errorInterceptor) WrapUnary(next connect.UnaryFunc) connect.UnaryFunc {
+	return func(ctx context.Context, req connect.AnyRequest) (connect.AnyResponse, error) {
+		res, err := next(ctx, req)
+		if err == nil {
+			return res, nil
 		}
-	})
+		return nil, i.forWire(ctx, req.Spec().Procedure, err)
+	}
+}
+
+func (i errorInterceptor) WrapStreamingHandler(
+	next connect.StreamingHandlerFunc,
+) connect.StreamingHandlerFunc {
+	return func(ctx context.Context, conn connect.StreamingHandlerConn) error {
+		if err := next(ctx, conn); err != nil {
+			return i.forWire(ctx, conn.Spec().Procedure, err)
+		}
+		return nil
+	}
+}
+
+// WrapStreamingClient is the outbound half, which this server does not use.
+func (i errorInterceptor) WrapStreamingClient(
+	next connect.StreamingClientFunc,
+) connect.StreamingClientFunc {
+	return next
+}
+
+func (i errorInterceptor) forWire(ctx context.Context, procedure string, err error) error {
+	// Already shaped for the wire, by this interceptor on a nested call or by Connect itself (a
+	// codec failure, a request that exceeded the size limit). Leave it alone.
+	var alreadyWire *connect.Error
+	if errors.As(err, &alreadyWire) {
+		return err
+	}
+
+	kind := errs.KindOf(err)
+	if kind == errs.Internal {
+		// The only kind worth a log line. The rest are the caller's mistakes, and logging those at
+		// error level trains everyone to ignore the error log.
+		i.log.ErrorContext(ctx, "rpc failed", "procedure", procedure, "error", err)
+	}
+
+	return connect.NewError(codeFor(kind), errors.New(errs.PublicMessage(err)))
 }
 
 func codeFor(kind errs.Kind) connect.Code {

@@ -34,7 +34,7 @@ public sealed class PluginLoaderTests : IDisposable
 
     private static PluginLoadResult Load(PluginPaths paths)
     {
-        return PluginLoader.LoadAll(paths, new PluginXamlHost(), []);
+        return PluginLoader.LoadAll(paths, new PluginXamlHost(), [], []);
     }
 
     private static void Save(PluginPaths paths, PluginRecord record)
@@ -49,6 +49,23 @@ public sealed class PluginLoaderTests : IDisposable
     {
         Directory.CreateDirectory(directory);
         File.WriteAllText(Path.Combine(directory, "manifest.json"), content);
+    }
+
+    /// <summary>A manifest that passes every check before the one under test.</summary>
+    private static string Manifest(string moduleName)
+    {
+        return $$"""
+            {
+              "schemaVersion": 1,
+              "id": "weather",
+              "moduleName": "{{moduleName}}",
+              "displayName": "Weather",
+              "version": "1.0.0",
+              "entryAssembly": "Plugin.dll",
+              "moduleType": "Plugin.WeatherModule",
+              "minHostSdk": "0.1"
+            }
+            """;
     }
 
     [Fact]
@@ -210,6 +227,78 @@ public sealed class PluginLoaderTests : IDisposable
         var afterRelease = PluginState.Load(paths);
 
         Assert.Null(afterRelease.Find("weather"));
+    }
+
+    /// <summary>
+    /// Attachment is keyed by the module name, so a plugin taking one this build already answers to
+    /// would hide that module's row and own its toggle. Refused before anything is opened.
+    /// </summary>
+    [Fact]
+    public void LoadAll_AModuleNameThisBuildAlreadyAnswersToIsRefused()
+    {
+        var paths = Paths;
+        Place(paths.InstalledDirectory("weather", "1.0.0"), Manifest("Notes"));
+        Save(paths, new PluginRecord { PluginID = "weather", InstalledVersion = "1.0.0" });
+
+        var result = PluginLoader.LoadAll(paths, new PluginXamlHost(), [], ["Notes"]);
+
+        Assert.Empty(result.Modules);
+        Assert.Equal(
+            "Plugin.Load.ModuleNameTaken", Assert.Single(result.Catalog.Faults).Reason.Code);
+    }
+
+    /// <summary>
+    /// A removal that could not delete keeps its record so the next launch retries it, and until it
+    /// succeeds the plugin the user asked to be rid of must not be running.
+    /// </summary>
+    [Fact]
+    public void LoadAll_ARecordMarkedForRemovalIsNotLoaded()
+    {
+        var paths = Paths;
+        var directory = paths.InstalledDirectory("weather", "1.0.0");
+        Place(directory);
+        Save(paths, new PluginRecord {
+            PluginID = "weather",
+            InstalledVersion = "1.0.0",
+            PendingRemove = true,
+        });
+
+        using (File.Open(Path.Combine(directory, "manifest.json"), FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            var result = Load(paths);
+
+            Assert.Empty(result.Modules);
+            Assert.Empty(result.Catalog.Faults);
+        }
+    }
+
+    /// <summary>
+    /// A move that fails leaves the working install where it was. Deleting every version first meant
+    /// a failure destroyed the one that worked and then said nothing was installed.
+    /// </summary>
+    [Fact]
+    public void LoadAll_APromotionThatFailsKeepsTheInstalledVersion()
+    {
+        var paths = Paths;
+        var installed = paths.InstalledDirectory("weather", "1.0.0");
+        Place(installed);
+        Place(paths.StagedDirectory("weather", "1.1.0"));
+        Save(paths, new PluginRecord {
+            PluginID = "weather",
+            InstalledVersion = "1.0.0",
+            StagedVersion = "1.1.0",
+        });
+
+        // Held open, so the move cannot take it.
+        using (File.Open(Path.Combine(paths.StagedDirectory("weather", "1.1.0"), "manifest.json"),
+            FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            var result = Load(paths);
+
+            Assert.True(Directory.Exists(installed));
+            Assert.Contains(
+                result.Catalog.Faults, fault => fault.Reason.Code == "Plugin.Load.PromoteFailed");
+        }
     }
 
     [Fact]

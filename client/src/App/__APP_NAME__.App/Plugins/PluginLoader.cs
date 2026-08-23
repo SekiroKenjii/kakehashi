@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.PluginSdk.Xaml;
 using __ROOT_NAMESPACE__.SharedKernel;
@@ -15,8 +16,12 @@ namespace __ROOT_NAMESPACE__.App.Plugins;
 /// The id travels with the module because composition can still refuse one, and a refusal filed
 /// under the module's name is a row the state file cannot be looked up by — the two vocabularies
 /// differ, so uninstalling it would find nothing.
+/// <para>
+/// The catalog entry travels with it for the same reason: it is added once composition has accepted
+/// the plugin, so one that is refused there is a fault row and not also a working one.
+/// </para>
 /// </remarks>
-public sealed record PluginModule(string PluginID, IModule Module);
+public sealed record PluginModule(string PluginID, IModule Module, LoadedPlugin Loaded);
 
 /// <summary>What one launch made of the installed plugins.</summary>
 /// <param name="Modules">The modules to compose, in the order they loaded.</param>
@@ -34,7 +39,8 @@ public sealed record PluginLoadResult(IReadOnlyList<PluginModule> Modules, Plugi
 /// <para>
 /// Nothing here throws. A plugin that cannot be loaded becomes a row with a reason on it and the
 /// application starts without it — including one that throws from its own code, because every call
-/// into a plugin is made inside a filter that turns the exception into that row.
+/// into a plugin is made inside a filter that turns the exception into that row. What a plugin says
+/// about itself is asked once and kept: see <see cref="GuardedPluginModule"/>.
 /// </para>
 /// </remarks>
 public static class PluginLoader
@@ -48,27 +54,38 @@ public static class PluginLoader
     /// The navigation keys this build already owns. A plugin claiming one of them is refused rather
     /// than allowed to replace the screen behind it.
     /// </param>
+    /// <param name="reservedModuleNames">
+    /// The module names this build already answers to. Attachment is keyed by name, so a plugin
+    /// taking one would own the toggle for somebody else's module.
+    /// </param>
     public static PluginLoadResult LoadAll(
-        PluginPaths paths, PluginXamlHost xaml, IReadOnlyCollection<string> reservedPageKeys)
+        PluginPaths paths,
+        PluginXamlHost xaml,
+        IReadOnlyCollection<string> reservedPageKeys,
+        IReadOnlyCollection<string> reservedModuleNames)
     {
         ArgumentNullException.ThrowIfNull(paths);
         ArgumentNullException.ThrowIfNull(xaml);
         ArgumentNullException.ThrowIfNull(reservedPageKeys);
+        ArgumentNullException.ThrowIfNull(reservedModuleNames);
 
         var catalog = new PluginCatalog();
         var state = PluginState.Load(paths);
         Settle(paths, state, catalog);
 
         var taken = new HashSet<string>(reservedPageKeys, StringComparer.Ordinal);
+        var named = new HashSet<string>(reservedModuleNames, StringComparer.Ordinal);
         var modules = new List<PluginModule>();
 
         foreach (var record in state.Records)
         {
-            if (record.InstalledVersion.Length == 0)
+            // A removal that could not delete keeps its record so the next launch retries, and a
+            // plugin the user asked to be rid of must not be loaded in the meantime.
+            if (record.PendingRemove || record.InstalledVersion.Length == 0)
             {
                 continue;
             }
-            var loaded = Load(paths, xaml, record, taken, out var module);
+            var loaded = Load(paths, xaml, record, taken, named, out var module);
 
             if (loaded.IsFailure)
             {
@@ -76,8 +93,7 @@ public static class PluginLoader
 
                 continue;
             }
-            modules.Add(new PluginModule(record.PluginID, module!));
-            catalog.Add(new LoadedPlugin(record, loaded.Value));
+            modules.Add(new PluginModule(record.PluginID, module!, new LoadedPlugin(record, loaded.Value)));
         }
 
         return new PluginLoadResult(modules, catalog);
@@ -145,12 +161,11 @@ public static class PluginLoader
             var staged = paths.StagedDirectory(record.PluginID, record.StagedVersion);
             var installed = paths.InstalledDirectory(record.PluginID, record.StagedVersion);
 
-            if (!Promote(paths, record, staged, installed))
+            var promoted = Promote(paths, record, staged, installed);
+
+            if (promoted.IsFailure)
             {
-                catalog.AddFault(
-                    record.PluginID,
-                    record.StagedVersion,
-                    PluginLoadErrors.DirectoryMissing(staged));
+                catalog.AddFault(record.PluginID, record.StagedVersion, promoted.Error);
 
                 continue;
             }
@@ -166,18 +181,28 @@ public static class PluginLoader
         }
     }
 
-    private static bool Promote(PluginPaths paths, PluginRecord record, string staged, string installed)
+    /// <summary>
+    /// Puts a staged version where the loader reads from, and says what happened.
+    /// </summary>
+    /// <remarks>
+    /// Only the version being replaced comes out before the move, and the rest of the plugin's old
+    /// versions after it succeeds: a move that fails then leaves the working install where it was,
+    /// rather than deleting it and reporting that nothing is installed.
+    /// </remarks>
+    private static Result Promote(PluginPaths paths, PluginRecord record, string staged, string installed)
     {
         if (!Directory.Exists(staged))
         {
             // The move happened and the record was never written — the one window a crash can land
             // in. What is on disk is the answer, so adopt it rather than faulting forever.
-            return Directory.Exists(installed);
+            return Directory.Exists(installed)
+                ? Result.Success()
+                : Result.Failure(PluginLoadErrors.DirectoryMissing(staged));
         }
 
         try
         {
-            _ = Delete(paths.InstalledRoot(record.PluginID));
+            _ = Delete(installed);
             var parent = Path.GetDirectoryName(installed);
 
             if (parent is not null)
@@ -185,13 +210,14 @@ public static class PluginLoader
                 Directory.CreateDirectory(parent);
             }
             Directory.Move(staged, installed);
+            Sweep(paths.InstalledRoot(record.PluginID), installed);
             _ = Delete(paths.StagedRoot(record.PluginID));
 
-            return true;
+            return Result.Success();
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            return false;
+            return Result.Failure(PluginLoadErrors.PromoteFailed(record.StagedVersion, exception.Message));
         }
     }
 
@@ -200,6 +226,7 @@ public static class PluginLoader
         PluginXamlHost xaml,
         PluginRecord record,
         HashSet<string> taken,
+        HashSet<string> named,
         out IModule? module)
     {
         module = null;
@@ -217,7 +244,8 @@ public static class PluginLoader
             using var stream = File.OpenRead(manifestPath);
             manifest = PluginManifestJson.Read(stream);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception)
+            when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
             return Result.Failure<PluginManifest>(PluginLoadErrors.ManifestUnreadable(manifestPath));
         }
@@ -241,17 +269,15 @@ public static class PluginLoader
         {
             return Result.Failure<PluginManifest>(supported.Error);
         }
-        var library = Path.Combine(directory, PluginPackage.LibraryFolder.TrimEnd('/'));
 
-        foreach (var priFile in manifest.PriFiles)
+        // Before anything is opened. Attachment is keyed by module name, so a plugin taking one
+        // this build already answers to would hide that module's row and own its toggle.
+        if (!named.Add(manifest.ModuleName))
         {
-            var added = xaml.AddPackage(Path.Combine(library, priFile));
-
-            if (added.IsFailure)
-            {
-                return Result.Failure<PluginManifest>(added.Error);
-            }
+            return Result.Failure<PluginManifest>(
+                PluginLoadErrors.ModuleNameTaken(manifest.ModuleName));
         }
+        var library = Path.Combine(directory, PluginPackage.LibraryFolder.TrimEnd('/'));
         var assemblyPath = Path.Combine(library, manifest.EntryAssembly);
         Assembly assembly;
 
@@ -265,12 +291,6 @@ public static class PluginLoader
             return Result.Failure<PluginManifest>(
                 PluginLoadErrors.AssemblyUnloadable(manifest.EntryAssembly, exception.Message));
         }
-        var registered = xaml.AddMetadataProvider(assembly);
-
-        if (registered.IsFailure)
-        {
-            return Result.Failure<PluginManifest>(registered.Error);
-        }
         var created = Activate(assembly, manifest);
 
         if (created.IsFailure)
@@ -283,7 +303,34 @@ public static class PluginLoader
         {
             return Result.Failure<PluginManifest>(reserved.Error);
         }
-        module = created.Value;
+        var described = Describe(created.Value);
+
+        if (described.IsFailure)
+        {
+            return Result.Failure<PluginManifest>(described.Error);
+        }
+
+        // Last, because neither seam has a removal: a plugin seated here and then refused would
+        // answer resource lookups and claim XAML type names for the life of the process.
+        foreach (var priFile in manifest.PriFiles)
+        {
+            var added = xaml.AddPackage(Path.Combine(library, priFile));
+
+            if (added.IsFailure)
+            {
+                return Result.Failure<PluginManifest>(added.Error);
+            }
+        }
+        var registered = xaml.AddMetadataProvider(assembly);
+
+        if (registered.IsFailure)
+        {
+            return Result.Failure<PluginManifest>(registered.Error);
+        }
+
+        // From here nothing asks the plugin again: what it said is what every reader is given.
+        module = new GuardedPluginModule(
+            created.Value, manifest.ModuleName, described.Value, reserved.Value);
 
         return Result.Success(manifest);
     }
@@ -322,7 +369,7 @@ public static class PluginLoader
     /// module that throws from it is a row with a reason rather than an application that will not
     /// start.
     /// </remarks>
-    private static Result ClaimPageKeys(IModule module, HashSet<string> taken)
+    private static Result<IReadOnlyList<NavigationItem>> ClaimPageKeys(IModule module, HashSet<string> taken)
     {
         IReadOnlyList<NavigationItem> items;
 
@@ -332,7 +379,8 @@ public static class PluginLoader
         }
         catch (Exception exception)
         {
-            return Result.Failure(PluginLoadErrors.Threw(nameof(IModule.GetNavigationItems), exception));
+            return Result.Failure<IReadOnlyList<NavigationItem>>(
+                PluginLoadErrors.Threw(nameof(IModule.GetNavigationItems), exception));
         }
         var keys = new List<string>();
 
@@ -342,13 +390,13 @@ public static class PluginLoader
 
             if (key.Length == 0)
             {
-                return Result.Failure(PluginLoadErrors.Invalid(
+                return Result.Failure<IReadOnlyList<NavigationItem>>(PluginLoadErrors.Invalid(
                     $"'{item.PageType.Name}' is not a page name the navigation service can key."));
             }
 
             if (taken.Contains(key))
             {
-                return Result.Failure(PluginLoadErrors.PageKeyTaken(key));
+                return Result.Failure<IReadOnlyList<NavigationItem>>(PluginLoadErrors.PageKeyTaken(key));
             }
             keys.Add(key);
         }
@@ -358,7 +406,21 @@ public static class PluginLoader
             _ = taken.Add(key);
         }
 
-        return Result.Success();
+        return Result.Success(items);
+    }
+
+    /// <summary>The plugin's own account of itself, asked once and inside a filter.</summary>
+    private static Result<ModuleDescriptor> Describe(IModule module)
+    {
+        try
+        {
+            return Result.Success(module.Descriptor);
+        }
+        catch (Exception exception)
+        {
+            return Result.Failure<ModuleDescriptor>(
+                PluginLoadErrors.Threw(nameof(IModule.Descriptor), exception));
+        }
     }
 
     private static string KeyOf(Type pageType)
@@ -369,6 +431,23 @@ public static class PluginLoader
         return name.Length > suffix.Length && name.EndsWith(suffix, StringComparison.OrdinalIgnoreCase)
             ? name[..^suffix.Length]
             : string.Empty;
+    }
+
+    /// <summary>Removes every version of a plugin except the one now in use.</summary>
+    private static void Sweep(string installedRoot, string keep)
+    {
+        if (!Directory.Exists(installedRoot))
+        {
+            return;
+        }
+
+        foreach (var directory in Directory.EnumerateDirectories(installedRoot))
+        {
+            if (!directory.Equals(keep, StringComparison.OrdinalIgnoreCase))
+            {
+                _ = Delete(directory);
+            }
+        }
     }
 
     /// <summary>Removes a directory if it is there, and says whether it is gone.</summary>

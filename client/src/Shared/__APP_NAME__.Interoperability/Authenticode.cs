@@ -1,4 +1,5 @@
 using System;
+using System.Security.Cryptography;
 using System.Security.Cryptography.Pkcs;
 using System.Security.Cryptography.X509Certificates;
 using Windows.Win32;
@@ -40,11 +41,17 @@ public enum SignatureStatus
 /// <param name="Status">What the trust provider concluded.</param>
 /// <param name="Subject">The signer's certificate subject, empty when the file is unsigned.</param>
 /// <param name="Thumbprint">The signer's certificate thumbprint, empty when the file is unsigned.</param>
-public sealed record FileSignature(SignatureStatus Status, string Subject, string Thumbprint)
+/// <param name="PublicKey">
+/// A SHA-256 over the signer's subject public key info, empty when the file is unsigned. It is what
+/// identifies a publisher across a certificate renewal, which a subject name does not: a name is
+/// only as unique as the set of authorities the machine trusts.
+/// </param>
+public sealed record FileSignature(
+    SignatureStatus Status, string Subject, string Thumbprint, string PublicKey)
 {
     /// <summary>The answer for a file that carries no signature.</summary>
     public static readonly FileSignature Unsigned =
-        new(SignatureStatus.Unsigned, string.Empty, string.Empty);
+        new(SignatureStatus.Unsigned, string.Empty, string.Empty, string.Empty);
 }
 
 /// <summary>
@@ -84,8 +91,28 @@ public static class Authenticode
         using var signer = ReadSigner(filePath);
 
         return signer is null
-            ? new FileSignature(status, string.Empty, string.Empty)
-            : new FileSignature(status, signer.Subject, signer.Thumbprint);
+            ? new FileSignature(status, string.Empty, string.Empty, string.Empty)
+            : new FileSignature(status, signer.Subject, signer.Thumbprint, PublicKeyOf(signer));
+    }
+
+    /// <summary>A SHA-256 over the certificate's subject public key info, lower-case hex.</summary>
+    /// <remarks>
+    /// The key rather than the certificate, because a renewal issues a new certificate over the same
+    /// key and a publisher that stayed the publisher should stay recognised.
+    /// </remarks>
+    private static string PublicKeyOf(X509Certificate2 certificate)
+    {
+        var info = certificate.PublicKey;
+        var key = info.EncodedKeyValue.RawData;
+
+        // The algorithm parameters are part of the key: an ECC key is a point and the curve it is
+        // on. They are absent for RSA, where the algorithm alone settles how to read the modulus.
+        var parameters = info.EncodedParameters?.RawData ?? [];
+        var encoded = new byte[key.Length + parameters.Length];
+        key.CopyTo(encoded, 0);
+        parameters.CopyTo(encoded, key.Length);
+
+        return Convert.ToHexStringLower(SHA256.HashData(encoded));
     }
 
     /// <summary>

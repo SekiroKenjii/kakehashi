@@ -32,10 +32,14 @@ context is what microsoft-ui-xaml#3888 reports breaking XAML user controls; remo
 restart, so isolation would buy nothing but a second way for type identity to go wrong.
 
 **A refusal is data, not an exception.** A plugin that will not load becomes a row with a reason on
-the Plugins screen; an unreadable state file means no plugins rather than no application. Every call
-into plugin-authored code is made inside a filter, so a plugin that throws is a row too. The loader
-runs before the container exists, so it cannot log — faults are data on `PluginCatalog`, which the
+the Plugins screen; an unreadable state file is set aside rather than written over. Every call into
+plugin-authored code is made inside a filter, so a plugin that throws is a row too. The loader runs
+before the container exists, so it cannot log — faults are data on `PluginCatalog`, which the
 Plugins screen reads.
+
+**And a plugin is asked once.** Its name, its descriptor and its navigation items are kept, and
+every later reader is given those answers rather than the plugin — so it cannot say one thing to be
+checked and another to be used.
 
 ## Consequences
 

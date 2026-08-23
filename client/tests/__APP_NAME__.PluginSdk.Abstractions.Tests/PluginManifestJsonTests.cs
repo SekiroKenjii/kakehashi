@@ -123,4 +123,24 @@ public sealed class PluginManifestJsonTests
     {
         Assert.Null(ReadText("null"));
     }
+
+    /// <summary>
+    /// A null inside the array, not a null array. The loader joins each of these onto a directory
+    /// path, and Path.Combine throws on a null segment.
+    /// </summary>
+    [Fact]
+    public void Read_ANullEntryInPriFiles_BecomesAnEmptyName()
+    {
+        var manifest = ReadText("""
+            {
+              "schemaVersion": 1,
+              "id": "weather",
+              "priFiles": ["App.Modules.Weather.UI.pri", null]
+            }
+            """);
+
+        Assert.NotNull(manifest);
+        Assert.Equal(2, manifest.PriFiles.Count);
+        Assert.Equal(string.Empty, manifest.PriFiles[1]);
+    }
 }

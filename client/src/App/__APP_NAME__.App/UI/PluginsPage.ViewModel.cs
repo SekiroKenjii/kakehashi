@@ -110,6 +110,18 @@ public sealed partial class PluginsViewModel : ViewModel
     /// <summary>Whether these exact bytes have been agreed to before, read once when they open.</summary>
     private bool _pendingConsented;
 
+    /// <summary>
+    /// Whether a package is being opened right now.
+    /// </summary>
+    /// <remarks>
+    /// The file picker is a separate window and not modal to this one, so a second Install lands
+    /// between the first click and the prompt appearing — and the prompt is bound to whatever
+    /// Pending holds, so it would repaint to describe the second package while somebody reads the
+    /// first, and install that one.
+    /// </remarks>
+    [ObservableProperty]
+    private bool _preparing;
+
     [ObservableProperty]
     private string _searchText = string.Empty;
 
@@ -209,6 +221,9 @@ public sealed partial class PluginsViewModel : ViewModel
 
     public bool CanInstallPending => Pending is not null && (!ConsentRequired || ConsentGiven);
 
+    /// <summary>Whether another package may be opened. One prompt at a time, and one preparation.</summary>
+    public bool CanStartInstall => !Preparing && Pending is null;
+
     public string PendingName => Pending?.Manifest.DisplayName ?? string.Empty;
 
     /// <summary>The identity line under the name: what it is, and how big.</summary>
@@ -263,11 +278,24 @@ public sealed partial class PluginsViewModel : ViewModel
     /// </summary>
     public async Task<bool> PrepareInstallFromFileAsync()
     {
+        if (!CanStartInstall)
+        {
+            return false;
+        }
         ErrorMessage = string.Empty;
         OnPropertyChanged(nameof(HasError));
-        var path = await _files.PickFileAsync("Plugin package", PluginPaths.PackageExtension);
+        Preparing = true;
 
-        return path is not null && Prepare(path, _fileSource);
+        try
+        {
+            var path = await _files.PickFileAsync("Plugin package", PluginPaths.PackageExtension);
+
+            return path is not null && await PrepareAsync(path, _fileSource);
+        }
+        finally
+        {
+            Preparing = false;
+        }
     }
 
     /// <summary>Accepts the package the dialog is showing. False keeps the dialog open.</summary>
@@ -285,7 +313,10 @@ public sealed partial class PluginsViewModel : ViewModel
             return false;
         }
         var manifest = Pending.Manifest;
-        var committed = _installer.Commit(Pending, ConsentGiven, _pendingSource);
+
+        // An answer already on the record is an answer. Without it the prompt hides the checkbox as
+        // already-agreed and Commit then refuses for want of the box being ticked.
+        var committed = _installer.Commit(Pending, ConsentGiven || _pendingConsented, _pendingSource);
 
         if (committed.IsFailure)
         {
@@ -380,8 +411,12 @@ public sealed partial class PluginsViewModel : ViewModel
 
     partial void OnConsentGivenChanged(bool value) => OnPropertyChanged(nameof(CanInstallPending));
 
+    partial void OnPreparingChanged(bool value) => OnPropertyChanged(nameof(CanStartInstall));
+
     partial void OnPendingChanged(PluginPreview? value)
     {
+        OnPropertyChanged(nameof(CanStartInstall));
+
         foreach (var name in new[] {
             nameof(PendingName), nameof(PendingSummary), nameof(PendingAuthor), nameof(PendingDigest),
             nameof(PendingSignature), nameof(PendingNavigation), nameof(PendingHostSdk),
@@ -393,10 +428,16 @@ public sealed partial class PluginsViewModel : ViewModel
         }
     }
 
-    /// <summary>Opens a package and holds it for the prompt, however it arrived.</summary>
-    private bool Prepare(string packagePath, string source)
+    /// <summary>
+    /// Opens a package and holds it for the prompt, however it arrived.
+    /// </summary>
+    /// <remarks>
+    /// Off the UI thread: opening one unpacks the archive to disk and hashes the whole file, which
+    /// on a package of any size is long enough to freeze the window it was started from.
+    /// </remarks>
+    private async Task<bool> PrepareAsync(string packagePath, string source)
     {
-        var inspected = _installer.Inspect(packagePath);
+        var inspected = await Task.Run(() => _installer.Inspect(packagePath));
 
         if (inspected.IsFailure)
         {
