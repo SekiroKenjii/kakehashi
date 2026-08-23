@@ -80,6 +80,17 @@ public static class PluginLoadErrors
     }
 
     /// <summary>
+    /// Post-configuration runs after the host's own and needs no removal to win, so reaching into
+    /// the options of a type the plugin does not own is substitution by another name.
+    /// </summary>
+    public static Error RegistrationReachedHostOptions(string moduleName, string serviceType)
+    {
+        return new Error(
+            "Plugin.Load.RegistrationReachedHostOptions",
+            $"'{moduleName}' registered '{serviceType}', which configures options it does not own.");
+    }
+
+    /// <summary>
     /// A plugin's own code threw. Named here rather than allowed to escape, because a plugin that
     /// stops the application from starting is the outcome the whole design exists to avoid.
     /// </summary>

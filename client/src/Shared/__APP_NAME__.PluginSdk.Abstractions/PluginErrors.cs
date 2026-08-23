@@ -111,6 +111,30 @@ public static class PluginErrors
             "Plugin.Package.PathEscapes", $"Entry '{path}' resolves outside the destination directory.");
     }
 
+    /// <summary>
+    /// A name that means one thing to the archive and another to the file system, which is how a
+    /// package gets judged as one thing and extracted as another.
+    /// </summary>
+    public static Error EntryNameInvalid(string path)
+    {
+        return new Error(
+            "Plugin.Package.EntryNameInvalid",
+            $"Entry '{path}' is not a plain relative path, so it does not name one file.");
+    }
+
+    public static Error EntryNameRepeated(string path)
+    {
+        return new Error(
+            "Plugin.Package.EntryNameRepeated",
+            $"The package holds more than one entry called '{path}', and only one of them would survive.");
+    }
+
+    public static Error EntryUnwritable(string path)
+    {
+        return new Error(
+            "Plugin.Package.EntryUnwritable", $"Entry '{path}' is not a name this system can write.");
+    }
+
     public static Error PackageTooLarge(long bytes, long limit)
     {
         return new Error(

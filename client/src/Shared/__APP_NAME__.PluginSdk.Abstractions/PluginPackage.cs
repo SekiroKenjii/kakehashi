@@ -117,6 +117,14 @@ public sealed class PluginPackage : IDisposable
         {
             return Result.Failure<PluginPackage>(PluginErrors.PackageUnreadable);
         }
+        var names = CheckNamespace(archive);
+
+        if (names.IsFailure)
+        {
+            archive.Dispose();
+
+            return Result.Failure<PluginPackage>(names.Error);
+        }
 
         var read = ReadManifest(archive);
 
@@ -158,10 +166,73 @@ public sealed class PluginPackage : IDisposable
         return errors;
     }
 
+    /// <summary>
+    /// Refuses an archive whose entry names do not each mean one file.
+    /// </summary>
+    /// <remarks>
+    /// Read before the manifest is, because everything downstream asks the archive for an entry by
+    /// name and gets the first, while extraction writes them all and the last wins on disk. Two
+    /// entries called manifest.json are a package that is judged as one thing and loads as another.
+    /// <para>
+    /// The names are compared as they are written, never resolved first: resolving is what makes
+    /// <c>lib/../manifest.json</c> land inside the destination and pass the guard in
+    /// <see cref="ExtractTo"/>.
+    /// </para>
+    /// </remarks>
+    private static Result CheckNamespace(ZipArchive archive)
+    {
+        var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+        foreach (var name in archive.Entries.Select(entry => entry.FullName))
+        {
+            if (!IsCanonical(name))
+            {
+                return Result.Failure(PluginErrors.EntryNameInvalid(name));
+            }
+
+            // Ordinally unique is not enough: GetEntry matches ordinally and the file system does
+            // not, so lib/X.dll and lib/x.dll are two entries and one file.
+            if (!seen.Add(name))
+            {
+                return Result.Failure(PluginErrors.EntryNameRepeated(name));
+            }
+        }
+
+        return Result.Success();
+    }
+
+    private static bool IsCanonical(string name)
+    {
+        if (name.Length == 0 || name.StartsWith('/') || name.Contains('\\') || name.Contains(':'))
+        {
+            return false;
+        }
+        var segments = name.Split('/');
+
+        for (var i = 0; i < segments.Length; i++)
+        {
+            if (segments[i] is "." or "..")
+            {
+                return false;
+            }
+
+            // A directory entry ends in a slash, so its last segment is empty by design. Anywhere
+            // else an empty segment is a doubled separator.
+            if (segments[i].Length == 0 && i != segments.Length - 1)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     /// <summary>Unpacks into a directory that must already exist and be empty.</summary>
     /// <remarks>
     /// Each entry's resolved path is checked against the destination before it is written, so an
-    /// entry whose name climbs out of the directory is refused rather than followed.
+    /// entry whose name climbs out of the directory is refused rather than followed. An archive
+    /// opened through <see cref="Open(Stream, bool)"/> can no longer hold such a name; the check
+    /// stays because the method is public.
     /// </remarks>
     public Result ExtractTo(string destinationDirectory)
     {
@@ -181,8 +252,19 @@ public sealed class PluginPackage : IDisposable
             {
                 return Result.Failure(PluginErrors.PathEscapes(entry.FullName));
             }
-            Directory.CreateDirectory(Path.GetDirectoryName(target)!);
-            entry.ExtractToFile(target, overwrite: true);
+
+            try
+            {
+                Directory.CreateDirectory(Path.GetDirectoryName(target)!);
+                entry.ExtractToFile(target, overwrite: true);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
+                or ArgumentException or NotSupportedException)
+            {
+                // A name Windows will not take — a wildcard character, a reserved device name, a
+                // NUL. Refused here rather than thrown at whoever is holding the dialog open.
+                return Result.Failure(PluginErrors.EntryUnwritable(entry.FullName));
+            }
         }
 
         return Result.Success();
