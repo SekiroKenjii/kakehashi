@@ -46,8 +46,8 @@ func (s *Service) Publish(
 			"The package does not match the digest that was sent with it.")
 	}
 
-	// The plugin row first: a version has nowhere to hang without it, and re-publishing an
-	// existing plugin is how its description is kept current.
+	// Re-publishing an existing plugin is how its description is kept current, so what goes to the
+	// store is the row as it will stand rather than the one this upload described.
 	if existing, err := s.store.GetPlugin(ctx, entity.PluginID); err == nil {
 		if err := existing.Describe(entity.DisplayName, entity.Description, entity.Publisher, now); err != nil {
 			return pluginsapi.Version{}, err
@@ -57,11 +57,8 @@ func (s *Service) Publish(
 		return pluginsapi.Version{}, err
 	}
 
-	if err := s.store.UpsertPlugin(ctx, entity); err != nil {
-		return pluginsapi.Version{}, err
-	}
-
-	if err := s.store.InsertVersion(ctx, next, content); err != nil {
+	// Both rows or neither: a version that fails to insert must not leave a plugin behind.
+	if err := s.store.PublishVersion(ctx, entity, next, content); err != nil {
 		return pluginsapi.Version{}, err
 	}
 	eventbus.Publish(s.bus, ctx, pluginsapi.Published{

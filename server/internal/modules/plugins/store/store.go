@@ -6,14 +6,15 @@
 //
 // Style follows ktaranov/sqlserver-kit — see platform/database.
 //
-// The files: this one is the seam, holding the type, its constructor and the helpers more than one
-// query needs. migrations.go holds the schema history, which is one unit because its value is its
+// The files: this one is the seam, holding the type, its constructor, the helpers more than one
+// query needs, and PublishVersion, which is the only write spanning two tables. migrations.go holds the schema history, which is one unit because its value is its
 // order. Then one file per table — plugin.go, pluginversion.go, install.go — because the store's
 // unit is the table, and a version is its own table even though the domain keeps it inside the
 // plugin it belongs to.
 package store
 
 import (
+	"context"
 	"database/sql"
 	"errors"
 	"strings"
@@ -31,6 +32,41 @@ type SQLServer struct {
 
 // New returns a store backed by db.
 func New(db *database.DB) *SQLServer { return &SQLServer{db: db} }
+
+// PublishVersion writes the plugin row and the version under it as one act.
+//
+// Two statements, because the version's INSERT selects the plugin's Id and needs the row to be
+// there. One transaction, because a version that fails to insert must not leave a plugin behind:
+// on a first publish that is a catalog entry with nothing under it, which List hides and nothing
+// can then remove, and on a republish it is a description overwritten by an upload that was
+// refused.
+func (s *SQLServer) PublishVersion(
+	ctx context.Context, p domain.Plugin, v domain.Version, content []byte,
+) error {
+	return s.inTransaction(ctx, func(tx *sql.Tx) error {
+		if err := upsertPlugin(ctx, tx, p); err != nil {
+			return err
+		}
+		return insertVersion(ctx, tx, v, content)
+	})
+}
+
+// inTransaction runs fn against a transaction, rolling back on any error.
+func (s *SQLServer) inTransaction(ctx context.Context, fn func(*sql.Tx) error) error {
+	tx, err := s.db.BeginTx(ctx, nil)
+	if err != nil {
+		return errs.Internalf(err, "begin transaction")
+	}
+
+	if err := fn(tx); err != nil {
+		_ = tx.Rollback()
+		return err
+	}
+	if err := tx.Commit(); err != nil {
+		return errs.Internalf(err, "commit transaction")
+	}
+	return nil
+}
 
 // scanner is what *sql.Row and *sql.Rows have in common, so one scan function serves both the
 // single-row and the many-row queries.

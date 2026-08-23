@@ -110,3 +110,54 @@ func TestValidatePluginIDAgreesWithNewPlugin(t *testing.T) {
 		t.Errorf("kind = %v, want %v", errs.KindOf(err), errs.Invalid)
 	}
 }
+
+// Each of these matches its pattern and then overflows the column it is written to, where SQL
+// Server raises "String or binary data would be truncated" — which the interceptor hides, so the
+// administrator gets a 500 rather than the sentence they could act on.
+func TestRefusesValuesTheColumnsCannotHold(t *testing.T) {
+	long := func(n int) string { return strings.Repeat("9", n) }
+
+	cases := map[string]func() error{
+		"plugin id": func() error {
+			_, err := domain.NewPlugin(strings.Repeat("a", domain.MaxPluginIDLength+1), "Weather", "", "", published)
+			return err
+		},
+		"publisher": func() error {
+			_, err := domain.NewPlugin("weather", "Weather", "", strings.Repeat("n", domain.MaxPublisherLength+1), published)
+			return err
+		},
+		"version": func() error {
+			_, err := domain.NewVersion("weather", long(domain.MaxVersionLength)+".0.0", "1.1", digest, 1, 100, published)
+			return err
+		},
+		"min host sdk": func() error {
+			_, err := domain.NewVersion("weather", "1.0.0", long(domain.MaxHostSDKLength)+".0", digest, 1, 100, published)
+			return err
+		},
+	}
+
+	for name, build := range cases {
+		t.Run(name, func(t *testing.T) {
+			if err := build(); errs.KindOf(err) != errs.Invalid {
+				t.Errorf("kind = %v, want %v", errs.KindOf(err), errs.Invalid)
+			}
+		})
+	}
+}
+
+// The second write path. A fix that only touched NewPlugin would still let a republish through.
+func TestDescribeRefusesAPublisherTheColumnCannotHold(t *testing.T) {
+	p, err := domain.NewPlugin("weather", "Weather", "", "npham", published)
+	if err != nil {
+		t.Fatalf("NewPlugin = %v", err)
+	}
+
+	err = p.Describe("Weather", "", strings.Repeat("n", domain.MaxPublisherLength+1), published)
+
+	if errs.KindOf(err) != errs.Invalid {
+		t.Errorf("kind = %v, want %v", errs.KindOf(err), errs.Invalid)
+	}
+	if p.Publisher != "npham" {
+		t.Errorf("Publisher = %q, want it left alone", p.Publisher)
+	}
+}

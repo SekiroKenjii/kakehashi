@@ -24,6 +24,18 @@ const MaxDisplayNameLength = 120
 // MaxDescriptionLength caps the sentence under it.
 const MaxDescriptionLength = 400
 
+// MaxPluginIDLength matches the PluginId column, on both tables that carry one.
+const MaxPluginIDLength = 64
+
+// MaxVersionLength matches the Version column.
+const MaxVersionLength = 32
+
+// MaxHostSDKLength matches the MinHostSdk column.
+const MaxHostSDKLength = 16
+
+// MaxPublisherLength matches the Publisher column.
+const MaxPublisherLength = 200
+
 var (
 	// A catalog identity is lower case, digits and single hyphens: it is shown in a monospace
 	// column, typed into a command, and used as a directory name on the client.
@@ -83,11 +95,16 @@ func NewPlugin(pluginID, displayName, description, publisher string, now time.Ti
 		return Plugin{}, err
 	}
 
+	publisher, err = normalizeText(publisher, "publisher", MaxPublisherLength, false)
+	if err != nil {
+		return Plugin{}, err
+	}
+
 	return Plugin{
 		PluginID:    pluginID,
 		DisplayName: displayName,
 		Description: description,
-		Publisher:   strings.TrimSpace(publisher),
+		Publisher:   publisher,
 		IsListed:    true,
 		CreatedAt:   now,
 		UpdatedAt:   now,
@@ -110,10 +127,19 @@ func NewVersion(
 	if !versionPattern.MatchString(version) {
 		return Version{}, errs.Invalidf("A version reads major.minor.patch, not %q.", version)
 	}
+	// The pattern bounds the shape and not the length: it matches thirty digits before the first
+	// dot, which SQL Server then refuses with a message nobody can act on.
+	if len(version) > MaxVersionLength {
+		return Version{}, errs.Invalidf("A version is limited to %d characters.", MaxVersionLength)
+	}
 
 	minHostSDK = strings.TrimSpace(minHostSDK)
 	if !hostSDKPattern.MatchString(minHostSDK) {
 		return Version{}, errs.Invalidf("A host SDK version reads major.minor, not %q.", minHostSDK)
+	}
+	if len(minHostSDK) > MaxHostSDKLength {
+		return Version{}, errs.Invalidf(
+			"A host SDK version is limited to %d characters.", MaxHostSDKLength)
 	}
 
 	sha256 = strings.ToLower(strings.TrimSpace(sha256))
@@ -149,9 +175,13 @@ func (p *Plugin) Describe(displayName, description, publisher string, now time.T
 	if err != nil {
 		return err
 	}
+	publisher, err = normalizeText(publisher, "publisher", MaxPublisherLength, false)
+	if err != nil {
+		return err
+	}
 	p.DisplayName = displayName
 	p.Description = description
-	p.Publisher = strings.TrimSpace(publisher)
+	p.Publisher = publisher
 	p.UpdatedAt = now
 	return nil
 }
@@ -169,6 +199,10 @@ func normalizePluginID(pluginID string) (string, error) {
 	if !pluginIDPattern.MatchString(pluginID) {
 		return "", errs.Invalidf(
 			"A plugin id is lower case, digits and single hyphens, not %q.", pluginID)
+	}
+	// len(), not UTF16Len: the pattern has already restricted this to ASCII, so the two agree.
+	if len(pluginID) > MaxPluginIDLength {
+		return "", errs.Invalidf("A plugin id is limited to %d characters.", MaxPluginIDLength)
 	}
 	return pluginID, nil
 }

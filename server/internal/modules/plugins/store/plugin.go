@@ -58,8 +58,11 @@ func (s *SQLServer) GetPlugin(ctx context.Context, pluginID string) (domain.Plug
 	return p, nil
 }
 
-// UpsertPlugin stores a plugin, rewriting what the catalog says about one it already has.
-func (s *SQLServer) UpsertPlugin(ctx context.Context, p domain.Plugin) error {
+// upsertPlugin stores a plugin, rewriting what the catalog says about one it already has.
+//
+// Unexported and transaction-bound: a plugin row is only ever written as half of a publish, and the
+// other half is the version that hangs from it.
+func upsertPlugin(ctx context.Context, tx *sql.Tx, p domain.Plugin) error {
 	const q = `
         UPDATE plugins.Plugin
         SET DisplayName = @p2, Description = @p3, Publisher = @p4, UpdatedAt = @p6
@@ -71,7 +74,7 @@ func (s *SQLServer) UpsertPlugin(ctx context.Context, p domain.Plugin) error {
             VALUES (@p1, @p2, @p3, @p4, @p5, @p6, @p6);
         END;`
 
-	_, err := s.db.ExecContext(
+	_, err := tx.ExecContext(
 		ctx, q, p.PluginID, p.DisplayName, p.Description, p.Publisher, p.IsListed, storable(p.UpdatedAt))
 	if err != nil {
 		return errs.Internalf(err, "upsert plugin")

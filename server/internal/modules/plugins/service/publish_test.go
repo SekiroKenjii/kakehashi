@@ -124,3 +124,26 @@ func TestSetListedAndSetYankedRefuseAMalformedIdentity(t *testing.T) {
 		t.Errorf("SetYanked kind = %v, want %v", errs.KindOf(err), errs.Invalid)
 	}
 }
+
+// A republish that is refused must leave the catalog as it was. Two writes on the pooled handle
+// rewrote the plugin row first, so a refused upload changed the description every client reads.
+func TestPublishThatIsRefusedLeavesTheCatalogRowAlone(t *testing.T) {
+	store := newFakeStore()
+	content := []byte("a package")
+	plugin, version := publishArgs(content, digestOf(content))
+	svc := newService(store)
+
+	if _, err := svc.Publish(context.Background(), plugin, version, content); err != nil {
+		t.Fatalf("the first Publish = %v", err)
+	}
+	plugin.Description = "Rewritten by an upload that was refused."
+
+	_, err := svc.Publish(context.Background(), plugin, version, content)
+
+	if errs.KindOf(err) != errs.Invalid {
+		t.Fatalf("kind = %v, want %v", errs.KindOf(err), errs.Invalid)
+	}
+	if got := store.plugins["weather"].Description; got != "Forecast tiles." {
+		t.Errorf("Description = %q, want the one the accepted publish wrote", got)
+	}
+}
