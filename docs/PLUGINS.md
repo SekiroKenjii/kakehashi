@@ -17,7 +17,7 @@ nothing left to enforce.
 | It can | It cannot |
 | --- | --- |
 | register services into the host's container | remove or register over a service the host registered |
-| add screens to the navigation pane | replace a screen this build already answers to |
+| add screens to the navigation pane | replace a screen or take a module name this build answers to |
 | ship compiled XAML, `x:Bind`, code-behind and its own XAML types | resolve its own `.resw` strings through `x:Uid` |
 | use host `{StaticResource}` styles and `{ThemeResource}` | be unloaded without restarting |
 | be turned off and on instantly, like any module | have its screens rearranged from the Navigation screen |
@@ -28,11 +28,18 @@ is caught by name — removal is not required to substitute one, because the con
 last descriptor and a plugin registers last. Throwing is caught by a filter. Any of the three rolls
 the whole registration back and becomes a row.
 
-A page whose key collides with one this build already answers to is a load failure with the key
-named on the row. The reserved keys come from the compiled-in modules' navigation items, the host's
-pane entries, and the two screens the shell registers without a pane item of their own — Home and
-Settings. The key is matched the way the navigation service matches it, because one derived by a
+A page whose key collides with one this build already answers to is a load failure with the key named
+on the row, and so is a module name — attachment is keyed by name, so a plugin taking one would own
+somebody else's toggle. The reserved keys come from the compiled-in modules' navigation items, the
+host's pane entries, and the two screens the shell registers without a pane item of their own — Home
+and Settings. The key is matched the way the navigation service matches it, because one derived by a
 different rule would not be the one that collides.
+
+**A plugin is asked what it contributes once.** Its name, its descriptor and its navigation items are
+read inside the loader's filters and kept, and every later reader is given those answers rather than
+the plugin — so a module cannot return one list to be checked and another to be registered. What it
+still can do is re-register a page key through `INavigationService`, which is public on the assembly
+plugins compile against; closing that is a change to a contract and is tracked separately.
 
 ## The lifecycle, and why a restart
 
@@ -60,16 +67,20 @@ of one**, and the screen's "Restart required" banner is the literal truth rather
 
 A crash between the move and the state file being written is covered from the other side: the next
 launch finds the staged directory gone and the new one present, and adopts what is on disk rather
-than faulting on both halves. An uninstall whose files are still held open keeps its record, so the
-launch after that tries again instead of orphaning the directory.
+than faulting on both halves. The state file itself is written beside and moved over, so a kill
+mid-write leaves the previous one. An uninstall whose files are still held open keeps its record, so
+the launch after that tries again instead of orphaning the directory — and a plugin waiting to be
+removed is not loaded in the meantime.
 
 Turning a loaded plugin off and on is instant: it is the same attach/detach a compiled-in module
 has, and nothing is loaded or unloaded by it.
 
-Nothing here throws. A plugin that will not load is a row with a reason, an unreadable state file
-means no plugins rather than no application, and every call into plugin-authored code — its module
-constructor, its `GetNavigationItems()`, its `RegisterServices`, and the constructor of its
-generated XAML metadata provider — is made inside a filter that turns an exception into that row.
+Nothing here throws. A plugin that will not load is a row with a reason, an unreadable state file is
+set aside rather than written over, and every call into plugin-authored code — its module
+constructor, its `Descriptor`, its `GetNavigationItems()`, its `RegisterServices`, and the
+constructor of its generated XAML metadata provider — is made inside a filter that turns an
+exception into that row. Its resource index and its XAML types are seated only once it has been
+accepted, because neither seam has a removal.
 
 `Plugins:Enabled: false` in `appsettings.json` is the switch for when even that is not enough. The
 screen says so rather than showing an empty list: installing still works and nothing will load what
@@ -79,10 +90,17 @@ it stages until the switch goes back.
 
 Two levels, and the difference is one comparison.
 
-**Verified** — the entry assembly's Authenticode signature is valid *and* its signer's full
-distinguished name matches, exactly, the publisher of the running executable. Installs without a
-prompt. It vouches for that one file: the other assemblies in `lib/` are extracted and loaded
-without a signature check of their own.
+**Verified** — the entry assembly's Authenticode signature is valid *and* it was signed with the same
+key as the running executable: the subject name and a digest of the signer's public key both have to
+match. Installs without a prompt. It vouches for that one file — the other assemblies in `lib/` are
+extracted and loaded without a signature check of their own.
+
+The key rather than the name alone, because a name is only as unique as the set of authorities the
+machine trusts: any extra trusted root — an enterprise inspection CA, an MSP's, one left behind by
+something else — can issue a certificate bearing the publisher's exact distinguished name. The key
+is what makes a publisher the same publisher. The cost is stated rather than hidden: a host
+re-signed with a **new key pair** stops recognising plugins signed with the old one, so a key
+rotation is a re-sign of everything. A certificate renewal over the same key changes nothing.
 
 **Unofficial** — everything else, including a perfectly valid signature from somebody else. Always
 prompts.
