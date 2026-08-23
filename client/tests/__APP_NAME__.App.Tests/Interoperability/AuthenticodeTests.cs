@@ -12,6 +12,12 @@ namespace __ROOT_NAMESPACE__.App.Tests.Interoperability;
 /// A signed system binary is the only fixture that does not need a certificate to be generated and
 /// trusted first, and the tampered case is the one that matters: building the certificate chain
 /// alone would call a modified file valid, because the signer really is who they claim to be.
+/// <para>
+/// Revocation is not covered and cannot be without a revoked certificate to sign with. What is
+/// covered is that turning the check on did not break the ordinary answer:
+/// <see cref="Verify_SignedSystemBinary_IsValidAndNamesItsSigner"/> runs on machines with a cold
+/// revocation cache and on machines with no network, and both have to say Valid.
+/// </para>
 /// </remarks>
 public sealed class AuthenticodeTests : IDisposable
 {

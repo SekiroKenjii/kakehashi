@@ -116,6 +116,7 @@
     <EmbeddedResource Include="Plugins\Templates\GitIgnore.tmpl" LogicalName="Templates.GitIgnore.tmpl" />
     <EmbeddedResource Include="Plugins\Templates\ModuleProject.tmpl" LogicalName="Templates.ModuleProject.tmpl" />
     <EmbeddedResource Include="Plugins\Templates\ModuleEntryPoint.tmpl" LogicalName="Templates.ModuleEntryPoint.tmpl" />
+    <EmbeddedResource Include="Plugins\Templates\ModuleEntryPointBare.tmpl" LogicalName="Templates.ModuleEntryPointBare.tmpl" />
     <EmbeddedResource Include="Plugins\Templates\PageMarkup.tmpl" LogicalName="Templates.PageMarkup.tmpl" />
     <EmbeddedResource Include="Plugins\Templates\PageCodeBehind.tmpl" LogicalName="Templates.PageCodeBehind.tmpl" />
     <EmbeddedResource Include="Plugins\Templates\PageViewModel.tmpl" LogicalName="Templates.PageViewModel.tmpl" />

@@ -229,18 +229,46 @@ CORE to this repository, absent from what `kakehashi new` writes:
 
 ```text
 docs/BOILERPLATE.md
-docs/pivot/
-docs/brand/
-docs/adr/0016-…  through  docs/adr/0020-…
-templates/README.scaffold.md   (moved to README.md)
-tools/inventory/
-tools/rename/
-tools/units/
+docs/RELEASING.md
+docs/pivot
+docs/brand
+docs/adr/0016-one-example-module-in-the-template.md
+docs/adr/0017-oidc-provider-is-core.md
+docs/adr/0018-database-driven-navigation-stays.md
+docs/adr/0019-cli-lives-in-the-monorepo.md
+docs/adr/0020-no-second-example-module.md
+docs/adr/0022-cli-tags-carry-the-module-path.md
+tools/cli
+tools/inventory
+tools/rename
+tools/units
+packaging
+templates/template.json
+CHANGELOG.template.md
+CHANGELOG.cli.md
+.github/ISSUE_TEMPLATE
 .github/workflows/scaffold-smoke.yml
+.github/workflows/release-template.yml
+.github/workflows/release-cli.yml
 ```
 
-`tools/rename/rename.sh` deletes exactly this list, and its self-check fails if anything it left
-behind still names the template.
+Three files are moved rather than dropped, so the scaffolded project gets the version written for it
+rather than the one written about the template:
+
+```text
+templates/README.scaffold.md  ->  README.md
+templates/CLAUDE.scaffold.md  ->  CLAUDE.md
+templates/LICENSE.scaffold  ->  LICENSE
+```
+
+**`templates/template.json` is the authority.** Its `exclude` array is what the CLI reads, what
+`release-template.yml` trims the release asset with, and what `tools/rename/rename.sh` restates for
+anyone who arrived through "Use this template" — the script deletes itself last, which is why
+`tools/rename` is in that array and not in the script's own loop. All three have to agree, and a
+list that drifts here is one this document is wrong about rather than one the scaffold gets wrong.
+After any of them changes, regenerate this block from `exclude` rather than editing it by hand.
+
+The self-check runs afterwards and fails if anything left behind still names the template.
 
 Everything else marked IDENTITY is dropped or neutralised rather than merely skipped.
 

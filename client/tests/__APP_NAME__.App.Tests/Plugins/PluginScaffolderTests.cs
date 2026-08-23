@@ -97,6 +97,59 @@ public sealed class PluginScaffolderTests : IDisposable
         Assert.True(File.Exists(Path.Combine(ProjectDirectory, "WeatherModule.cs")));
     }
 
+    /// <summary>
+    /// The defect this covers: the entry point named a page, a view model and their namespaces
+    /// whether or not they were written, so a project scaffolded without a page did not compile.
+    /// </summary>
+    [Fact]
+    public void Create_WithoutASamplePage_NamesNothingItDidNotWrite()
+    {
+        var written = Scaffolder.Create(Request(Target, withPage: false));
+
+        Assert.True(written.IsSuccess);
+
+        foreach (var path in written.Value)
+        {
+            var text = File.ReadAllText(path);
+
+            Assert.DoesNotContain("WeatherPage", text, StringComparison.Ordinal);
+            Assert.DoesNotContain("WeatherPageViewModel", text, StringComparison.Ordinal);
+        }
+    }
+
+    /// <summary>
+    /// A module with no screen promises none, and has no compiled XAML to index. Both are still a
+    /// manifest the loader accepts — the format allows a plugin that contributes only services.
+    /// </summary>
+    [Fact]
+    public void Create_WithoutASamplePage_PromisesNoScreenAndNoResourceIndex()
+    {
+        _ = Scaffolder.Create(Request(Target, withPage: false));
+
+        using var stream = File.OpenRead(Path.Combine(Target, "manifest.json"));
+        var manifest = PluginManifestJson.Read(stream);
+
+        Assert.NotNull(manifest);
+        Assert.Empty(PluginManifestValidator.Validate(manifest));
+        Assert.Empty(manifest.Navigation);
+        Assert.Empty(manifest.PriFiles);
+    }
+
+    /// <summary>With a page, the manifest names exactly the one the project writes.</summary>
+    [Fact]
+    public void Create_WithASamplePage_PromisesTheScreenItWrote()
+    {
+        _ = Scaffolder.Create(Request(Target));
+
+        using var stream = File.OpenRead(Path.Combine(Target, "manifest.json"));
+        var manifest = PluginManifestJson.Read(stream);
+
+        Assert.NotNull(manifest);
+        Assert.Empty(PluginManifestValidator.Validate(manifest));
+        Assert.Equal("WeatherPage", Assert.Single(manifest.Navigation).Page);
+        Assert.Equal("__APP_NAME__.Modules.Weather.UI.pri", Assert.Single(manifest.PriFiles));
+    }
+
     [Fact]
     public void Create_LeavesNoPlaceholderBehind()
     {

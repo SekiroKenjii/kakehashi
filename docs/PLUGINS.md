@@ -103,9 +103,10 @@ into two, so the status is kept beside it: unsigned, signed by another publisher
 since it was signed* read differently in the prompt and on the row, because the last of those is the
 one that is not merely unvouched-for.
 
-One thing the model does not check: revocation (`WTD_REVOKE_NONE`), so a certificate revoked after
-it was issued still reads as valid. Turning it on makes verification depend on reaching a CRL or
-OCSP responder, which is a decision about what an offline install should do.
+Revocation is checked, and only against what this machine has already cached
+(`WTD_CACHE_ONLY_URL_RETRIEVAL`). A certificate this machine knows was revoked reads as revoked; one
+it has never seen a list for reads as valid, because not knowing is not the same as knowing, and an
+install that reached for a CRL would be one that needed the network and stalled without it.
 
 **Consent is keyed on the identity and the digest together.** Different bytes are a different
 package whatever its version says, so an update is a fresh decision and the prompt returns — while a
@@ -164,10 +165,14 @@ index, which is the file the host loads. Without it the pages build and then can
 Then, from the Develop tab or from a build server:
 
 ```sh
-dotnet tool install --global __APP_NAME__.PluginTool
-__APP_NAME_LOWER__-plugin validate .
-__APP_NAME_LOWER__-plugin pack .
+dotnet run --project client/tools/__APP_NAME__.PluginTool -- validate <project>
+dotnet run --project client/tools/__APP_NAME__.PluginTool -- pack <project>
 ```
+
+The tool is `PackAsTool`, and nothing here publishes it: a deployment that wants
+`__APP_NAME_LOWER__-plugin` on a build server packs it and installs from that package. CI packs it
+on every run, so that it stays installable is a thing the gates know rather than a thing somebody
+finds out.
 
 `validate` packs the project in memory through the same code `pack` writes with, opens the result
 and checks *that* — so what an author is told is what a user's installation would say, and there is
