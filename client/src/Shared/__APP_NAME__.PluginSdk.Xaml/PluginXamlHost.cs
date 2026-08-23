@@ -30,9 +30,18 @@ public sealed class PluginXamlHost
     private Application? _application;
 
     /// <summary>Takes over resource resolution for the application. Call from its constructor.</summary>
+    /// <remarks>
+    /// Once only. A second subscription would build a second manager per request and hand the event
+    /// whichever one ran last, so a repeat is ignored rather than doubled.
+    /// </remarks>
     public void Attach(Application application)
     {
         ArgumentNullException.ThrowIfNull(application);
+
+        if (_application is not null)
+        {
+            return;
+        }
         _application = application;
         application.ResourceManagerRequested += OnResourceManagerRequested;
     }
@@ -55,17 +64,7 @@ public sealed class PluginXamlHost
             return Result.Failure(PluginXamlErrors.NotAttached);
         }
         var name = pluginAssembly.GetName().Name ?? string.Empty;
-        IXamlMetadataProvider? provider;
-        string reason;
-
-        try
-        {
-            provider = XamlMetadataBridge.FindProvider(pluginAssembly, out reason);
-        }
-        catch (ReflectionTypeLoadException exception)
-        {
-            return Result.Failure(PluginXamlErrors.MetadataProviderUnusable(name, exception.Message));
-        }
+        var provider = XamlMetadataBridge.FindProvider(pluginAssembly, out var reason);
 
         if (provider is not null)
         {

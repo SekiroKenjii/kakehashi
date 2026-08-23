@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.UI.Contracts;
@@ -23,6 +24,16 @@ public static class HostNavigation
     /// what they are called — is decided once, on the server, for every client. <c>Group</c> is only
     /// the fallback for a client that has not been able to ask.
     /// </remarks>
+    /// <summary>
+    /// The two screens the shell registers itself, which have no pane item of their own.
+    /// </summary>
+    /// <remarks>
+    /// Home is the one fixed destination and Settings is chrome, so neither is in <see cref="Items"/>
+    /// — but both answer to a navigation key, so a plugin may not claim one. The shell and the
+    /// plugin loader read this list rather than each spelling the pair.
+    /// </remarks>
+    public static IReadOnlyList<Type> ShellPages { get; } = [typeof(HomePage), typeof(SettingsPage)];
+
     public static IReadOnlyList<NavigationItem> Items { get; } = [
         new NavigationItem("Users", "", typeof(UsersPage)) {
             Id = "account.users",

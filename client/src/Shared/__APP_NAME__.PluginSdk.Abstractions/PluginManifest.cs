@@ -62,12 +62,6 @@ public sealed record PluginManifest
     /// docs/adr/0015-module-attachment-is-not-a-security-boundary.md
     /// </remarks>
     public string CallsPermission { get; init; } = string.Empty;
-
-    /// <summary>
-    /// Set when the package carries a XAML-bearing library of its own that resolves its resources
-    /// through unprefixed <c>ms-appx</c> URIs, which only the host's unsafe hooks can redirect.
-    /// </summary>
-    public bool RequiresUnsafeXamlHooks { get; init; }
 }
 
 /// <summary>One screen a package adds to the navigation pane.</summary>

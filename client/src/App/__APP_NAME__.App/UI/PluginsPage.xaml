@@ -83,6 +83,14 @@
             Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
             Severity="Error" />
 
+        <InfoBar
+            Grid.Row="2"
+            IsClosable="False"
+            IsOpen="{x:Bind ViewModel.PluginsDisabled}"
+            Message="Installing one still works, and nothing will load it until this is turned back on."
+            Severity="Informational"
+            Title="Plugins are turned off for this installation" />
+
         <!--
             Staged work never touches what is running, so this is the only place the difference is
             visible: the change is real, and it is not in effect yet.
@@ -597,6 +605,12 @@
                         <TextBlock Text="{x:Bind ViewModel.PendingNavigation, Mode=OneWay}" TextWrapping="Wrap" />
                         <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Requires host SDK" />
                         <TextBlock Text="{x:Bind ViewModel.PendingHostSdk, Mode=OneWay}" />
+                        <!--
+                            What the package says it will reach, never what it is permitted to. The
+                            wording says so, because a row that reads as a grant is worse than none.
+                        -->
+                        <TextBlock FontSize="12" Foreground="{ThemeResource TextFillColorSecondaryBrush}" Text="Declares that it calls" />
+                        <TextBlock Text="{x:Bind ViewModel.PendingCalls, Mode=OneWay}" TextWrapping="Wrap" />
                     </StackPanel>
 
                     <!--

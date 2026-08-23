@@ -12,6 +12,7 @@ using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.App.Services.Platform;
 using __ROOT_NAMESPACE__.App.UI;
 using __ROOT_NAMESPACE__.PluginSdk.Xaml;
+using __ROOT_NAMESPACE__.SharedKernel;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using __ROOT_NAMESPACE__.UI.Contracts.Services;
 using __ROOT_NAMESPACE__.UI.Contracts.Services.Platform;
@@ -175,46 +176,20 @@ internal static class AppHost
         }
         services.AddSingleton(plugins.Catalog);
 
-        foreach (var module in plugins.Modules)
+        foreach (var plugin in plugins.Modules)
         {
-            if (!TryRegisterPlugin(services, module))
+            var registered = PluginRegistration.Add(services, plugin.Module);
+
+            if (registered.IsFailure)
             {
-                plugins.Catalog.AddFault(
-                    module.Name, string.Empty, PluginLoadErrors.RegistrationRemovedServices(module.Name));
+                // Filed under the plugin id, which is what the state file is keyed by — a row filed
+                // under the module name is one the Remove button cannot find.
+                plugins.Catalog.AddFault(plugin.PluginID, string.Empty, registered.Error);
 
                 continue;
             }
-            services.AddSingleton(module);
+            services.AddSingleton(plugin.Module);
         }
-    }
-
-    /// <summary>
-    /// Lets a plugin add its own services, and refuses one that takes anything away.
-    /// </summary>
-    /// <remarks>
-    /// A module's registration is additive. Removing or replacing what the host registered would
-    /// let a plugin substitute its own navigation service, its own token store, its own anything —
-    /// so the collection is snapshotted, and a registration that dropped an entry is rolled back
-    /// whole rather than partly honoured.
-    /// </remarks>
-    private static bool TryRegisterPlugin(IServiceCollection services, IModule module)
-    {
-        var before = services.ToArray();
-        module.RegisterServices(services);
-        var after = new HashSet<ServiceDescriptor>(services);
-
-        if (before.All(after.Contains))
-        {
-            return true;
-        }
-        services.Clear();
-
-        foreach (var descriptor in before)
-        {
-            services.Add(descriptor);
-        }
-
-        return false;
     }
 
     /// <summary>
@@ -234,12 +209,12 @@ internal static class AppHost
 
         if (!options.Enabled)
         {
-            return new PluginLoadResult([], new PluginCatalog());
+            return new PluginLoadResult([], new PluginCatalog { Disabled = true });
         }
         var declared = ModuleCatalog.Modules
             .SelectMany(module => module.GetNavigationItems())
             .Concat(HostNavigation.Items);
-        var reserved = PluginLoader.PageKeysOf(declared);
+        var reserved = PluginLoader.PageKeysOf(declared, HostNavigation.ShellPages);
 
         return PluginLoader.LoadAll(PluginPaths.Default, pluginXaml, reserved);
     }

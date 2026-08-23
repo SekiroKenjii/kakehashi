@@ -155,18 +155,104 @@ public sealed class PluginLoaderTests : IDisposable
         Assert.Equal("Plugin.Load.Invalid", result.Catalog.Faults[0].Reason.Code);
     }
 
+    /// <summary>
+    /// The one window a crash can land in: the directory moved and the record was never written.
+    /// Faulting forever would leave the new version on disk and unloadable, recoverable only by the
+    /// user pressing Remove.
+    /// </summary>
+    [Fact]
+    public void LoadAll_AdoptsAPromotionThatMovedAndWasNeverRecorded()
+    {
+        var paths = Paths;
+        Place(paths.InstalledDirectory("weather", "1.1.0"));
+        Save(paths, new PluginRecord {
+            PluginID = "weather",
+            InstalledVersion = "1.0.0",
+            StagedVersion = "1.1.0",
+        });
+
+        var result = Load(paths);
+
+        var reloaded = PluginState.Load(paths);
+        var promoted = reloaded.Find("weather");
+
+        Assert.NotNull(promoted);
+        Assert.Equal("1.1.0", promoted.InstalledVersion);
+        Assert.Equal(string.Empty, promoted.StagedVersion);
+
+        // The bug this covers faulted twice, once per half of a promotion it could not finish.
+        Assert.DoesNotContain(
+            result.Catalog.Faults, fault => fault.Reason.Code == "Plugin.Load.DirectoryMissing");
+    }
+
+    /// <summary>
+    /// A directory that could not be deleted keeps its record, so the next launch tries again. The
+    /// record going first would orphan the files permanently, because nothing would name them.
+    /// </summary>
+    [Fact]
+    public void LoadAll_AnUninstallThatCouldNotDeleteKeepsItsRecord()
+    {
+        var paths = Paths;
+        var directory = paths.InstalledDirectory("weather", "1.0.0");
+        Place(directory);
+        Save(paths, new PluginRecord { PluginID = "weather", PendingRemove = true });
+
+        using (var held = File.Open(Path.Combine(directory, "manifest.json"), FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            _ = Load(paths);
+        }
+
+        var afterHeld = PluginState.Load(paths);
+
+        Assert.NotNull(afterHeld.Find("weather"));
+
+        _ = Load(paths);
+        var afterRelease = PluginState.Load(paths);
+
+        Assert.Null(afterRelease.Find("weather"));
+    }
+
     [Fact]
     public void PageKeysOf_DropsTheSuffixTheNavigationServiceDrops()
     {
         var items = new[] { new NavigationItem("Weather", "", typeof(WeatherPage)) };
 
-        var keys = PluginLoader.PageKeysOf(items);
+        var keys = PluginLoader.PageKeysOf(items, []);
+
+        Assert.Equal(["Weather"], keys.ToArray());
+    }
+
+    /// <summary>
+    /// A screen with no pane item still answers to a key, so a plugin may not claim one — which is
+    /// the hole HomePage and SettingsPage sat in until the shell's own pair was passed here too.
+    /// </summary>
+    [Fact]
+    public void PageKeysOf_ReservesAScreenThatHasNoPaneItem()
+    {
+        var keys = PluginLoader.PageKeysOf([], [typeof(WeatherPage)]);
+
+        Assert.Equal(["Weather"], keys.ToArray());
+    }
+
+    /// <summary>
+    /// The navigation service matches the suffix case-insensitively, so a key derived any other way
+    /// would not be the one that collides.
+    /// </summary>
+    [Fact]
+    public void PageKeysOf_MatchesTheSuffixTheWayTheNavigationServiceMatchesIt()
+    {
+        var keys = PluginLoader.PageKeysOf([], [typeof(Weatherpage)]);
 
         Assert.Equal(["Weather"], keys.ToArray());
     }
 
     /// <summary>A stand-in for a page type: the loader only ever reads the name.</summary>
     private sealed class WeatherPage
+    {
+    }
+
+    /// <summary>The same name the navigation service would still key, spelled differently.</summary>
+    private sealed class Weatherpage
     {
     }
 }

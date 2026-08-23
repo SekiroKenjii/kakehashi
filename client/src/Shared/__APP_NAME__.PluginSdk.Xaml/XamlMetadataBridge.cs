@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.Reflection;
 using __ROOT_NAMESPACE__.SharedKernel;
@@ -51,7 +52,16 @@ internal static class XamlMetadataBridge
         {
             return Result.Failure(PluginXamlErrors.MetadataBridgeUnavailable(_otherProvidersMember));
         }
-        others.Add(provider);
+
+        try
+        {
+            others.Add(provider);
+        }
+        catch (NotSupportedException)
+        {
+            // A generated list that is fixed-size or read-only would take the provider nowhere.
+            return Result.Failure(PluginXamlErrors.MetadataBridgeUnavailable(_otherProvidersMember));
+        }
 
         return Result.Success();
     }
@@ -66,8 +76,22 @@ internal static class XamlMetadataBridge
     public static IXamlMetadataProvider? FindProvider(Assembly assembly, out string reason)
     {
         reason = string.Empty;
+        Type[] candidates;
 
-        foreach (var candidate in assembly.GetExportedTypes())
+        try
+        {
+            candidates = assembly.GetExportedTypes();
+        }
+        catch (Exception exception)
+        {
+            // Reading a plugin's types resolves what it references, so a missing dependency
+            // surfaces here rather than as a type nobody asked for.
+            reason = $"its types could not be read: {exception.Message}";
+
+            return null;
+        }
+
+        foreach (var candidate in candidates)
         {
             if (candidate.IsAbstract
                 || candidate.IsGenericTypeDefinition
@@ -83,7 +107,18 @@ internal static class XamlMetadataBridge
                 continue;
             }
 
-            return (IXamlMetadataProvider)System.Activator.CreateInstance(candidate)!;
+            try
+            {
+                return (IXamlMetadataProvider)System.Activator.CreateInstance(candidate)!;
+            }
+            catch (Exception exception)
+            {
+                // The plugin's own constructor. It runs before anything else of the plugin's does,
+                // so an exception here would be the first thing a plugin could stop a launch with.
+                reason = $"'{candidate.FullName}' threw {exception.GetType().Name}: {exception.Message}";
+
+                return null;
+            }
         }
 
         return null;

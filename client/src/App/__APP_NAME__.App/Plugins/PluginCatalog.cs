@@ -43,6 +43,15 @@ public sealed class PluginCatalog
     /// <summary>Whether anything is waiting, which is what the banner asks.</summary>
     public bool RestartRequired => _staged.Count > 0;
 
+    /// <summary>
+    /// Whether this deployment turned plugins off, in which case nothing was even looked for.
+    /// </summary>
+    /// <remarks>
+    /// Carried so the screen can say so. An empty list and a working install button would otherwise
+    /// tell somebody their package is staged for a launch that will not load it.
+    /// </remarks>
+    public bool Disabled { get; init; }
+
     public void Add(LoadedPlugin plugin)
     {
         ArgumentNullException.ThrowIfNull(plugin);

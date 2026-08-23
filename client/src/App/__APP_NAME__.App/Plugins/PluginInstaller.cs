@@ -129,6 +129,7 @@ public sealed class PluginInstaller
         record.SHA256 = preview.Trust.SHA256;
         record.SignerSubject = preview.Trust.Signer;
         record.Signature = preview.Trust.Level.ToString();
+        record.SignatureStatus = preview.Trust.Signature.ToString();
         record.ConsentGiven = consented;
         record.SizeInBytes = preview.SizeInBytes;
         record.InstalledOn = _now();
@@ -179,10 +180,16 @@ public sealed class PluginInstaller
     /// Against the identity and the digest, which together settle it: different bytes are a
     /// different package whatever its version says, so an update is a fresh decision.
     /// </remarks>
-    public static bool AlreadyConsented(PluginRecord? record, PluginPreview preview)
+    public bool AlreadyConsented(PluginPreview preview)
     {
         ArgumentNullException.ThrowIfNull(preview);
+        var state = PluginState.Load(_paths);
 
+        return Agreed(state.Find(preview.Manifest.Id), preview);
+    }
+
+    private static bool Agreed(PluginRecord? record, PluginPreview preview)
+    {
         return record is not null
             && record.ConsentGiven
             && record.PluginID.Equals(preview.Manifest.Id, StringComparison.Ordinal)
