@@ -26,7 +26,7 @@ feed's scope changes.
 | `AppUpdated` | System | the client, through `RecordClientEvent` |
 | `ThemeChanged` | System | the client, through `RecordClientEvent` |
 | `PluginInstalled` | System | `plugins/service/install.go` — a package this catalog offered |
-| `PluginSideloaded` | Security | the same event, with any other source |
+| `PluginSideloaded` | Security | the same event, with any other source — no shipped client sends one |
 
 Three of these are worth knowing the history of, because the feed was wrong about them until
 recently:
@@ -45,7 +45,10 @@ recently:
 carries where the package came from, and only this deployment's own catalog earns the quieter row —
 everything else is code nobody here chose to offer, running with everything the application can do.
 A source a later build adds reads as `PluginSideloaded`, which is the direction a wrong guess has to
-fail in. Neither row names the plugin: an entry has no field for one, and the Plugins page is the
+fail in. **Nothing reports one today**: this client calls `ReportInstalled` only for a catalog
+install, and the server refuses a version its own catalog does not hold, so a package installed from
+a file reaches no feed at all. The kind exists for the source set the contract already carries.
+Neither row names the plugin: an entry has no field for one, and the Plugins page is the
 inventory. What the feed answers is "did I do that, and when".
 
 **An event is published only when the write it describes actually did something.** Ending a session

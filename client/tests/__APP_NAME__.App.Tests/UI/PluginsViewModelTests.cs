@@ -1,8 +1,11 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
+using System.IO.Compression;
 using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
+using NSubstitute;
 using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.App.UI;
@@ -10,7 +13,6 @@ using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.SharedKernel;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using __ROOT_NAMESPACE__.UI.Contracts.Services.Platform;
-using NSubstitute;
 using Xunit;
 
 namespace __ROOT_NAMESPACE__.App.Tests.UI;
@@ -212,14 +214,85 @@ public sealed class PluginsViewModelTests : IDisposable
     /// The whole point of the install prompt: an unverified package cannot be installed without the
     /// user saying so, and the button that would do it is not available until they have.
     /// </summary>
+    /// <remarks>
+    /// Driven through a real package, because the property is only meaningful once something is
+    /// pending — asserting it on an empty view model passes on the "nothing is pending" clause and
+    /// proves nothing about the gate.
+    /// </remarks>
     [Fact]
-    public void CanInstallPending_IsFalseUntilAnUnverifiedPackageIsConsentedTo()
+    public async Task CanInstallPending_IsFalseUntilAnUnverifiedPackageIsConsentedTo()
     {
         Compose();
         var viewModel = CreateViewModel();
+        _files.PickFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(WriteUnsignedPackage());
 
+        Assert.True(await viewModel.PrepareInstallFromFileAsync());
+        Assert.True(viewModel.ConsentRequired);
         Assert.False(viewModel.CanInstallPending);
-        Assert.False(viewModel.ConsentRequired);
+
+        viewModel.ConsentGiven = true;
+
+        Assert.True(viewModel.CanInstallPending);
+    }
+
+    /// <summary>
+    /// Refusing at the gate must leave the package where it was. Committing without consent throws
+    /// the staged files away, so a second attempt would record a directory that is no longer there.
+    /// </summary>
+    [Fact]
+    public async Task ConfirmInstall_WithoutConsent_ChangesNothingAndStagesNothing()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+        _files.PickFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(WriteUnsignedPackage());
+        _ = await viewModel.PrepareInstallFromFileAsync();
+        var staged = viewModel.Pending!.StagedDirectory;
+
+        Assert.False(await viewModel.ConfirmInstallAsync());
+        Assert.True(System.IO.Directory.Exists(staged));
+        Assert.NotNull(viewModel.Pending);
+        Assert.Empty(_catalog.AwaitingRestart);
+
+        viewModel.ConsentGiven = true;
+
+        Assert.True(await viewModel.ConfirmInstallAsync());
+        Assert.Single(_catalog.AwaitingRestart);
+    }
+
+    /// <summary>The smallest package the installer accepts, signed by nobody.</summary>
+    private string WriteUnsignedPackage()
+    {
+        System.IO.Directory.CreateDirectory(_root);
+        var path = System.IO.Path.Combine(_root, "weather" + PluginPaths.PackageExtension);
+
+        using (var file = System.IO.File.Create(path))
+        using (var archive = new ZipArchive(file, ZipArchiveMode.Create))
+        {
+            var manifestEntry = archive.CreateEntry("manifest.json");
+
+            using (var manifest = new StreamWriter(manifestEntry.Open()))
+            {
+                manifest.Write("""
+                    {
+                      "schemaVersion": 1,
+                      "id": "weather",
+                      "moduleName": "Weather",
+                      "displayName": "Weather",
+                      "version": "1.0.0",
+                      "entryAssembly": "App.Modules.Weather.UI.dll",
+                      "moduleType": "App.Modules.Weather.UI.WeatherModule",
+                      "minHostSdk": "0.1"
+                    }
+                    """);
+            }
+
+            var assemblyEntry = archive.CreateEntry("lib/App.Modules.Weather.UI.dll");
+
+            using var bytes = assemblyEntry.Open();
+            bytes.Write([0x4D, 0x5A]);
+        }
+
+        return path;
     }
 
     [Fact]

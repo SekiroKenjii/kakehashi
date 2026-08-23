@@ -22,8 +22,8 @@ public sealed record PluginFault(string PluginID, string Version, Error Reason);
 /// </summary>
 /// <remarks>
 /// The loader runs before the container exists, so it cannot log through the application's logger
-/// and cannot show anything. It records instead, and whoever can — a logger once the host is built,
-/// the plugins page once somebody opens it — reads this.
+/// and cannot show anything. It records instead, and the plugins page reads it — which is also the
+/// only thing that does, so a plugin that failed to load is invisible until somebody opens it.
 /// </remarks>
 public sealed class PluginCatalog
 {

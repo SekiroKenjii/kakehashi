@@ -29,3 +29,8 @@ that supersedes the old one.
 | [0020](0020-no-second-example-module.md) | No second example module; Notes already touches the event bus |
 | [0021](0021-upgrade-is-a-three-way-merge.md) | `upgrade` reconstructs both versions and patches the difference |
 | [0022](0022-cli-tags-carry-the-module-path.md) | The CLI's tags carry its module path, so `go install` can read them |
+| [0023](0023-plugins-load-at-startup.md) | Plugins load during host construction, and the disk settles before they do |
+| [0024](0024-plugin-xaml-resolves-through-a-runtime-loaded-pri.md) | Plugin XAML resolves through a runtime-loaded PRI and a metadata bridge we own |
+| [0025](0025-a-plugins-declared-permission-is-disclosure.md) | A plugin's declared permission is disclosure, not a gate |
+| [0026](0026-plugin-artifacts-stream-over-the-contract.md) | Plugin artifacts stream over the contract, not from a static route |
+| [0027](0027-an-install-is-reported-through-the-module-that-published-it.md) | An install is reported through the module that published it |

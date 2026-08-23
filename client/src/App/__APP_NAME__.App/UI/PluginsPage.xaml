@@ -575,6 +575,7 @@
             Closed="OnInstallDialogClosed"
             CloseButtonText="Cancel"
             DefaultButton="Primary"
+            IsPrimaryButtonEnabled="{x:Bind ViewModel.CanInstallPending, Mode=OneWay}"
             PrimaryButtonClick="OnInstallDialogPrimary"
             PrimaryButtonText="Install plugin"
             Title="Review plugin before installing">
