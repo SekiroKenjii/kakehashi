@@ -145,8 +145,8 @@ function Section([string]$t) { Write-Host "`n== $t" -ForegroundColor Cyan }
 Section 'Shell and navigation'
 
 $items = PaneItems
-Assert-That 'the pane was built from the server layout' ($items.Count -ge 7) ($items -join ', ')
-foreach ($expected in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Settings')) {
+Assert-That 'the pane was built from the server layout' ($items.Count -ge 8) ($items -join ', ')
+foreach ($expected in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     Assert-That "the pane offers $expected" ($items -contains $expected) ($items -join ', ')
 }
 Assert-That 'the account footer item has an accessible name' (-not ($items -contains 'NavigationViewItem')) `
@@ -157,7 +157,7 @@ Start-Sleep 1
 Test-UI 'the pane expands again' { winapp ui invoke 'PART_PaneToggleButton' -w $hwnd }
 Start-Sleep 1
 
-foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Settings')) {
+foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     Assert-That "$page opens" (GoTo $page) 'nav item not found or not invokable'
 }
 Shot '30-settings'
@@ -426,12 +426,50 @@ if ($footer.Count) {
     Shot '80-account-flyout'
 }
 
+# ─────────────────────────────────────────────────────────────── plugins
+
+Section 'Plugins'
+
+Assert-That 'Plugins opens' (GoTo 'Plugins') ''
+Shot '90-plugins'
+
+# The one assertion on this page about wording rather than structure, and it is here because a
+# disclaimer nobody renders is a disclaimer nobody read.
+$footer = @(AllOf | Where-Object { $_.name -like '*same privileges as*' })
+Assert-That 'the page states what a plugin runs with' ($footer.Count -ge 1) `
+    'no text naming the privileges a plugin runs with'
+
+foreach ($tab in @('Installed', 'Browse catalog', 'Develop')) {
+    Assert-That "the tab strip offers $tab" ($null -ne (Find1 -Name $tab)) 'not found'
+}
+
+$cards = @(AllOf | Where-Object { $_.name -in @('Modules', 'Waiting', 'Unofficial', 'Host SDK') })
+Assert-That 'the summary cards count what this composition is made of' ($cards.Count -ge 3) `
+    "$($cards.Count) of 4 cards found"
+
+Assert-That 'installing from a file is offered' `
+    ($null -ne (Find1 -Name 'Install from file' -Type 'Button')) 'button not found'
+
+$develop = Find1 -Name 'Develop'
+if ($develop) {
+    Test-UI 'the Develop tab opens' { winapp ui invoke $develop -w $hwnd }
+    Start-Sleep 2
+    foreach ($b in @('Create project', 'Check', 'Pack')) {
+        Assert-That "Develop offers $b" ($null -ne (Find1 -Name $b -Type 'Button')) 'not found'
+    }
+    Shot '91-plugins-develop'
+}
+
+# No plugin is installed here. A binary fixture does not belong in a template, and building one
+# inside a UI test would tie it to a toolchain and a host build path; docs/PLUGINS.md carries the
+# manual pass that covers loading one instead.
+
 # ─────────────────────────────────────────────────────────────── accessibility sweep
 
 Section 'Accessibility sweep across every page'
 
 $unnamed = @()
-foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Settings')) {
+foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     if (-not (GoTo $page)) { continue }
     $bad = @(Elements -Interactive | Where-Object {
         $_.type -in @('Button', 'Edit', 'ComboBox', 'CheckBox') -and -not $_.name -and -not $_.automationId

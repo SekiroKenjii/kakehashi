@@ -230,6 +230,13 @@ The seam between the two halves is `IBackendClient` and the module gateways behi
 above that seam — view models, pages, use cases — is written against interfaces, so which transport
 carries a call is a configuration value rather than a design decision.
 
+**A module need not be compiled in.** One built elsewhere, packaged as a `.plugin` and installed
+from a file or from this deployment's catalog, joins the same composition through the same `IModule`
+seam — so attaching and detaching work on it unchanged. Two things follow from the container being
+sealed at `builder.Build()`: a plugin loads during host construction, and installing therefore takes
+effect at the next launch while removing happens at the start of one. The whole feature, including
+what a plugin can and cannot do and the one gap in it, is [docs/PLUGINS.md](PLUGINS.md).
+
 ## Testing
 
 The server's domain, service and platform layers import no I/O. That is not an accident; it is what

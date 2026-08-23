@@ -14,7 +14,7 @@ namespace __ROOT_NAMESPACE__.App.Tests.Plugins;
 /// </summary>
 /// <remarks>
 /// Loading an assembly needs a real plugin, which is not something this solution has; those cases
-/// belong to the fixture plugin the running application is driven against. What is covered here is
+/// are covered by installing a plugin by hand — docs/PLUGINS.md. What is covered here is
 /// everything that happens on disk and in the state file — the part that decides which version the
 /// next launch sees, and the part that has to be right for an uninstall to actually uninstall.
 /// </remarks>

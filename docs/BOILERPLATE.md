@@ -70,6 +70,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `docs/COMMENTS.md` | CORE | |
 | `docs/CONTRACTS.md` | CORE | |
 | `docs/NAVIGATION.md` | CORE | |
+| `docs/PLUGINS.md` | CORE | |
 | `docs/RBAC.md` | CORE | the mechanism. The seeded roles it describes belong to unit `admin-ui` |
 | `docs/adr/` | CORE | |
 | `docs/adr/0016-one-example-module-in-the-template.md` | CORE | template repo only — D1 |
@@ -150,6 +151,9 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/docs/mockups/home-page-mockup.html` | CORE | |
 | `client/docs/mockups/navigation-management-mockup.html` | EXAMPLE | unit `admin-ui` |
 | `client/docs/mockups/permission-management.html` | EXAMPLE | unit `admin-ui` |
+| `client/docs/mockups/plugin-develop-mockup.html` | CORE | |
+| `client/docs/mockups/plugin-install-dialog-mockup.html` | CORE | |
+| `client/docs/mockups/plugin-manager-mockup.html` | CORE | |
 | `client/docs/mockups/profile-flyout-mockup.html` | CORE | |
 | `client/docs/mockups/sign-in-ui-mockup.html` | CORE | |
 | `client/docs/mockups/splash-screen-ui-mockup.html` | CORE | |

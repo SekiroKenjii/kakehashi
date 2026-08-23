@@ -17,7 +17,7 @@ namespace __ROOT_NAMESPACE__.App.Tests.Plugins;
 /// <para>
 /// What none of this can check is a plugin, which is not in this solution and never will be. That
 /// gap is why the packaging tool validates a package and why the loader re-runs the cheap half of
-/// it; the resolving path itself is exercised against a fixture plugin in the running application.
+/// it; the resolving path itself is only exercised by installing a plugin by hand — docs/PLUGINS.md.
 /// </para>
 /// </remarks>
 public sealed class PluginXamlLayeringTests

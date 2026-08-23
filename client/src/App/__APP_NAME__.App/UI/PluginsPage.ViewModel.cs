@@ -258,7 +258,9 @@ public sealed partial class PluginsViewModel : ViewModel
     /// </remarks>
     public async Task<bool> ConfirmInstallAsync()
     {
-        if (Pending is null)
+        // Asked as well as bound: Commit refuses without consent only after discarding what it
+        // unpacked, which would leave a second attempt recording a directory that is gone.
+        if (Pending is null || !CanInstallPending)
         {
             return false;
         }

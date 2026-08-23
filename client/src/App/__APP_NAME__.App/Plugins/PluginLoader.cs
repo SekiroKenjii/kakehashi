@@ -24,9 +24,9 @@ public sealed record PluginLoadResult(IReadOnlyList<IModule> Modules, PluginCata
 /// rather than immediately, and why a removal happens here: this is the one moment the files are
 /// not yet open.
 /// <para>
-/// Nothing in here throws. A plugin that cannot be loaded becomes a row with a reason on it, and
-/// the application starts without it — an application that will not start because of a plugin is
-/// the outcome the whole design exists to avoid.
+/// A plugin that cannot be loaded becomes a row with a reason on it and the application starts
+/// without it. Three calls into the plugin's own code are still unguarded — GetNavigationItems
+/// here, RegisterServices in AppHost, and its XAML provider's constructor: docs/PLUGINS.md.
 /// </para>
 /// </remarks>
 public static class PluginLoader
@@ -79,8 +79,8 @@ public static class PluginLoader
     /// The page keys a build owns before any plugin is loaded.
     /// </summary>
     /// <remarks>
-    /// Derived the same way the navigation service derives them — the type name without its "Page"
-    /// suffix — because a key that matched by a different rule would not be the one that collides.
+    /// The type name without its "Page" suffix, which is how the navigation service derives a key —
+    /// though it compares the suffix case-insensitively and this compares it exactly.
     /// </remarks>
     public static IReadOnlyCollection<string> PageKeysOf(IEnumerable<NavigationItem> items)
     {
@@ -96,8 +96,8 @@ public static class PluginLoader
     /// </summary>
     /// <remarks>
     /// Both happen before a single assembly is loaded, which is the only moment the files are not
-    /// held open. A failure here leaves the previous version in place and the staged copy where it
-    /// was, so the next launch tries the same thing again rather than ending up with neither.
+    /// held open. A promotion that fails leaves the staged copy where the next launch finds it; one
+    /// that succeeds and is not recorded does not, which docs/PLUGINS.md states as an open window.
     /// </remarks>
     private static void Settle(PluginPaths paths, PluginState state, PluginCatalog catalog)
     {
@@ -342,8 +342,8 @@ public static class PluginLoader
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            // A directory still held open comes out on a later launch. Failing here would strand
-            // the application on a plugin it is trying to be rid of.
+            // Failing here would strand the application on a plugin it is trying to be rid of. The
+            // record goes either way, so a directory still held open is orphaned rather than retried.
         }
     }
 }
