@@ -83,6 +83,7 @@
   <Folder Name="/tools/">
     <Project Path="tools/__APP_NAME__.Analyzers/__APP_NAME__.Analyzers.csproj" />
     <Project Path="tools/__APP_NAME__.Analyzers.CodeFixes/__APP_NAME__.Analyzers.CodeFixes.csproj" />
+    <Project Path="tools/__APP_NAME__.PluginTool/__APP_NAME__.PluginTool.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/__APP_NAME__.Analyzers.Tests/__APP_NAME__.Analyzers.Tests.csproj" />

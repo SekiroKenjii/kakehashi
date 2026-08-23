@@ -65,6 +65,21 @@ public sealed partial class PluginsPage : Page
         ViewModel.CreateProject();
     }
 
+    private async void OnBrowseProjectClick(object sender, RoutedEventArgs e)
+    {
+        await ViewModel.BrowseForProjectAsync();
+    }
+
+    private void OnCheckProjectClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.CheckProject();
+    }
+
+    private void OnPackProjectClick(object sender, RoutedEventArgs e)
+    {
+        ViewModel.PackProject();
+    }
+
     private async void OnInstallFromFileClick(object sender, RoutedEventArgs e)
     {
         if (await ViewModel.PrepareInstallFromFileAsync())

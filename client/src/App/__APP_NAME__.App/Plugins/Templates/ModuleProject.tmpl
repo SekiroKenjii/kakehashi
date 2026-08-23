@@ -28,9 +28,9 @@
   </ItemGroup>
 
   <!--
-    Private=false on every one: the host already has these, and a package that carried its own copies
-    would load a second set of the types the host is holding. The packaging tool refuses a package
-    that ships one.
+    Private=false on every one: the host already has these, so a copy in the package would be dead
+    weight. The default load context resolves an assembly by its simple name and the host's is
+    already loaded, so the copy beside the plugin is never the one that runs.
 
     Two references, deliberately. The application's shared controls are available too, but referring
     to them by path brings their whole package graph into this project to restore — so a starter

@@ -10,8 +10,8 @@ dotnet build {{AssemblyName}}/{{AssemblyName}}.csproj -p:Platform=x64
 
 The project references the application's assemblies from the directory it was scaffolded against, so
 it compiles against exactly the ones it will be loaded beside. `Private=false` on every one of them:
-the host already has these, and a package carrying its own copies would load a second set of the
-types the host is holding.
+the host already has these, and a copy in the package would be dead weight — the load context
+resolves by simple name, and the host's is already loaded.
 
 Two of them, deliberately. The application's shared controls — its page header, its cards — are
 available at runtime, but referring to them by path brings their whole package graph into this
@@ -38,8 +38,25 @@ the resource index the host loads; without it the pages build and then cannot be
 - The manifest's `minHostSdk` is checked before the assembly is opened, so a package built against a
   later host is refused with a sentence rather than failing inside XAML.
 
+## Pack it
+
+```sh
+dotnet tool install --global __APP_NAME__.PluginTool
+__APP_NAME_LOWER__-plugin validate .
+__APP_NAME_LOWER__-plugin pack .
+```
+
+`validate` packs the project in memory and checks the archive, so what it approves is the file
+`pack` would write rather than a directory that resembles one. It reports what the manifest gets
+wrong, a `moduleType` the entry assembly does not declare, a page whose name would break its key, a
+resource index that is not declared, a screen the manifest promises and the package cannot show,
+and `x:Uid` in markup — a plugin's own `.resw` strings do not resolve, so a localized label renders
+empty. The Plugins screen's Develop tab runs the same checks out of the same library.
+
+What it does not do is run your module, so it cannot confirm that `GetNavigationItems()` agrees with
+the manifest, and it sees only pages that derive directly from `Page`.
+
 ## Install it
 
-Build, then package the output and install it from the application's Plugins screen. It loads at the
-next launch: a plugin's services are registered while the container is still open, which is earlier
-than any screen exists.
+Install the `.plugin` from the application's Plugins screen. It loads at the next launch: a plugin's
+services are registered while the container is still open, which is earlier than any screen exists.

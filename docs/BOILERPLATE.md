@@ -217,6 +217,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/tests/__APP_NAME__.Modules.Notes.UI.Tests/` | EXAMPLE | unit `notes` |
 | `client/tools/__APP_NAME__.Analyzers/` | CORE | |
 | `client/tools/__APP_NAME__.Analyzers.CodeFixes/` | CORE | |
+| `client/tools/__APP_NAME__.PluginTool/` | CORE | |
 
 ## Not copied into a scaffolded project
 

@@ -473,6 +473,74 @@
                             </ItemsControl>
                         </StackPanel>
                     </Border>
+
+                    <!--
+                        Acts on a project that has already been built, which is why it takes its own
+                        path rather than the one the form above is still being filled in with.
+                    -->
+                    <Border Style="{StaticResource CardStyle}">
+                        <StackPanel Padding="20" Spacing="10">
+                            <StackPanel Spacing="2">
+                                <TextBlock FontWeight="SemiBold" Text="Check and pack" />
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="Runs the same checks an install runs, against the package your project would produce."
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+
+                            <Grid ColumnSpacing="8" VerticalAlignment="Bottom">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <TextBox
+                                    Grid.Column="0"
+                                    Header="Built project"
+                                    IsReadOnly="True"
+                                    PlaceholderText="Choose the folder holding manifest.json"
+                                    Text="{x:Bind ViewModel.ProjectPath, Mode=OneWay}" />
+                                <Button
+                                    Grid.Column="1"
+                                    VerticalAlignment="Bottom"
+                                    AutomationProperties.Name="Browse for a project"
+                                    Click="OnBrowseProjectClick"
+                                    Content="Browse" />
+                            </Grid>
+
+                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                <Button
+                                    AutomationProperties.Name="Check"
+                                    Click="OnCheckProjectClick"
+                                    Content="Check"
+                                    IsEnabled="{x:Bind ViewModel.CanCheckProject, Mode=OneWay}" />
+                                <Button
+                                    AutomationProperties.Name="Pack"
+                                    Click="OnPackProjectClick"
+                                    Content="Pack"
+                                    IsEnabled="{x:Bind ViewModel.CanCheckProject, Mode=OneWay}" />
+                            </StackPanel>
+
+                            <TextBlock
+                                FontSize="12"
+                                IsTextSelectionEnabled="True"
+                                Text="{x:Bind ViewModel.ToolResult, Mode=OneWay}"
+                                TextWrapping="Wrap"
+                                Visibility="{x:Bind local:PluginsPage.HasText(ViewModel.ToolResult), Mode=OneWay}" />
+
+                            <StackPanel Spacing="2">
+                                <TextBlock
+                                    FontSize="12"
+                                    Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                    Text="The same two steps without a window" />
+                                <TextBlock
+                                    IsTextSelectionEnabled="True"
+                                    Style="{StaticResource MonoTextStyle}"
+                                    Text="{x:Bind ViewModel.CliCommand, Mode=OneWay}"
+                                    TextWrapping="Wrap" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
                 </StackPanel>
             </ScrollViewer>
         </Grid>

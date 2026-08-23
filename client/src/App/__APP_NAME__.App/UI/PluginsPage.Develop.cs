@@ -1,8 +1,10 @@
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
+using __ROOT_NAMESPACE__.SharedKernel;
 
 namespace __ROOT_NAMESPACE__.App.UI;
 
@@ -32,6 +34,12 @@ public sealed partial class PluginsViewModel
 
     [ObservableProperty]
     private string _scaffoldResult = string.Empty;
+
+    [ObservableProperty]
+    private string _projectPath = string.Empty;
+
+    [ObservableProperty]
+    private string _toolResult = string.Empty;
 
     /// <summary>What the module name would produce, shown while it is being typed.</summary>
     public string NewProjectPreview
@@ -84,9 +92,49 @@ public sealed partial class PluginsViewModel
     public IReadOnlyList<string> NextSteps { get; } = [
         "Open it in your editor. It references the application's own assemblies, never its internals.",
         "Build it. DisableEmbeddedXbf is already false, which is what puts the XAML where the host looks.",
-        "Package the output and install it from the Installed tab.",
+        "Check and pack it below, then install the file from the Installed tab.",
         "Restart. A plugin's services are registered while the container is still open, which is earlier than any screen exists.",
     ];
+
+    /// <summary>The same two steps on a build server, where there is no window.</summary>
+    /// <remarks>
+    /// The tool runs the checks this tab runs, out of the same library, so what it reports here is
+    /// what it reports there.
+    /// </remarks>
+    public string CliCommand =>
+        $"__APP_NAME_LOWER__-plugin validate {Quoted(ProjectPath)}\n"
+            + $"__APP_NAME_LOWER__-plugin pack {Quoted(ProjectPath)}";
+
+    public bool CanCheckProject => ProjectPath.Length > 0;
+
+    public async Task BrowseForProjectAsync()
+    {
+        if (await _files.PickFolderAsync() is { } folder)
+        {
+            ProjectPath = folder;
+        }
+    }
+
+    /// <summary>
+    /// Reports everything wrong with a project, or that there is nothing.
+    /// </summary>
+    /// <remarks>
+    /// The project is packed in memory and the package is what gets checked, so this answers the
+    /// question an install would ask rather than a question about a directory.
+    /// </remarks>
+    public void CheckProject()
+    {
+        ToolResult = Describe(Check(ProjectPath), "Nothing to fix. It is ready to pack.");
+    }
+
+    /// <summary>Writes the package, and says where.</summary>
+    public void PackProject()
+    {
+        var packed = PluginPackager.Pack(ProjectPath, ProjectPath);
+        ToolResult = packed.IsFailure
+            ? packed.Error.Message
+            : $"Wrote {packed.Value}";
+    }
 
     public async Task BrowseForLocationAsync()
     {
@@ -126,6 +174,51 @@ public sealed partial class PluginsViewModel
     partial void OnNewLocationChanged(string value) => OnPropertyChanged(nameof(CanCreateProject));
 
     partial void OnWithSamplePageChanged(bool value) => OnPropertyChanged(nameof(GeneratedStructure));
+
+    private static string Quoted(string path)
+    {
+        return path.Length == 0 ? "<project>" : $"\"{path}\"";
+    }
+
+    private static string Describe(IReadOnlyList<Error> problems, string whenNone)
+    {
+        return problems.Count == 0
+            ? whenNone
+            : string.Join("\n", problems.Select(problem => problem.Message));
+    }
+
+    private static IReadOnlyList<Error> Check(string projectDirectory)
+    {
+        var built = PluginPackager.Build(projectDirectory);
+
+        if (built.IsFailure)
+        {
+            return [built.Error];
+        }
+
+        using var archive = built.Value;
+        var opened = PluginPackage.Open(archive, leaveOpen: true);
+
+        if (opened.IsFailure)
+        {
+            return [opened.Error];
+        }
+
+        using var package = opened.Value;
+
+        return [
+            .. package.Validate(),
+            .. PluginContentValidator.Validate(package),
+            .. PluginContentValidator.ValidateMarkup(projectDirectory),
+        ];
+    }
+
+    partial void OnProjectPathChanged(string value)
+    {
+        OnPropertyChanged(nameof(CanCheckProject));
+        OnPropertyChanged(nameof(CliCommand));
+        ToolResult = string.Empty;
+    }
 
     /// <summary>The contract version a project scaffolded now is written against.</summary>
     public static string HostSdkVersion => PluginSdkVersion.Current.ToString();
