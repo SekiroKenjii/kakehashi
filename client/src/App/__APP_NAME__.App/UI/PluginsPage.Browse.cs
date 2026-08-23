@@ -131,12 +131,21 @@ public sealed partial class PluginsViewModel
     public async Task<bool> PrepareInstallFromCatalogAsync(CatalogListItem item)
     {
         ArgumentNullException.ThrowIfNull(item);
+
+        if (!CanStartInstall)
+        {
+            return false;
+        }
         ErrorMessage = string.Empty;
         OnPropertyChanged(nameof(HasError));
+
+        // Through GetFileName, because the id and the version are the server's words: a rooted one
+        // would replace the temporary directory rather than sit inside it.
         var path = Path.Combine(
             Path.GetTempPath(),
-            $"{item.Plugin.PluginID}-{item.Plugin.Version}{PluginPaths.PackageExtension}");
+            Path.GetFileName($"{item.Plugin.PluginID}-{item.Plugin.Version}{PluginPaths.PackageExtension}"));
         IsCatalogBusy = true;
+        Preparing = true;
 
         try
         {
@@ -148,10 +157,11 @@ public sealed partial class PluginsViewModel
                 return Refuse(downloaded.Error.Message);
             }
 
-            return Prepare(path, _catalogSource);
+            return await PrepareAsync(path, _catalogSource);
         }
         finally
         {
+            Preparing = false;
             IsCatalogBusy = false;
             Delete(path);
         }

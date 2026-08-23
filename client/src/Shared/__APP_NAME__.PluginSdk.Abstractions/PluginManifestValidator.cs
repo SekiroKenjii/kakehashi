@@ -73,6 +73,30 @@ public static partial class PluginManifestValidator
     }
 
     /// <summary>
+    /// The two fields a caller turns into a path before anything else has validated them.
+    /// </summary>
+    /// <remarks>
+    /// Narrow on purpose. <see cref="Validate"/> returns every problem at once, which is what an
+    /// author wants and what a packager cannot wait for: it builds a search pattern out of the
+    /// entry assembly and an output name out of the id, and a separator in either reaches outside
+    /// the directory it was pointed at.
+    /// </remarks>
+    public static Result CheckPaths(PluginManifest manifest)
+    {
+        ArgumentNullException.ThrowIfNull(manifest);
+
+        if (!IdPattern().IsMatch(manifest.Id))
+        {
+            return Result.Failure(PluginErrors.IdInvalid(manifest.Id));
+        }
+
+        return FileNamePattern().IsMatch(manifest.EntryAssembly)
+            ? Result.Success()
+            : Result.Failure(
+                PluginErrors.FileNameInvalid(nameof(manifest.EntryAssembly), manifest.EntryAssembly));
+    }
+
+    /// <summary>
     /// Whether this host is new enough. Checked before the assembly is loaded, so a plugin built
     /// against a later SDK is refused with a sentence instead of failing inside XAML.
     /// </summary>

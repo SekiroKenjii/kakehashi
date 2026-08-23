@@ -116,4 +116,38 @@ public sealed class PluginPackagerTests : IDisposable
 
         Assert.True(PluginPackager.Build(Project).IsFailure);
     }
+
+    /// <summary>
+    /// A hand-edited manifest with a comma in the wrong place is a sentence, not a crash: the tool
+    /// runs on a build server and this reaches an author as a message either way.
+    /// </summary>
+    [Fact]
+    public void Build_AManifestThatIsNotJson_IsRefused()
+    {
+        Directory.CreateDirectory(Project);
+        File.WriteAllText(Path.Combine(Project, PluginPackage.ManifestEntryName), "{ \"id\": ");
+
+        var result = PluginPackager.Build(Project);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Plugin.Package.ManifestUnreadable", result.Error.Code);
+    }
+
+    /// <summary>
+    /// The entry assembly becomes a recursive search pattern and the id becomes an output file
+    /// name, so a separator in either is refused before either is built.
+    /// </summary>
+    [Fact]
+    public void Build_AnEntryAssemblyWithASeparator_IsRefused()
+    {
+        Directory.CreateDirectory(Project);
+        File.WriteAllText(
+            Path.Combine(Project, PluginPackage.ManifestEntryName),
+            Manifest.Replace(_entryAssembly, "../App.dll", StringComparison.Ordinal));
+
+        var result = PluginPackager.Build(Project);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Plugin.Manifest.FileNameInvalid", result.Error.Code);
+    }
 }

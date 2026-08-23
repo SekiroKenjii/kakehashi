@@ -49,6 +49,7 @@
                 <Button
                     AutomationProperties.Name="Install from file"
                     Click="OnInstallFromFileClick"
+                    IsEnabled="{x:Bind ViewModel.CanStartInstall, Mode=OneWay}"
                     Style="{StaticResource AccentToolbarButtonStyle}">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                         <FontIcon FontSize="14" Glyph="&#xE7B8;" />
@@ -177,6 +178,7 @@
                             <DataTemplate x:DataType="local:PluginListItem">
                                 <Grid
                                     Padding="14,12"
+                                    DataContext="{x:Bind}"
                                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                     BorderThickness="0,0,0,1"
                                     ColumnSpacing="12">
@@ -229,14 +231,12 @@
                                             IsOn="{x:Bind IsEnabled}"
                                             OffContent=""
                                             OnContent=""
-                                            Tag="{x:Bind}"
                                             Toggled="OnToggled" />
                                         <Button
                                             AutomationProperties.Name="Remove"
                                             Click="OnUninstallClick"
                                             IsEnabled="{x:Bind CanUninstall}"
                                             Style="{StaticResource ToolbarButtonStyle}"
-                                            Tag="{x:Bind}"
                                             ToolTipService.ToolTip="Remove">
                                             <FontIcon FontSize="14" Glyph="&#xE74D;" />
                                         </Button>
@@ -303,6 +303,7 @@
                             <DataTemplate x:DataType="local:CatalogListItem">
                                 <Grid
                                     Padding="14,12"
+                                    DataContext="{x:Bind}"
                                     BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}"
                                     BorderThickness="0,0,0,1"
                                     ColumnSpacing="12">
@@ -339,8 +340,7 @@
                                         AutomationProperties.Name="Install"
                                         Click="OnCatalogInstallClick"
                                         Content="Install"
-                                        IsEnabled="{x:Bind CanInstall}"
-                                        Tag="{x:Bind}" />
+                                        IsEnabled="{x:Bind CanInstall}" />
                                 </Grid>
                             </DataTemplate>
                         </ItemsRepeater.ItemTemplate>

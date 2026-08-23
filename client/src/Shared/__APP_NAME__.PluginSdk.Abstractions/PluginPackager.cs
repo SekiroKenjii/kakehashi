@@ -3,6 +3,7 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text.Json;
 using __ROOT_NAMESPACE__.SharedKernel;
 
 namespace __ROOT_NAMESPACE__.PluginSdk.Abstractions;
@@ -145,11 +146,18 @@ public static class PluginPackager
             using var file = File.OpenRead(path);
             var manifest = PluginManifestJson.Read(file);
 
-            return manifest is null
-                ? Result.Failure<PluginManifest>(PluginErrors.ManifestUnreadable)
+            if (manifest is null)
+            {
+                return Result.Failure<PluginManifest>(PluginErrors.ManifestUnreadable);
+            }
+            var paths = PluginManifestValidator.CheckPaths(manifest);
+
+            return paths.IsFailure
+                ? Result.Failure<PluginManifest>(paths.Error)
                 : Result.Success(manifest);
         }
-        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        catch (Exception exception)
+            when (exception is IOException or UnauthorizedAccessException or JsonException)
         {
             return Result.Failure<PluginManifest>(PluginErrors.ManifestUnreadable);
         }

@@ -41,6 +41,10 @@ public sealed partial class PluginsViewModel
     [ObservableProperty]
     private string _toolResult = string.Empty;
 
+    /// <summary>Whether a check or a pack is running. Both walk the project and write an archive.</summary>
+    [ObservableProperty]
+    private bool _isToolBusy;
+
     /// <summary>What the module name would produce, shown while it is being typed.</summary>
     public string NewProjectPreview
     {
@@ -105,7 +109,7 @@ public sealed partial class PluginsViewModel
         $"__APP_NAME_LOWER__-plugin validate {Quoted(ProjectPath)}\n"
             + $"__APP_NAME_LOWER__-plugin pack {Quoted(ProjectPath)}";
 
-    public bool CanCheckProject => ProjectPath.Length > 0;
+    public bool CanCheckProject => ProjectPath.Length > 0 && !IsToolBusy;
 
     public async Task BrowseForProjectAsync()
     {
@@ -122,18 +126,39 @@ public sealed partial class PluginsViewModel
     /// The project is packed in memory and the package is what gets checked, so this answers the
     /// question an install would ask rather than a question about a directory.
     /// </remarks>
-    public void CheckProject()
+    public async Task CheckProjectAsync()
     {
-        ToolResult = Describe(Check(ProjectPath), "Nothing to fix. It is ready to pack.");
+        var project = ProjectPath;
+        IsToolBusy = true;
+
+        try
+        {
+            var problems = await Task.Run(() => Check(project));
+            ToolResult = Describe(problems, "Nothing to fix. It is ready to pack.");
+        }
+        finally
+        {
+            IsToolBusy = false;
+        }
     }
 
     /// <summary>Writes the package, and says where.</summary>
-    public void PackProject()
+    public async Task PackProjectAsync()
     {
-        var packed = PluginPackager.Pack(ProjectPath, ProjectPath);
-        ToolResult = packed.IsFailure
-            ? packed.Error.Message
-            : $"Wrote {packed.Value}";
+        var project = ProjectPath;
+        IsToolBusy = true;
+
+        try
+        {
+            var packed = await Task.Run(() => PluginPackager.Pack(project, project));
+            ToolResult = packed.IsFailure
+                ? packed.Error.Message
+                : $"Wrote {packed.Value}";
+        }
+        finally
+        {
+            IsToolBusy = false;
+        }
     }
 
     public async Task BrowseForLocationAsync()
@@ -149,6 +174,7 @@ public sealed partial class PluginsViewModel
     {
         ScaffoldResult = string.Empty;
         ErrorMessage = string.Empty;
+        OnPropertyChanged(nameof(HasError));
 
         var written = _scaffolder.Create(new PluginProjectRequest(
             NewModuleName, NewDisplayName, NewIcon, NewLocation, WithSamplePage));
@@ -212,6 +238,8 @@ public sealed partial class PluginsViewModel
             .. PluginContentValidator.ValidateMarkup(projectDirectory),
         ];
     }
+
+    partial void OnIsToolBusyChanged(bool value) => OnPropertyChanged(nameof(CanCheckProject));
 
     partial void OnProjectPathChanged(string value)
     {

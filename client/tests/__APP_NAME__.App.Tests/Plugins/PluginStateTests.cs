@@ -91,4 +91,40 @@ public sealed class PluginStateTests : IDisposable
 
         Assert.Null(state.Find("weather"));
     }
+
+    /// <summary>
+    /// Written beside and moved over, so a kill during the write leaves the previous file rather
+    /// than a truncated one — which is the byte that made the whole state unreadable.
+    /// </summary>
+    [Fact]
+    public void TrySave_LeavesNoPartialFileBehind()
+    {
+        var paths = new PluginPaths(_root);
+        var state = PluginState.Load(paths);
+        state.Put(new PluginRecord { PluginID = "weather", InstalledVersion = "1.0.0" });
+
+        Assert.True(state.TrySave());
+        Assert.False(File.Exists(paths.StateFile + ".writing"));
+
+        var reloaded = PluginState.Load(paths);
+
+        Assert.NotNull(reloaded.Find("weather"));
+    }
+
+    /// <summary>
+    /// A state file that cannot be read is the only record of what somebody installed, so it is set
+    /// aside rather than left where the next install writes over it.
+    /// </summary>
+    [Fact]
+    public void Load_AnUnreadableFileIsSetAsideRatherThanOverwritten()
+    {
+        var paths = new PluginPaths(_root);
+        Directory.CreateDirectory(_root);
+        File.WriteAllText(paths.StateFile, "{ this is not json");
+
+        var state = PluginState.Load(paths);
+
+        Assert.Empty(state.Records);
+        Assert.True(File.Exists(paths.StateFile + ".unreadable"));
+    }
 }

@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Text.Json;
 using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.SharedKernel;
 
@@ -29,12 +30,13 @@ public sealed record PluginPreview(
 public sealed class PluginInstaller
 {
     private readonly PluginPaths _paths;
-    private readonly string _publisher;
+    private readonly PluginPublisher _publisher;
     private readonly Func<DateTimeOffset> _now;
 
-    public PluginInstaller(PluginPaths paths, string publisher, Func<DateTimeOffset>? now = null)
+    public PluginInstaller(PluginPaths paths, PluginPublisher publisher, Func<DateTimeOffset>? now = null)
     {
         ArgumentNullException.ThrowIfNull(paths);
+        ArgumentNullException.ThrowIfNull(publisher);
         _paths = paths;
         _publisher = publisher;
         _now = now ?? (() => DateTimeOffset.UtcNow);
@@ -73,6 +75,13 @@ public sealed class PluginInstaller
             return Result.Failure<PluginPreview>(supported.Error);
         }
         var staged = _paths.StagedDirectory(manifest.Id, manifest.Version);
+
+        // An install already agreed to is not cleared to make room for one that has not been. A
+        // dismissal of the prompt below would take the committed copy with it.
+        if (IsCommitted(manifest))
+        {
+            return Result.Failure<PluginPreview>(PluginLoadErrors.AlreadyStaged(manifest.Version));
+        }
         Clear(staged);
 
         try
@@ -91,12 +100,22 @@ public sealed class PluginInstaller
 
             return Result.Failure<PluginPreview>(extracted.Error);
         }
+        // Read back from where it landed rather than out of the archive. An archive can name one
+        // file twice, and it is the extracted copy the next launch loads.
+        var extractedManifest = ReadStaged(staged);
+
+        if (extractedManifest is null || !Same(manifest, extractedManifest))
+        {
+            Clear(staged);
+
+            return Result.Failure<PluginPreview>(PluginLoadErrors.ManifestDisagrees(manifest.Id));
+        }
         var entry = Path.Combine(
-            staged, PluginPackage.LibraryFolder.TrimEnd('/'), manifest.EntryAssembly);
+            staged, PluginPackage.LibraryFolder.TrimEnd('/'), extractedManifest.EntryAssembly);
         var trust = PluginTrust.Judge(packagePath, entry, _publisher);
         var size = new FileInfo(packagePath).Length;
 
-        return Result.Success(new PluginPreview(manifest, trust, size, staged));
+        return Result.Success(new PluginPreview(extractedManifest, trust, size, staged));
     }
 
     /// <summary>
@@ -194,6 +213,42 @@ public sealed class PluginInstaller
             && record.ConsentGiven
             && record.PluginID.Equals(preview.Manifest.Id, StringComparison.Ordinal)
             && record.SHA256.Equals(preview.Trust.SHA256, StringComparison.Ordinal);
+    }
+
+    /// <summary>Whether a record already points at this exact staged version.</summary>
+    private bool IsCommitted(PluginManifest manifest)
+    {
+        var record = PluginState
+            .Load(_paths)
+            .Find(manifest.Id);
+
+        return record is not null
+            && record.StagedVersion.Equals(manifest.Version, StringComparison.Ordinal);
+    }
+
+    private static PluginManifest? ReadStaged(string staged)
+    {
+        try
+        {
+            using var stream = File.OpenRead(Path.Combine(staged, PluginPackage.ManifestEntryName));
+
+            return PluginManifestJson.Read(stream);
+        }
+        catch (Exception exception)
+            when (exception is IOException or UnauthorizedAccessException or JsonException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Whether two manifests name the same package. Identity only; prose may differ.</summary>
+    private static bool Same(PluginManifest archived, PluginManifest extracted)
+    {
+        return archived.Id == extracted.Id
+            && archived.Version == extracted.Version
+            && archived.ModuleName == extracted.ModuleName
+            && archived.ModuleType == extracted.ModuleType
+            && archived.EntryAssembly == extracted.EntryAssembly;
     }
 
     private static void Clear(string directory)

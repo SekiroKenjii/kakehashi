@@ -46,7 +46,7 @@ public sealed class PluginsViewModelTests : IDisposable
 
     private PluginsViewModel CreateViewModel()
     {
-        var installer = new PluginInstaller(new PluginPaths(_root), publisher: string.Empty);
+        var installer = new PluginInstaller(new PluginPaths(_root), PluginPublisher.Nobody);
         var scaffolder = new PluginScaffolder(_root);
 
         return new PluginsViewModel(
@@ -250,10 +250,66 @@ public sealed class PluginsViewModelTests : IDisposable
         _ = await viewModel.PrepareInstallFromFileAsync();
         viewModel.ConsentGiven = true;
         _ = await viewModel.ConfirmInstallAsync();
+        Promote();
 
         Assert.True(await viewModel.PrepareInstallFromFileAsync());
         Assert.False(viewModel.ConsentRequired);
         Assert.True(viewModel.CanInstallPending);
+    }
+
+    /// <summary>
+    /// Reinstalling a version already waiting for the restart it needs is refused rather than
+    /// re-staged. Opening one clears the staging directory first, and dismissing the prompt would
+    /// take an install already agreed to with it.
+    /// </summary>
+    [Fact]
+    public async Task PrepareInstall_ForAVersionAlreadyStagedIsRefused()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+        _files.PickFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(WriteUnsignedPackage());
+        _ = await viewModel.PrepareInstallFromFileAsync();
+        var staged = viewModel.Pending!.StagedDirectory;
+        viewModel.ConsentGiven = true;
+        _ = await viewModel.ConfirmInstallAsync();
+
+        Assert.False(await viewModel.PrepareInstallFromFileAsync());
+        Assert.True(viewModel.HasError);
+        Assert.True(System.IO.Directory.Exists(staged));
+    }
+
+    /// <summary>
+    /// The file picker is its own window and not modal to this one, so a second Install lands
+    /// between the first click and the prompt appearing. The prompt shows whatever is pending, so
+    /// it would repaint to describe the second package while somebody is reading the first.
+    /// </summary>
+    [Fact]
+    public async Task PrepareInstall_WhileOneIsAlreadyWaitingIsRefused()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+        _files.PickFileAsync(Arg.Any<string>(), Arg.Any<string>()).Returns(WriteUnsignedPackage());
+
+        Assert.True(await viewModel.PrepareInstallFromFileAsync());
+        Assert.False(viewModel.CanStartInstall);
+        Assert.False(await viewModel.PrepareInstallFromFileAsync());
+
+        viewModel.CancelInstall();
+
+        Assert.True(viewModel.CanStartInstall);
+    }
+
+    /// <summary>What the loader's promotion does to the record, without loading anything.</summary>
+    private void Promote()
+    {
+        var paths = new PluginPaths(_root);
+        var state = PluginState.Load(paths);
+        var record = state.Find("weather")!;
+        record.InstalledVersion = record.StagedVersion;
+        record.StagedVersion = string.Empty;
+        state.Put(record);
+
+        Assert.True(state.TrySave());
     }
 
     /// <summary>Turned off, the screen says so rather than showing an empty list.</summary>
@@ -267,7 +323,7 @@ public sealed class PluginsViewModelTests : IDisposable
         var off = new PluginsViewModel(
             _modules,
             new PluginCatalog { Disabled = true },
-            new PluginInstaller(new PluginPaths(_root), publisher: string.Empty),
+            new PluginInstaller(new PluginPaths(_root), PluginPublisher.Nobody),
             _files,
             _dialogs,
             new PluginScaffolder(_root),

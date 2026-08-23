@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
@@ -47,7 +48,7 @@ public static class PluginManifestJson
             Homepage = OrEmpty(manifest.Homepage),
             EntryAssembly = OrEmpty(manifest.EntryAssembly),
             ModuleType = OrEmpty(manifest.ModuleType),
-            PriFiles = OrEmpty(manifest.PriFiles),
+            PriFiles = [.. OrEmpty(manifest.PriFiles).Select(OrEmpty)],
             MinHostSdk = OrEmpty(manifest.MinHostSdk),
             Navigation = [.. NormalizeNavigation(manifest.Navigation)],
             CallsPermission = OrEmpty(manifest.CallsPermission),

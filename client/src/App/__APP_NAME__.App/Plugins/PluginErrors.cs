@@ -9,13 +9,38 @@ public static class PluginLoadErrors
     public static readonly Error Disabled = new(
         "Plugin.Load.Disabled", "Plugins are turned off for this installation.");
 
-    public static readonly Error PackagedHost = new(
-        "Plugin.Load.PackagedHost",
-        "Plugins are supported only when the application is installed unpackaged.");
-
     public static Error DirectoryMissing(string path)
     {
         return new Error("Plugin.Load.DirectoryMissing", $"Nothing is installed at '{path}'.");
+    }
+
+    /// <summary>
+    /// The staged version is still where it was, so the next launch tries again — which is why this
+    /// says what failed rather than that something is missing.
+    /// </summary>
+    public static Error PromoteFailed(string version, string reason)
+    {
+        return new Error(
+            "Plugin.Load.PromoteFailed",
+            $"Version {version} could not be put in place and is still staged: {reason}");
+    }
+
+    public static Error AlreadyStaged(string version)
+    {
+        return new Error(
+            "Plugin.Install.AlreadyStaged",
+            $"Version {version} is already staged and loads at the next launch. Restart, or remove it first.");
+    }
+
+    /// <summary>
+    /// The manifest that was read out of the archive and the one that landed on disk are not the
+    /// same package, so what was judged is not what would be loaded.
+    /// </summary>
+    public static Error ManifestDisagrees(string pluginID)
+    {
+        return new Error(
+            "Plugin.Install.ManifestDisagrees",
+            $"'{pluginID}' unpacked to a different package than it declared.");
     }
 
     public static Error ManifestUnreadable(string path)
@@ -43,6 +68,17 @@ public static class PluginLoadErrors
         return new Error(
             "Plugin.Load.ModuleNameMismatch",
             $"The manifest names the module '{declared}', and it calls itself '{actual}'.");
+    }
+
+    /// <summary>
+    /// Attachment is keyed by module name, so two modules of one name share a toggle and the second
+    /// hides the first.
+    /// </summary>
+    public static Error ModuleNameTaken(string moduleName)
+    {
+        return new Error(
+            "Plugin.Load.ModuleNameTaken",
+            $"This build already has a module called '{moduleName}'.");
     }
 
     /// <summary>

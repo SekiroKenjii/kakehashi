@@ -164,4 +164,39 @@ public sealed class PluginManifestValidatorTests
         Assert.True(result.IsFailure);
         Assert.Equal("Plugin.Manifest.MinHostSdkInvalid", result.Error.Code);
     }
+
+    /// <summary>
+    /// The packager builds a search pattern out of the entry assembly and an output name out of the
+    /// id, so a separator in either reaches outside the directory it was pointed at.
+    /// </summary>
+    [Theory]
+    [InlineData("../escape.dll")]
+    [InlineData("lib/escape.dll")]
+    [InlineData(@"lib\escape.dll")]
+    public void CheckPaths_ASeparatorInTheEntryAssembly_IsRefused(string entryAssembly)
+    {
+        var manifest = PluginManifests.Valid() with { EntryAssembly = entryAssembly };
+
+        var result = PluginManifestValidator.CheckPaths(manifest);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Plugin.Manifest.FileNameInvalid", result.Error.Code);
+    }
+
+    [Fact]
+    public void CheckPaths_ASeparatorInTheId_IsRefused()
+    {
+        var manifest = PluginManifests.Valid() with { Id = "../weather" };
+
+        var result = PluginManifestValidator.CheckPaths(manifest);
+
+        Assert.True(result.IsFailure);
+        Assert.Equal("Plugin.Manifest.IdInvalid", result.Error.Code);
+    }
+
+    [Fact]
+    public void CheckPaths_AManifestValidateAccepts_IsAccepted()
+    {
+        Assert.True(PluginManifestValidator.CheckPaths(PluginManifests.Valid()).IsSuccess);
+    }
 }
