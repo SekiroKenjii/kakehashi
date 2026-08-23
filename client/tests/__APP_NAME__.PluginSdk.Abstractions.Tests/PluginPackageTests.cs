@@ -68,6 +68,109 @@ public sealed class PluginPackageTests : IDisposable
         }
     }
 
+    /// <summary>Two entries of one name, which the archive allows and the file system does not.</summary>
+    private static MemoryStream BuildArchiveWithTwoManifests()
+    {
+        var stream = new MemoryStream();
+
+        using (var archive = new ZipArchive(stream, ZipArchiveMode.Create, leaveOpen: true))
+        {
+            foreach (var body in new[] { "first", "second" })
+            {
+                var entry = archive.CreateEntry(PluginPackage.ManifestEntryName);
+
+                using var content = entry.Open();
+                content.Write(Encoding.UTF8.GetBytes(body));
+            }
+        }
+        stream.Position = 0;
+
+        return stream;
+    }
+
+    /// <summary>
+    /// The attack this refusal exists for: GetEntry answers with the first manifest and extraction
+    /// writes the last, so a package could be judged as one thing and load as another.
+    /// </summary>
+    [Fact]
+    public void Open_WithTwoManifests_IsRefused()
+    {
+        using var stream = BuildArchiveWithTwoManifests();
+
+        var opened = PluginPackage.Open(stream, leaveOpen: true);
+
+        Assert.True(opened.IsFailure);
+        Assert.Equal("Plugin.Package.EntryNameRepeated", opened.Error.Code);
+    }
+
+    /// <summary>
+    /// The same aliasing by another route. Each of these resolves to a path inside the destination,
+    /// so the guard against climbing out of it never fires — the names have to be refused as names.
+    /// </summary>
+    [Theory]
+    [InlineData("lib/../manifest.json")]
+    [InlineData("./manifest.json")]
+    [InlineData("lib//x.dll")]
+    [InlineData(@"lib\x.dll")]
+    [InlineData("/lib/x.dll")]
+    [InlineData("C:/lib/x.dll")]
+    public void Open_WithANameThatDoesNotMeanOneFile_IsRefused(string name)
+    {
+        using var stream = BuildArchive(PluginManifests.Valid(), [.. DefaultEntries(), name]);
+
+        var opened = PluginPackage.Open(stream, leaveOpen: true);
+
+        Assert.True(opened.IsFailure);
+        Assert.Equal("Plugin.Package.EntryNameInvalid", opened.Error.Code);
+    }
+
+    /// <summary>
+    /// Ordinal uniqueness is not enough: the archive tells these apart and the file system does not.
+    /// </summary>
+    [Fact]
+    public void Open_WithTwoLibraryFilesDifferingOnlyInCase_IsRefused()
+    {
+        using var stream = BuildArchive(
+            PluginManifests.Valid(),
+            [.. DefaultEntries(), PluginPackage.LibraryFolder + PluginManifests.EntryAssembly.ToUpperInvariant()]);
+
+        var opened = PluginPackage.Open(stream, leaveOpen: true);
+
+        Assert.True(opened.IsFailure);
+        Assert.Equal("Plugin.Package.EntryNameRepeated", opened.Error.Code);
+    }
+
+    /// <summary>A directory entry ends in a slash, and that is not a doubled separator.</summary>
+    [Fact]
+    public void Open_WithADirectoryEntry_IsAccepted()
+    {
+        using var stream = BuildArchive(PluginManifests.Valid(), [.. DefaultEntries(), "assets/"]);
+
+        Assert.True(PluginPackage.Open(stream, leaveOpen: true).IsSuccess);
+    }
+
+    /// <summary>
+    /// A name the archive accepts and Windows will not take. Refused rather than thrown, because
+    /// the caller is a click handler with a dialog open.
+    /// </summary>
+    [Fact]
+    public void ExtractTo_AnEntryThisSystemCannotWrite_IsARefusalRatherThanAThrow()
+    {
+        using var stream = BuildArchive(PluginManifests.Valid(), [.. DefaultEntries(), "lib/a?b.dll"]);
+
+        var opened = PluginPackage.Open(stream, leaveOpen: true);
+
+        Assert.True(opened.IsSuccess);
+
+        using var package = opened.Value;
+        Directory.CreateDirectory(_directory);
+
+        var extracted = package.ExtractTo(_directory);
+
+        Assert.True(extracted.IsFailure);
+        Assert.Equal("Plugin.Package.EntryUnwritable", extracted.Error.Code);
+    }
+
     [Fact]
     public void Open_ReadsTheManifest()
     {
@@ -191,18 +294,22 @@ public sealed class PluginPackageTests : IDisposable
         Assert.True(File.Exists(Path.Combine(_directory, "lib", PluginManifests.EntryAssembly)));
     }
 
+    /// <summary>
+    /// A name that climbs out is now refused a step earlier, when the archive is opened, because it
+    /// is not a name that means one file. The guard in <c>ExtractTo</c> is unreachable through
+    /// <c>Open</c> and stays because the method is public.
+    /// </summary>
     [Fact]
-    public void ExtractTo_EntryThatClimbsOutOfTheDirectory_IsRefused()
+    public void Open_WithAnEntryThatClimbsOutOfTheDirectory_IsRefused()
     {
         var entries = DefaultEntries().Append("../escaped.dll");
+
         using var stream = BuildArchive(PluginManifests.Valid(), entries);
-        using var package = OpenValid(stream);
-        Directory.CreateDirectory(_directory);
 
-        var result = package.ExtractTo(_directory);
+        var opened = PluginPackage.Open(stream, leaveOpen: true);
 
-        Assert.True(result.IsFailure);
-        Assert.Equal("Plugin.Package.PathEscapes", result.Error.Code);
+        Assert.True(opened.IsFailure);
+        Assert.Equal("Plugin.Package.EntryNameInvalid", opened.Error.Code);
         Assert.False(File.Exists(Path.Combine(_directory, "..", "escaped.dll")));
     }
 }
