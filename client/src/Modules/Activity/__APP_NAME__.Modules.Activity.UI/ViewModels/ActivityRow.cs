@@ -199,6 +199,11 @@ public sealed partial class ActivityRow : ObservableObject
             ActivityKinds.PasswordChanged => ("Password changed", "\uE8D7", false),
             ActivityKinds.AppUpdated => ("App updated", "\uE895", false),
             ActivityKinds.ThemeChanged => ("Theme changed", "\uE790", false),
+            ActivityKinds.PluginInstalled => ("Plugin installed", "\uEA86", false),
+            // Drawn as an alert because a package nobody here offered now runs with everything the
+            // application can do.
+            ActivityKinds.PluginSideloaded =>
+                ("Plugin installed from outside the catalog", "\uEA86", true),
             _ => (kind, _fallbackGlyph, false),
         };
     }
