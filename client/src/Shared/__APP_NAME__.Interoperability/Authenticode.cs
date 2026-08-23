@@ -67,6 +67,10 @@ public static class Authenticode
     private const int _certEUntrustedRoot = unchecked((int)0x800B0109);
     private const int _certEChaining = unchecked((int)0x800B010A);
 
+    private const int _cryptENoRevocationCheck = unchecked((int)0x80092012);
+    private const int _cryptERevocationOffline = unchecked((int)0x80092013);
+    private const int _certERevocationFailure = unchecked((int)0x800B010E);
+
     public static FileSignature Verify(string filePath)
     {
         ArgumentException.ThrowIfNullOrEmpty(filePath);
@@ -84,7 +88,29 @@ public static class Authenticode
             : new FileSignature(status, signer.Subject, signer.Thumbprint);
     }
 
-    private static unsafe SignatureStatus VerifyTrust(string filePath)
+    /// <summary>
+    /// What the trust provider says about the file.
+    /// </summary>
+    /// <remarks>
+    /// Twice, when the first answer is about revocation rather than about the signature. A cache
+    /// that has never seen this chain's list cannot say whether it was revoked, and that is not the
+    /// same as saying it was — so the question is asked again without it, and what comes back is
+    /// the verdict on everything else. Fail closed on a revocation this machine knows about, fail
+    /// open on one it cannot determine.
+    /// </remarks>
+    private static SignatureStatus VerifyTrust(string filePath)
+    {
+        var result = Verify(filePath, WINTRUST_DATA_REVOCATION_CHECKS.WTD_REVOKE_WHOLECHAIN);
+
+        if (result is _cryptENoRevocationCheck or _cryptERevocationOffline or _certERevocationFailure)
+        {
+            result = Verify(filePath, WINTRUST_DATA_REVOCATION_CHECKS.WTD_REVOKE_NONE);
+        }
+
+        return Map(result);
+    }
+
+    private static unsafe int Verify(string filePath, WINTRUST_DATA_REVOCATION_CHECKS revocation)
     {
         var action = PInvoke.WINTRUST_ACTION_GENERIC_VERIFY_V2;
 
@@ -97,9 +123,13 @@ public static class Authenticode
             var data = new WINTRUST_DATA {
                 cbStruct = (uint)sizeof(WINTRUST_DATA),
                 dwUIChoice = WINTRUST_DATA_UICHOICE.WTD_UI_NONE,
-                fdwRevocationChecks = WINTRUST_DATA_REVOCATION_CHECKS.WTD_REVOKE_NONE,
+                fdwRevocationChecks = revocation,
                 dwUnionChoice = WINTRUST_DATA_UNION_CHOICE.WTD_CHOICE_FILE,
                 dwStateAction = WINTRUST_DATA_STATE_ACTION.WTD_STATEACTION_VERIFY,
+
+                // Cached lists only, never a CRL or an OCSP responder: an install must not need
+                // the network, or stall on one that is not there.
+                dwProvFlags = WINTRUST_DATA_PROVIDER_FLAGS.WTD_CACHE_ONLY_URL_RETRIEVAL,
             };
             data.Anonymous.pFile = &file;
 
@@ -108,7 +138,7 @@ public static class Authenticode
             data.dwStateAction = WINTRUST_DATA_STATE_ACTION.WTD_STATEACTION_CLOSE;
             _ = PInvoke.WinVerifyTrust(HWND.Null, ref action, &data);
 
-            return Map(result);
+            return result;
         }
     }
 

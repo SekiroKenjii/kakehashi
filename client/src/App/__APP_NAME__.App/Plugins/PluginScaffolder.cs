@@ -176,6 +176,24 @@ public sealed partial class PluginScaffolder
         return Result.Success();
     }
 
+    /// <summary>The one destination a scaffolded page is reached by, as the manifest spells it.</summary>
+    private static string Navigation(PluginProjectRequest request)
+    {
+        var title = request.DisplayName.Length == 0 ? request.ModuleName : request.DisplayName;
+        var icon = request.Icon.Length == 0 ? "document" : request.Icon;
+
+        return $$"""
+            [
+                {
+                  "title": "{{title}}",
+                  "icon": "{{icon}}",
+                  "group": "Utilities",
+                  "page": "{{request.ModuleName}}Page"
+                }
+              ]
+            """;
+    }
+
     private static IEnumerable<(string Template, string Path)> Layout(PluginProjectRequest request)
     {
         yield return ("Manifest.tmpl", "manifest.json");
@@ -183,16 +201,27 @@ public sealed partial class PluginScaffolder
         yield return ("Readme.tmpl", "README.md");
         yield return ("GitIgnore.tmpl", ".gitignore");
         yield return ("ModuleProject.tmpl", "{{AssemblyName}}/{{AssemblyName}}.csproj");
-        yield return ("ModuleEntryPoint.tmpl", "{{AssemblyName}}/{{Module}}Module.cs");
 
-        if (request.WithSamplePage)
+        // Two entry points rather than one with a hole in it: a template naming a view that was
+        // never written is a project that does not compile.
+        if (!request.WithSamplePage)
         {
-            yield return ("PageMarkup.tmpl", "{{AssemblyName}}/Views/{{Module}}Page.xaml");
-            yield return ("PageCodeBehind.tmpl", "{{AssemblyName}}/Views/{{Module}}Page.xaml.cs");
-            yield return ("PageViewModel.tmpl", "{{AssemblyName}}/ViewModels/{{Module}}PageViewModel.cs");
+            yield return ("ModuleEntryPointBare.tmpl", "{{AssemblyName}}/{{Module}}Module.cs");
+
+            yield break;
         }
+        yield return ("ModuleEntryPoint.tmpl", "{{AssemblyName}}/{{Module}}Module.cs");
+        yield return ("PageMarkup.tmpl", "{{AssemblyName}}/Views/{{Module}}Page.xaml");
+        yield return ("PageCodeBehind.tmpl", "{{AssemblyName}}/Views/{{Module}}Page.xaml.cs");
+        yield return ("PageViewModel.tmpl", "{{AssemblyName}}/ViewModels/{{Module}}PageViewModel.cs");
     }
 
+    /// <summary>What every template's placeholders are replaced with.</summary>
+    /// <remarks>
+    /// PriFiles and Navigation are rendered rather than literal because both are empty without a
+    /// page: a resource index exists only where there is compiled XAML, and a screen the manifest
+    /// promises is one the package has to be able to show.
+    /// </remarks>
     private Dictionary<string, string> Values(PluginProjectRequest request)
     {
         return new Dictionary<string, string>(StringComparer.Ordinal) {
@@ -205,6 +234,8 @@ public sealed partial class PluginScaffolder
             ["HostSdk"] = PluginSdkVersion.Current.ToString(),
             ["HostDirectory"] = _hostDirectory,
             ["Year"] = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture),
+            ["PriFiles"] = request.WithSamplePage ? $"[\"{AssemblyNameFor(request.ModuleName)}.pri\"]" : "[]",
+            ["Navigation"] = request.WithSamplePage ? Navigation(request) : "[]",
         };
     }
 }

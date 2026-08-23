@@ -9,16 +9,8 @@
   "homepage": "",
   "entryAssembly": "{{AssemblyName}}.dll",
   "moduleType": "{{RootNamespace}}.{{Module}}Module",
-  "priFiles": ["{{AssemblyName}}.pri"],
+  "priFiles": {{PriFiles}},
   "minHostSdk": "{{HostSdk}}",
-  "navigation": [
-    {
-      "title": "{{DisplayName}}",
-      "icon": "{{Icon}}",
-      "group": "Utilities",
-      "page": "{{Module}}Page"
-    }
-  ],
-  "callsPermission": "",
-  "requiresUnsafeXamlHooks": false
+  "navigation": {{Navigation}},
+  "callsPermission": ""
 }

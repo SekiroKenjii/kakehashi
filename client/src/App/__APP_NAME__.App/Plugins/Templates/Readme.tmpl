@@ -24,7 +24,7 @@ packages when you want the shared ones.
 | --- | --- |
 | `manifest.json` | what the package declares, and the only thing read before any of its code runs |
 | `{{AssemblyName}}/{{Module}}Module.cs` | the entry point the host activates |
-| `{{AssemblyName}}/Views/` | pages, whose compiled XAML goes into this assembly's own resource index |
+| `{{AssemblyName}}/Views/` | pages, whose compiled XAML goes into this assembly's own resource index — absent until you add one |
 
 `DisableEmbeddedXbf` is set to `false` in the project file. That is what puts the compiled XAML in
 the resource index the host loads; without it the pages build and then cannot be found at runtime.
@@ -40,11 +40,22 @@ the resource index the host loads; without it the pages build and then cannot be
 
 ## Pack it
 
+The tool is in the application's own repository, at `client/tools/__APP_NAME__.PluginTool`, and is
+not published anywhere — so run it from there, or install it from a package you build:
+
 ```sh
-dotnet tool install --global __APP_NAME__.PluginTool
+dotnet run --project <app>/client/tools/__APP_NAME__.PluginTool -- validate .
+dotnet run --project <app>/client/tools/__APP_NAME__.PluginTool -- pack .
+```
+
+```sh
+dotnet pack <app>/client/tools/__APP_NAME__.PluginTool -o ./tool
+dotnet tool install --global --add-source ./tool __APP_NAME__.PluginTool
 __APP_NAME_LOWER__-plugin validate .
 __APP_NAME_LOWER__-plugin pack .
 ```
+
+The second is worth doing on a build server, where a command is easier to keep than a path.
 
 `validate` packs the project in memory and checks the archive, so what it approves is the file
 `pack` would write rather than a directory that resembles one. It reports what the manifest gets

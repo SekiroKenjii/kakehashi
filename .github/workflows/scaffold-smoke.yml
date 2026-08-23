@@ -264,6 +264,19 @@ jobs:
         working-directory: ${{ runner.temp }}/project/client
         run: dotnet test ${{ env.PROJECT_NAME }}.slnx -c Release --no-build --verbosity normal
 
+      # A dotnet tool is the one output no other gate produces: build and test say nothing about
+      # the package metadata, and a scaffolded project's author is the one who has to publish it.
+      # NU5xxx warnings are errors here like everywhere else.
+      - name: Pack the plugin tool
+        working-directory: ${{ runner.temp }}/project/client
+        run: |
+          $tool = "tools/$env:PROJECT_NAME.PluginTool/$env:PROJECT_NAME.PluginTool.csproj"
+          dotnet pack $tool -c Release --no-build -o "$env:RUNNER_TEMP/nupkg"
+          if ($LASTEXITCODE -ne 0) { throw "dotnet pack exited $LASTEXITCODE" }
+          $package = Get-ChildItem "$env:RUNNER_TEMP/nupkg/$env:PROJECT_NAME.PluginTool.*.nupkg"
+          if (-not $package) { throw "pack produced no $env:PROJECT_NAME.PluginTool package" }
+          "packed $($package.Name)"
+
   # Removing the example module has to leave a tree that still builds, or --bare is a promise the
   # template cannot keep.
   scaffold-smoke-bare:
