@@ -213,13 +213,20 @@ public sealed class PluginsViewModelTests : IDisposable
     }
 
     /// <summary>
-    /// Unsigned and modified-since-signed are both Unofficial and are not the same news, so the row
-    /// says which. Saying "Unsigned" about a validly signed package is the drift worth catching.
+    /// Every status is its own news, and they are all Unofficial. Saying "Unsigned" about a package
+    /// that carries a real signature is the drift worth catching; a status this build does not
+    /// recognise is the one case where the default is right.
     /// </summary>
     [Theory]
     [InlineData("Unsigned", nameof(PluginsViewModel.UnsignedWarning))]
     [InlineData("Valid", nameof(PluginsViewModel.OtherPublisherWarning))]
     [InlineData("Tampered", nameof(PluginsViewModel.TamperedWarning))]
+    [InlineData("Expired", nameof(PluginsViewModel.ExpiredWarning))]
+    [InlineData("Revoked", nameof(PluginsViewModel.RevokedWarning))]
+    [InlineData("Distrusted", nameof(PluginsViewModel.DistrustedWarning))]
+    [InlineData("UntrustedRoot", nameof(PluginsViewModel.UntrustedRootWarning))]
+    [InlineData("Unknown", nameof(PluginsViewModel.UnsignedWarning))]
+    [InlineData("", nameof(PluginsViewModel.UnsignedWarning))]
     public void Load_TheRowSaysWhichKindOfUnofficialItIs(string status, string expected)
     {
         Compose();
@@ -232,6 +239,10 @@ public sealed class PluginsViewModelTests : IDisposable
             [nameof(PluginsViewModel.UnsignedWarning)] = PluginsViewModel.UnsignedWarning,
             [nameof(PluginsViewModel.OtherPublisherWarning)] = PluginsViewModel.OtherPublisherWarning,
             [nameof(PluginsViewModel.TamperedWarning)] = PluginsViewModel.TamperedWarning,
+            [nameof(PluginsViewModel.ExpiredWarning)] = PluginsViewModel.ExpiredWarning,
+            [nameof(PluginsViewModel.RevokedWarning)] = PluginsViewModel.RevokedWarning,
+            [nameof(PluginsViewModel.DistrustedWarning)] = PluginsViewModel.DistrustedWarning,
+            [nameof(PluginsViewModel.UntrustedRootWarning)] = PluginsViewModel.UntrustedRootWarning,
         };
 
         Assert.Equal(warnings[expected], viewModel.Items[0].Warning);
@@ -435,6 +446,39 @@ public sealed class PluginsViewModelTests : IDisposable
 
         Assert.True(viewModel.RestartRequired);
         Assert.Contains("1.1.0", viewModel.RestartMessage, StringComparison.Ordinal);
+        Assert.Contains("on the next launch", viewModel.RestartMessage, StringComparison.Ordinal);
+        Assert.Equal("Restart required", viewModel.RestartTitle);
+    }
+
+    /// <summary>
+    /// Turned off, the loader does not run, so a restart promotes nothing and removes nothing. The
+    /// banner said "loads on the next launch" directly under a bar saying it would not.
+    /// </summary>
+    [Fact]
+    public void RestartMessage_WhenPluginsAreOff_SaysWhatIsActuallyWaitedOn()
+    {
+        Compose();
+        var catalog = new PluginCatalog { Disabled = true };
+        catalog.AddAwaitingRestart(new PluginRecord {
+            PluginID = "weather",
+            DisplayName = "Weather",
+            StagedVersion = "1.1.0",
+        });
+
+        var viewModel = new PluginsViewModel(
+            _modules,
+            catalog,
+            new PluginInstaller(new PluginPaths(_root), PluginPublisher.Nobody),
+            _files,
+            _dialogs,
+            new PluginScaffolder(_root),
+            _catalogService);
+        viewModel.Load();
+
+        Assert.Contains(
+            "when plugins are turned back on", viewModel.RestartMessage, StringComparison.Ordinal);
+        Assert.DoesNotContain("next launch", viewModel.RestartMessage, StringComparison.Ordinal);
+        Assert.Equal("Waiting for plugins to be turned on", viewModel.RestartTitle);
     }
 
     [Fact]

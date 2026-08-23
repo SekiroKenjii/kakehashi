@@ -2,9 +2,9 @@
 
   <!--
     The packaging tool a plugin author runs, shipped as a dotnet tool so their build server needs
-    nothing installed but this package. It holds no rules of its own: everything it checks lives in
-    __APP_NAME__.PluginSdk.Abstractions, which the application runs too, so an author cannot be
-    told one thing here and a user another at install.
+    nothing installed but this package. It holds no rules of its own: everything it checks and
+    everything it writes lives in __APP_NAME__.PluginSdk.Abstractions, which the application runs
+    too, so an author cannot be told one thing here and a user another at install.
   -->
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -15,7 +15,7 @@
     <PackAsTool>true</PackAsTool>
     <PackageId>__APP_NAME__.PluginTool</PackageId>
     <ToolCommandName>__APP_NAME_LOWER__-plugin</ToolCommandName>
-    <Description>Validates and packs __APP_TITLE__ plugin projects.</Description>
+    <Description>Scaffolds, validates and packs __APP_TITLE__ plugin projects.</Description>
     <Authors>__AUTHOR__</Authors>
   </PropertyGroup>
 

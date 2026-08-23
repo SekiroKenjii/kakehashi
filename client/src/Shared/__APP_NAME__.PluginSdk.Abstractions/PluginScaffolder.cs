@@ -1,13 +1,11 @@
 using System;
 using System.Collections.Generic;
-using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Text.RegularExpressions;
-using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.SharedKernel;
 
-namespace __ROOT_NAMESPACE__.App.Plugins;
+namespace __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 
 /// <summary>What the Develop tab was asked to write.</summary>
 /// <param name="ModuleName">PascalCase, and what every generated name is derived from.</param>
@@ -22,11 +20,16 @@ public sealed record PluginProjectRequest(
 /// Writes a plugin project that builds and loads without anything being edited first.
 /// </summary>
 /// <remarks>
-/// The templates are embedded in this application rather than fetched, and the generated project
-/// references the assemblies sitting beside this executable rather than a package feed. Both follow
-/// from the same requirement: an application somebody scaffolded is standalone, and a plugin project
-/// it writes cannot depend on the generator that produced the application
+/// The templates are embedded rather than fetched, and the generated project references assemblies
+/// in a directory the caller names rather than a package feed. Both follow from the same
+/// requirement: an application somebody scaffolded is standalone, and a plugin project it writes
+/// cannot depend on the generator that produced the application
 /// (docs/adr/0021-upgrade-is-a-three-way-merge.md).
+/// <para>
+/// In the SDK rather than the application, so the packaging tool can write a project too — which is
+/// what lets a build server compile one and find out that the templates still produce something
+/// that builds.
+/// </para>
 /// </remarks>
 public sealed partial class PluginScaffolder
 {
@@ -70,7 +73,7 @@ public sealed partial class PluginScaffolder
         }
         catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
         {
-            return Result.Failure<IReadOnlyList<string>>(PluginLoadErrors.Invalid(exception.Message));
+            return Result.Failure<IReadOnlyList<string>>(PluginErrors.ProjectInvalid(exception.Message));
         }
 
         return Result.Success<IReadOnlyList<string>>(written);
@@ -98,7 +101,7 @@ public sealed partial class PluginScaffolder
     {
         if (!ModuleNamePattern().IsMatch(moduleName))
         {
-            return Result.Failure(PluginLoadErrors.Invalid(
+            return Result.Failure(PluginErrors.ProjectInvalid(
                 "A module name is PascalCase letters and digits, starting with a letter."));
         }
         var manifest = new PluginManifest {
@@ -117,11 +120,17 @@ public sealed partial class PluginScaffolder
         // name that packs.
         return problems.Count == 0
             ? Result.Success()
-            : Result.Failure(PluginLoadErrors.Invalid(problems[0].Message));
+            : Result.Failure(PluginErrors.ProjectInvalid(problems[0].Message));
     }
 
     [GeneratedRegex("^[A-Z][A-Za-z0-9]*$")]
     private static partial Regex ModuleNamePattern();
+
+    [GeneratedRegex(@"^[\p{L}\p{N}][\p{L}\p{N} .'-]*$")]
+    private static partial Regex DisplayNamePattern();
+
+    [GeneratedRegex("^[a-z][a-z0-9-]*$")]
+    private static partial Regex IconPattern();
 
     [GeneratedRegex("([a-z0-9])([A-Z])")]
     private static partial Regex SplitWords();
@@ -156,9 +165,23 @@ public sealed partial class PluginScaffolder
             return name;
         }
 
+        // Both reach a JSON string, a C# literal and a XAML attribute in the same pass, so a quote
+        // or a backslash in either is a project that does not compile. Empty falls back instead.
+        if (request.DisplayName.Length > 0 && !DisplayNamePattern().IsMatch(request.DisplayName))
+        {
+            return Result.Failure(PluginErrors.ProjectInvalid(
+                "A display name is letters, digits, spaces and simple punctuation."));
+        }
+
+        if (request.Icon.Length > 0 && !IconPattern().IsMatch(request.Icon))
+        {
+            return Result.Failure(PluginErrors.ProjectInvalid(
+                "An icon is a lower-case name from the icon set, like 'document'."));
+        }
+
         if (request.Directory.Length == 0)
         {
-            return Result.Failure(PluginLoadErrors.Invalid("A project needs somewhere to go."));
+            return Result.Failure(PluginErrors.ProjectInvalid("A project needs somewhere to go."));
         }
 
         // Refused rather than merged into: a half-overwritten project is worse than none, and the
@@ -169,7 +192,7 @@ public sealed partial class PluginScaffolder
 
             if (existing.Any())
             {
-                return Result.Failure(PluginLoadErrors.Invalid($"'{request.Directory}' is not empty."));
+                return Result.Failure(PluginErrors.ProjectInvalid($"'{request.Directory}' is not empty."));
             }
         }
 
@@ -227,13 +250,11 @@ public sealed partial class PluginScaffolder
         return new Dictionary<string, string>(StringComparer.Ordinal) {
             ["Module"] = request.ModuleName,
             ["DisplayName"] = request.DisplayName.Length == 0 ? request.ModuleName : request.DisplayName,
-            ["Icon"] = request.Icon.Length == 0 ? "document" : request.Icon,
             ["PluginId"] = PluginIDFor(request.ModuleName),
             ["AssemblyName"] = AssemblyNameFor(request.ModuleName),
             ["RootNamespace"] = $"__ROOT_NAMESPACE__.Modules.{request.ModuleName}.UI",
             ["HostSdk"] = PluginSdkVersion.Current.ToString(),
             ["HostDirectory"] = _hostDirectory,
-            ["Year"] = DateTime.UtcNow.Year.ToString(CultureInfo.InvariantCulture),
             ["PriFiles"] = request.WithSamplePage ? $"[\"{AssemblyNameFor(request.ModuleName)}.pri\"]" : "[]",
             ["Navigation"] = request.WithSamplePage ? Navigation(request) : "[]",
         };

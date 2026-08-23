@@ -137,7 +137,6 @@ public sealed partial class PluginsViewModel
             return false;
         }
         ErrorMessage = string.Empty;
-        OnPropertyChanged(nameof(HasError));
 
         // Through GetFileName, because the id and the version are the server's words: a rooted one
         // would replace the temporary directory rather than sit inside it.

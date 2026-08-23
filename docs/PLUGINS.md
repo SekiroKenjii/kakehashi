@@ -58,7 +58,8 @@ assembly cannot be unloaded, and its files stay open for the life of the process
 Each launch settles the disk before it opens a single assembly:
 
 1. delete every directory an uninstall marked, and clear its entry;
-2. promote `staged\<id>\<v>` over `installed\<id>\*`, delete-then-move;
+2. promote `staged\<id>\<v>` over `installed\<id>\<v>`, delete-then-move, then sweep the versions
+   it replaced;
 3. load what is in `installed\`.
 
 A crash between the delete and the move leaves the staged copy where the next launch finds it, and
@@ -151,7 +152,7 @@ repeats what the module also declares in code.
   "entryAssembly": "__APP_NAME__.Modules.MarkdownEditor.UI.dll",
   "moduleType": "__ROOT_NAMESPACE__.Modules.MarkdownEditor.UI.MarkdownEditorModule",
   "priFiles": ["__APP_NAME__.Modules.MarkdownEditor.UI.pri"],
-  "minHostSdk": "1.1",
+  "minHostSdk": "0.1",
   "navigation": [{ "title": "Markdown", "group": "Utilities", "page": "MarkdownPage" }],
   "callsPermission": "markdown.access"
 }
@@ -187,10 +188,19 @@ dotnet run --project client/tools/__APP_NAME__.PluginTool -- validate <project>
 dotnet run --project client/tools/__APP_NAME__.PluginTool -- pack <project>
 ```
 
+It writes a project too, which is the Develop tab's wizard without a window. The host directory is
+an argument because a tool runs from wherever it was installed, and the project references the
+assemblies it will be loaded beside:
+
+```sh
+dotnet run --project client/tools/__APP_NAME__.PluginTool --     scaffold Weather <directory> <host build output> [--no-page]
+```
+
 The tool is `PackAsTool`, and nothing here publishes it: a deployment that wants
 `__APP_NAME_LOWER__-plugin` on a build server packs it and installs from that package. CI packs it
-on every run, so that it stays installable is a thing the gates know rather than a thing somebody
-finds out.
+on every run, and scaffolds a plugin against the host it just built and compiles it — so that the
+templates still produce something that builds is a thing the gates know rather than a thing an
+author finds out.
 
 `validate` packs the project in memory through the same code `pack` writes with, opens the result
 and checks *that* — so what an author is told is what a user's installation would say, and there is
@@ -228,8 +238,9 @@ a live `Application`, so it is verified by running the thing:
 
 1. Plugins → Develop → scaffold a module into an empty folder.
 2. Build it, then **Check** and **Pack** from the same tab.
-3. Plugins → Installed → **Install from file**. Confirm the prompt shows Unofficial, the four
-   warnings, the SHA-256, and that the install button stays unavailable until the box is ticked.
+3. Plugins → Installed → **Install from file**. Confirm the prompt says "This plugin is not
+   verified", the four warnings, the SHA-256, and that the install button stays unavailable until
+   the box is ticked.
 4. Restart. The new entry appears in the pane and its page opens — this is the step that proves the
    XAML and resource-index path.
 5. Toggle it off: the pane item disappears without a restart, and the state survives a relaunch.
@@ -248,11 +259,11 @@ one inside a UI test would make it depend on a toolchain and a host build path. 
 
 | | |
 | --- | --- |
-| `client/src/Shared/__APP_NAME__.PluginSdk.Abstractions/` | the manifest, the package format, the validators, the packager |
+| `client/src/Shared/__APP_NAME__.PluginSdk.Abstractions/` | the manifest, the package format, the validators, the packager, the scaffolder |
 | `client/src/Shared/__APP_NAME__.PluginSdk.Xaml/` | the host's half of the XAML bridge |
-| `client/src/App/__APP_NAME__.App/Plugins/` | paths, state, trust, the loader, the installer, the scaffolder |
+| `client/src/App/__APP_NAME__.App/Plugins/` | paths, state, trust, the loader, the installer |
 | `client/src/App/__APP_NAME__.App/UI/PluginsPage.*` | the screen: Installed, Browse catalog, Develop |
-| `client/tools/__APP_NAME__.PluginTool/` | `validate` and `pack` |
+| `client/tools/__APP_NAME__.PluginTool/` | `scaffold`, `validate` and `pack` |
 | `server/internal/modules/plugins/` | the catalog, the artifacts, publishing |
 
 ADRs [0023](adr/0023-plugins-load-at-startup.md),

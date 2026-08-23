@@ -21,13 +21,12 @@ import (
 type Store interface {
 	ListListed(ctx context.Context) ([]domain.Plugin, error)
 	GetPlugin(ctx context.Context, pluginID string) (domain.Plugin, error)
-	UpsertPlugin(ctx context.Context, p domain.Plugin) error
+	PublishVersion(ctx context.Context, p domain.Plugin, v domain.Version, content []byte) error
 	SetListed(ctx context.Context, pluginID string, listed bool, now time.Time) error
 
 	LatestVersions(ctx context.Context) (map[string]domain.Version, error)
 	ListVersions(ctx context.Context, pluginID string) ([]domain.Version, error)
 	GetVersion(ctx context.Context, pluginID, version string) (domain.Version, error)
-	InsertVersion(ctx context.Context, v domain.Version, content []byte) error
 	SetYanked(ctx context.Context, pluginID, version string, yanked bool) error
 
 	// WriteContent streams an artifact rather than returning it, so neither this service nor the

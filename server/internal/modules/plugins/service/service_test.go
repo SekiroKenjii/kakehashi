@@ -67,11 +67,6 @@ func (f *fakeStore) GetPlugin(_ context.Context, pluginID string) (domain.Plugin
 	return p, nil
 }
 
-func (f *fakeStore) UpsertPlugin(_ context.Context, p domain.Plugin) error {
-	f.plugins[p.PluginID] = p
-	return nil
-}
-
 func (f *fakeStore) SetListed(_ context.Context, pluginID string, listed bool, _ time.Time) error {
 	p, ok := f.plugins[pluginID]
 	if !ok {
@@ -114,10 +109,15 @@ func (f *fakeStore) GetVersion(_ context.Context, pluginID, version string) (dom
 	return v, nil
 }
 
-func (f *fakeStore) InsertVersion(_ context.Context, v domain.Version, content []byte) error {
+// PublishVersion refuses before it writes either row, which is what the real one's transaction
+// buys: a test that observed a plugin row after a refused version would be observing the defect.
+func (f *fakeStore) PublishVersion(
+	_ context.Context, p domain.Plugin, v domain.Version, content []byte,
+) error {
 	if _, exists := f.versions[key(v.PluginID, v.Version)]; exists {
 		return errs.Invalidf("Version %s of %q is already published.", v.Version, v.PluginID)
 	}
+	f.plugins[p.PluginID] = p
 	f.seedVersion(v, content)
 	f.inserted = append(f.inserted, v)
 	return nil

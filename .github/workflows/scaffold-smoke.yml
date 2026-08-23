@@ -277,6 +277,46 @@ jobs:
           if (-not $package) { throw "pack produced no $env:PROJECT_NAME.PluginTool package" }
           "packed $($package.Name)"
 
+      # The one gate that compiles what the scaffolder writes. Everything above proves the
+      # application builds; this proves the project it hands an author does, which is a different
+      # claim and the one that goes stale quietly - a package version the templates hardcode, or an
+      # entry point naming a view the other variant never writes.
+      #
+      # Both variants, because they are two different templates and the wizard only ever exercises
+      # one of them. Validate afterwards, because it reads the build output.
+      - name: Build a scaffolded plugin
+        working-directory: ${{ runner.temp }}/project/client
+        run: |
+          $output = @(
+            "src/App/$env:PROJECT_NAME.App/bin/Release/net10.0-windows10.0.19041.0",
+            "src/App/$env:PROJECT_NAME.App/bin/x64/Release/net10.0-windows10.0.19041.0"
+          ) | Where-Object { Test-Path (Join-Path $_ "$env:PROJECT_NAME.UI.Contracts.dll") } |
+            Select-Object -First 1
+          if (-not $output) { throw "no host output holding $env:PROJECT_NAME.UI.Contracts.dll" }
+          $hostDirectory = (Resolve-Path $output).Path
+          $tool = "tools/$env:PROJECT_NAME.PluginTool/$env:PROJECT_NAME.PluginTool.csproj"
+
+          $weather = Join-Path $env:RUNNER_TEMP "plugin-Weather"
+          $barometer = Join-Path $env:RUNNER_TEMP "plugin-Barometer"
+
+          dotnet run --project $tool -c Release --no-build -- scaffold Weather $weather $hostDirectory
+          if ($LASTEXITCODE -ne 0) { throw "the Weather scaffold exited $LASTEXITCODE" }
+
+          dotnet run --project $tool -c Release --no-build -- `
+            scaffold Barometer $barometer $hostDirectory --no-page
+          if ($LASTEXITCODE -ne 0) { throw "the Barometer scaffold exited $LASTEXITCODE" }
+
+          foreach ($module in @("Weather", "Barometer")) {
+            $root = Join-Path $env:RUNNER_TEMP "plugin-$module"
+            $project = Join-Path $root "$env:PROJECT_NAME.Modules.$module.UI"
+
+            dotnet build $project -c Release -p:Platform=x64
+            if ($LASTEXITCODE -ne 0) { throw "the $module plugin did not build" }
+
+            dotnet run --project $tool -c Release --no-build -- validate $root
+            if ($LASTEXITCODE -ne 0) { throw "the $module plugin did not validate" }
+          }
+
   # Removing the example module has to leave a tree that still builds, or --bare is a promise the
   # template cannot keep.
   scaffold-smoke-bare:

@@ -77,20 +77,24 @@
             <SelectorBarItem Text="Develop" />
         </SelectorBar>
 
-        <InfoBar
-            Grid.Row="2"
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
-            Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-            Severity="Error" />
+        <!--
+            Stacked rather than both placed in the row: neither can be dismissed, so two in one cell
+            means the second one covers the first, and the first is the one with the reason on it.
+        -->
+        <StackPanel Grid.Row="2" Spacing="8">
+            <InfoBar
+                IsClosable="False"
+                IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
+                Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
+                Severity="Error" />
 
-        <InfoBar
-            Grid.Row="2"
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.PluginsDisabled}"
-            Message="Installing one still works, and nothing will load it until this is turned back on."
-            Severity="Informational"
-            Title="Plugins are turned off for this installation" />
+            <InfoBar
+                IsClosable="False"
+                IsOpen="{x:Bind ViewModel.PluginsDisabled}"
+                Message="Installing one still works, and nothing will load it until this is turned back on."
+                Severity="Informational"
+                Title="Plugins are turned off for this installation" />
+        </StackPanel>
 
         <!--
             Staged work never touches what is running, so this is the only place the difference is
@@ -102,7 +106,7 @@
             IsOpen="{x:Bind ViewModel.RestartRequired, Mode=OneWay}"
             Message="{x:Bind ViewModel.RestartMessage, Mode=OneWay}"
             Severity="Warning"
-            Title="Restart required">
+            Title="{x:Bind ViewModel.RestartTitle}">
             <InfoBar.ActionButton>
                 <Button
                     AutomationProperties.Name="Restart now"

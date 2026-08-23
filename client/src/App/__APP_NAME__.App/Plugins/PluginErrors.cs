@@ -6,9 +6,6 @@ namespace __ROOT_NAMESPACE__.App.Plugins;
 /// <summary>Why a plugin did not load, or would not install.</summary>
 public static class PluginLoadErrors
 {
-    public static readonly Error Disabled = new(
-        "Plugin.Load.Disabled", "Plugins are turned off for this installation.");
-
     public static Error DirectoryMissing(string path)
     {
         return new Error("Plugin.Load.DirectoryMissing", $"Nothing is installed at '{path}'.");

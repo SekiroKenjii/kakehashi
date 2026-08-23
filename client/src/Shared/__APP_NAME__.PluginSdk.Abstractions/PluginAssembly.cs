@@ -102,14 +102,16 @@ public sealed class PluginAssembly
                 pages.Add(name);
             }
 
+            if (ImplementsModule(metadata, type))
+            {
+                modules.Add(name);
+            }
+
             foreach (var interfaceName in InterfaceNames(metadata, type))
             {
+                // Not inherited, unlike the module interface: the XAML compiler emits the provider
+                // onto the type it generated it for.
                 declaresXaml = declaresXaml || interfaceName == _xamlMetadataProvider;
-
-                if (interfaceName == _moduleInterface)
-                {
-                    modules.Add(name);
-                }
             }
         }
 
@@ -129,6 +131,36 @@ public sealed class PluginAssembly
     private static string BaseTypeName(MetadataReader metadata, TypeDefinition type)
     {
         return type.BaseType.IsNil ? string.Empty : HandleName(metadata, type.BaseType);
+    }
+
+    /// <summary>
+    /// Whether this type, or anything it derives from in this assembly, is a module.
+    /// </summary>
+    /// <remarks>
+    /// The runtime accepts a module that implements the interface through a base class, so refusing
+    /// one here would be the packaging tool inventing a rule the host does not have. The walk stops
+    /// at the assembly boundary: a base outside it cannot be the plugin's own module either way.
+    /// </remarks>
+    private static bool ImplementsModule(MetadataReader metadata, TypeDefinition type)
+    {
+        while (true)
+        {
+            foreach (var interfaceName in InterfaceNames(metadata, type))
+            {
+                if (interfaceName == _moduleInterface)
+                {
+                    return true;
+                }
+            }
+
+            // IsNil first, for the same reason BaseTypeName checks it: reading a nil handle as a
+            // row index walks off the end of the table.
+            if (type.BaseType.IsNil || type.BaseType.Kind != HandleKind.TypeDefinition)
+            {
+                return false;
+            }
+            type = metadata.GetTypeDefinition((TypeDefinitionHandle)type.BaseType);
+        }
     }
 
     private static IEnumerable<string> InterfaceNames(MetadataReader metadata, TypeDefinition type)

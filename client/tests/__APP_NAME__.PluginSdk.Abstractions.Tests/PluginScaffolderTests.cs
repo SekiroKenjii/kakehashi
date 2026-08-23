@@ -1,11 +1,9 @@
 using System;
 using System.IO;
 using System.Linq;
-using __ROOT_NAMESPACE__.App.Plugins;
-using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using Xunit;
 
-namespace __ROOT_NAMESPACE__.App.Tests.Plugins;
+namespace __ROOT_NAMESPACE__.PluginSdk.Abstractions.Tests;
 
 /// <summary>
 /// Unit tests for <see cref="PluginScaffolder"/>: that what it writes is a package the loader would
@@ -205,5 +203,53 @@ public sealed class PluginScaffolderTests : IDisposable
     public void CheckModuleName_AcceptsWhatItThenDerivesAValidIdentityFrom(string moduleName)
     {
         Assert.True(PluginScaffolder.CheckModuleName(moduleName).IsSuccess);
+    }
+
+    /// <summary>
+    /// The display name reaches a JSON string, a C# literal and a XAML attribute in one pass, so a
+    /// quote or a backslash is a project that does not compile rather than one that looks wrong.
+    /// </summary>
+    [Theory]
+    [InlineData("Weather \"quoted\"")]
+    [InlineData(@"Weather\Editor")]
+    [InlineData("Weather <b>")]
+    [InlineData("Weather & Co")]
+    [InlineData("Weather\nEditor")]
+    public void Create_ADisplayNameThatWouldNotSurviveATemplate_IsRefused(string displayName)
+    {
+        var written = Scaffolder.Create(
+            new PluginProjectRequest("Weather", displayName, "cloud", Target, WithSamplePage: true));
+
+        Assert.True(written.IsFailure);
+        Assert.Equal("Plugin.Project.Invalid", written.Error.Code);
+        Assert.False(Directory.Exists(ProjectDirectory));
+    }
+
+    /// <summary>The icon lands in the manifest's navigation array, where the same characters bite.</summary>
+    [Theory]
+    [InlineData("Cloud")]
+    [InlineData("cloud\"")]
+    [InlineData("\uE9CA")]
+    public void Create_AnIconThatIsNotAName_IsRefused(string icon)
+    {
+        var written = Scaffolder.Create(
+            new PluginProjectRequest("Weather", "Weather", icon, Target, WithSamplePage: true));
+
+        Assert.True(written.IsFailure);
+        Assert.Equal("Plugin.Project.Invalid", written.Error.Code);
+    }
+
+    /// <summary>Both fall back rather than being refused, which is what the wizard leaves them as.</summary>
+    [Fact]
+    public void Create_AnEmptyDisplayNameAndIcon_AreTheDefaultsRatherThanARefusal()
+    {
+        var written = Scaffolder.Create(
+            new PluginProjectRequest("Weather", string.Empty, string.Empty, Target, WithSamplePage: true));
+
+        Assert.True(written.IsSuccess);
+
+        var manifest = File.ReadAllText(Path.Combine(Target, "manifest.json"));
+
+        Assert.Contains("\"document\"", manifest, StringComparison.Ordinal);
     }
 }

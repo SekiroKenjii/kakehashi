@@ -53,6 +53,16 @@ public sealed class PluginAssemblyTests
     }
 
     /// <summary>
+    /// The runtime activates a module that implements the interface through a base class, so a
+    /// packaging tool that refused one would be inventing a rule the host does not have.
+    /// </summary>
+    [Fact]
+    public void DeclaresModule_IsTrueForOneThatImplementsItThroughABaseClass()
+    {
+        Assert.True(Read().DeclaresModule(_fixtures + "BarometerModule"));
+    }
+
+    /// <summary>
     /// The two refusals a packaging tool has to tell apart: a name that is not in the assembly is a
     /// spelling mistake, and a name that is but is not a module is a missing interface.
     /// </summary>

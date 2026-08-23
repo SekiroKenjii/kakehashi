@@ -103,9 +103,9 @@ func (s *SQLServer) GetVersion(ctx context.Context, pluginID, version string) (d
 	return v, nil
 }
 
-// InsertVersion stores a package. A version this plugin already has fails as invalid rather than
+// insertVersion stores a package. A version this plugin already has fails as invalid rather than
 // overwriting: a published artifact is what somebody's checksum refers to.
-func (s *SQLServer) InsertVersion(ctx context.Context, v domain.Version, content []byte) error {
+func insertVersion(ctx context.Context, tx *sql.Tx, v domain.Version, content []byte) error {
 	const q = `
         INSERT INTO plugins.PluginVersion
             (PluginId, Version, MinHostSdk, SizeInBytes, Sha256, Content, IsYanked, PublishedAt)
@@ -113,7 +113,7 @@ func (s *SQLServer) InsertVersion(ctx context.Context, v domain.Version, content
         FROM plugins.Plugin AS p
         WHERE p.PluginId = @p1;`
 
-	res, err := s.db.ExecContext(
+	res, err := tx.ExecContext(
 		ctx, q, v.PluginID, v.Version, v.MinHostSDK, v.SizeInBytes, v.SHA256, content,
 		storable(v.PublishedAt))
 	if err != nil {

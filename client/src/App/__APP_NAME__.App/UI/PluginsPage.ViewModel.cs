@@ -69,23 +69,37 @@ public sealed record PluginListItem(
 public sealed partial class PluginsViewModel : ViewModel
 {
     /// <summary>
-    /// What a row says about a package this application cannot vouch for.
+    /// What every row says about a package this application cannot vouch for.
     /// </summary>
     /// <remarks>
     /// Here rather than in the markup because the view model composes the row, and it is worth one
     /// place: a warning that drifts between the list and the install prompt is a warning nobody
-    /// believes.
+    /// believes. What differs per row is only the lead, so only the lead is written per row.
     /// </remarks>
-    public const string UnsignedWarning =
-        "Unsigned — runs with full application privileges. Installed at your own risk.";
+    private const string _atYourOwnRisk =
+        " — runs with full application privileges. Installed at your own risk.";
+
+    /// <summary>Nobody signed it, and the default for a status this build does not recognise.</summary>
+    public const string UnsignedWarning = "Unsigned" + _atYourOwnRisk;
 
     /// <summary>A valid signature from somebody this application does not answer for.</summary>
-    public const string OtherPublisherWarning =
-        "Signed by another publisher — runs with full application privileges. Installed at your own risk.";
+    public const string OtherPublisherWarning = "Signed by another publisher" + _atYourOwnRisk;
 
     /// <summary>The one that is not merely unvouched-for: these bytes are not the ones signed.</summary>
-    public const string TamperedWarning =
-        "Modified since it was signed — runs with full application privileges. Installed at your own risk.";
+    public const string TamperedWarning = "Modified since it was signed" + _atYourOwnRisk;
+
+    /// <summary>Signed, and the certificate has run out.</summary>
+    public const string ExpiredWarning = "Signed with a certificate that has expired" + _atYourOwnRisk;
+
+    /// <summary>Signed, and the certificate was withdrawn by the authority that issued it.</summary>
+    public const string RevokedWarning = "Signed with a revoked certificate" + _atYourOwnRisk;
+
+    /// <summary>Signed by somebody this machine has been told not to trust.</summary>
+    public const string DistrustedWarning = "Signed by a distrusted publisher" + _atYourOwnRisk;
+
+    /// <summary>Signed, and the chain ends somewhere this machine does not recognise.</summary>
+    public const string UntrustedRootWarning =
+        "Signed by an authority this machine does not trust" + _atYourOwnRisk;
 
     private const string _allFilter = "All";
     private const string _fileSource = "File";
@@ -188,6 +202,10 @@ public sealed partial class PluginsViewModel : ViewModel
     /// <summary>Whether anything is waiting for the application to be restarted.</summary>
     public bool RestartRequired => _catalog.RestartRequired;
 
+    /// <summary>What the banner is headed, which is not a restart when a restart would do nothing.</summary>
+    public string RestartTitle => PluginsDisabled ? "Waiting for plugins to be turned on" : "Restart required";
+
+
     public string RestartMessage
     {
         get {
@@ -202,13 +220,13 @@ public sealed partial class PluginsViewModel : ViewModel
             {
                 return string.Create(
                     CultureInfo.CurrentCulture,
-                    $"{waiting.Count} changes are staged and take effect on the next launch.");
+                    $"{waiting.Count} changes are staged and take effect {StagedUntil()}.");
             }
             var record = waiting[0];
 
             return record.PendingRemove
-                ? $"{record.DisplayName} is removed on the next launch."
-                : $"{record.DisplayName} {record.StagedVersion} is staged and loads on the next launch.";
+                ? $"{record.DisplayName} is removed {StagedUntil()}."
+                : $"{record.DisplayName} {record.StagedVersion} is staged and loads {StagedUntil()}.";
         }
     }
 
@@ -283,7 +301,6 @@ public sealed partial class PluginsViewModel : ViewModel
             return false;
         }
         ErrorMessage = string.Empty;
-        OnPropertyChanged(nameof(HasError));
         Preparing = true;
 
         try
@@ -337,9 +354,8 @@ public sealed partial class PluginsViewModel : ViewModel
 
             if (reported.IsFailure)
             {
-                ErrorMessage = $"{manifest.DisplayName} {manifest.Version} is staged and loads on "
-                    + $"the next launch. The catalog was not told: {reported.Error.Message}";
-                OnPropertyChanged(nameof(HasError));
+                ErrorMessage = $"{manifest.DisplayName} {manifest.Version} is staged and loads "
+                    + $"{StagedUntil()}. The catalog was not told: {reported.Error.Message}";
             }
         }
 
@@ -362,7 +378,6 @@ public sealed partial class PluginsViewModel : ViewModel
         ArgumentNullException.ThrowIfNull(item);
         var result = item.IsEnabled ? _modules.Detach(item.ModuleName) : _modules.Attach(item.ModuleName);
         ErrorMessage = result.IsFailure ? result.Error.Message : string.Empty;
-        OnPropertyChanged(nameof(HasError));
         Load();
     }
 
@@ -386,7 +401,6 @@ public sealed partial class PluginsViewModel : ViewModel
         if (result.IsFailure)
         {
             ErrorMessage = result.Error.Message;
-            OnPropertyChanged(nameof(HasError));
 
             return;
         }
@@ -408,6 +422,8 @@ public sealed partial class PluginsViewModel : ViewModel
         OnPropertyChanged(nameof(ShowingBrowse));
         OnPropertyChanged(nameof(ShowingDevelop));
     }
+
+    partial void OnErrorMessageChanged(string value) => OnPropertyChanged(nameof(HasError));
 
     partial void OnConsentGivenChanged(bool value) => OnPropertyChanged(nameof(CanInstallPending));
 
@@ -451,11 +467,22 @@ public sealed partial class PluginsViewModel : ViewModel
         return true;
     }
 
+    /// <summary>
+    /// What a staged change is waiting for.
+    /// </summary>
+    /// <remarks>
+    /// Turned off, the loader does not run at all, so neither a promotion nor a removal happens at
+    /// the next launch. What is staged waits for the switch instead.
+    /// </remarks>
+    private string StagedUntil()
+    {
+        return PluginsDisabled ? "when plugins are turned back on" : "on the next launch";
+    }
+
     /// <summary>Puts a reason on the page, and answers no.</summary>
     private bool Refuse(string message)
     {
         ErrorMessage = message;
-        OnPropertyChanged(nameof(HasError));
 
         return false;
     }
@@ -495,9 +522,15 @@ public sealed partial class PluginsViewModel : ViewModel
     /// <summary>What a row says about a package, which is what the prompt said when it was installed.</summary>
     private static string WarningFor(PluginRecord record)
     {
+        // Over the string the state file holds rather than the enum, so a value this build does not
+        // recognise falls to the default rather than throwing.
         return record.SignatureStatus switch {
             nameof(SignatureStatus.Tampered) => TamperedWarning,
             nameof(SignatureStatus.Valid) => OtherPublisherWarning,
+            nameof(SignatureStatus.Expired) => ExpiredWarning,
+            nameof(SignatureStatus.Revoked) => RevokedWarning,
+            nameof(SignatureStatus.Distrusted) => DistrustedWarning,
+            nameof(SignatureStatus.UntrustedRoot) => UntrustedRootWarning,
             _ => UnsignedWarning,
         };
     }
