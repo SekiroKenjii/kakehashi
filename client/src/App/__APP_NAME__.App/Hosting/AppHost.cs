@@ -11,6 +11,7 @@ using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.App.Services.Platform;
 using __ROOT_NAMESPACE__.App.UI;
+using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 using __ROOT_NAMESPACE__.PluginSdk.Xaml;
 using __ROOT_NAMESPACE__.SharedKernel;
 using __ROOT_NAMESPACE__.UI.Contracts;

@@ -10,4 +10,27 @@
     <ProjectReference Include="..\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
   </ItemGroup>
 
+  <!--
+    The plugin project templates, embedded rather than copied: whatever scaffolds a plugin has to be
+    able to do it from wherever it was installed, and both the application and the packaging tool
+    do. LogicalName is explicit so the name the scaffolder asks for does not depend on the root
+    namespace.
+
+    None of these is named for the extension it produces. A resource whose file name contains ".cs"
+    is dropped from the compilation in the application that carries this library, so the template is
+    named for what it is and the scaffolder decides where it lands.
+  -->
+  <ItemGroup>
+    <EmbeddedResource Include="Templates\Manifest.tmpl" LogicalName="Templates.Manifest.tmpl" />
+    <EmbeddedResource Include="Templates\DirectoryBuildProps.tmpl" LogicalName="Templates.DirectoryBuildProps.tmpl" />
+    <EmbeddedResource Include="Templates\Readme.tmpl" LogicalName="Templates.Readme.tmpl" />
+    <EmbeddedResource Include="Templates\GitIgnore.tmpl" LogicalName="Templates.GitIgnore.tmpl" />
+    <EmbeddedResource Include="Templates\ModuleProject.tmpl" LogicalName="Templates.ModuleProject.tmpl" />
+    <EmbeddedResource Include="Templates\ModuleEntryPoint.tmpl" LogicalName="Templates.ModuleEntryPoint.tmpl" />
+    <EmbeddedResource Include="Templates\ModuleEntryPointBare.tmpl" LogicalName="Templates.ModuleEntryPointBare.tmpl" />
+    <EmbeddedResource Include="Templates\PageMarkup.tmpl" LogicalName="Templates.PageMarkup.tmpl" />
+    <EmbeddedResource Include="Templates\PageCodeBehind.tmpl" LogicalName="Templates.PageCodeBehind.tmpl" />
+    <EmbeddedResource Include="Templates\PageViewModel.tmpl" LogicalName="Templates.PageViewModel.tmpl" />
+  </ItemGroup>
+
 </Project>

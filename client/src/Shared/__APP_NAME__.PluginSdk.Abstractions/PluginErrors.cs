@@ -233,4 +233,10 @@ public static class PluginErrors
     {
         return new Error("Plugin.Project.OutputUnwritable", reason);
     }
+
+    /// <summary>A project the scaffolder will not write, and why.</summary>
+    public static Error ProjectInvalid(string reason)
+    {
+        return new Error("Plugin.Project.Invalid", reason);
+    }
 }
