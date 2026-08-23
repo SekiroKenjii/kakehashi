@@ -231,8 +231,8 @@ public sealed class PluginPackage : IDisposable
     /// <remarks>
     /// Each entry's resolved path is checked against the destination before it is written, so an
     /// entry whose name climbs out of the directory is refused rather than followed. An archive
-    /// opened through <see cref="Open(Stream, bool)"/> can no longer hold such a name; the check
-    /// stays because the method is public.
+    /// opened through <see cref="Open(Stream, bool)"/> holds no such name, and the check stays
+    /// because the method is public.
     /// </remarks>
     public Result ExtractTo(string destinationDirectory)
     {
