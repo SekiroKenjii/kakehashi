@@ -12,6 +12,7 @@ import (
 	accountapi "__GO_MODULE__/server/internal/modules/account/api"
 	"__GO_MODULE__/server/internal/modules/activity/domain"
 	"__GO_MODULE__/server/internal/modules/activity/service"
+	pluginsapi "__GO_MODULE__/server/internal/modules/plugins/api"
 	"__GO_MODULE__/server/internal/platform/eventbus"
 )
 
@@ -63,7 +64,7 @@ func newModule(store *fakeStore) (*Module, *app.Kernel) {
 	return module, kernel
 }
 
-func TestEachAccountFactBecomesOneEntry(t *testing.T) {
+func TestEachPublishedFactBecomesOneEntry(t *testing.T) {
 	cases := []struct {
 		name        string
 		publish     func(*app.Kernel)
@@ -172,6 +173,48 @@ func TestEachAccountFactBecomesOneEntry(t *testing.T) {
 			// A password belongs to an account rather than to a device, so there is no session here
 			// either.
 			wantKind: "PasswordChanged", wantSession: "", wantWhere: "", wantIP: "",
+		},
+		{
+			// An install has no session and no connection of its own: the report arrives on one and
+			// describes something that already happened on a machine, not the report itself.
+			name: "a plugin this catalog offered",
+			publish: func(k *app.Kernel) {
+				eventbus.Publish(k.Bus, context.Background(), pluginsapi.Installed{
+					UserID:   "account-1",
+					PluginID: "weather",
+					Version:  "1.0.0",
+					Source:   pluginsapi.SourceCatalog,
+					At:       happenedAt,
+				})
+			},
+			wantKind: "PluginInstalled", wantSession: "", wantWhere: "", wantIP: "",
+		},
+		{
+			// Its own kind, because it is the one a reader acts on: nobody this deployment answers
+			// for chose to offer this package, and it runs with everything the application can do.
+			name: "a plugin from somewhere else",
+			publish: func(k *app.Kernel) {
+				eventbus.Publish(k.Bus, context.Background(), pluginsapi.Installed{
+					UserID:   "account-1",
+					PluginID: "weather",
+					Version:  "1.0.0",
+					Source:   pluginsapi.SourceFile,
+					At:       happenedAt,
+				})
+			},
+			wantKind: "PluginSideloaded", wantSession: "", wantWhere: "", wantIP: "",
+		},
+		{
+			// The direction a wrong guess has to fail in: only the catalog's own answer earns the
+			// quieter row, so a source a later build added reads as the louder one.
+			name: "a plugin from a source this build does not recognise",
+			publish: func(k *app.Kernel) {
+				eventbus.Publish(k.Bus, context.Background(), pluginsapi.Installed{
+					UserID: "account-1", PluginID: "weather", Version: "1.0.0",
+					Source: "something-later", At: happenedAt,
+				})
+			},
+			wantKind: "PluginSideloaded", wantSession: "", wantWhere: "", wantIP: "",
 		},
 	}
 

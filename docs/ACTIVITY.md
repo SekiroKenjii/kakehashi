@@ -9,8 +9,8 @@ open already knows.
 
 ## Where entries come from
 
-Almost entirely from the server watching itself. The activity module subscribes to the account
-module's events and writes one row per fact; `server/internal/modules/activity/subscriptions.go` is
+Almost entirely from the server watching itself. The activity module subscribes to what other
+modules publish and writes one row per fact; `server/internal/modules/activity/subscriptions.go` is
 the only file in the module that imports another module, and the only one anybody edits when the
 feed's scope changes.
 
@@ -25,6 +25,8 @@ feed's scope changes.
 | `PasswordChanged` | Security | `account/service/profile.go` |
 | `AppUpdated` | System | the client, through `RecordClientEvent` |
 | `ThemeChanged` | System | the client, through `RecordClientEvent` |
+| `PluginInstalled` | System | `plugins/service/install.go` — a package this catalog offered |
+| `PluginSideloaded` | Security | the same event, with any other source |
 
 Three of these are worth knowing the history of, because the feed was wrong about them until
 recently:
@@ -38,6 +40,13 @@ recently:
   being broken.
 - **`FailedSignIn` and `NewDeviceSignedIn` existed in `accountapi` and were never published**, so the
   feed showed the coarser `SignedIn` where the account page said "New device signed in".
+
+**A plugin install is two kinds because its source is the difference a reader acts on.** The event
+carries where the package came from, and only this deployment's own catalog earns the quieter row —
+everything else is code nobody here chose to offer, running with everything the application can do.
+A source a later build adds reads as `PluginSideloaded`, which is the direction a wrong guess has to
+fail in. Neither row names the plugin: an entry has no field for one, and the Plugins page is the
+inventory. What the feed answers is "did I do that, and when".
 
 **An event is published only when the write it describes actually did something.** Ending a session
 that is already gone is deliberately idempotent, and for a while it announced a revocation anyway —

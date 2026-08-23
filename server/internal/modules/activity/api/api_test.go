@@ -23,6 +23,8 @@ func TestEveryKindHasACategory(t *testing.T) {
 		{KindPasswordChanged, CategorySecurity},
 		{KindAppUpdated, CategorySystem},
 		{KindThemeChanged, CategorySystem},
+		{KindPluginInstalled, CategorySystem},
+		{KindPluginSideloaded, CategorySecurity},
 	}
 
 	for _, c := range cases {
