@@ -77,7 +77,7 @@ public sealed partial class LoginViewModel : ViewModel
     /// <summary>The shield, or the warning triangle when there is nothing to be reassured about.</summary>
     public string TransportGlyph
     {
-        get { return DetectTransport() == Transport.Plain ? "" : ""; }
+        get { return DetectTransport() == Transport.Plain ? "\uE7BA" : "\uE72E"; }
     }
 
     /// <summary>Green for TLS, neutral for loopback, caution for plain HTTP over a network.</summary>

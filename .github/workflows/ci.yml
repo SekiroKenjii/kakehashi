@@ -186,6 +186,18 @@ jobs:
         working-directory: .
         run: bash tools/check-comment-length.sh .
 
+      # A Private Use Area character is invisible in editors and diffs, which is how an icon mapping
+      # gets destroyed by an edit that looks harmless (ADR 0013).
+      - name: Require icon glyphs to be written as escapes
+        working-directory: .
+        run: bash tools/check-icon-escapes.sh .
+
+      # An icon name a module declares and this client cannot resolve draws one thing in the pane
+      # and another on the Navigation screen, and neither surface says so.
+      - name: Require every declared icon name to resolve
+        working-directory: .
+        run: bash tools/check-navigation-icons.sh .
+
   client:
     # WinUI 3 (Windows App SDK) requires Windows to build.
     runs-on: windows-latest

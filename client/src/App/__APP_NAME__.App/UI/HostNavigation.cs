@@ -31,29 +31,37 @@ public static class HostNavigation
     /// shell owns it.
     /// </summary>
     /// <remarks>
-    /// Each names the destination the deployment files it under, so where these screens sit — and
-    /// what they are called — is decided once, on the server, for every client. <c>Group</c> is only
-    /// the fallback for a client that has not been able to ask.
+    /// The menu items name the destination the deployment files them under, so where those screens
+    /// sit — and what they are called — is decided once, on the server, for every client.
+    /// <c>Group</c> is only the fallback for a client that has not been able to ask.
+    /// <para>
+    /// Plugins is the exception, and names no destination: it sits in the footer beside the account
+    /// row, which is not a place the deployment's model can express. An item with no id is one the
+    /// deployment was never offered, so this client places it and this client gates it.
+    /// </para>
+    /// <para>
+    /// Glyphs are written as escapes, never as the character: a Private Use Area code point shows up
+    /// as nothing in most editors and diffs (docs/adr/0013-client-owned-icon-vocabulary.md).
+    /// </para>
     /// </remarks>
     public static IReadOnlyList<NavigationItem> Items { get; } = [
-        new NavigationItem("Users", "", typeof(UsersPage)) {
+        new NavigationItem("Users", "\uE716", typeof(UsersPage)) {
             Id = "account.users",
             Group = "Administration",
             RequiredPermission = PermissionKeys.ManageUsers,
         },
-        new NavigationItem("Role permissions", "", typeof(RolePermissionsPage)) {
+        new NavigationItem("Role permissions", "\uE192", typeof(RolePermissionsPage)) {
             Id = "authz.roles",
             Group = "Administration",
             RequiredPermission = PermissionKeys.ManageRoles,
         },
-        new NavigationItem("Navigation", "", typeof(NavigationLayoutPage)) {
+        new NavigationItem("Navigation", "\uE816", typeof(NavigationLayoutPage)) {
             Id = "navigation.layout",
             Group = "Administration",
             RequiredPermission = PermissionKeys.ManageNavigation,
         },
-        new NavigationItem("Plugins", "", typeof(PluginsPage)) {
-            Id = "plugins.library",
-            Group = "Administration",
+        new NavigationItem(
+            "Plugins", "\uE74C", typeof(PluginsPage), NavigationItemPlacement.Footer) {
             RequiredPermission = PermissionKeys.ManagePlugins,
         },
     ];
