@@ -42,7 +42,8 @@ public enum SignatureStatus
 /// <param name="Subject">The signer's certificate subject, empty when the file is unsigned.</param>
 /// <param name="Thumbprint">The signer's certificate thumbprint, empty when the file is unsigned.</param>
 /// <param name="PublicKey">
-/// A SHA-256 over the signer's subject public key info, empty when the file is unsigned. It is what
+/// A SHA-256 over the signer's public key and its algorithm parameters, empty when the file is
+/// unsigned. It is what
 /// identifies a publisher across a certificate renewal, which a subject name does not: a name is
 /// only as unique as the set of authorities the machine trusts.
 /// </param>
@@ -95,7 +96,7 @@ public static class Authenticode
             : new FileSignature(status, signer.Subject, signer.Thumbprint, PublicKeyOf(signer));
     }
 
-    /// <summary>A SHA-256 over the certificate's subject public key info, lower-case hex.</summary>
+    /// <summary>A SHA-256 over the certificate's public key and its parameters, lower-case hex.</summary>
     /// <remarks>
     /// The key rather than the certificate, because a renewal issues a new certificate over the same
     /// key and a publisher that stayed the publisher should stay recognised.

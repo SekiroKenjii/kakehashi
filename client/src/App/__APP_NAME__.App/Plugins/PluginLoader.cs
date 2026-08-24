@@ -21,7 +21,7 @@ namespace __ROOT_NAMESPACE__.App.Plugins;
 /// the plugin, so one that is refused there is a fault row and not also a working one.
 /// </para>
 /// </remarks>
-public sealed record PluginModule(string PluginID, IModule Module, LoadedPlugin Loaded);
+public sealed record PluginModule(string PluginID, GuardedPluginModule Module, LoadedPlugin Loaded);
 
 /// <summary>What one launch made of the installed plugins.</summary>
 /// <param name="Modules">The modules to compose, in the order they loaded.</param>
@@ -227,7 +227,7 @@ public static class PluginLoader
         PluginRecord record,
         HashSet<string> taken,
         HashSet<string> named,
-        out IModule? module)
+        out GuardedPluginModule? module)
     {
         module = null;
         var directory = paths.InstalledDirectory(record.PluginID, record.InstalledVersion);

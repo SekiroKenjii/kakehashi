@@ -42,6 +42,10 @@ public sealed class AuthenticodeTests : IDisposable
         Assert.Equal(SignatureStatus.Valid, signature.Status);
         Assert.Contains("Microsoft", signature.Subject, StringComparison.Ordinal);
         Assert.NotEmpty(signature.Thumbprint);
+
+        // The value the Verified verdict turns on, so it has to be there and be a digest.
+        Assert.Equal(64, signature.PublicKey.Length);
+        Assert.DoesNotContain(signature.PublicKey, char.IsUpper);
     }
 
     [Fact]
@@ -55,6 +59,7 @@ public sealed class AuthenticodeTests : IDisposable
         Assert.Equal(SignatureStatus.Unsigned, signature.Status);
         Assert.Equal(string.Empty, signature.Subject);
         Assert.Equal(string.Empty, signature.Thumbprint);
+        Assert.Equal(string.Empty, signature.PublicKey);
     }
 
     /// <summary>

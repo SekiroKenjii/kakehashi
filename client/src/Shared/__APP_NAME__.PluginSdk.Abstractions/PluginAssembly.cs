@@ -16,8 +16,8 @@ namespace __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 /// included — and running its module initializers, on a machine that has not agreed to run it yet.
 /// A metadata reader compares names as strings, so it needs nothing but the file.
 /// <para>
-/// The cost of that is stated where each member is: a name comparison sees what a type declares,
-/// never what it inherits through something else.
+/// The cost of that is stated where each member is: a name comparison sees what a type declares.
+/// <see cref="DeclaresModule"/> is the one that follows a base chain, because the runtime does.
 /// </para>
 /// </remarks>
 public sealed class PluginAssembly
@@ -81,7 +81,11 @@ public sealed class PluginAssembly
     /// <summary>Whether this assembly declares that type at all.</summary>
     public bool Declares(string typeName) => _types.Contains(typeName);
 
-    /// <summary>Whether that type is one the host could mount as a module.</summary>
+    /// <summary>
+    /// Whether that type implements the host's module interface, directly or through a base class
+    /// in this assembly. Whether the host could mount it also needs a public parameterless
+    /// constructor, which the loader checks and this cannot see.
+    /// </summary>
     public bool DeclaresModule(string typeName) => _modules.Contains(typeName);
 
     private static PluginAssembly From(MetadataReader metadata)

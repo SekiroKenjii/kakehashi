@@ -60,14 +60,17 @@ nothing and the screen says so, because installing still works and a package sta
 that is off waits for a launch that will not load it. MSIX is untested rather than refused: `%LOCALAPPDATA%` and `ms-appx` both change meaning
 there, and v1 supports unpackaged only.
 
-A plugin cannot substitute a host service. `AddModules` snapshots the collection, calls
+A plugin cannot substitute a host service. `PluginRegistration` snapshots the collection, calls
 `RegisterServices`, and rolls the whole registration back if anything the host registered went
 missing — which is stronger than any static check of the plugin's code, because it observes the
 result rather than the source.
 
 Nor can it register over one. Removal is not required to substitute a service — the container
 resolves the last descriptor and a plugin registers last — so a registration naming a service type
-the host already provides is refused by name.
+the host already provides is refused, by type rather than by name, and an open generic the host
+registered answers for every closed form of it. Post-configuring options the plugin does not own is
+the fourth refusal, and it is separate because the host registers no post-configuration for a plugin
+to shadow.
 
 The state file is written after the promotion rather than before, which would leave a plugin's files
 present under a version its record does not name. Rather than order the two writes, the next launch

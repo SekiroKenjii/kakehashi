@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Security;
 using System.Text.RegularExpressions;
 using __ROOT_NAMESPACE__.SharedKernel;
 
@@ -244,6 +245,12 @@ public sealed partial class PluginScaffolder
     /// PriFiles and Navigation are rendered rather than literal because both are empty without a
     /// page: a resource index exists only where there is compiled XAML, and a screen the manifest
     /// promises is one the package has to be able to show.
+    /// <para>
+    /// HostDirectory is the one value not derived from a validated name — it is wherever the
+    /// application was installed — and it lands in XML element content, so it is escaped. An
+    /// ordinary install path like <c>C:\Program Files\Acme &amp; Co</c> would otherwise produce a
+    /// Directory.Build.props MSBuild cannot parse.
+    /// </para>
     /// </remarks>
     private Dictionary<string, string> Values(PluginProjectRequest request)
     {
@@ -254,7 +261,7 @@ public sealed partial class PluginScaffolder
             ["AssemblyName"] = AssemblyNameFor(request.ModuleName),
             ["RootNamespace"] = $"__ROOT_NAMESPACE__.Modules.{request.ModuleName}.UI",
             ["HostSdk"] = PluginSdkVersion.Current.ToString(),
-            ["HostDirectory"] = _hostDirectory,
+            ["HostDirectory"] = SecurityElement.Escape(_hostDirectory) ?? string.Empty,
             ["PriFiles"] = request.WithSamplePage ? $"[\"{AssemblyNameFor(request.ModuleName)}.pri\"]" : "[]",
             ["Navigation"] = request.WithSamplePage ? Navigation(request) : "[]",
         };

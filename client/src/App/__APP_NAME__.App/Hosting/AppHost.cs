@@ -179,7 +179,7 @@ internal static class AppHost
 
         foreach (var plugin in plugins.Modules)
         {
-            var registered = PluginRegistration.Add(services, plugin.Module);
+            var registered = PluginRegistration.Add(services, plugin.Module, plugin.Module.Assembly);
 
             if (registered.IsFailure)
             {
@@ -189,7 +189,7 @@ internal static class AppHost
 
                 continue;
             }
-            services.AddSingleton(plugin.Module);
+            services.AddSingleton<IModule>(plugin.Module);
             plugins.Catalog.Add(plugin.Loaded);
         }
     }

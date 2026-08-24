@@ -7,13 +7,14 @@ using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using NSubstitute;
 using __ROOT_NAMESPACE__.App.Plugins;
+using __ROOT_NAMESPACE__.SharedKernel;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using Xunit;
 
 namespace __ROOT_NAMESPACE__.App.Tests.Plugins;
 
 /// <summary>
-/// Unit tests for <see cref="PluginRegistration"/>: the three ways a plugin could stop being
+/// Unit tests for <see cref="PluginRegistration"/>: the four ways a plugin could stop being
 /// additive, and that the collection is left exactly as it was after each.
 /// </summary>
 /// <remarks>
@@ -47,12 +48,26 @@ public sealed class PluginRegistrationTests
         return services;
     }
 
+    /// <summary>
+    /// Calls the rule the way composition does: with the assembly the plugin's code came from.
+    /// </summary>
+    /// <remarks>
+    /// Production passes <c>GuardedPluginModule.Assembly</c>, never the instance's own type, because
+    /// the instance it holds is the guard. This helper is the one place the test suite spells the
+    /// same thing, and <see cref="Add_ThroughTheLoadersGuard_StillJudgesByThePluginsAssembly"/> is
+    /// what proves the two agree.
+    /// </remarks>
+    private static Result Add(IServiceCollection services, IModule module)
+    {
+        return PluginRegistration.Add(services, module, module.GetType().Assembly);
+    }
+
     [Fact]
     public void Add_APluginThatOnlyAddsItsOwnServicesIsAccepted()
     {
         var services = Host();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services, Module(s => s.AddSingleton<IPluginThing, PluginThing>()));
 
         Assert.True(added.IsSuccess);
@@ -64,7 +79,7 @@ public sealed class PluginRegistrationTests
     {
         var services = Host();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services, Module(s => ServiceCollectionDescriptorExtensions.RemoveAll<IHostThing>(s)));
 
         Assert.True(added.IsFailure);
@@ -81,7 +96,7 @@ public sealed class PluginRegistrationTests
     {
         var services = Host();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services, Module(s => s.AddSingleton<IHostThing, PluginThing>()));
 
         Assert.True(added.IsFailure);
@@ -94,7 +109,7 @@ public sealed class PluginRegistrationTests
     public void Add_WhatIsRolledBackIsWhatWouldOtherwiseHaveResolved()
     {
         var services = Host();
-        _ = PluginRegistration.Add(
+        _ = Add(
             services, Module(s => s.AddSingleton<IHostThing, PluginThing>()));
 
         using var provider = services.BuildServiceProvider();
@@ -113,7 +128,7 @@ public sealed class PluginRegistrationTests
         var services = Host();
         services.AddOptions();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services,
             Owned(s => s.AddSingleton<IOptions<LoggerFilterOptions>>(
                 Options.Create(new LoggerFilterOptions()))));
@@ -130,7 +145,7 @@ public sealed class PluginRegistrationTests
         services.AddOptions();
         services.Configure<LoggerFilterOptions>(options => options.MinLevel = LogLevel.Warning);
 
-        _ = PluginRegistration.Add(
+        _ = Add(
             services,
             Owned(s => s.AddSingleton<IOptions<LoggerFilterOptions>>(
                 Options.Create(new LoggerFilterOptions { MinLevel = LogLevel.Trace }))));
@@ -151,7 +166,7 @@ public sealed class PluginRegistrationTests
         var services = Host();
         services.AddOptions();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services,
             Owned(s => s.PostConfigure<LoggerFilterOptions>(options => options.MinLevel = LogLevel.Trace)));
 
@@ -162,16 +177,52 @@ public sealed class PluginRegistrationTests
     /// <summary>
     /// And the case the rule must not catch: a plugin configuring options it declares itself.
     /// </summary>
+    /// <remarks>
+    /// "Itself" is the assembly declaring the module, so a plugin whose options type lives in a
+    /// sibling assembly is refused too — conservative, documented in docs/PLUGINS.md, and the
+    /// direction a wrong answer has to fail in.
+    /// </remarks>
     [Fact]
     public void Add_ConfiguringItsOwnOptions_IsAccepted()
     {
         var services = Host();
         services.AddOptions();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services, Owned(s => s.Configure<PluginSettings>(settings => settings.Address = "plugin")));
 
         Assert.True(added.IsSuccess);
+    }
+
+    /// <summary>
+    /// The loader hands composition a guard, not the plugin's own module, so a rule that asked the
+    /// instance whose code it was would answer with the host's — refusing a plugin's own options and
+    /// letting through post-configuration of any host options type declared in the host assembly.
+    /// </summary>
+    [Fact]
+    public void Add_ThroughTheLoadersGuard_StillJudgesByThePluginsAssembly()
+    {
+        var descriptor = new ModuleDescriptor("Weather", "Weather does things.", IsRequired: false);
+        var services = Host();
+        services.AddOptions();
+
+        var own = new GuardedPluginModule(
+            Owned(s => s.Configure<PluginSettings>(settings => settings.Address = "plugin")),
+            "Weather",
+            descriptor,
+            []);
+
+        Assert.True(PluginRegistration.Add(services, own, own.Assembly).IsSuccess);
+
+        var reaching = new GuardedPluginModule(
+            Owned(s => s.PostConfigure<PluginOptions>(options => options.Enabled = false)),
+            "Weather",
+            descriptor,
+            []);
+        var refused = PluginRegistration.Add(Host(), reaching, reaching.Assembly);
+
+        Assert.True(refused.IsFailure);
+        Assert.Equal("Plugin.Load.RegistrationReachedHostOptions", refused.Error.Code);
     }
 
     [Fact]
@@ -179,7 +230,7 @@ public sealed class PluginRegistrationTests
     {
         var services = Host();
 
-        var added = PluginRegistration.Add(
+        var added = Add(
             services, Module(_ => throw new InvalidOperationException("no")));
 
         Assert.True(added.IsFailure);
@@ -193,7 +244,7 @@ public sealed class PluginRegistrationTests
     {
         var services = Host();
 
-        var added = PluginRegistration.Add(services, Module(s => {
+        var added = Add(services, Module(s => {
             s.AddSingleton<IPluginThing, PluginThing>();
 
             throw new InvalidOperationException("no");

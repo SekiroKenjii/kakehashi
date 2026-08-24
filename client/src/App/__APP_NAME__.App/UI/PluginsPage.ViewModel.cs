@@ -205,7 +205,6 @@ public sealed partial class PluginsViewModel : ViewModel
     /// <summary>What the banner is headed, which is not a restart when a restart would do nothing.</summary>
     public string RestartTitle => PluginsDisabled ? "Waiting for plugins to be turned on" : "Restart required";
 
-
     public string RestartMessage
     {
         get {

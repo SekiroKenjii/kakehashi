@@ -207,6 +207,13 @@ public sealed class PluginPackage : IDisposable
         {
             return false;
         }
+
+        // A control character is never part of a name somebody meant, and a NUL reaches
+        // Path.GetFullPath before any filter downstream can catch what it throws.
+        if (name.Any(char.IsControl))
+        {
+            return false;
+        }
         var segments = name.Split('/');
 
         for (var i = 0; i < segments.Length; i++)
@@ -222,12 +229,19 @@ public sealed class PluginPackage : IDisposable
             {
                 return false;
             }
+
+            // Windows drops a trailing dot or space, so 'x.dll' and 'x.dll.' are one file on disk
+            // and two names here — the aliasing the uniqueness rule above exists to refuse.
+            if (segments[i].Length > 0 && segments[i][^1] is '.' or ' ')
+            {
+                return false;
+            }
         }
 
         return true;
     }
 
-    /// <summary>Unpacks into a directory that must already exist and be empty.</summary>
+    /// <summary>Unpacks into a directory, creating what each entry needs under it.</summary>
     /// <remarks>
     /// Each entry's resolved path is checked against the destination before it is written, so an
     /// entry whose name climbs out of the directory is refused rather than followed. An archive
@@ -261,8 +275,8 @@ public sealed class PluginPackage : IDisposable
             catch (Exception exception) when (exception is IOException or UnauthorizedAccessException
                 or ArgumentException or NotSupportedException)
             {
-                // A name Windows will not take — a wildcard character, a reserved device name, a
-                // NUL. Refused here rather than thrown at whoever is holding the dialog open.
+                // A name Windows will not take — a wildcard character, a reserved device name.
+                // Refused here rather than thrown at whoever is holding the dialog open.
                 return Result.Failure(PluginErrors.EntryUnwritable(entry.FullName));
             }
         }

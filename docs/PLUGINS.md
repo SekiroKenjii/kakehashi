@@ -22,11 +22,17 @@ nothing left to enforce.
 | use host `{StaticResource}` styles and `{ThemeResource}` | be unloaded without restarting |
 | be turned off and on instantly, like any module | have its screens rearranged from the Navigation screen |
 
-The refusals are not conventions, and there are three ways a registration could stop being additive.
+The refusals are not conventions, and there are four ways a registration could stop being additive.
 Removing an entry is caught against a snapshot. Registering a service type the host already provides
-is caught by name — removal is not required to substitute one, because the container resolves the
-last descriptor and a plugin registers last. Throwing is caught by a filter. Any of the three rolls
-the whole registration back and becomes a row.
+is caught by type — removal is not required to substitute one, because the container resolves the
+last descriptor and a plugin registers last. Post-configuring options the plugin does not own is
+caught separately, because the host registers no post-configuration and so nothing is being shadowed.
+Throwing is caught by a filter. Any of the four rolls the whole registration back and becomes a row.
+
+The options rule reads "its own" as *the assembly declaring the module*. A plugin that ships several
+assemblies and declares its options type in a sibling is refused by it — conservatively, and with a
+message that says the options are not its own when they are. Declare an options type in the entry
+assembly, or configure it from code rather than through the options pipeline.
 
 A page whose key collides with one this build already answers to is a load failure with the key named
 on the row, and so is a module name — attachment is keyed by name, so a plugin taking one would own
@@ -164,9 +170,10 @@ repeats what the module also declares in code.
 `callsPermission` is shown in the install prompt as **disclosure, never a gate** — see
 [ADR 0025](adr/0025-a-plugins-declared-permission-is-disclosure.md). Nothing stored client-side may
 be read as authorization; the server refuses what a plugin is not entitled to ask for, at the one
-place that sees every request. A plugin's navigation items carry no `RequiredPermission` at all,
-because a key a plugin invented is not in the server's catalogue and setting it would make the
-plugin hide its own screen.
+place that sees every request. A plugin's navigation items get no `RequiredPermission` from
+anything the host derives, because a key a plugin invented is not in the server's catalogue and
+setting one would make the plugin hide its own screen. A plugin that sets one on an item it returns
+is honoured like any other, which is a way to hide a screen and never a way to reach one.
 
 `minHostSdk` is checked **before** `Assembly.LoadFrom`, so a package built against a later host is a
 refused install rather than a `MissingMethodException` mid-navigation.

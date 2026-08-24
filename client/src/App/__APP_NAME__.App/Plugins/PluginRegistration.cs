@@ -19,17 +19,23 @@ namespace __ROOT_NAMESPACE__.App.Plugins;
 /// because post-configuration is a seam the host never registers into and so cannot be shadowing.
 /// Throwing is caught by the filter.
 /// <para>
-/// Any of the three rolls the whole registration back rather than honouring part of it. Here rather
+/// Any of the four rolls the whole registration back rather than honouring part of it. Here rather
 /// than in the composition root so it can be tested against a real collection, which is the only
 /// way to know the container agrees with what the rule assumes about it.
 /// </para>
 /// </remarks>
 public static class PluginRegistration
 {
-    public static Result Add(IServiceCollection services, IModule module)
+    /// <param name="plugin">
+    /// The assembly the plugin's code came from. An argument rather than
+    /// <c>module.GetType().Assembly</c>, because the module handed here is the loader's guard and
+    /// that would answer with the host's.
+    /// </param>
+    public static Result Add(IServiceCollection services, IModule module, Assembly plugin)
     {
         ArgumentNullException.ThrowIfNull(services);
         ArgumentNullException.ThrowIfNull(module);
+        ArgumentNullException.ThrowIfNull(plugin);
         var before = services.ToArray();
         var provided = before
             .Select(descriptor => descriptor.ServiceType)
@@ -51,7 +57,6 @@ public static class PluginRegistration
         }
 
         var added = services.Where(descriptor => !before.Contains(descriptor));
-        var plugin = module.GetType().Assembly;
 
         foreach (var descriptor in added)
         {
