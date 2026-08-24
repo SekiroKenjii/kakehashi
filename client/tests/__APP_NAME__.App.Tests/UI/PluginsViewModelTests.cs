@@ -647,4 +647,32 @@ public sealed class PluginsViewModelTests : IDisposable
             Assert.Single(showing, shown => shown);
         }
     }
+
+    /// <summary>
+    /// The band under the tab strip collapses whole when it holds nothing. A panel that is visible
+    /// but empty still contributes its margin, which is the gap this exists to remove.
+    /// </summary>
+    [Fact]
+    public void HasBanner_IsFalseOnlyWhenTheBandWouldBeEmpty()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+        viewModel.Load();
+
+        // The Installed tab always shows the stat cards.
+        Assert.True(viewModel.HasBanner);
+
+        viewModel.Tab = "Browse catalog";
+
+        Assert.False(viewModel.HasBanner);
+
+        viewModel.ErrorMessage = "Something to read.";
+
+        Assert.True(viewModel.HasError);
+        Assert.True(viewModel.HasBanner);
+
+        viewModel.ErrorMessage = string.Empty;
+
+        Assert.False(viewModel.HasBanner);
+    }
 }

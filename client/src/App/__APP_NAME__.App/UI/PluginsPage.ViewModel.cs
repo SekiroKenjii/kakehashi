@@ -189,6 +189,15 @@ public sealed partial class PluginsViewModel : ViewModel
 
     public bool HasError => ErrorMessage.Length > 0;
 
+    /// <summary>
+    /// Whether the band under the tab strip holds anything.
+    /// </summary>
+    /// <remarks>
+    /// Bound to the band's own visibility so it collapses whole. A panel that is visible but empty
+    /// still contributes its margin, which is the gap this exists to remove.
+    /// </remarks>
+    public bool HasBanner => HasError || PluginsDisabled || RestartRequired || ShowingInstalled;
+
     /// <summary>Which tab the page is showing. The strip is the only thing that sets it.</summary>
     public bool ShowingInstalled => Tab == _installedTab;
 
@@ -287,6 +296,7 @@ public sealed partial class PluginsViewModel : ViewModel
         RebuildStats();
         OnPropertyChanged(nameof(RestartRequired));
         OnPropertyChanged(nameof(RestartMessage));
+        OnPropertyChanged(nameof(HasBanner));
     }
 
     /// <summary>
@@ -420,9 +430,14 @@ public sealed partial class PluginsViewModel : ViewModel
         OnPropertyChanged(nameof(ShowingInstalled));
         OnPropertyChanged(nameof(ShowingBrowse));
         OnPropertyChanged(nameof(ShowingDevelop));
+        OnPropertyChanged(nameof(HasBanner));
     }
 
-    partial void OnErrorMessageChanged(string value) => OnPropertyChanged(nameof(HasError));
+    partial void OnErrorMessageChanged(string value)
+    {
+        OnPropertyChanged(nameof(HasError));
+        OnPropertyChanged(nameof(HasBanner));
+    }
 
     partial void OnConsentGivenChanged(bool value) => OnPropertyChanged(nameof(CanInstallPending));
 
