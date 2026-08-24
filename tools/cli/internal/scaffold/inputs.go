@@ -30,6 +30,7 @@ type Inputs struct {
 	Author        string
 	Year          string
 	Auth          string
+	PluginExt     string
 	WithExample   bool
 }
 
@@ -42,6 +43,11 @@ var (
 	rootNamespacePattern = regexp.MustCompile(`^[A-Z][A-Za-z0-9.]*$`)
 	accentPattern        = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
 	yearPattern          = regexp.MustCompile(`^[0-9]{4}$`)
+
+	// No dot: the template writes it, so an answer cannot smuggle one in and make the extension a
+	// path. Lower case because Windows compares extensions case-insensitively and two spellings of
+	// one extension is a distinction nobody can act on.
+	pluginExtPattern = regexp.MustCompile(`^[a-z][a-z0-9]{1,15}$`)
 )
 
 // placeholderPattern is what the template spells a substitution site with, and what the self-check
@@ -77,6 +83,9 @@ func (in *Inputs) Derive(now time.Time) {
 	if in.Auth == "" {
 		in.Auth = AuthInApp
 	}
+	if in.PluginExt == "" {
+		in.PluginExt = strings.ToLower(in.AppName) + "pkg"
+	}
 }
 
 // Validate checks every input against its pattern. Derive runs first: these rules are written for
@@ -93,6 +102,7 @@ func (in Inputs) Validate() error {
 		{"--root-namespace", in.RootNamespace, rootNamespacePattern},
 		{"--accent", in.Accent, accentPattern},
 		{"--year", in.Year, yearPattern},
+		{"--plugin-extension", in.PluginExt, pluginExtPattern},
 	} {
 		if err := matches(rule.flag, rule.value, rule.pattern); err != nil {
 			return err
@@ -139,6 +149,11 @@ func ValidateAccent(colour string) error { return matches("accent", colour, acce
 // ValidateTitle reports whether a value may be the display title.
 func ValidateTitle(title string) error { return freeText("display title", title) }
 
+// ValidatePluginExt reports whether a value may be the plugin package extension, without its dot.
+func ValidatePluginExt(ext string) error {
+	return matches("plugin extension", ext, pluginExtPattern)
+}
+
 // matches is one pattern rule. The label is what the caller calls the value, because a flag error
 // names a flag and a wizard names the field.
 func matches(label, value string, pattern *regexp.Regexp) error {
@@ -180,6 +195,7 @@ func (in Inputs) replacements() []replacement {
 		{"__ACCENT__", in.Accent},
 		{"__AUTHOR__", in.Author},
 		{"__YEAR__", in.Year},
+		{"__PLUGIN_EXT__", in.PluginExt},
 	}
 }
 

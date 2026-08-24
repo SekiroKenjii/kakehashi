@@ -28,7 +28,7 @@ USAGE
 
 die() { echo "rename: $*" >&2; exit 1; }
 
-app_name=""; go_module=""; app_title=""; proto_package=""; root_namespace=""
+app_name=""; go_module=""; app_title=""; proto_package=""; root_namespace=""; plugin_ext=""
 accent="#C4513C"; author=""; year=""
 
 while [ $# -gt 0 ]; do
@@ -37,6 +37,7 @@ while [ $# -gt 0 ]; do
         --go-module) go_module="${2:-}"; shift 2 ;;
         --app-title) app_title="${2:-}"; shift 2 ;;
         --proto-package) proto_package="${2:-}"; shift 2 ;;
+        --plugin-extension) plugin_ext="${2:-}"; shift 2 ;;
         --root-namespace) root_namespace="${2:-}"; shift 2 ;;
         --accent) accent="${2:-}"; shift 2 ;;
         --author) author="${2:-}"; shift 2 ;;
@@ -57,6 +58,7 @@ echo "$go_module" | grep -qE '^[a-zA-Z0-9][a-zA-Z0-9._~/-]*[a-zA-Z0-9]$' ||
     die "--go-module is not a valid module path: '$go_module'"
 
 app_name_lower=$(echo "$app_name" | tr '[:upper:]' '[:lower:]')
+: "${plugin_ext:=${app_name_lower}pkg}"
 app_name_upper=$(echo "$app_name" | tr '[:lower:]' '[:upper:]')
 : "${app_title:=$app_name}"
 : "${proto_package:=$app_name_lower}"
@@ -77,10 +79,12 @@ echo "$year" | grep -qE '^[0-9]{4}$' || die "--year must be four digits, got '$y
 placeholder_names=(
     __APP_NAME_LOWER__ __APP_NAME_UPPER__ __APP_NAME__ __APP_TITLE__
     __ROOT_NAMESPACE__ __PROTO_PACKAGE__ __GO_MODULE__ __ACCENT__ __AUTHOR__ __YEAR__
+    __PLUGIN_EXT__
 )
 placeholder_values=(
     "$app_name_lower" "$app_name_upper" "$app_name" "$app_title"
     "$root_namespace" "$proto_package" "$go_module" "$accent" "$author" "$year"
+    "$plugin_ext"
 )
 
 # sed reads | as the delimiter, & as the whole match and \ as an escape. A value carrying one of
