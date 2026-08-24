@@ -330,7 +330,7 @@ public static class PluginLoader
 
         // From here nothing asks the plugin again: what it said is what every reader is given.
         module = new GuardedPluginModule(
-            created.Value, manifest.ModuleName, described.Value, reserved.Value);
+            created.Value, manifest.ModuleName, described.Value, reserved.Value, record.Group);
 
         return Result.Success(manifest);
     }

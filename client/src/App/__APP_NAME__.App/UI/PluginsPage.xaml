@@ -238,6 +238,18 @@
                                         Orientation="Horizontal"
                                         Spacing="4"
                                         VerticalAlignment="Center">
+                                        <!--
+                                            Only an installed plugin has screens to file; a built-in
+                                            is arranged from the Navigation screen like any other.
+                                        -->
+                                        <ComboBox
+                                            AutomationProperties.Name="Pane heading"
+                                            MinWidth="150"
+                                            ItemsSource="{x:Bind Headings}"
+                                            PlaceholderText="Heading"
+                                            SelectedItem="{x:Bind Group}"
+                                            SelectionChanged="OnHeadingChanged"
+                                            Visibility="{x:Bind CanUninstall}" />
                                         <ToggleSwitch
                                             AutomationProperties.Name="Enabled"
                                             IsEnabled="{x:Bind CanToggle}"

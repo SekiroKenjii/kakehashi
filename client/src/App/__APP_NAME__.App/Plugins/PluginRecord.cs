@@ -56,6 +56,16 @@ public sealed record PluginRecord
     /// </remarks>
     public bool ConsentGiven { get; set; }
 
+    /// <summary>
+    /// The pane heading this plugin's screens sit under, chosen on this machine.
+    /// </summary>
+    /// <remarks>
+    /// Empty means whatever the module itself said. It is stored here rather than arranged by the
+    /// deployment because a plugin is installed on one machine and the deployment has no row for
+    /// it — a heading it cannot see is not one it can be asked to arrange.
+    /// </remarks>
+    public string Group { get; set; } = string.Empty;
+
     public long SizeInBytes { get; set; }
 
     public DateTimeOffset InstalledOn { get; set; }
