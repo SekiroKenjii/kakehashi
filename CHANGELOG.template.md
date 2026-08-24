@@ -14,6 +14,69 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
+## template/v1.2.0 — 2026-08-24
+
+| | |
+| --- | --- |
+| Requires CLI | `>=1.0.0 <2.0.0` — unchanged |
+
+### Added
+
+- **Plugins.** A module built somewhere else, packaged as a `.plugin` file and installed into a
+  running project, becomes a first-class part of it — its services registered in the same
+  container, its screens in the same navigation pane, its row on the same screen as the compiled-in
+  modules. A new **Plugins** screen manages all of it: what this composition is made of, install
+  from a file, browse the catalog the deployment serves, and a Develop tab that scaffolds a plugin
+  project which builds without being edited first.
+
+  Installing takes effect at the next launch and removing happens at the start of one. That is the
+  shape of the feature rather than a defect in it: `RegisterServices` takes an `IServiceCollection`,
+  and that collection stops accepting registrations before any window exists. `docs/PLUGINS.md` is
+  the whole of it — what a plugin can and cannot do, what Verified means, and what the loader
+  refuses.
+
+- **A plugin's compiled XAML resolves**, which is the part the Windows App SDK does not offer.
+  Full XAML, `x:Bind`, code-behind, the host's own styles and a plugin's own declared types all
+  work, through a resource fallback and a metadata-provider bridge this template owns — no
+  third-party package, no native hooking (ADR 0024). A plugin's own `.resw` strings are the one
+  gap, and it is stated rather than discovered.
+
+- **A server-side catalog.** A new `plugins` Go module publishes, lists and serves plugin
+  artifacts, streamed over the contract in chunks rather than from a static route this server has
+  never had (ADR 0026). Installing from it reaches the activity feed as its own kind, and a
+  sideload reaches it as a louder one — without widening `activityapi.CanReport`, because the
+  event travels on the bus from a module that checked its own catalog first.
+
+- **`__APP_NAME__.PluginTool`**, a `PackAsTool` CLI a plugin author's build server can install:
+  `scaffold`, `validate` and `pack`, over the same library the application runs, so an author and a
+  user's installation cannot be told different things. CI scaffolds a plugin against the host it
+  just built and compiles it, both with and without a sample page.
+
+- **Authenticode verification** in `__APP_NAME__.Interoperability`: the trust provider's verdict
+  and the signer's subject and public key, through CsWin32. Verified means signed with the same key
+  as the running executable — the subject and a digest of the key both have to match, because a
+  subject alone is a string any authority the machine trusts can issue.
+
+### Fixed
+
+- Choosing the project's accent changed nothing. `AccentService` wrote the accent family into
+  application resources after the shell had already drawn, and WinUI binds its accent brushes the
+  first time a window draws — so all seven writes landed where nothing would read them again. The
+  Windows branch was the same mistake inverted, removing keys that had never been there. The write
+  now happens in its own orchestrator ahead of the splash, and Windows becomes a source like any
+  other rather than a fallback.
+
+- The activity feed's "open the account screen" action never worked. It navigated to `AccountPage`
+  while the navigation service registers the key it derives by dropping the suffix, which is
+  `Account`.
+
+### Changed
+
+- The startup order lives in one file. Adding an orchestrator meant opening every other one to find
+  out which numbers were taken, and the only list was prose in ADR 0010 that went stale the moment a
+  step was added. Each constant now carries the invariant that pins it, and the ADR names its
+  anchors rather than restating the values.
+
 ## template/v1.1.1 — 2026-08-19
 
 | | |

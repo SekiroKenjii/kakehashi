@@ -1,13 +1,19 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using __ROOT_NAMESPACE__.App.Composition;
 using __ROOT_NAMESPACE__.App.Core;
 using __ROOT_NAMESPACE__.App.Hosting.Orchestration;
 using __ROOT_NAMESPACE__.App.Infrastructure.DependencyInjection;
 using __ROOT_NAMESPACE__.App.Infrastructure.Observability;
+using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.App.Services.Platform;
 using __ROOT_NAMESPACE__.App.UI;
+using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
+using __ROOT_NAMESPACE__.PluginSdk.Xaml;
+using __ROOT_NAMESPACE__.SharedKernel;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using __ROOT_NAMESPACE__.UI.Contracts.Services;
 using __ROOT_NAMESPACE__.UI.Contracts.Services.Platform;
@@ -19,6 +25,7 @@ using Microsoft.Extensions.Logging;
 using AccountV1 = __ROOT_NAMESPACE__.Account.V1;
 using AuthzV1 = __ROOT_NAMESPACE__.Authz.V1;
 using NavigationV1 = __ROOT_NAMESPACE__.Navigation.V1;
+using PluginsV1 = __ROOT_NAMESPACE__.Plugins.V1;
 
 namespace __ROOT_NAMESPACE__.App.Hosting;
 
@@ -29,8 +36,9 @@ namespace __ROOT_NAMESPACE__.App.Hosting;
 /// </summary>
 internal static class AppHost
 {
-    public static IHost Build()
+    public static IHost Build(PluginXamlHost pluginXaml)
     {
+        ArgumentNullException.ThrowIfNull(pluginXaml);
         var builder = Host.CreateApplicationBuilder();
 
         builder.Configuration.AddJsonFile(
@@ -60,7 +68,7 @@ internal static class AppHost
         AddPlatformServices(builder.Services);
         AddViewsAndViewModels(builder.Services);
         AddOrchestrators(builder.Services);
-        AddModules(builder.Services);
+        AddModules(builder.Services, LoadPlugins(builder, pluginXaml));
 
         return builder.Build();
     }
@@ -100,6 +108,20 @@ internal static class AppHost
         services.AddSingleton<IDialogService, DialogService>();
         services.AddSingleton<IClipboardService, ClipboardService>();
         services.AddSingleton<IFileSaveService, FileSaveService>();
+        services.AddSingleton<IFileOpenService, FileOpenService>();
+
+        // A generated project references the assemblies beside this executable, so it compiles
+        // against exactly the ones it will be loaded next to.
+        services.AddSingleton(_ => new PluginScaffolder(AppContext.BaseDirectory));
+
+        // The catalog client is the host's too: it feeds the screen that governs every module.
+        services.AddBackendGrpcClient<PluginsV1.PluginService.PluginServiceClient>();
+        services.AddSingleton<IPluginCatalogService, PluginCatalogService>();
+
+        // A build that cannot vouch for itself vouches for nothing: every package is then
+        // unofficial, and every install is asked about.
+        services.AddSingleton(_ => new PluginInstaller(
+            PluginPaths.Default, PluginTrust.PublisherOf(Environment.ProcessPath ?? string.Empty)));
         services.AddSingleton<INotificationService, NotificationService>();
         services.AddSingleton<IMainWindowProvider, MainWindowProvider>();
         services.AddSingleton<IShellOverlay, ShellOverlayService>();
@@ -122,6 +144,7 @@ internal static class AppHost
         services.AddTransient<NavigationLayoutViewModel>();
         services.AddTransient<NavigationLayoutPage>();
         services.AddTransient<UsersPage>();
+        services.AddTransient<PluginsPage>();
 
         services.AddTransient<ShellViewModel>();
         services.AddTransient<SplashViewModel>();
@@ -129,12 +152,14 @@ internal static class AppHost
         services.AddTransient<SettingsViewModel>();
         services.AddTransient<RolePermissionsViewModel>();
         services.AddTransient<UsersViewModel>();
+        services.AddTransient<PluginsViewModel>();
     }
 
     private static void AddOrchestrators(IServiceCollection services)
     {
         services.AddSingleton<StartupContext>();
         services.AddSingleton<AppOrchestrator>();
+        services.AddSingleton<IStartupOrchestrator, AccentOrchestrator>();
         services.AddSingleton<IStartupOrchestrator, SplashOrchestrator>();
         services.AddSingleton<IStartupOrchestrator, AuthenticationOrchestrator>();
         services.AddSingleton<IStartupOrchestrator, PermissionOrchestrator>();
@@ -143,12 +168,59 @@ internal static class AppHost
         services.AddSingleton<IStartupOrchestrator, ActivationOrchestrator>();
     }
 
-    private static void AddModules(IServiceCollection services)
+    private static void AddModules(IServiceCollection services, PluginLoadResult plugins)
     {
         foreach (var module in ModuleCatalog.Modules)
         {
             services.AddSingleton(module);
             module.RegisterServices(services);
         }
+        services.AddSingleton(plugins.Catalog);
+
+        foreach (var plugin in plugins.Modules)
+        {
+            var registered = PluginRegistration.Add(services, plugin.Module, plugin.Module.Assembly);
+
+            if (registered.IsFailure)
+            {
+                // Filed under the plugin id, which is what the state file is keyed by — a row filed
+                // under the module name is one the Remove button cannot find.
+                plugins.Catalog.AddFault(plugin.PluginID, string.Empty, registered.Error);
+
+                continue;
+            }
+            services.AddSingleton<IModule>(plugin.Module);
+            plugins.Catalog.Add(plugin.Loaded);
+        }
+    }
+
+    /// <summary>
+    /// Brings installed plugins into this composition, or none when the deployment turned them off.
+    /// </summary>
+    /// <remarks>
+    /// Here rather than later because a module's services have to be registered while the
+    /// collection is still open, which is also why installing one takes effect at the next launch.
+    /// </remarks>
+    private static PluginLoadResult LoadPlugins(
+        HostApplicationBuilder builder, PluginXamlHost pluginXaml)
+    {
+        var options = new PluginOptions();
+        builder.Configuration
+            .GetSection(PluginOptions.SectionName)
+            .Bind(options);
+
+        if (!options.Enabled)
+        {
+            return new PluginLoadResult([], new PluginCatalog { Disabled = true });
+        }
+        var declared = ModuleCatalog.Modules
+            .SelectMany(module => module.GetNavigationItems())
+            .Concat(HostNavigation.Items);
+        var reserved = PluginLoader.PageKeysOf(declared, HostNavigation.ShellPages);
+        var names = ModuleCatalog.Modules
+            .Select(module => module.Name)
+            .ToArray();
+
+        return PluginLoader.LoadAll(PluginPaths.Default, pluginXaml, reserved, names);
     }
 }

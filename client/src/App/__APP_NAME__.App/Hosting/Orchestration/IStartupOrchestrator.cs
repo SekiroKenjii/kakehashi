@@ -9,7 +9,10 @@ namespace __ROOT_NAMESPACE__.App.Hosting.Orchestration;
 /// </summary>
 public interface IStartupOrchestrator
 {
-    /// <summary>Relative execution order; lower values run first.</summary>
+    /// <summary>
+    /// Relative execution order; lower values run first. Every value lives in
+    /// <see cref="StartupOrder"/>, never as a literal here.
+    /// </summary>
     int Order { get; }
 
     /// <summary>Name used for logging and diagnostics.</summary>

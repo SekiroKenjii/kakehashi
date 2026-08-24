@@ -31,6 +31,7 @@ import (
 	"__GO_MODULE__/server/internal/modules/authz"
 	"__GO_MODULE__/server/internal/modules/health"
 	"__GO_MODULE__/server/internal/modules/navigation"
+	"__GO_MODULE__/server/internal/modules/plugins"
 	// kakehashi:unit-notes:begin
 	"__GO_MODULE__/server/internal/modules/notes"
 	// kakehashi:unit-notes:end
@@ -112,6 +113,7 @@ func modules() []app.Module {
 		// kakehashi:unit-activity:end
 		authz.New(),
 		navigation.New(),
+		plugins.New(),
 		// kakehashi:module-registrations:end
 	}
 }

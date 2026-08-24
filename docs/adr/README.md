@@ -1,9 +1,27 @@
 # Architecture Decision Records
 
-One decision per file: Context → Decision → Consequences, 10–25 lines. Past tense belongs here —
-an ADR is where a comment's history goes when the comment becomes present-tense fact, per
+One decision per file: Context → Decision → Consequences. Past tense belongs here — an ADR is where
+a comment's history goes when the comment becomes present-tense fact, per
 [docs/COMMENTS.md](../COMMENTS.md). Records are immutable once accepted; a reversal is a new record
 that supersedes the old one.
+
+**The shape of a new one**, which is what 0021 onwards do — an em dash after the number, and no
+`Date:` or `Status:` line, because git records both:
+
+```markdown
+# 0028 — The decision, as a sentence in the present tense
+
+## Context
+## Decision
+## Consequences
+```
+
+Around thirty lines, and up to seventy where the alternatives were worth rejecting in writing. The
+shortest record here is 29 and the longest is 72; the number is descriptive rather than a target,
+and one that fits in ten lines is usually a comment.
+
+0001–0020 carry `# 0001. Title` — a full stop after the number — with `Date:` and `Status:` lines
+under it. That is the older form, kept because a record is immutable, and it is not the one to copy.
 
 | # | Decision |
 | --- | --- |
@@ -29,3 +47,8 @@ that supersedes the old one.
 | [0020](0020-no-second-example-module.md) | No second example module; Notes already touches the event bus |
 | [0021](0021-upgrade-is-a-three-way-merge.md) | `upgrade` reconstructs both versions and patches the difference |
 | [0022](0022-cli-tags-carry-the-module-path.md) | The CLI's tags carry its module path, so `go install` can read them |
+| [0023](0023-plugins-load-at-startup.md) | Plugins load during host construction, and the disk settles before they do |
+| [0024](0024-plugin-xaml-resolves-through-a-runtime-loaded-pri.md) | Plugin XAML resolves through a runtime-loaded PRI and a metadata bridge we own |
+| [0025](0025-a-plugins-declared-permission-is-disclosure.md) | A plugin's declared permission is disclosure, not a gate |
+| [0026](0026-plugin-artifacts-stream-over-the-contract.md) | Plugin artifacts stream over the contract, not from a static route |
+| [0027](0027-an-install-is-reported-through-the-module-that-published-it.md) | An install is reported through the module that published it |

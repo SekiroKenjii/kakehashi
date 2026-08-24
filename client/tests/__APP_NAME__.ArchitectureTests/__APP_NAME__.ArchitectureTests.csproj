@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Shared\__APP_NAME__.SharedKernel\__APP_NAME__.SharedKernel.csproj" />
+    <ProjectReference Include="..\..\src\Shared\__APP_NAME__.PluginSdk.Abstractions\__APP_NAME__.PluginSdk.Abstractions.csproj" />
     <!-- kakehashi:module-projects:begin -->
     <ProjectReference Include="..\..\src\Modules\Auth\__APP_NAME__.Modules.Auth.Domain\__APP_NAME__.Modules.Auth.Domain.csproj" />
     <ProjectReference Include="..\..\src\Modules\Auth\__APP_NAME__.Modules.Auth.Application\__APP_NAME__.Modules.Auth.Application.csproj" />

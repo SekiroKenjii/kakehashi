@@ -1,0 +1,30 @@
+using System.Collections.Generic;
+using __ROOT_NAMESPACE__.UI.Contracts;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace {{RootNamespace}};
+
+/// <summary>The {{DisplayName}} module.</summary>
+/// <remarks>
+/// Scaffolded without a screen, so it contributes services and nothing to the navigation pane. A
+/// page added later needs three things: the type, its view model registered below, and an entry
+/// returned from <see cref="GetNavigationItems"/> whose type name ends in "Page".
+/// </remarks>
+public sealed class {{Module}}Module : IModule
+{
+    /// <summary>The name the host keys attachment by. It matches the manifest.</summary>
+    public string Name => "{{Module}}";
+
+    public ModuleDescriptor Descriptor => new(
+        "{{DisplayName}}",
+        "Describe what this module is for.",
+        IsRequired: false);
+
+    public void RegisterServices(IServiceCollection services)
+    {
+        // Additive only. Removing or replacing what the host registered is refused at load, and so
+        // is registering a service type the host already provides.
+    }
+
+    public IReadOnlyList<NavigationItem> GetNavigationItems() => [];
+}

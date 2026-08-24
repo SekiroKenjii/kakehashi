@@ -1,0 +1,20 @@
+using CommunityToolkit.Mvvm.ComponentModel;
+using __ROOT_NAMESPACE__.UI.Contracts;
+
+namespace {{RootNamespace}}.ViewModels;
+
+/// <summary>What the {{DisplayName}} page shows.</summary>
+public sealed partial class {{Module}}PageViewModel : ViewModel
+{
+    /// <summary>
+    /// A partial property rather than a field: the toolkit's generator needs one to produce the
+    /// WinRT marshalling code, and a field fails the build in a project that ships into a XAML app.
+    /// </summary>
+    [ObservableProperty]
+    public partial string Headline { get; set; }
+
+    public {{Module}}PageViewModel()
+    {
+        Headline = "{{DisplayName}} is loaded from a plugin.";
+    }
+}

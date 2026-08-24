@@ -51,7 +51,7 @@ public sealed partial class AppOrchestrator
             activity?.AddTag("orchestrator.name", orchestrator.Name);
             LogRunningOrchestrator(orchestrator.Name);
 
-            // The splash is created by the first orchestrator, so earlier steps have nowhere to report.
+            // The splash is created partway through, so the steps before it have nowhere to report.
             _context.Splash?.ViewModel.ReportProgress(
                 index + 1, _orchestrators.Count, orchestrator.Description);
 

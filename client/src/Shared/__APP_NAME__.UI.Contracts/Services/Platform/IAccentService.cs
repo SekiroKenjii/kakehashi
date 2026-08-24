@@ -30,7 +30,7 @@ public interface IAccentService : IUiContractService, ISingletonDependency
     /// <summary>Emits the new source whenever it changes.</summary>
     IObservable<AccentSource> OnAccentChanged { get; }
 
-    /// <summary>Loads the persisted choice and applies it. Call once, after the main window exists.</summary>
+    /// <summary>Loads the persisted choice and applies it. Call once, before the first window exists.</summary>
     void Initialize();
 
     /// <summary>Applies and persists the given source.</summary>

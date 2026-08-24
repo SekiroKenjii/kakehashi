@@ -15,10 +15,20 @@ attach its own modules.
 
 - **Attach** = make a *compiled-in* module part of the user's composition: nav-rail item(s),
   Home tile, navigable pages. **Detach** = remove it from that composition.
-- All modules stay compiled into the app and keep their services registered at startup.
+- ~~All modules stay compiled into the app and keep their services registered at startup.
   Attachment is a **runtime composition state**, not assembly loading. True plugin loading
   (external DLLs at runtime) is explicitly out of scope: WinUI XBF/PRI resource resolution for
-  foreign assemblies is fragile, and the architecture tests could not see runtime references.
+  foreign assemblies is fragile, and the architecture tests could not see runtime references.~~
+  **Superseded** by the plugin system — see [docs/PLUGINS.md](../../docs/PLUGINS.md). A module
+  built elsewhere can now join the composition, and attachment works on it unchanged.
+
+  The two reasons above did not age the same way. The XBF/PRI one is **answered**: the host resolves
+  a plugin's compiled XAML through its own resource index and a metadata bridge, from public Windows
+  App SDK API — [ADR 0024](../../docs/adr/0024-plugin-xaml-resolves-through-a-bridge-we-own.md). The
+  other is **still true and unchanged**: no reflection-over-assemblies test can constrain a DLL that
+  is not in the solution. That is exactly why the packaging tool's `validate` exists, and why the
+  loader re-checks the cheap half of it — a page key that collides is refused, and a
+  `RegisterServices` that removes anything is rolled back against a snapshot.
 - The Auth module is **required** (the startup sign-in gate depends on it) and is never
   detachable. The Settings page is host chrome, not a module — no `x`.
 

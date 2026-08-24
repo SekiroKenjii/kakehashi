@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.UI.Contracts;
@@ -16,7 +17,18 @@ namespace __ROOT_NAMESPACE__.App.UI;
 public static class HostNavigation
 {
     /// <summary>
-    /// Home is not here: it is the one fixed destination, and the shell owns it.
+    /// The two screens the shell registers itself, which have no pane item of their own.
+    /// </summary>
+    /// <remarks>
+    /// Home is the one fixed destination and Settings is chrome, so neither is in <see cref="Items"/>
+    /// — but both answer to a navigation key, so a plugin may not claim one. The shell and the
+    /// plugin loader read this list rather than each spelling the pair.
+    /// </remarks>
+    public static IReadOnlyList<Type> ShellPages { get; } = [typeof(HomePage), typeof(SettingsPage)];
+
+    /// <summary>
+    /// The host's own pane destinations. Home is not here: it is the one fixed destination, and the
+    /// shell owns it.
     /// </summary>
     /// <remarks>
     /// Each names the destination the deployment files it under, so where these screens sit — and
@@ -38,6 +50,11 @@ public static class HostNavigation
             Id = "navigation.layout",
             Group = "Administration",
             RequiredPermission = PermissionKeys.ManageNavigation,
+        },
+        new NavigationItem("Plugins", "", typeof(PluginsPage)) {
+            Id = "plugins.library",
+            Group = "Administration",
+            RequiredPermission = PermissionKeys.ManagePlugins,
         },
     ];
 }

@@ -68,6 +68,10 @@
       <Platform Solution="*|x64" Project="x64" />
     </Project>
     <Project Path="src/Shared/__APP_NAME__.Mediator/__APP_NAME__.Mediator.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.PluginSdk.Abstractions/__APP_NAME__.PluginSdk.Abstractions.csproj" />
+    <Project Path="src/Shared/__APP_NAME__.PluginSdk.Xaml/__APP_NAME__.PluginSdk.Xaml.csproj">
+      <Platform Solution="*|x64" Project="x64" />
+    </Project>
     <Project Path="src/Shared/__APP_NAME__.SharedKernel/__APP_NAME__.SharedKernel.csproj" />
     <Project Path="src/Shared/__APP_NAME__.UI.Common/__APP_NAME__.UI.Common.csproj">
       <Platform Solution="*|x64" Project="x64" />
@@ -79,6 +83,7 @@
   <Folder Name="/tools/">
     <Project Path="tools/__APP_NAME__.Analyzers/__APP_NAME__.Analyzers.csproj" />
     <Project Path="tools/__APP_NAME__.Analyzers.CodeFixes/__APP_NAME__.Analyzers.CodeFixes.csproj" />
+    <Project Path="tools/__APP_NAME__.PluginTool/__APP_NAME__.PluginTool.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/__APP_NAME__.Analyzers.Tests/__APP_NAME__.Analyzers.Tests.csproj" />
@@ -88,6 +93,7 @@
     </Project>
     <Project Path="tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj" />
     <Project Path="tests/__APP_NAME__.Mediator.Tests/__APP_NAME__.Mediator.Tests.csproj" />
+    <Project Path="tests/__APP_NAME__.PluginSdk.Abstractions.Tests/__APP_NAME__.PluginSdk.Abstractions.Tests.csproj" />
     <!-- kakehashi:module-test-projects:begin -->
     <Project Path="tests/__APP_NAME__.Modules.Auth.Application.Tests/__APP_NAME__.Modules.Auth.Application.Tests.csproj" />
     <Project Path="tests/__APP_NAME__.Modules.Auth.Domain.Tests/__APP_NAME__.Modules.Auth.Domain.Tests.csproj" />

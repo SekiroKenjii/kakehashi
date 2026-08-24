@@ -37,14 +37,28 @@ function Elements {
 }
 
 # Every element on the page, including the Text runs that inspect -i hides.
+#
+# From the JSON tree rather than the printed one, and the difference is not cosmetic. The printed
+# form carries SGR escapes between the type and the name — which the obvious regex reads straight
+# past — and truncates a long name at the console width with no closing quote. Either one turns an
+# element into a nameless row, and a nameless row is indistinguishable from a control that is
+# genuinely unnamed. The JSON is nested rather than flat, hence the walk.
 function AllOf {
-    (winapp ui inspect -w $hwnd -d 24 2>$null) -split "`r?`n" | ForEach-Object {
-        if ($_ -match '^\s*(\S+)\s+(\w+)\s+"([^"]*)"') {
-            [pscustomobject]@{ selector = $Matches[1]; type = $Matches[2]; name = $Matches[3] }
-        } elseif ($_ -match '^\s*(\S+)\s+(\w+)\s') {
-            [pscustomobject]@{ selector = $Matches[1]; type = $Matches[2]; name = '' }
-        }
+    $j = winapp ui inspect -w $hwnd -d 24 --json 2>$null | ConvertFrom-Json
+    if (-not $j.windows) { return @() }
+    $out = [System.Collections.Generic.List[object]]::new()
+    $stack = [System.Collections.Generic.Stack[object]]::new()
+    foreach ($e in $j.windows[0].elements) { $stack.Push($e) }
+    while ($stack.Count) {
+        $e = $stack.Pop()
+        $out.Add([pscustomobject]@{
+            selector = $e.selector; type = $e.type; name = $e.name
+            x = $e.x; y = $e.y; width = $e.width; height = $e.height
+            offscreen = $e.isOffscreen
+        })
+        if ($e.children) { foreach ($c in $e.children) { $stack.Push($c) } }
     }
+    $out
 }
 
 function Find1 {
@@ -145,8 +159,8 @@ function Section([string]$t) { Write-Host "`n== $t" -ForegroundColor Cyan }
 Section 'Shell and navigation'
 
 $items = PaneItems
-Assert-That 'the pane was built from the server layout' ($items.Count -ge 7) ($items -join ', ')
-foreach ($expected in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Settings')) {
+Assert-That 'the pane was built from the server layout' ($items.Count -ge 8) ($items -join ', ')
+foreach ($expected in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     Assert-That "the pane offers $expected" ($items -contains $expected) ($items -join ', ')
 }
 Assert-That 'the account footer item has an accessible name' (-not ($items -contains 'NavigationViewItem')) `
@@ -157,7 +171,7 @@ Start-Sleep 1
 Test-UI 'the pane expands again' { winapp ui invoke 'PART_PaneToggleButton' -w $hwnd }
 Start-Sleep 1
 
-foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Settings')) {
+foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     Assert-That "$page opens" (GoTo $page) 'nav item not found or not invokable'
 }
 Shot '30-settings'
@@ -426,12 +440,57 @@ if ($footer.Count) {
     Shot '80-account-flyout'
 }
 
+# ─────────────────────────────────────────────────────────────── plugins
+
+Section 'Plugins'
+
+Assert-That 'Plugins opens' (GoTo 'Plugins') ''
+Shot '90-plugins'
+
+# The one assertion on this page about wording rather than structure, and it is here because a
+# disclaimer nobody renders is a disclaimer nobody read.
+$footer = @(AllOf | Where-Object { $_.name -like '*same privileges as*' })
+Assert-That 'the page states what a plugin runs with' ($footer.Count -ge 1) `
+    'no text naming the privileges a plugin runs with'
+
+foreach ($tab in @('Installed', 'Browse catalog', 'Develop')) {
+    Assert-That "the tab strip offers $tab" ($null -ne (Find1 -Name $tab)) 'not found'
+}
+
+$cards = @(AllOf | Where-Object { $_.name -in @('Modules', 'Waiting', 'Unofficial', 'Host SDK') })
+Assert-That 'the summary cards count what this composition is made of' ($cards.Count -ge 3) `
+    "$($cards.Count) of 4 cards found"
+
+Assert-That 'installing from a file is offered' `
+    ($null -ne (Find1 -Name 'Install from file' -Type 'Button')) 'button not found'
+
+$develop = Find1 -Name 'Develop'
+if ($develop) {
+    Test-UI 'the Develop tab opens' { winapp ui invoke $develop -w $hwnd }
+    Start-Sleep 2
+    foreach ($b in @('Create project', 'Check', 'Pack')) {
+        Assert-That "Develop offers $b" ($null -ne (Find1 -Name $b -Type 'Button')) 'not found'
+    }
+
+    # Offered is not the same as reachable. UIA finds a control that has been scrolled off the
+    # bottom of a column, and reports it at 0x0 - which is the one thing an assertion about its
+    # existence cannot tell you and a person notices immediately.
+    $buried = @(AllOf | Where-Object { $_.name -in @('Create project', 'Check', 'Pack') -and $_.offscreen })
+    Assert-That 'every action on Develop is on screen without scrolling' ($buried.Count -eq 0) `
+        "offscreen: $(($buried | ForEach-Object { $_.name }) -join ', ')"
+    Shot '91-plugins-develop'
+}
+
+# No plugin is installed here. A binary fixture does not belong in a template, and building one
+# inside a UI test would tie it to a toolchain and a host build path; docs/PLUGINS.md carries the
+# manual pass that covers loading one instead.
+
 # ─────────────────────────────────────────────────────────────── accessibility sweep
 
 Section 'Accessibility sweep across every page'
 
 $unnamed = @()
-foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Settings')) {
+foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     if (-not (GoTo $page)) { continue }
     $bad = @(Elements -Interactive | Where-Object {
         $_.type -in @('Button', 'Edit', 'ComboBox', 'CheckBox') -and -not $_.name -and -not $_.automationId

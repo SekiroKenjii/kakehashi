@@ -70,6 +70,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `docs/COMMENTS.md` | CORE | |
 | `docs/CONTRACTS.md` | CORE | |
 | `docs/NAVIGATION.md` | CORE | |
+| `docs/PLUGINS.md` | CORE | |
 | `docs/RBAC.md` | CORE | the mechanism. The seeded roles it describes belong to unit `admin-ui` |
 | `docs/adr/` | CORE | |
 | `docs/adr/0016-one-example-module-in-the-template.md` | CORE | template repo only — D1 |
@@ -89,6 +90,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `proto/__PROTO_PACKAGE__/authz/v1/` | CORE | |
 | `proto/__PROTO_PACKAGE__/health/v1/` | CORE | |
 | `proto/__PROTO_PACKAGE__/navigation/v1/` | CORE | |
+| `proto/__PROTO_PACKAGE__/plugins/v1/` | CORE | |
 | `proto/__PROTO_PACKAGE__/notes/v1/` | EXAMPLE | unit `notes` |
 
 ### server/
@@ -109,12 +111,14 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `server/internal/gen/__PROTO_PACKAGE__/authz/v1/` | CORE | |
 | `server/internal/gen/__PROTO_PACKAGE__/health/v1/` | CORE | |
 | `server/internal/gen/__PROTO_PACKAGE__/navigation/v1/` | CORE | |
+| `server/internal/gen/__PROTO_PACKAGE__/plugins/v1/` | CORE | generated |
 | `server/internal/gen/__PROTO_PACKAGE__/notes/v1/` | EXAMPLE | unit `notes` |
 | `server/internal/modules/account/` | CORE | the OpenID Connect provider — D2 |
 | `server/internal/modules/activity/` | EXAMPLE | unit `activity` |
 | `server/internal/modules/authz/` | CORE | the permission mechanism — D2 |
 | `server/internal/modules/health/` | CORE | |
 | `server/internal/modules/navigation/` | CORE | four modules implement its `Contributor` contract — D3 |
+| `server/internal/modules/plugins/` | CORE | the plugin catalog and its artifacts |
 | `server/internal/modules/notes/` | EXAMPLE | unit `notes` |
 | `server/internal/platform/` | CORE | |
 | `server/tools/archlint/` | CORE | gate 1. Its fixtures name `notes`; Phase 1 makes them synthetic |
@@ -147,6 +151,9 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/docs/mockups/home-page-mockup.html` | CORE | |
 | `client/docs/mockups/navigation-management-mockup.html` | EXAMPLE | unit `admin-ui` |
 | `client/docs/mockups/permission-management.html` | EXAMPLE | unit `admin-ui` |
+| `client/docs/mockups/plugin-develop-mockup.html` | CORE | |
+| `client/docs/mockups/plugin-install-dialog-mockup.html` | CORE | |
+| `client/docs/mockups/plugin-manager-mockup.html` | CORE | |
 | `client/docs/mockups/profile-flyout-mockup.html` | CORE | |
 | `client/docs/mockups/sign-in-ui-mockup.html` | CORE | |
 | `client/docs/mockups/splash-screen-ui-mockup.html` | CORE | |
@@ -201,6 +208,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/tests/__APP_NAME__.ArchitectureTests/__APP_NAME__.ArchitectureTests.csproj` | CORE (M) | marker: `module-projects` |
 | `client/tests/__APP_NAME__.ArchitectureTests/NotesLayeringTests.cs` | EXAMPLE | unit `notes` |
 | `client/tests/__APP_NAME__.Mediator.Tests/` | CORE | |
+| `client/tests/__APP_NAME__.PluginSdk.Abstractions.Tests/` | CORE | |
 | `client/tests/__APP_NAME__.Modules.Activity.Application.Tests/` | EXAMPLE | unit `activity` |
 | `client/tests/__APP_NAME__.Modules.Activity.UI.Tests/` | EXAMPLE | unit `activity` |
 | `client/tests/__APP_NAME__.Modules.Auth.Application.Tests/` | CORE | |
@@ -213,6 +221,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/tests/__APP_NAME__.Modules.Notes.UI.Tests/` | EXAMPLE | unit `notes` |
 | `client/tools/__APP_NAME__.Analyzers/` | CORE | |
 | `client/tools/__APP_NAME__.Analyzers.CodeFixes/` | CORE | |
+| `client/tools/__APP_NAME__.PluginTool/` | CORE | |
 
 ## Not copied into a scaffolded project
 
@@ -220,18 +229,46 @@ CORE to this repository, absent from what `kakehashi new` writes:
 
 ```text
 docs/BOILERPLATE.md
-docs/pivot/
-docs/brand/
-docs/adr/0016-…  through  docs/adr/0020-…
-templates/README.scaffold.md   (moved to README.md)
-tools/inventory/
-tools/rename/
-tools/units/
+docs/RELEASING.md
+docs/pivot
+docs/brand
+docs/adr/0016-one-example-module-in-the-template.md
+docs/adr/0017-oidc-provider-is-core.md
+docs/adr/0018-database-driven-navigation-stays.md
+docs/adr/0019-cli-lives-in-the-monorepo.md
+docs/adr/0020-no-second-example-module.md
+docs/adr/0022-cli-tags-carry-the-module-path.md
+tools/cli
+tools/inventory
+tools/rename
+tools/units
+packaging
+templates/template.json
+CHANGELOG.template.md
+CHANGELOG.cli.md
+.github/ISSUE_TEMPLATE
 .github/workflows/scaffold-smoke.yml
+.github/workflows/release-template.yml
+.github/workflows/release-cli.yml
 ```
 
-`tools/rename/rename.sh` deletes exactly this list, and its self-check fails if anything it left
-behind still names the template.
+Three files are moved rather than dropped, so the scaffolded project gets the version written for it
+rather than the one written about the template:
+
+```text
+templates/README.scaffold.md  ->  README.md
+templates/CLAUDE.scaffold.md  ->  CLAUDE.md
+templates/LICENSE.scaffold  ->  LICENSE
+```
+
+**`templates/template.json` is the authority.** Its `exclude` array is what the CLI reads, what
+`release-template.yml` trims the release asset with, and what `tools/rename/rename.sh` restates for
+anyone who arrived through "Use this template" — the script deletes itself last, which is why
+`tools/rename` is in that array and not in the script's own loop. All three have to agree, and a
+list that drifts here is one this document is wrong about rather than one the scaffold gets wrong.
+After any of them changes, regenerate this block from `exclude` rather than editing it by hand.
+
+The self-check runs afterwards and fails if anything left behind still names the template.
 
 Everything else marked IDENTITY is dropped or neutralised rather than merely skipped.
 

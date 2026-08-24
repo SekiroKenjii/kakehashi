@@ -26,7 +26,7 @@ breaking it, or a technical reason that cannot be read off the code. Nothing els
 
 4. **Long comments are misplaced documents.** A block over ~6 lines is architecture documentation
    wearing a comment costume. Move it to `docs/` or `docs/adr/NNNN-<slug>.md`
-   (Context → Decision → Consequences, 10–20 lines) and leave one sentence plus the link.
+   (Context → Decision → Consequences) and leave one sentence plus the link.
 
    **Beside a statement the limit is two lines, and CI enforces it.** Three lines of prose in a
    logic flow is a paragraph, and a paragraph interrupts the code it is meant to explain. This

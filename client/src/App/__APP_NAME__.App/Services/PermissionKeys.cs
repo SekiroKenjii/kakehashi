@@ -25,6 +25,16 @@ public static class PermissionKeys
     public const string ViewAudit = "audit.view";
 
     /// <summary>
+    /// Guards the Plugins screen. Declared by the server's plugins module.
+    /// </summary>
+    /// <remarks>
+    /// The same key that guards publishing, because the screen is where somebody decides what a
+    /// fleet of machines will run — a narrower one for reading would be a distinction without a
+    /// difference.
+    /// </remarks>
+    public const string ManagePlugins = "plugins.manage";
+
+    /// <summary>
     /// Guards the Navigation screen. Declared by the server's navigation module.
     /// </summary>
     /// <remarks>

@@ -18,7 +18,7 @@ public sealed class SplashOrchestrator : IStartupOrchestrator
         _context = context;
     }
 
-    public int Order => 10;
+    public int Order => StartupOrder.Splash;
 
     public string Name => nameof(SplashOrchestrator);
 

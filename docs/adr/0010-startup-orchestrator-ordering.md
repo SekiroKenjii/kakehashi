@@ -16,18 +16,25 @@ pane drawn wrong.
 ## Decision
 
 Startup is a list of `IStartupOrchestrator` singletons; `AppOrchestrator` sorts them by integer
-`Order` and awaits each in turn: Splash 10, Authentication 15, Permission 17, Shell 20, Theme 30,
-Activation 40. `AuthenticationOrchestrator` runs every registered `IAuthenticationGate` and is a
-no-op when none is registered, which is what keeps the Auth module optional.
-`PermissionOrchestrator` fetches permissions and navigation layout together at 17 — after 15
-because both calls need a token, before 20 because the shell needs both answers — and re-fetches
-both on every `AuthSessionChangedMessage`.
+`Order` and awaits each in turn. Every number lives in `StartupOrder`, one file, each constant
+carrying the invariant that pins it — a new step is placed by reading its neighbours there rather
+than by grepping seven classes. This document records why there is an ordering and what the
+invariants are; it does not restate the values, because the version that did went stale the first
+time a step was added.
+
+`AuthenticationOrchestrator` runs every registered `IAuthenticationGate` and is a no-op when none
+is registered, which is what keeps the Auth module optional. `PermissionOrchestrator` fetches
+permissions and navigation layout together — after Authentication because both calls need a token,
+before Shell because the shell needs both answers — and re-fetches both on every
+`AuthSessionChangedMessage`.
 
 ## Consequences
 
-New steps slot in by number, and the numbers carry invariants: anything needing a token goes after
-15, anything the navigation pane depends on goes before 20, anything touching main-window content
-goes after 20, and Activation stays last so the splash covers everything. The session-change
+New steps slot in by number, and the numbers carry invariants: anything a window resolves as it
+first draws goes before Splash, anything needing a token goes after Authentication, anything the
+navigation pane depends on goes before Shell, anything touching main-window content goes after
+Shell, and Activation stays last so the splash covers everything. Naming the anchors rather than
+their values is deliberate — the invariants outlive any particular number. The session-change
 re-read means signing in as somebody else replaces the predecessor's permissions instead of
 inheriting them — a security property on shared machines. Inside that re-read, permissions must
 refresh before layout: the layout's Changed event rebuilds the pane, so the reverse order rebuilds
