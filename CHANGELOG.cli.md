@@ -7,6 +7,18 @@ Ordinary semantic versioning for a tool. The interesting number is the range of 
 works with — stated by the binary and checked against each template's own `requiresCli`, in both
 directions.
 
+## tools/cli/v1.2.0 — 2026-08-24
+
+| | |
+| --- | --- |
+| Templates supported | `>=1.0.0 <2.0.0` — unchanged |
+
+Released alongside template 1.2.0, and the binary is unchanged: the plugin system that release
+carries is entirely template-side, and 1.1.0 already scaffolds it. The number moves so the two
+lines read the same at a glance.
+
+If you are on 1.1.0 there is nothing here to take.
+
 ## tools/cli/v1.1.0 — 2026-08-18
 
 | | |
