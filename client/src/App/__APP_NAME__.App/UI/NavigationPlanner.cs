@@ -76,10 +76,14 @@ public sealed class NavigationPlanner
             }
         }
 
-        // An item with no id was never offered to the deployment for arrangement (the footer items),
-        // so it keeps the placement the client gave it.
+        // An item with no id was never offered to the deployment (the footer items), so it keeps the
+        // placement the client gave it — and is gated here, because nobody else answered for it.
         foreach (var (item, isEnabled) in available.Values.Where(entry => entry.Item.Id.Length == 0))
         {
+            if (!Permits(item))
+            {
+                continue;
+            }
             entries.Add(new NavigationEntry(item, isEnabled));
         }
 

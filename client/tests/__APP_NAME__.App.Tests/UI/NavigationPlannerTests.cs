@@ -208,6 +208,40 @@ public sealed class NavigationPlannerTests
     }
 
     /// <summary>
+    /// A footer item is one the deployment never saw, so nobody else can gate it. The Plugins
+    /// screen is one, and it carries a permission.
+    /// </summary>
+    [Fact]
+    public void Plan_AFooterItemWhosePermissionTheAccountLacks_IsNotPlanned()
+    {
+        _permissions.Allows("plugins.manage").Returns(false);
+        var host = new NavigationItem(
+            "Plugins", "P", typeof(object), NavigationItemPlacement.Footer) {
+            RequiredPermission = "plugins.manage",
+        };
+
+        var plan = new NavigationPlanner(_registry, _permissions, [host])
+            .Plan(Layout(Group("Utilities")));
+
+        Assert.Empty(plan);
+    }
+
+    [Fact]
+    public void Plan_AFooterItemWhosePermissionTheAccountHas_IsPlanned()
+    {
+        _permissions.Allows("plugins.manage").Returns(true);
+        var host = new NavigationItem(
+            "Plugins", "P", typeof(object), NavigationItemPlacement.Footer) {
+            RequiredPermission = "plugins.manage",
+        };
+
+        var plan = new NavigationPlanner(_registry, _permissions, [host])
+            .Plan(Layout(Group("Utilities")));
+
+        Assert.Equal("Plugins", Assert.Single(plan).Item.Title);
+    }
+
+    /// <summary>
     /// Once the deployment has answered, it is the authority on which destinations are offered — it
     /// applied the same permission check server-side, with the grants it resolved itself. A second,
     /// client-side check could only disagree with it.
