@@ -30,10 +30,13 @@
         </Style>
     </Page.Resources>
 
-    <Grid Padding="24,12,24,20" RowSpacing="12">
+    <!--
+        Margins rather than RowSpacing: a Grid charges its spacing between every adjacent row pair,
+        including rows whose content is collapsed, and most of these rows are empty most of the time.
+        A collapsed element contributes neither height nor margin, so the gap goes with it.
+    -->
+    <Grid Padding="24,12,24,20">
         <Grid.RowDefinitions>
-            <RowDefinition Height="Auto" />
-            <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -70,6 +73,7 @@
         <SelectorBar
             x:Name="TabBar"
             Grid.Row="1"
+            Margin="0,8,0,0"
             HorizontalAlignment="Left"
             SelectionChanged="OnTabChanged">
             <SelectorBarItem x:Name="TabInstalled" Text="Installed" />
@@ -78,10 +82,16 @@
         </SelectorBar>
 
         <!--
-            Stacked rather than both placed in the row: neither can be dismissed, so two in one cell
-            means the second one covers the first, and the first is the one with the reason on it.
+            One band for everything that is usually absent. Stacked rather than placed in their own
+            rows: neither InfoBar can be dismissed, so two in one cell means the second covers the
+            first, and the first is the one with the reason on it. The band collapses whole when it
+            holds nothing, which is what keeps its margin off the layout.
         -->
-        <StackPanel Grid.Row="2" Spacing="8">
+        <StackPanel
+            Grid.Row="2"
+            Margin="0,12,0,0"
+            Spacing="8"
+            Visibility="{x:Bind ViewModel.HasBanner, Mode=OneWay}">
             <InfoBar
                 IsClosable="False"
                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
@@ -94,47 +104,46 @@
                 Message="Installing one still works, and nothing will load it until this is turned back on."
                 Severity="Informational"
                 Title="Plugins are turned off for this installation" />
+
+            <!--
+                Staged work never touches what is running, so this is the only place the difference
+                is visible: the change is real, and it is not in effect yet.
+            -->
+            <InfoBar
+                IsClosable="False"
+                IsOpen="{x:Bind ViewModel.RestartRequired, Mode=OneWay}"
+                Message="{x:Bind ViewModel.RestartMessage, Mode=OneWay}"
+                Severity="Warning"
+                Title="{x:Bind ViewModel.RestartTitle}">
+                <InfoBar.ActionButton>
+                    <Button
+                        AutomationProperties.Name="Restart now"
+                        Click="OnRestartClick"
+                        Content="Restart now" />
+                </InfoBar.ActionButton>
+            </InfoBar>
+
+            <ItemsRepeater
+                ItemsSource="{x:Bind ViewModel.StatCards}"
+                Visibility="{x:Bind ViewModel.ShowingInstalled, Mode=OneWay}">
+                <ItemsRepeater.ItemTemplate>
+                    <DataTemplate x:DataType="controls:StatCard">
+                        <controls:StatCardView Card="{x:Bind}" />
+                    </DataTemplate>
+                </ItemsRepeater.ItemTemplate>
+                <ItemsRepeater.Layout>
+                    <UniformGridLayout
+                        ItemsStretch="Fill"
+                        MaximumRowsOrColumns="4"
+                        MinColumnSpacing="12"
+                        Orientation="Horizontal" />
+                </ItemsRepeater.Layout>
+            </ItemsRepeater>
         </StackPanel>
 
-        <!--
-            Staged work never touches what is running, so this is the only place the difference is
-            visible: the change is real, and it is not in effect yet.
-        -->
-        <InfoBar
-            Grid.Row="3"
-            IsClosable="False"
-            IsOpen="{x:Bind ViewModel.RestartRequired, Mode=OneWay}"
-            Message="{x:Bind ViewModel.RestartMessage, Mode=OneWay}"
-            Severity="Warning"
-            Title="{x:Bind ViewModel.RestartTitle}">
-            <InfoBar.ActionButton>
-                <Button
-                    AutomationProperties.Name="Restart now"
-                    Click="OnRestartClick"
-                    Content="Restart now" />
-            </InfoBar.ActionButton>
-        </InfoBar>
-
-        <ItemsRepeater
-            Grid.Row="4"
-            ItemsSource="{x:Bind ViewModel.StatCards}"
-            Visibility="{x:Bind ViewModel.ShowingInstalled, Mode=OneWay}">
-            <ItemsRepeater.ItemTemplate>
-                <DataTemplate x:DataType="controls:StatCard">
-                    <controls:StatCardView Card="{x:Bind}" />
-                </DataTemplate>
-            </ItemsRepeater.ItemTemplate>
-            <ItemsRepeater.Layout>
-                <UniformGridLayout
-                    ItemsStretch="Fill"
-                    MaximumRowsOrColumns="4"
-                    MinColumnSpacing="12"
-                    Orientation="Horizontal" />
-            </ItemsRepeater.Layout>
-        </ItemsRepeater>
-
         <Border
-            Grid.Row="5"
+            Grid.Row="3"
+            Margin="0,12,0,0"
             Style="{StaticResource CardStyle}"
             Visibility="{x:Bind ViewModel.ShowingInstalled, Mode=OneWay}">
             <Grid>
@@ -258,7 +267,8 @@
             signed it is on the artifact, so the same prompt a file install shows is what decides it.
         -->
         <Border
-            Grid.Row="5"
+            Grid.Row="3"
+            Margin="0,12,0,0"
             Style="{StaticResource CardStyle}"
             Visibility="{x:Bind ViewModel.ShowingBrowse, Mode=OneWay}">
             <Grid>
@@ -364,7 +374,8 @@
 
         <!--  The Develop tab. The three tabs share row 5, and exactly one of them is visible.  -->
         <Grid
-            Grid.Row="5"
+            Grid.Row="3"
+            Margin="0,12,0,0"
             ColumnSpacing="12"
             Visibility="{x:Bind ViewModel.ShowingDevelop, Mode=OneWay}">
             <Grid.ColumnDefinitions>
@@ -571,7 +582,8 @@
             make before installing one.
         -->
         <StackPanel
-            Grid.Row="6"
+            Grid.Row="4"
+            Margin="0,12,0,0"
             Orientation="Horizontal"
             Spacing="8">
             <FontIcon
