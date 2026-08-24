@@ -501,6 +501,13 @@
                                     Click="OnPackProjectClick"
                                     Content="Pack"
                                     IsEnabled="{x:Bind ViewModel.CanCheckProject, Mode=OneWay}" />
+
+                                <ProgressRing
+                                    Width="20"
+                                    Height="20"
+                                    VerticalAlignment="Center"
+                                    IsActive="{x:Bind ViewModel.IsToolBusy, Mode=OneWay}"
+                                    Visibility="{x:Bind ViewModel.IsToolBusy, Mode=OneWay}" />
                             </StackPanel>
 
                             <TextBlock

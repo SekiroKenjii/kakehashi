@@ -7,10 +7,10 @@
 // Style follows ktaranov/sqlserver-kit — see platform/database.
 //
 // The files: this one is the seam, holding the type, its constructor, the helpers more than one
-// query needs, and PublishVersion, which is the only write spanning two tables. migrations.go holds the schema history, which is one unit because its value is its
-// order. Then one file per table — plugin.go, pluginversion.go, install.go — because the store's
-// unit is the table, and a version is its own table even though the domain keeps it inside the
-// plugin it belongs to.
+// query needs, and PublishVersion, which is the only write spanning two tables. migrations.go holds
+// the schema history, which is one unit because its value is its order. Then one file per table —
+// plugin.go, pluginversion.go, install.go — because the store's unit is the table, and a version is
+// its own table even though the domain keeps it inside the plugin it belongs to.
 package store
 
 import (

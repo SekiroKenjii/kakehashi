@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -33,6 +34,15 @@ public sealed class GuardedPluginModule(
     ModuleDescriptor descriptor,
     IReadOnlyList<NavigationItem> navigationItems) : IModule
 {
+    /// <summary>
+    /// The assembly the plugin's own code came from.
+    /// </summary>
+    /// <remarks>
+    /// Stated rather than reflected on this instance: composition asks whose code a registration
+    /// belongs to, and reflecting on the guard answers with the host's, which inverts the question.
+    /// </remarks>
+    public Assembly Assembly => module.GetType().Assembly;
+
     public string Name => name;
 
     public ModuleDescriptor Descriptor => descriptor;

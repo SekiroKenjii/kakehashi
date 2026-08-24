@@ -5,6 +5,7 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
+	"strings"
 	"testing"
 
 	"connectrpc.com/connect"
@@ -80,7 +81,12 @@ func TestWrapStreamingHandlerHidesAnInternalMessage(t *testing.T) {
 	if err == nil {
 		t.Fatal("err = nil, want an error")
 	}
-	if got := err.Error(); got == secret {
+	// Contains, not equality: connect prefixes the code, so an equality check would pass even if the
+	// whole internal message were handed straight to the wire.
+	if got := err.Error(); strings.Contains(got, secret) {
+		t.Fatalf("message = %q, want the public one", got)
+	}
+	if got := err.Error(); !strings.Contains(got, errs.PublicMessage(errs.Internalf(nil, "x"))) {
 		t.Fatalf("message = %q, want the public one", got)
 	}
 }
