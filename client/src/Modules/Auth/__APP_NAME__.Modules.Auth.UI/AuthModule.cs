@@ -98,7 +98,7 @@ public sealed class AuthModule : IModule
         PersonPicture? avatar = null;
 
         return [
-            new NavigationItem("Account", "", typeof(AccountPage), NavigationItemPlacement.Footer) {
+            new NavigationItem("Account", "\uE77B", typeof(AccountPage), NavigationItemPlacement.Footer) {
                 ContentFactory = () => {
                     avatar = new PersonPicture {
                         Width = 28,

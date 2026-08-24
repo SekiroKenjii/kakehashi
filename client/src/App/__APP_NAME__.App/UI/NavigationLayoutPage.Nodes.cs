@@ -137,9 +137,15 @@ public sealed partial class NavScreenNode : ObservableObject
     public string Glyph =>
         NavigationIcons.Resolve(Icon, NavigationIcons.Resolve(DefaultIcon, NavigationIcons.Unknown));
 
-    /// <summary>Whether this build can draw the icon name; empty means "use the code's", not
-    /// unknown.</summary>
-    public bool IsIconKnown => Icon.Length == 0 || NavigationIcons.Knows(Icon);
+    /// <summary>
+    /// Whether this build can draw whichever name is in play — the override, or the code's when
+    /// there is no override.
+    /// </summary>
+    /// <remarks>
+    /// Both, because judging only the override reports a name this build cannot draw as known: the
+    /// row then shows the unknown-icon placeholder beside a mark saying the icon is fine.
+    /// </remarks>
+    public bool IsIconKnown => NavigationIcons.Knows(IconName);
 
     public bool IsIconUnknown => !IsIconKnown;
 

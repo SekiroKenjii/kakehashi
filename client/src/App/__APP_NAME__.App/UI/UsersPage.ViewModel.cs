@@ -750,16 +750,16 @@ public sealed partial class UsersViewModel : ViewModel
         StatCards.Add(new StatCard(
             "TOTAL USERS", TotalCount.ToString(),
             createdThisMonth == 0 ? "All accounts" : $"+{createdThisMonth} this month",
-            "", StatKind.Accent));
+            "\uE716", StatKind.Accent));
         StatCards.Add(new StatCard(
-            "ACTIVE", ActiveCount.ToString(), $"{percent}% of total", "", StatKind.Positive));
+            "ACTIVE", ActiveCount.ToString(), $"{percent}% of total", "\uE8FB", StatKind.Positive));
         StatCards.Add(new StatCard(
             // The detail must count within the card's population. NeverSignedInCount also includes
             // active accounts, so it can exceed the inactive total it would sit under.
             "INACTIVE", InactiveCount.ToString(),
             $"{inactiveNeverSignedIn} never signed in", "", StatKind.Muted));
         StatCards.Add(new StatCard(
-            "IDLE > 30 DAYS", IdleCount.ToString(), "Review for cleanup", "", StatKind.Warning));
+            "IDLE > 30 DAYS", IdleCount.ToString(), "Review for cleanup", "\uE823", StatKind.Warning));
     }
 
     private void RebuildRoleFilters()

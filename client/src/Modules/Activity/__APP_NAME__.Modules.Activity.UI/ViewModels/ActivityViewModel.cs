@@ -536,18 +536,18 @@ public sealed partial class ActivityViewModel : ViewModel
         StatCards.Clear();
         StatCards.Add(new StatCard(
             "EVENTS", page.Total.ToString(CultureInfo.CurrentCulture),
-            SelectedRange.Label.ToLowerInvariant(), "", StatKind.Accent));
+            SelectedRange.Label.ToLowerInvariant(), "\uE81C", StatKind.Accent));
         StatCards.Add(new StatCard(
             "SIGN-INS", signIns.ToString(CultureInfo.CurrentCulture),
-            $"{page.CountOf(ActivityKinds.NewDeviceSignedIn)} from a new device", "",
+            $"{page.CountOf(ActivityKinds.NewDeviceSignedIn)} from a new device", "\uE930",
             StatKind.Positive));
         StatCards.Add(new StatCard(
             "REFUSED SIGN-INS", refused.ToString(CultureInfo.CurrentCulture),
-            refused == 0 ? "none in this range" : "review the rows below", "",
+            refused == 0 ? "none in this range" : "review the rows below", "\uE783",
             refused == 0 ? StatKind.Muted : StatKind.Critical));
         StatCards.Add(new StatCard(
             "PLATFORMS IN VIEW", platforms.Count.ToString(CultureInfo.CurrentCulture),
-            platforms.Count == 0 ? "none reported" : string.Join(" · ", platforms), "",
+            platforms.Count == 0 ? "none reported" : string.Join(" · ", platforms), "\uE770",
             StatKind.Muted));
     }
 

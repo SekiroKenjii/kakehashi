@@ -77,7 +77,7 @@ public sealed partial class NavigationLayoutPage : Page
     /// <summary>An open eye for a screen the pane offers, a struck-through one for a hidden screen.</summary>
     public static string EyeGlyph(bool isVisible)
     {
-        return isVisible ? "" : "";
+        return isVisible ? "\uE7B3" : "\uED1A";
     }
 
     /// <summary>A screen that refuses to be hidden draws its eye faded, since pressing it does nothing.</summary>

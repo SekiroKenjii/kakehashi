@@ -166,6 +166,19 @@ foreach ($expected in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions'
 Assert-That 'the account footer item has an accessible name' (-not ($items -contains 'NavigationViewItem')) `
     'a NavigationViewItem with no name is announced as its class name'
 
+# Plugins sits in the footer, between the account row and the framework's Settings item. There is no
+# UIA property that says "footer", so this is read off the pane's vertical order: below every
+# Administration item, above Settings.
+$paneY = @{}
+foreach ($row in (AllOf | Where-Object { $_.name -in @('Navigation', 'Plugins', 'Settings') })) {
+    if (-not $paneY.ContainsKey($row.name)) { $paneY[$row.name] = $row.y }
+}
+Assert-That 'Plugins sits below the menu and above Settings' `
+    ($paneY.ContainsKey('Plugins') -and $paneY.ContainsKey('Settings') -and
+     $paneY.ContainsKey('Navigation') -and
+     $paneY['Plugins'] -gt $paneY['Navigation'] -and $paneY['Plugins'] -lt $paneY['Settings']) `
+    ("Navigation=$($paneY['Navigation']) Plugins=$($paneY['Plugins']) Settings=$($paneY['Settings'])")
+
 Test-UI 'the pane collapses' { winapp ui invoke 'PART_PaneToggleButton' -w $hwnd }
 Start-Sleep 1
 Test-UI 'the pane expands again' { winapp ui invoke 'PART_PaneToggleButton' -w $hwnd }

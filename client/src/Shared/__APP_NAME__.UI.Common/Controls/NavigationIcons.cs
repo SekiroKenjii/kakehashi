@@ -34,7 +34,7 @@ public static class NavigationIcons
         ("people", "\uE716"),
         ("account", "\uE77B"),
         ("permissions", "\uE192"),
-        ("navigation", "\uE700"),
+        ("navigation", "\uE816"),
         ("settings", "\uE713"),
 
         // What somebody else's module is likely to be about. Named for the subject, not the glyph:
