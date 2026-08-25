@@ -85,7 +85,9 @@
             One band for everything that is usually absent. Stacked rather than placed in their own
             rows: neither InfoBar can be dismissed, so two in one cell means the second covers the
             first, and the first is the one with the reason on it. The band collapses whole when it
-            holds nothing, which is what keeps its margin off the layout.
+            holds nothing, which is what keeps its margin off the layout. Visibility as well as
+            IsOpen on each bar: a closed InfoBar is not collapsed, so it keeps its share of the
+            band's Spacing and pushes everything below it down by that much.
         -->
         <StackPanel
             Grid.Row="2"
@@ -96,14 +98,16 @@
                 IsClosable="False"
                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                Severity="Error" />
+                Severity="Error"
+                Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
 
             <InfoBar
                 IsClosable="False"
                 IsOpen="{x:Bind ViewModel.PluginsDisabled}"
                 Message="Installing one still works, and nothing will load it until this is turned back on."
                 Severity="Informational"
-                Title="Plugins are turned off for this installation" />
+                Title="Plugins are turned off for this installation"
+                Visibility="{x:Bind ViewModel.PluginsDisabled}" />
 
             <!--
                 Staged work never touches what is running, so this is the only place the difference
@@ -114,7 +118,8 @@
                 IsOpen="{x:Bind ViewModel.RestartRequired, Mode=OneWay}"
                 Message="{x:Bind ViewModel.RestartMessage, Mode=OneWay}"
                 Severity="Warning"
-                Title="{x:Bind ViewModel.RestartTitle}">
+                Title="{x:Bind ViewModel.RestartTitle}"
+                Visibility="{x:Bind ViewModel.RestartRequired, Mode=OneWay}">
                 <InfoBar.ActionButton>
                     <Button
                         AutomationProperties.Name="Restart now"

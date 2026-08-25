@@ -86,6 +86,7 @@ thư mục đích. Fail giữa chừng không để lại rác.
     "protoPackage": "orderdesk",
     "accent": "#E34234",
     "auth": "inapp",
+    "pluginExt": "orderdeskpkg",
     "withExample": true
   },
   "units": { "removed": [], "applied": ["notes"] }

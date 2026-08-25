@@ -104,6 +104,7 @@
 
         <!--  Account actions  -->
         <Button
+            AutomationProperties.Name="View profile"
             Click="OnActionButtonClick"
             Command="{x:Bind ViewModel.ViewProfileCommand}"
             Style="{StaticResource MenuRowButtonStyle}">
@@ -241,6 +242,7 @@
         </Grid>
 
         <Button
+            AutomationProperties.Name="Settings"
             Click="OnActionButtonClick"
             Command="{x:Bind ViewModel.OpenSettingsCommand}"
             Style="{StaticResource MenuRowButtonStyle}">
@@ -291,6 +293,7 @@
         <Button
             HorizontalAlignment="Stretch"
             HorizontalContentAlignment="Center"
+            AutomationProperties.Name="Sign out"
             BorderBrush="{ThemeResource SystemFillColorCriticalBrush}"
             Click="OnActionButtonClick"
             Command="{x:Bind ViewModel.SignOutCommand}"

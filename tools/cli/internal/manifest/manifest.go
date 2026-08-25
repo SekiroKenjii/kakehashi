@@ -55,6 +55,7 @@ type Inputs struct {
 	Author        string `json:"author"`
 	Year          string `json:"year"`
 	Auth          string `json:"auth"`
+	PluginExt     string `json:"pluginExt"`
 	WithExample   bool   `json:"withExample"`
 }
 
