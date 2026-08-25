@@ -963,10 +963,33 @@
                                 PaneDisplayMode="Left" />
                         </Border>
 
-                        <TextBlock
-                            Grid.Row="3"
-                            Style="{StaticResource HintTextStyle}"
-                            Text="{x:Bind ViewModel.PreviewNote, Mode=OneWay}" />
+                        <StackPanel Grid.Row="3" Spacing="6">
+                            <TextBlock
+                                Style="{StaticResource HintTextStyle}"
+                                Text="{x:Bind ViewModel.PreviewNote, Mode=OneWay}" />
+
+                            <!--
+                                Listed rather than hidden: a screen that is in the pane and absent
+                                from this page reads as a fault in this page. These have no row to
+                                move - the deployment was never offered them.
+                            -->
+                            <StackPanel
+                                Spacing="2"
+                                Visibility="{x:Bind ViewModel.HasClientScreens, Mode=OneWay}">
+                                <TextBlock
+                                    Style="{StaticResource HintTextStyle}"
+                                    Text="Placed by this client, and arranged elsewhere" />
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.ClientScreens}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:NavClientScreen">
+                                            <TextBlock
+                                                Style="{StaticResource HintTextStyle}"
+                                                Text="{x:Bind Summary}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
                     </Grid>
                 </Border>
     </Grid>

@@ -7,6 +7,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using CommunityToolkit.Mvvm.Messaging;
 using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.App.Services;
 using __ROOT_NAMESPACE__.Interoperability;
@@ -44,6 +45,8 @@ public sealed record PluginListItem(
     string Warning,
     PluginOrigin Origin,
     string StagedVersion,
+    string Group,
+    IReadOnlyList<string> Headings,
     bool IsEnabled,
     bool CanToggle,
     bool CanUninstall)
@@ -115,6 +118,7 @@ public sealed partial class PluginsViewModel : ViewModel
     private readonly IDialogService _dialogs;
     private readonly PluginScaffolder _scaffolder;
     private readonly IPluginCatalogService _catalogService;
+    private readonly INavigationLayoutService _layout;
 
     private List<PluginListItem> _all = [];
 
@@ -162,7 +166,8 @@ public sealed partial class PluginsViewModel : ViewModel
         IFileOpenService files,
         IDialogService dialogs,
         PluginScaffolder scaffolder,
-        IPluginCatalogService catalogService)
+        IPluginCatalogService catalogService,
+        INavigationLayoutService layout)
     {
         ArgumentNullException.ThrowIfNull(modules);
         ArgumentNullException.ThrowIfNull(catalog);
@@ -171,6 +176,7 @@ public sealed partial class PluginsViewModel : ViewModel
         ArgumentNullException.ThrowIfNull(dialogs);
         ArgumentNullException.ThrowIfNull(scaffolder);
         ArgumentNullException.ThrowIfNull(catalogService);
+        ArgumentNullException.ThrowIfNull(layout);
         _modules = modules;
         _catalog = catalog;
         _installer = installer;
@@ -178,6 +184,7 @@ public sealed partial class PluginsViewModel : ViewModel
         _dialogs = dialogs;
         _scaffolder = scaffolder;
         _catalogService = catalogService;
+        _layout = layout;
     }
 
     public ObservableCollection<PluginListItem> Items { get; } = [];
@@ -381,6 +388,58 @@ public sealed partial class PluginsViewModel : ViewModel
         }
     }
 
+    /// <summary>
+    /// The pane headings a plugin's screens can be filed under.
+    /// </summary>
+    /// <remarks>
+    /// The deployment's own headings, because a plugin filed under a name no heading has invents a
+    /// second one at the bottom of the pane. A heading with nothing visible under it is not in the
+    /// layout at all, so what is offered is what a user can actually see today; the empty entry is
+    /// the real "no heading" choice rather than a missing value.
+    /// </remarks>
+    public IReadOnlyList<string> HeadingChoices => [
+        string.Empty,
+        .. _layout.Current.Groups.Select(group => group.Title),
+    ];
+
+    /// <summary>
+    /// Files a plugin's screens under a heading, and redraws the pane.
+    /// </summary>
+    /// <remarks>
+    /// Three writes, and all three are needed: the state file so it survives a restart, the loaded
+    /// module so this session agrees, and the broadcast so the shell replans. The catalog is a
+    /// snapshot taken before the container existed, so writing to it would reach nothing.
+    /// </remarks>
+    public void FileUnder(PluginListItem item, string heading)
+    {
+        ArgumentNullException.ThrowIfNull(item);
+        ArgumentNullException.ThrowIfNull(heading);
+
+        if (item.PluginID.Length == 0 || heading == item.Group)
+        {
+            return;
+        }
+        var filed = _installer.FileUnder(item.PluginID, heading);
+
+        if (filed.IsFailure)
+        {
+            ErrorMessage = filed.Error.Message;
+
+            return;
+        }
+
+        var loaded = _modules.All
+            .OfType<GuardedPluginModule>()
+            .Where(module => module.Name == item.ModuleName);
+
+        foreach (var guarded in loaded)
+        {
+            guarded.FileUnder(heading);
+        }
+        WeakReferenceMessenger.Default.Send(new ModuleSetChangedMessage());
+        Load();
+    }
+
     /// <summary>Turns a module on or off. Instant: nothing is loaded or unloaded by it.</summary>
     public void Toggle(PluginListItem item)
     {
@@ -581,6 +640,8 @@ public sealed partial class PluginsViewModel : ViewModel
                 string.Empty,
                 PluginOrigin.BuiltIn,
                 string.Empty,
+                string.Empty,
+                [],
                 _modules.IsAttached(module.Name),
                 !module.Descriptor.IsRequired,
                 CanUninstall: false);
@@ -589,6 +650,8 @@ public sealed partial class PluginsViewModel : ViewModel
 
     private IEnumerable<PluginListItem> Installed()
     {
+        var headings = HeadingChoices;
+
         foreach (var plugin in _catalog.Loaded)
         {
             var record = plugin.Record;
@@ -613,6 +676,8 @@ public sealed partial class PluginsViewModel : ViewModel
                 verified ? string.Empty : WarningFor(record),
                 verified ? PluginOrigin.Verified : PluginOrigin.Unofficial,
                 record.StagedVersion,
+                record.Group,
+                headings,
                 _modules.IsAttached(manifest.ModuleName),
                 CanToggle: true,
                 CanUninstall: true);
@@ -633,6 +698,8 @@ public sealed partial class PluginsViewModel : ViewModel
                 fault.Reason.Message,
                 PluginOrigin.Faulted,
                 string.Empty,
+                string.Empty,
+                [],
                 IsEnabled: false,
                 CanToggle: false,
                 CanUninstall: true);

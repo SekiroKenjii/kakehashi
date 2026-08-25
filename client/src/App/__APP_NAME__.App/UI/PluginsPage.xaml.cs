@@ -120,6 +120,22 @@ public sealed partial class PluginsPage : Page
         ViewModel.CancelInstall();
     }
 
+    /// <summary>
+    /// Files a plugin's screens under the chosen heading.
+    /// </summary>
+    /// <remarks>
+    /// Read from the row's own data context, like the switch beside it: the template's bindings run
+    /// when a realized row is handed a different item, so a rebind would otherwise read as a choice.
+    /// The view model refuses a heading the row already has, which is what a rebind supplies.
+    /// </remarks>
+    private void OnHeadingChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (sender is ComboBox { DataContext: PluginListItem item, SelectedItem: string heading })
+        {
+            ViewModel.FileUnder(item, heading);
+        }
+    }
+
     private void OnToggled(object sender, RoutedEventArgs e)
     {
         // From the row's own data context rather than a second binding on the switch: the root's
