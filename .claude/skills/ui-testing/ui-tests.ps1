@@ -447,7 +447,12 @@ if ($allOn) {
 
 Section 'Account'
 
-$footer = @(Elements -Interactive | Where-Object { $_.className -like '*NavigationViewItem*' -and $_.name -eq 'NavigationViewItem' })
+# Selected by name. The pane assertion above refuses the bare class name, so a filter for that name
+# matches nothing by construction -- and a section that matches nothing reports neither a pass nor a
+# failure, which is why the count is asserted before it is used.
+$footer = @(Elements -Interactive | Where-Object { $_.className -like '*NavigationViewItem*' -and $_.name -eq 'Account' })
+Assert-That 'the account footer item is reachable' ($footer.Count -ge 1) `
+    'no pane item named Account - the flyout below it cannot be opened'
 if ($footer.Count) {
     Test-UI 'the account footer item opens' { winapp ui invoke $footer[0].selector -w $hwnd }
     Start-Sleep 2
