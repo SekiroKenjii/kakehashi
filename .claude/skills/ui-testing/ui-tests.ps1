@@ -52,7 +52,7 @@ function AllOf {
     while ($stack.Count) {
         $e = $stack.Pop()
         $out.Add([pscustomobject]@{
-            selector = $e.selector; type = $e.type; name = $e.name
+            selector = $e.selector; type = $e.type; name = $e.name; className = $e.className
             x = $e.x; y = $e.y; width = $e.width; height = $e.height
             offscreen = $e.isOffscreen
         })
@@ -170,7 +170,8 @@ Assert-That 'the account footer item has an accessible name' (-not ($items -cont
 # UIA property that says "footer", so this is read off the pane's vertical order: below every
 # Administration item, above Settings.
 $paneY = @{}
-foreach ($row in (AllOf | Where-Object { $_.name -in @('Navigation', 'Plugins', 'Settings') })) {
+foreach ($row in (AllOf | Where-Object { $_.className -like '*NavigationViewItem*' -and
+    $_.name -in @('Navigation', 'Plugins', 'Settings') })) {
     if (-not $paneY.ContainsKey($row.name)) { $paneY[$row.name] = $row.y }
 }
 Assert-That 'Plugins sits below the menu and above Settings' `
@@ -446,7 +447,12 @@ if ($allOn) {
 
 Section 'Account'
 
-$footer = @(Elements -Interactive | Where-Object { $_.className -like '*NavigationViewItem*' -and $_.name -eq 'NavigationViewItem' })
+# Selected by name. The pane assertion above refuses the bare class name, so a filter for that name
+# matches nothing by construction -- and a section that matches nothing reports neither a pass nor a
+# failure, which is why the count is asserted before it is used.
+$footer = @(Elements -Interactive | Where-Object { $_.className -like '*NavigationViewItem*' -and $_.name -eq 'Account' })
+Assert-That 'the account footer item is reachable' ($footer.Count -ge 1) `
+    'no pane item named Account - the flyout below it cannot be opened'
 if ($footer.Count) {
     Test-UI 'the account footer item opens' { winapp ui invoke $footer[0].selector -w $hwnd }
     Start-Sleep 2
@@ -511,6 +517,10 @@ foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'N
     if ($bad.Count) { $unnamed += [pscustomobject]@{ page = $page; count = $bad.Count } }
     Write-Host ("  {0,-18} {1} unnamed interactive control(s)" -f $page, $bad.Count)
 }
+
+# The account flyout and the Account screen behind it are not in this loop, and cannot be: the
+# flyout opens on a gesture that UIA's SelectionItemPattern does not produce, so a block that tried
+# would read the main window and call it clean. SKILL.md records what that leaves uncovered.
 Assert-That 'no page has an unnamed interactive control' ($unnamed.Count -eq 0) `
     (($unnamed | ForEach-Object { "$($_.page): $($_.count)" }) -join '; ')
 
