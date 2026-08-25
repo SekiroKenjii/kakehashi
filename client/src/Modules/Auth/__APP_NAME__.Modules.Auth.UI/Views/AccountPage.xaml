@@ -164,6 +164,7 @@
                                 Spacing="8">
                                 <Button
                                     HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Edit profile"
                                     Click="OnEditProfileClick"
                                     Style="{StaticResource AccentButtonStyle}">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
@@ -171,7 +172,10 @@
                                         <TextBlock Text="Edit profile" />
                                     </StackPanel>
                                 </Button>
-                                <Button HorizontalAlignment="Stretch" Click="OnChangePasswordClick">
+                                <Button
+                                    HorizontalAlignment="Stretch"
+                                    AutomationProperties.Name="Change password"
+                                    Click="OnChangePasswordClick">
                                     <StackPanel Orientation="Horizontal" Spacing="8">
                                         <FontIcon FontSize="14" Glyph="&#xE8D7;" />
                                         <TextBlock Text="Change password" />

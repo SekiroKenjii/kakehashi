@@ -517,6 +517,10 @@ foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'N
     if ($bad.Count) { $unnamed += [pscustomobject]@{ page = $page; count = $bad.Count } }
     Write-Host ("  {0,-18} {1} unnamed interactive control(s)" -f $page, $bad.Count)
 }
+
+# The account flyout and the Account screen behind it are not in this loop, and cannot be: the
+# flyout opens on a gesture that UIA's SelectionItemPattern does not produce, so a block that tried
+# would read the main window and call it clean. SKILL.md records what that leaves uncovered.
 Assert-That 'no page has an unnamed interactive control' ($unnamed.Count -eq 0) `
     (($unnamed | ForEach-Object { "$($_.page): $($_.count)" }) -join '; ')
 
