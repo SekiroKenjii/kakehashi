@@ -104,6 +104,7 @@
 
         <!--  Account actions  -->
         <Button
+            AutomationProperties.Name="View profile"
             Click="OnActionButtonClick"
             Command="{x:Bind ViewModel.ViewProfileCommand}"
             Style="{StaticResource MenuRowButtonStyle}">
