@@ -9,6 +9,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using __ROOT_NAMESPACE__.App.Plugins;
 using __ROOT_NAMESPACE__.App.Services;
+using __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 
 namespace __ROOT_NAMESPACE__.App.UI;
 
@@ -142,7 +143,7 @@ public sealed partial class PluginsViewModel
         // would replace the temporary directory rather than sit inside it.
         var path = Path.Combine(
             Path.GetTempPath(),
-            Path.GetFileName($"{item.Plugin.PluginID}-{item.Plugin.Version}{PluginPaths.PackageExtension}"));
+            Path.GetFileName($"{item.Plugin.PluginID}-{item.Plugin.Version}{PluginPackage.Extension}"));
         IsCatalogBusy = true;
         Preparing = true;
 

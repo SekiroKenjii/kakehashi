@@ -2,12 +2,14 @@ package cli
 
 import (
 	"errors"
+	"path/filepath"
 	"strings"
 	"testing"
 
 	"github.com/spf13/cobra"
 
 	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/scaffold"
+	"github.com/SekiroKenjii/kakehashi/tools/cli/internal/template"
 )
 
 // parse runs the command line through the `new` command's flag definitions and stops before it
@@ -98,5 +100,20 @@ func TestCollectRefusals(t *testing.T) {
 				t.Errorf("error %q does not mention %q", err, c.says)
 			}
 		})
+	}
+}
+
+// The shipped template has to be readable by the binary built from this same tree.
+//
+// Raising requiresCli without moving version is a scaffold that fails everywhere with a message
+// about the template still naming itself — true, and the wrong cause. CI builds the CLI from source
+// and scaffolds with it, so this is what keeps every scaffold-smoke job working.
+func TestTheShippedTemplateAdmitsThisCli(t *testing.T) {
+	t.Parallel()
+
+	root := filepath.Join("..", "..", "..", "..")
+
+	if _, err := template.LoadDescriptor(root, version); err != nil {
+		t.Fatalf("this CLI (%s) cannot read the template it ships beside: %v", version, err)
 	}
 }

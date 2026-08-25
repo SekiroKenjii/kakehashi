@@ -321,7 +321,7 @@ public sealed partial class PluginsViewModel : ViewModel
 
         try
         {
-            var path = await _files.PickFileAsync("Plugin package", PluginPaths.PackageExtension);
+            var path = await _files.PickFileAsync("Plugin package", PluginPackage.Extension);
 
             return path is not null && await PrepareAsync(path, _fileSource);
         }

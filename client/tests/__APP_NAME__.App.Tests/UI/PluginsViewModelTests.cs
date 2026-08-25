@@ -404,7 +404,7 @@ public sealed class PluginsViewModelTests : IDisposable
     private string WriteUnsignedPackage()
     {
         System.IO.Directory.CreateDirectory(_root);
-        var path = System.IO.Path.Combine(_root, "weather" + PluginPaths.PackageExtension);
+        var path = System.IO.Path.Combine(_root, "weather" + PluginPackage.Extension);
 
         using (var file = System.IO.File.Create(path))
         using (var archive = new ZipArchive(file, ZipArchiveMode.Create))

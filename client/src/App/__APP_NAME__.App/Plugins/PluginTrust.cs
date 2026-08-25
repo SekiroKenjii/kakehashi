@@ -79,7 +79,7 @@ public static class PluginTrust
     /// <summary>
     /// Judges an extracted package by its entry assembly and the file it arrived in.
     /// </summary>
-    /// <param name="packagePath">The <c>.plugin</c> file, which the digest is taken over.</param>
+    /// <param name="packagePath">The <c>.__PLUGIN_EXT__</c> file, which the digest is taken over.</param>
     /// <param name="entryAssemblyPath">The assembly the manifest names, which carries the signature.</param>
     /// <param name="publisher">
     /// This application's own signature. An unsigned application has none, in which case nothing

@@ -18,8 +18,8 @@ namespace __ROOT_NAMESPACE__.PluginSdk.Abstractions;
 /// </remarks>
 public sealed class PluginPackage : IDisposable
 {
-    /// <summary>The file extension a packed plugin carries.</summary>
-    public const string Extension = ".plugin";
+    /// <summary>The file extension a packed plugin carries, chosen when the project was made.</summary>
+    public const string Extension = ".__PLUGIN_EXT__";
 
     public const string ManifestEntryName = "manifest.json";
 

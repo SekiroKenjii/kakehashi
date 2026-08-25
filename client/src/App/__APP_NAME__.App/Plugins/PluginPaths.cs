@@ -18,9 +18,6 @@ namespace __ROOT_NAMESPACE__.App.Plugins;
 /// </remarks>
 public sealed class PluginPaths
 {
-    /// <summary>The extension a packed plugin carries.</summary>
-    public const string PackageExtension = ".plugin";
-
     private const string _installedFolder = "installed";
     private const string _stagedFolder = "staged";
     private const string _stateFile = "state.json";

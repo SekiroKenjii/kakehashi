@@ -24,6 +24,7 @@ func TestDeriveFillsTheDefaults(t *testing.T) {
 		Author:        "OrderDesk",
 		Year:          "2026",
 		Auth:          AuthInApp,
+		PluginExt:     "orderdeskpkg",
 	}
 	if in != want {
 		t.Errorf("Derive:\n got %+v\nwant %+v", in, want)
@@ -118,7 +119,7 @@ func TestTheTableCoversEveryPlaceholder(t *testing.T) {
 	want := []string{
 		"__APP_NAME__", "__APP_NAME_LOWER__", "__APP_NAME_UPPER__", "__APP_TITLE__",
 		"__ROOT_NAMESPACE__", "__PROTO_PACKAGE__", "__GO_MODULE__", "__ACCENT__",
-		"__AUTHOR__", "__YEAR__",
+		"__AUTHOR__", "__YEAR__", "__PLUGIN_EXT__",
 	}
 
 	have := map[string]bool{}

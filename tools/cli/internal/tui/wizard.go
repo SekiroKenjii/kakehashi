@@ -65,6 +65,7 @@ type answers struct {
 	Auth        string
 	AccentKind  string
 	AccentHex   string
+	PluginExt   string
 }
 
 func newAnswers() *answers {
@@ -84,6 +85,7 @@ func (a *answers) groups(opts Options) []*huh.Group {
 		huh.NewGroup(a.appNameField()),
 		huh.NewGroup(a.titleField()),
 		huh.NewGroup(a.goModuleField()),
+		huh.NewGroup(a.pluginExtField()),
 		huh.NewGroup(a.exampleField()),
 		huh.NewGroup(a.authField()),
 		huh.NewGroup(a.accentField()),
@@ -119,6 +121,16 @@ func (a *answers) goModuleField() huh.Field {
 		PlaceholderFunc(func() string { return defaultGoModule(a.AppName) }, &a.AppName).
 		Value(&a.GoModule).
 		Validate(optional(scaffold.ValidateGoModule))
+}
+
+func (a *answers) pluginExtField() huh.Field {
+	return huh.NewInput().
+		Title("Plugin package extension").
+		Description("What a packaged plugin for this app is called, without the dot. Lower case\n"+
+			"letters and digits. Enter accepts the default.").
+		PlaceholderFunc(func() string { return defaultPluginExt(a.AppName) }, &a.AppName).
+		Value(&a.PluginExt).
+		Validate(optional(scaffold.ValidatePluginExt))
 }
 
 func (a *answers) exampleField() huh.Field {
@@ -184,6 +196,7 @@ func (a *answers) inputs(author string) scaffold.Inputs {
 		Accent:      a.accent(),
 		Author:      author,
 		Auth:        a.Auth,
+		PluginExt:   strings.TrimSpace(a.PluginExt),
 		WithExample: a.WithExample,
 	}
 	if in.AppTitle == "" {
@@ -191,6 +204,9 @@ func (a *answers) inputs(author string) scaffold.Inputs {
 	}
 	if in.GoModule == "" {
 		in.GoModule = defaultGoModule(name)
+	}
+	if in.PluginExt == "" {
+		in.PluginExt = defaultPluginExt(name)
 	}
 	return in
 }
