@@ -246,6 +246,7 @@ func writeManifest(work string, opts Options, result *Result) error {
 			Author:        opts.Inputs.Author,
 			Year:          opts.Inputs.Year,
 			Auth:          opts.Inputs.Auth,
+			PluginExt:     opts.Inputs.PluginExt,
 			WithExample:   opts.Inputs.WithExample,
 		},
 		Units: manifest.Units{Applied: result.UnitsApplied, Removed: result.UnitsRemoved},
