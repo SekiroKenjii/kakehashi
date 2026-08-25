@@ -58,10 +58,12 @@
                     Text="Notes" />
             </StackPanel>
 
+            <!--  A closed InfoBar is not collapsed, so Visibility is bound as well as IsOpen.  -->
             <InfoBar
                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                Severity="Error" />
+                Severity="Error"
+                Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
 
             <Border Style="{StaticResource CardStyle}">
                 <StackPanel Spacing="14">
@@ -210,7 +212,8 @@
                         IsClosable="False"
                         IsOpen="{x:Bind ViewModel.HasDialogError, Mode=OneWay}"
                         Message="{x:Bind ViewModel.DialogError, Mode=OneWay}"
-                        Severity="Error" />
+                        Severity="Error"
+                        Visibility="{x:Bind ViewModel.HasDialogError, Mode=OneWay}" />
                     <TextBox
                         Header="Title"
                         PlaceholderText="What is this note about?"

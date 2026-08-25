@@ -73,10 +73,12 @@
                     Text="Account" />
             </StackPanel>
 
+            <!--  A closed InfoBar is not collapsed, so Visibility is bound as well as IsOpen.  -->
             <InfoBar
                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                Severity="Error" />
+                Severity="Error"
+                Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
 
             <!--  Signed-out state  -->
             <Border Style="{StaticResource CardStyle}" Visibility="{x:Bind ViewModel.IsSignedOut, Mode=OneWay}">
@@ -487,7 +489,8 @@
                         IsClosable="False"
                         IsOpen="{x:Bind ViewModel.HasDialogError, Mode=OneWay}"
                         Message="{x:Bind ViewModel.DialogError, Mode=OneWay}"
-                        Severity="Error" />
+                        Severity="Error"
+                        Visibility="{x:Bind ViewModel.HasDialogError, Mode=OneWay}" />
                     <TextBox Header="Display name" Text="{x:Bind ViewModel.EditDisplayName, Mode=TwoWay}" />
                     <TextBox Header="Phone (optional)" Text="{x:Bind ViewModel.EditPhone, Mode=TwoWay}" />
                 </StackPanel>
@@ -505,7 +508,8 @@
                         IsClosable="False"
                         IsOpen="{x:Bind ViewModel.HasDialogError, Mode=OneWay}"
                         Message="{x:Bind ViewModel.DialogError, Mode=OneWay}"
-                        Severity="Error" />
+                        Severity="Error"
+                        Visibility="{x:Bind ViewModel.HasDialogError, Mode=OneWay}" />
                     <PasswordBox Header="Current password" Password="{x:Bind ViewModel.CurrentPassword, Mode=TwoWay}" />
                     <PasswordBox Header="New password" Password="{x:Bind ViewModel.NewPassword, Mode=TwoWay}" />
                     <PasswordBox Header="Confirm new password" Password="{x:Bind ViewModel.ConfirmPassword, Mode=TwoWay}" />
