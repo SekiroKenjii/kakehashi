@@ -9,6 +9,14 @@ using __ROOT_NAMESPACE__.UI.Common.Controls;
 
 namespace __ROOT_NAMESPACE__.App.UI;
 
+/// <summary>One screen this client places itself, for the list that says why it is not editable.</summary>
+/// <param name="Title">What the pane calls it.</param>
+/// <param name="Heading">The heading it sits under, or empty for none.</param>
+public sealed record NavClientScreen(string Title, string Heading)
+{
+    public string Summary => Heading.Length == 0 ? $"{Title} — no heading" : $"{Title} — {Heading}";
+}
+
 /// <summary>An empty <c>Id</c> is the real "no heading" choice, not a missing value.</summary>
 public sealed record NavHeadingChoice(string Id, string Title);
 

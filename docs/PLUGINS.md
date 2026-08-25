@@ -20,7 +20,7 @@ nothing left to enforce.
 | add screens to the navigation pane | replace a screen or take a module name this build answers to |
 | ship compiled XAML, `x:Bind`, code-behind and its own XAML types | resolve its own `.resw` strings through `x:Uid` |
 | use host `{StaticResource}` styles and `{ThemeResource}` | be unloaded without restarting |
-| be turned off and on instantly, like any module | have its screens rearranged from the Navigation screen |
+| be turned off and on instantly, like any module | be arranged from the Navigation screen — its heading is chosen on the Plugins screen instead |
 
 The refusals are not conventions, and there are four ways a registration could stop being additive.
 Removing an entry is caught against a snapshot. Registering a service type the host already provides
@@ -40,6 +40,16 @@ somebody else's toggle. The reserved keys come from the compiled-in modules' nav
 host's pane entries, and the two screens the shell registers without a pane item of their own — Home
 and Settings. The key is matched the way the navigation service matches it, because one derived by a
 different rule would not be the one that collides.
+
+**Which heading its screens sit under is chosen on this machine.** The Plugins screen offers the
+headings the deployment currently has, and the answer is kept in `state.json` beside everything else
+about that installation. It is not the deployment's to arrange: a plugin is installed on one machine
+and the navigation table has no row for it, so a heading it cannot see is not one it can be asked to
+place. The Navigation screen lists these screens read-only, under "Placed by this client", because a
+screen that is in the pane and absent from that page reads as a fault in that page.
+
+A heading is matched by its title, so choosing one the deployment does not have creates a second
+heading at the bottom of the pane. That is why the choice is a list rather than a text box.
 
 **A plugin is asked what it contributes once.** Its name, its descriptor and its navigation items are
 read inside the loader's filters and kept, and every later reader is given those answers rather than

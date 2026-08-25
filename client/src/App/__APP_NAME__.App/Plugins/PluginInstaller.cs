@@ -194,6 +194,33 @@ public sealed class PluginInstaller
             : Result.Failure(PluginLoadErrors.DirectoryMissing(_paths.StateFile));
     }
 
+    /// <summary>
+    /// Records which pane heading a plugin's screens sit under.
+    /// </summary>
+    /// <remarks>
+    /// Here because this type owns the state file, which is the only place a decision about an
+    /// installed plugin outlives the process — the catalog the screen reads is a snapshot taken
+    /// before the container existed, so writing to it would change nothing on disk.
+    /// </remarks>
+    public Result FileUnder(string pluginID, string group)
+    {
+        ArgumentException.ThrowIfNullOrEmpty(pluginID);
+        ArgumentNullException.ThrowIfNull(group);
+        var state = PluginState.Load(_paths);
+        var record = state.Find(pluginID);
+
+        if (record is null)
+        {
+            return Result.Failure(PluginLoadErrors.DirectoryMissing(_paths.InstalledRoot(pluginID)));
+        }
+        record.Group = group;
+        state.Put(record);
+
+        return state.TrySave()
+            ? Result.Success()
+            : Result.Failure(PluginLoadErrors.DirectoryMissing(_paths.StateFile));
+    }
+
     /// <summary>Whether the user has already agreed to exactly this package.</summary>
     /// <remarks>
     /// Against the identity and the digest, which together settle it: different bytes are a

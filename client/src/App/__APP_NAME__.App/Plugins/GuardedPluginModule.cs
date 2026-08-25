@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Reflection;
 using __ROOT_NAMESPACE__.UI.Contracts;
 using Microsoft.Extensions.DependencyInjection;
@@ -32,8 +33,11 @@ public sealed class GuardedPluginModule(
     IModule module,
     string name,
     ModuleDescriptor descriptor,
-    IReadOnlyList<NavigationItem> navigationItems) : IModule
+    IReadOnlyList<NavigationItem> navigationItems,
+    string group) : IModule
 {
+    private IReadOnlyList<NavigationItem> _items = Under(navigationItems, group);
+
     /// <summary>
     /// The assembly the plugin's own code came from.
     /// </summary>
@@ -53,5 +57,26 @@ public sealed class GuardedPluginModule(
         module.RegisterServices(services);
     }
 
-    public IReadOnlyList<NavigationItem> GetNavigationItems() => navigationItems;
+    public IReadOnlyList<NavigationItem> GetNavigationItems() => _items;
+
+    /// <summary>
+    /// Files this plugin's screens under a different heading.
+    /// </summary>
+    /// <remarks>
+    /// The plugin is still asked once: this rewrites one field of the answer that was kept, which
+    /// is the host's to decide. The pane redraws when somebody broadcasts that the module set
+    /// changed.
+    /// </remarks>
+    public void FileUnder(string heading)
+    {
+        ArgumentNullException.ThrowIfNull(heading);
+        _items = Under(navigationItems, heading);
+    }
+
+    /// <summary>The items as they read under a heading, or as the module gave them when none.</summary>
+    private static IReadOnlyList<NavigationItem> Under(
+        IReadOnlyList<NavigationItem> items, string heading)
+    {
+        return heading.Length == 0 ? items : [.. items.Select(item => item with { Group = heading })];
+    }
 }
