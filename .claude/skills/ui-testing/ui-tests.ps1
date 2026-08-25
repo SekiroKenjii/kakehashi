@@ -52,7 +52,7 @@ function AllOf {
     while ($stack.Count) {
         $e = $stack.Pop()
         $out.Add([pscustomobject]@{
-            selector = $e.selector; type = $e.type; name = $e.name
+            selector = $e.selector; type = $e.type; name = $e.name; className = $e.className
             x = $e.x; y = $e.y; width = $e.width; height = $e.height
             offscreen = $e.isOffscreen
         })
@@ -170,7 +170,8 @@ Assert-That 'the account footer item has an accessible name' (-not ($items -cont
 # UIA property that says "footer", so this is read off the pane's vertical order: below every
 # Administration item, above Settings.
 $paneY = @{}
-foreach ($row in (AllOf | Where-Object { $_.name -in @('Navigation', 'Plugins', 'Settings') })) {
+foreach ($row in (AllOf | Where-Object { $_.className -like '*NavigationViewItem*' -and
+    $_.name -in @('Navigation', 'Plugins', 'Settings') })) {
     if (-not $paneY.ContainsKey($row.name)) { $paneY[$row.name] = $row.y }
 }
 Assert-That 'Plugins sits below the menu and above Settings' `
