@@ -37,7 +37,13 @@
         </Style>
     </Page.Resources>
 
-    <Grid Padding="24,12,24,20" RowSpacing="12">
+    <!--
+        Margins rather than RowSpacing, and Visibility on the bar as well as IsOpen. Row 3 is empty
+        on every successful load, and it takes both: a Grid charges its spacing between every
+        adjacent row pair whether or not the row measures anything, and a closed InfoBar is not
+        collapsed, so it would go on buying its own margin. Together the gap goes with the row.
+    -->
+    <Grid Padding="24,12,24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -75,7 +81,10 @@
         </common:PageHeader>
 
         <!--  The four counts. Every number here is one the server counted over the whole range.  -->
-        <ItemsRepeater Grid.Row="1" ItemsSource="{x:Bind ViewModel.StatCards}">
+        <ItemsRepeater
+            Grid.Row="1"
+            Margin="0,12,0,0"
+            ItemsSource="{x:Bind ViewModel.StatCards}">
             <ItemsRepeater.ItemTemplate>
                 <DataTemplate x:DataType="common:StatCard">
                     <common:StatCardView Card="{x:Bind}" />
@@ -91,7 +100,10 @@
         </ItemsRepeater>
 
         <!--  Filter bar. Search applies on submit, not per keystroke — the server does the searching.  -->
-        <Grid Grid.Row="2" ColumnSpacing="12">
+        <Grid
+            Grid.Row="2"
+            Margin="0,12,0,0"
+            ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
                 <ColumnDefinition Width="*" />
@@ -145,12 +157,17 @@
 
         <InfoBar
             Grid.Row="3"
+            Margin="0,12,0,0"
             IsClosable="False"
             IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
             Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-            Severity="Error" />
+            Severity="Error"
+            Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
 
-        <Border Grid.Row="4" Style="{StaticResource CardStyle}">
+        <Border
+            Grid.Row="4"
+            Margin="0,12,0,0"
+            Style="{StaticResource CardStyle}">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto" />
