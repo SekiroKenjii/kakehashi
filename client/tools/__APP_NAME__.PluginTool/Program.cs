@@ -60,6 +60,11 @@ internal static class Program
             return [.. package.Validate(), .. PluginContentValidator.Validate(package)];
         }
 
+        if (File.Exists(subject))
+        {
+            return [PluginErrors.NotAPackage(subject, PluginPackage.Extension)];
+        }
+
         if (!Directory.Exists(subject))
         {
             return [PluginErrors.ProjectManifestMissing(subject)];

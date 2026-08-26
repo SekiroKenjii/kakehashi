@@ -34,7 +34,14 @@ public sealed class PluginsViewModelTests : IDisposable
     private readonly IFileOpenService _files = Substitute.For<IFileOpenService>();
     private readonly IDialogService _dialogs = Substitute.For<IDialogService>();
     private readonly IPluginCatalogService _catalogService = Substitute.For<IPluginCatalogService>();
+    private readonly INavigationLayoutService _layout = Substitute.For<INavigationLayoutService>();
     private readonly PluginCatalog _catalog = new();
+
+    public PluginsViewModelTests()
+    {
+        // The deployment's headings are what a plugin can be filed under. None, unless a test says.
+        _layout.Current.Returns(NavigationLayout.None);
+    }
 
     public void Dispose()
     {
@@ -50,7 +57,7 @@ public sealed class PluginsViewModelTests : IDisposable
         var scaffolder = new PluginScaffolder(_root);
 
         return new PluginsViewModel(
-            _modules, _catalog, installer, _files, _dialogs, scaffolder, _catalogService);
+            _modules, _catalog, installer, _files, _dialogs, scaffolder, _catalogService, _layout);
     }
 
     private static IModule Module(string name, string display, bool required)
@@ -338,7 +345,8 @@ public sealed class PluginsViewModelTests : IDisposable
             _files,
             _dialogs,
             new PluginScaffolder(_root),
-            _catalogService);
+            _catalogService,
+            _layout);
 
         Assert.True(off.PluginsDisabled);
     }
@@ -396,7 +404,7 @@ public sealed class PluginsViewModelTests : IDisposable
     private string WriteUnsignedPackage()
     {
         System.IO.Directory.CreateDirectory(_root);
-        var path = System.IO.Path.Combine(_root, "weather" + PluginPaths.PackageExtension);
+        var path = System.IO.Path.Combine(_root, "weather" + PluginPackage.Extension);
 
         using (var file = System.IO.File.Create(path))
         using (var archive = new ZipArchive(file, ZipArchiveMode.Create))
@@ -472,7 +480,8 @@ public sealed class PluginsViewModelTests : IDisposable
             _files,
             _dialogs,
             new PluginScaffolder(_root),
-            _catalogService);
+            _catalogService,
+            _layout);
         viewModel.Load();
 
         Assert.Contains(
@@ -646,5 +655,118 @@ public sealed class PluginsViewModelTests : IDisposable
 
             Assert.Single(showing, shown => shown);
         }
+    }
+
+    /// <summary>
+    /// The band under the tab strip collapses whole when it holds nothing. A panel that is visible
+    /// but empty still contributes its margin, which is the gap this exists to remove.
+    /// </summary>
+    [Fact]
+    public void HasBanner_IsFalseOnlyWhenTheBandWouldBeEmpty()
+    {
+        Compose();
+        var viewModel = CreateViewModel();
+        viewModel.Load();
+
+        // The Installed tab always shows the stat cards.
+        Assert.True(viewModel.HasBanner);
+
+        viewModel.Tab = "Browse catalog";
+
+        Assert.False(viewModel.HasBanner);
+
+        viewModel.ErrorMessage = "Something to read.";
+
+        Assert.True(viewModel.HasError);
+        Assert.True(viewModel.HasBanner);
+
+        viewModel.ErrorMessage = string.Empty;
+
+        Assert.False(viewModel.HasBanner);
+    }
+
+    /// <summary>
+    /// The headings offered are the deployment's own. A plugin filed under a name no heading has
+    /// invents a second heading at the bottom of the pane, so the choice is bounded by what exists.
+    /// </summary>
+    [Fact]
+    public void HeadingChoices_AreTheDeploymentsHeadingsPlusNone()
+    {
+        Compose();
+        _layout.Current.Returns(new NavigationLayout(
+            [],
+            [new NavigationGroup("Utilities", []), new NavigationGroup("Administration", [])]));
+
+        var choices = CreateViewModel().HeadingChoices;
+
+        Assert.Equal([string.Empty, "Utilities", "Administration"], choices);
+    }
+
+    /// <summary>
+    /// The heading survives a restart, which means it has to reach the state file — the catalog the
+    /// screen reads is a snapshot taken before the container existed.
+    /// </summary>
+    [Fact]
+    public void FileUnder_WritesTheHeadingToTheStateFile()
+    {
+        Compose(Module("Weather", "Weather", required: false));
+        AddInstalled("weather", "Weather", nameof(PluginTrustLevel.Unofficial));
+        var paths = new PluginPaths(_root);
+        var state = PluginState.Load(paths);
+        state.Put(new PluginRecord { PluginID = "weather", InstalledVersion = "1.0.0" });
+        Assert.True(state.TrySave());
+
+        var viewModel = CreateViewModel();
+        viewModel.Load();
+        viewModel.FileUnder(viewModel.Items[0], "Tools");
+
+        var reloaded = PluginState.Load(paths);
+
+        Assert.Equal("Tools", reloaded.Find("weather")!.Group);
+    }
+
+    /// <summary>A row that is rebound to a different plugin must not read as somebody choosing.</summary>
+    [Fact]
+    public void FileUnder_TheHeadingTheRowAlreadyHas_WritesNothing()
+    {
+        Compose(Module("Weather", "Weather", required: false));
+        AddInstalled("weather", "Weather", nameof(PluginTrustLevel.Unofficial));
+
+        var viewModel = CreateViewModel();
+        viewModel.Load();
+        var row = viewModel.Items[0];
+
+        viewModel.FileUnder(row, row.Group);
+
+        // No state file was ever written, so nothing was recorded and nothing was refused.
+        Assert.False(System.IO.File.Exists(new PluginPaths(_root).StateFile));
+        Assert.False(viewModel.HasError);
+    }
+
+    [Fact]
+    public void FileUnder_AnUnknownPluginIsRefusedRatherThanWritten()
+    {
+        var installer = new PluginInstaller(new PluginPaths(_root), PluginPublisher.Nobody);
+
+        Assert.True(installer.FileUnder("nothing-here", "Tools").IsFailure);
+    }
+
+    /// <summary>An installed row carries the heading it is filed under; a built-in has none.</summary>
+    [Fact]
+    public void Load_AnInstalledRowCarriesItsHeadingAndABuiltInDoesNot()
+    {
+        Compose(Module("Notes", "Notes", required: false));
+        AddInstalled("weather", "Weather", nameof(PluginTrustLevel.Unofficial));
+        _catalog.Loaded[0].Record.Group = "Tools";
+
+        var viewModel = CreateViewModel();
+        viewModel.Load();
+
+        var installed = viewModel.Items.Single(item => item.Origin == PluginOrigin.Unofficial);
+        var builtIn = viewModel.Items.Single(item => item.Origin == PluginOrigin.BuiltIn);
+
+        Assert.Equal("Tools", installed.Group);
+        Assert.Equal(string.Empty, builtIn.Group);
+        Assert.Empty(builtIn.Headings);
     }
 }

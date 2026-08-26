@@ -9,6 +9,14 @@ using __ROOT_NAMESPACE__.UI.Common.Controls;
 
 namespace __ROOT_NAMESPACE__.App.UI;
 
+/// <summary>One screen this client places itself, for the list that says why it is not editable.</summary>
+/// <param name="Title">What the pane calls it.</param>
+/// <param name="Heading">The heading it sits under, or empty for none.</param>
+public sealed record NavClientScreen(string Title, string Heading)
+{
+    public string Summary => Heading.Length == 0 ? $"{Title} — no heading" : $"{Title} — {Heading}";
+}
+
 /// <summary>An empty <c>Id</c> is the real "no heading" choice, not a missing value.</summary>
 public sealed record NavHeadingChoice(string Id, string Title);
 
@@ -137,9 +145,15 @@ public sealed partial class NavScreenNode : ObservableObject
     public string Glyph =>
         NavigationIcons.Resolve(Icon, NavigationIcons.Resolve(DefaultIcon, NavigationIcons.Unknown));
 
-    /// <summary>Whether this build can draw the icon name; empty means "use the code's", not
-    /// unknown.</summary>
-    public bool IsIconKnown => Icon.Length == 0 || NavigationIcons.Knows(Icon);
+    /// <summary>
+    /// Whether this build can draw whichever name is in play — the override, or the code's when
+    /// there is no override.
+    /// </summary>
+    /// <remarks>
+    /// Both, because judging only the override reports a name this build cannot draw as known: the
+    /// row then shows the unknown-icon placeholder beside a mark saying the icon is fine.
+    /// </remarks>
+    public bool IsIconKnown => NavigationIcons.Knows(IconName);
 
     public bool IsIconUnknown => !IsIconKnown;
 

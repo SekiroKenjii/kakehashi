@@ -62,7 +62,12 @@
         </Style>
     </Page.Resources>
 
-    <Grid Padding="24,12,24,20" RowSpacing="12">
+    <!--
+        Margins rather than RowSpacing: a Grid charges its spacing between every adjacent row pair,
+        including the pair either side of a row whose content is collapsed. The staged-changes row is
+        collapsed whenever nothing is staged, which is most of the time.
+    -->
+    <Grid Padding="24,12,24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -124,6 +129,7 @@
         <!--  What is staged. Nothing has reached the server while this is showing.  -->
         <Border
             Grid.Row="1"
+            Margin="0,12,0,0"
             Padding="14,10"
             Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
             BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
@@ -194,9 +200,11 @@
         -->
         <InfoBar
             Grid.Row="2"
+            Margin="0,12,0,0"
             IsOpen="{x:Bind ViewModel.IsNoteOpen, Mode=TwoWay}"
             Message="Arranging the pane never changes who may open a screen. Each screen's permission is declared beside its code and enforced on every request, so the worst a change here can do is hide something."
-            Severity="Informational">
+            Severity="Informational"
+            Visibility="{x:Bind ViewModel.IsNoteOpen, Mode=OneWay}">
             <InfoBar.IconSource>
                 <FontIconSource Glyph="&#xE83D;" />
             </InfoBar.IconSource>
@@ -238,7 +246,10 @@
             </ScrollViewer>
         </ContentDialog>
 
-        <Grid Grid.Row="3" ColumnSpacing="12">
+        <Grid
+            Grid.Row="3"
+            Margin="0,12,0,0"
+            ColumnSpacing="12">
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="2*" />
                     <ColumnDefinition Width="3*" />
@@ -573,7 +584,10 @@
 
                                             <StackPanel Grid.Column="0" Spacing="5">
                                                 <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Name in the pane" />
-                                                <TextBox PlaceholderText="{x:Bind ViewModel.SelectedScreen.DefaultTitle, Mode=OneWay}" Text="{x:Bind ViewModel.SelectedScreen.Title, Mode=TwoWay}" />
+                                                <TextBox
+                                                    AutomationProperties.Name="Name in the pane"
+                                                    PlaceholderText="{x:Bind ViewModel.SelectedScreen.DefaultTitle, Mode=OneWay}"
+                                                    Text="{x:Bind ViewModel.SelectedScreen.Title, Mode=TwoWay}" />
                                                 <TextBlock Style="{StaticResource HintTextStyle}" Text="{x:Bind ViewModel.SelectedScreen.TitleHint, Mode=OneWay}" />
                                             </StackPanel>
 
@@ -963,10 +977,33 @@
                                 PaneDisplayMode="Left" />
                         </Border>
 
-                        <TextBlock
-                            Grid.Row="3"
-                            Style="{StaticResource HintTextStyle}"
-                            Text="{x:Bind ViewModel.PreviewNote, Mode=OneWay}" />
+                        <StackPanel Grid.Row="3" Spacing="6">
+                            <TextBlock
+                                Style="{StaticResource HintTextStyle}"
+                                Text="{x:Bind ViewModel.PreviewNote, Mode=OneWay}" />
+
+                            <!--
+                                Listed rather than hidden: a screen that is in the pane and absent
+                                from this page reads as a fault in this page. These have no row to
+                                move - the deployment was never offered them.
+                            -->
+                            <StackPanel
+                                Spacing="2"
+                                Visibility="{x:Bind ViewModel.HasClientScreens, Mode=OneWay}">
+                                <TextBlock
+                                    Style="{StaticResource HintTextStyle}"
+                                    Text="Placed by this client, and arranged elsewhere" />
+                                <ItemsControl ItemsSource="{x:Bind ViewModel.ClientScreens}">
+                                    <ItemsControl.ItemTemplate>
+                                        <DataTemplate x:DataType="local:NavClientScreen">
+                                            <TextBlock
+                                                Style="{StaticResource HintTextStyle}"
+                                                Text="{x:Bind Summary}" />
+                                        </DataTemplate>
+                                    </ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                            </StackPanel>
+                        </StackPanel>
                     </Grid>
                 </Border>
     </Grid>

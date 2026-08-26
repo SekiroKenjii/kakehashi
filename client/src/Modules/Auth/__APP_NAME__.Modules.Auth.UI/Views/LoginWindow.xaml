@@ -54,16 +54,19 @@
                 Password="{x:Bind ViewModel.Password, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
                 PlaceholderText="Password" />
 
+            <!--  A closed InfoBar is not collapsed, so Visibility is bound as well as IsOpen.  -->
             <InfoBar
                 Margin="0,16,0,0"
                 IsClosable="False"
                 IsOpen="{x:Bind ViewModel.HasError, Mode=OneWay}"
                 Message="{x:Bind ViewModel.ErrorMessage, Mode=OneWay}"
-                Severity="Error" />
+                Severity="Error"
+                Visibility="{x:Bind ViewModel.HasError, Mode=OneWay}" />
 
             <Button
                 Margin="0,20,0,0"
                 HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Sign in"
                 Command="{x:Bind ViewModel.SignInCommand}"
                 Style="{StaticResource AccentButtonStyle}">
                 <Grid>
@@ -255,6 +258,7 @@
             <Button
                 Margin="0,24,0,0"
                 HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Sign in with browser"
                 Command="{x:Bind ViewModel.SignInCommand}"
                 Style="{StaticResource AccentButtonStyle}">
                 <StackPanel Orientation="Horizontal" Spacing="10">
@@ -429,6 +433,7 @@
             <Button
                 Margin="0,20,0,10"
                 HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Reopen browser"
                 Command="{x:Bind ViewModel.ReopenBrowserCommand}">
                 <StackPanel Orientation="Horizontal" Spacing="8">
                     <FontIcon FontSize="14" Glyph="&#xE8A7;" />
@@ -488,6 +493,7 @@
             <Button
                 Margin="0,20,0,10"
                 HorizontalAlignment="Stretch"
+                AutomationProperties.Name="Try again"
                 Command="{x:Bind ViewModel.SignInCommand}"
                 Style="{StaticResource AccentButtonStyle}">
                 <StackPanel Orientation="Horizontal" Spacing="10">

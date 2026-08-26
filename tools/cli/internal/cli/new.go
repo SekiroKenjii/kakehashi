@@ -23,6 +23,7 @@ type options struct {
 	module          string
 	title           string
 	protoPackage    string
+	pluginExt       string
 	accent          string
 	author          string
 	withExample     bool
@@ -72,6 +73,8 @@ func bind(command *cobra.Command, opts *options) {
 	flags.BoolVar(&opts.withExample, "with-example", true, "include the example module")
 	flags.BoolVar(&opts.bare, "bare", false, "leave the example module out")
 	flags.StringVar(&opts.auth, "auth", scaffold.AuthInApp, "sign-in mode: inapp or browser")
+	flags.StringVar(&opts.pluginExt, "plugin-extension", "",
+		"plugin package extension without the dot (default: the app name, lower case, plus pkg)")
 	flags.StringVar(&opts.templateVersion, "template-version", "", "template version (default: the newest release)")
 	flags.StringVar(&opts.templateDir, "template-dir", "", "scaffold from a template checkout instead of a release")
 	flags.StringVar(&opts.dir, "dir", "", "destination (default: ./<app-name lower case>)")
@@ -179,6 +182,7 @@ func answers(command *cobra.Command, args []string, opts *options) (scaffold.Inp
 		AppTitle:     opts.title,
 		GoModule:     opts.module,
 		ProtoPackage: opts.protoPackage,
+		PluginExt:    opts.pluginExt,
 		Accent:       opts.accent,
 		Author:       opts.author,
 		Auth:         opts.auth,

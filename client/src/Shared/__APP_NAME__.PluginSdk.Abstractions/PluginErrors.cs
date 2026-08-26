@@ -234,6 +234,14 @@ public static class PluginErrors
         return new Error("Plugin.Project.OutputUnwritable", reason);
     }
 
+    /// <summary>A file that is not a package and not a project directory either.</summary>
+    public static Error NotAPackage(string path, string extension)
+    {
+        return new Error(
+            "Plugin.Project.NotAPackage",
+            $"'{path}' is a file rather than a project directory, and does not end in {extension}.");
+    }
+
     /// <summary>A project the scaffolder will not write, and why.</summary>
     public static Error ProjectInvalid(string reason)
     {

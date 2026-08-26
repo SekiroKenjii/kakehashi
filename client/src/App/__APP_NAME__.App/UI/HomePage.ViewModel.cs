@@ -629,7 +629,7 @@ public sealed partial class HomeViewModel : ViewModel
         ModuleCards.Add(new ModuleCardItem(
             _navigationService.GetPageKey(typeof(SettingsPage)),
             "Settings",
-            "",
+            "\uE713",
             "CORE",
             "Theme, error reporting and diagnostics for the application shell.",
             $"Theme: {ThemeText(_themeService.Theme)}",
@@ -646,7 +646,7 @@ public sealed partial class HomeViewModel : ViewModel
                 : item.PageType.Name == "ProductsPage"
                     ? ("CORE", $"{module.Name} module")
                     : ("MODULE", $"{module.Name} module");
-        string glyph = string.IsNullOrEmpty(item.IconGlyph) ? "" : item.IconGlyph;
+        string glyph = string.IsNullOrEmpty(item.IconGlyph) ? "\uE71D" : item.IconGlyph;
         bool withheld = _moduleRegistry.IsWithheld(module.Name);
         bool granted = _moduleRegistry.IsGranted(module.Name);
 
@@ -789,11 +789,11 @@ public sealed partial class HomeViewModel : ViewModel
     private static HomeActivityItem ToActivityItem(AppActivityEntry entry)
     {
         var (glyph, isPositive) = entry.Kind switch {
-            AppActivityLog.SignedInKind => ("", true),
-            AppActivityLog.SignedOutKind => ("", false),
-            AppActivityLog.AppUpdatedKind => ("", false),
-            AppActivityLog.ThemeChangedKind => ("", false),
-            _ => ("", false),
+            AppActivityLog.SignedInKind => ("\uE930", true),
+            AppActivityLog.SignedOutKind => ("\uE7E8", false),
+            AppActivityLog.AppUpdatedKind => ("\uE895", false),
+            AppActivityLog.ThemeChangedKind => ("\uE790", false),
+            _ => ("\uE946", false),
         };
 
         return new HomeActivityItem(

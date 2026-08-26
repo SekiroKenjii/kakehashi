@@ -23,7 +23,7 @@ public sealed class GuardedPluginModuleTests
     {
         var module = new ChangingModule();
         IReadOnlyList<NavigationItem> validated = [.. module.GetNavigationItems()];
-        var guarded = new GuardedPluginModule(module, "Weather", _descriptor, validated);
+        var guarded = new GuardedPluginModule(module, "Weather", _descriptor, validated, string.Empty);
 
         Assert.Equal(validated, guarded.GetNavigationItems());
         Assert.Equal(validated, guarded.GetNavigationItems());
@@ -34,10 +34,48 @@ public sealed class GuardedPluginModuleTests
     [Fact]
     public void NameAndDescriptor_ComeFromTheLoaderRatherThanThePlugin()
     {
-        var guarded = new GuardedPluginModule(new ThrowingModule(), "Weather", _descriptor, []);
+        var guarded = new GuardedPluginModule(new ThrowingModule(), "Weather", _descriptor, [], string.Empty);
 
         Assert.Equal("Weather", guarded.Name);
         Assert.Equal(_descriptor, guarded.Descriptor);
+    }
+
+    /// <summary>
+    /// A heading the installation chose overrides the one the module compiled in, without asking
+    /// the plugin anything a second time.
+    /// </summary>
+    [Fact]
+    public void GetNavigationItems_UnderAHeading_RewritesTheGroupAndNothingElse()
+    {
+        var module = new ChangingModule();
+        IReadOnlyList<NavigationItem> validated = [.. module.GetNavigationItems()];
+
+        var guarded = new GuardedPluginModule(module, "Weather", _descriptor, validated, "Tools");
+
+        var item = Assert.Single(guarded.GetNavigationItems());
+
+        Assert.Equal("Tools", item.Group);
+        Assert.Equal(validated[0].Title, item.Title);
+        Assert.Equal(validated[0].PageType, item.PageType);
+        Assert.Equal(1, module.Calls);
+    }
+
+    [Fact]
+    public void FileUnder_ChangesTheHeadingAndCanPutItBack()
+    {
+        var module = new ChangingModule();
+        IReadOnlyList<NavigationItem> validated = [.. module.GetNavigationItems()];
+        var guarded = new GuardedPluginModule(module, "Weather", _descriptor, validated, "Tools");
+
+        guarded.FileUnder("Reports");
+
+        Assert.Equal("Reports", Assert.Single(guarded.GetNavigationItems()).Group);
+
+        // Empty is "whatever the module said", not "no heading the module can have".
+        guarded.FileUnder(string.Empty);
+
+        Assert.Equal(validated[0].Group, Assert.Single(guarded.GetNavigationItems()).Group);
+        Assert.Equal(1, module.Calls);
     }
 
     /// <summary>
@@ -49,7 +87,7 @@ public sealed class GuardedPluginModuleTests
     public void RegisterServices_IsForwardedToThePlugin()
     {
         var module = new ChangingModule();
-        var guarded = new GuardedPluginModule(module, "Weather", _descriptor, []);
+        var guarded = new GuardedPluginModule(module, "Weather", _descriptor, [], string.Empty);
         guarded.RegisterServices(new ServiceCollection());
 
         Assert.Equal(1, module.Registrations);
@@ -76,7 +114,7 @@ public sealed class GuardedPluginModuleTests
             Calls++;
 
             return Calls == 1
-                ? [new NavigationItem("Weather", "\uE9CA", typeof(WeatherPage))]
+                ? [new NavigationItem("Weather", "\uE9CA", typeof(WeatherPage)) { Group = "Utilities" }]
                 : [new NavigationItem("Settings", "\uE713", typeof(SettingsPage))];
         }
     }

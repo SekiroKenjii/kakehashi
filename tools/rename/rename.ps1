@@ -18,6 +18,7 @@ param(
     [Parameter(Mandatory)][string]$GoModule,
     [string]$AppTitle,
     [string]$ProtoPackage,
+    [string]$PluginExtension,
     [string]$RootNamespace,
     [string]$Accent = '#C4513C',
     [string]$Author,
@@ -44,6 +45,7 @@ if ($GoModule -notmatch '^[a-zA-Z0-9][a-zA-Z0-9._~/-]*[a-zA-Z0-9]$') {
 }
 
 $appNameLower = $AppName.ToLowerInvariant()
+if (-not $PluginExtension) { $PluginExtension = "${appNameLower}pkg" }
 $appNameUpper = $AppName.ToUpperInvariant()
 if (-not $AppTitle) { $AppTitle = $AppName }
 if (-not $ProtoPackage) { $ProtoPackage = $appNameLower }
@@ -76,6 +78,7 @@ $placeholders = @(
     @{ Name = '__ROOT_NAMESPACE__'; Value = $RootNamespace }
     @{ Name = '__PROTO_PACKAGE__'; Value = $ProtoPackage }
     @{ Name = '__GO_MODULE__'; Value = $GoModule }
+    @{ Name = '__PLUGIN_EXT__'; Value = $PluginExtension }
     @{ Name = '__ACCENT__'; Value = $Accent }
     @{ Name = '__AUTHOR__'; Value = $Author }
     @{ Name = '__YEAR__'; Value = $Year }

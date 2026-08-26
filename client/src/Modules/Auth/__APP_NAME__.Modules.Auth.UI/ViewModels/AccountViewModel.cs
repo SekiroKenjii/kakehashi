@@ -453,13 +453,13 @@ public sealed partial class AccountViewModel : ViewModel
     private static ActivityItem ToActivityItem(SecurityEventDto entry)
     {
         var (title, glyph, isAlert) = entry.Kind switch {
-            "SignedIn" => ("Signed in", "", false),
-            "SignedOut" => ("Signed out", "", false),
-            "NewDeviceSignedIn" => ("New device signed in", "", false),
-            "PasswordChanged" => ("Password changed", "", false),
-            "FailedSignIn" => ("Failed sign-in attempt", "", true),
-            "SessionRevoked" => ("Session revoked", "", false),
-            _ => (entry.Kind, "", false),
+            "SignedIn" => ("Signed in", "\uE930", false),
+            "SignedOut" => ("Signed out", "\uE7E8", false),
+            "NewDeviceSignedIn" => ("New device signed in", "\uE717", false),
+            "PasswordChanged" => ("Password changed", "\uE8D7", false),
+            "FailedSignIn" => ("Failed sign-in attempt", "\uE783", true),
+            "SessionRevoked" => ("Session revoked", "\uEE35", false),
+            _ => (entry.Kind, "\uE946", false),
         };
 
         return new ActivityItem(

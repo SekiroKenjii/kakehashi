@@ -210,7 +210,8 @@ public sealed class PluginRegistrationTests
             Owned(s => s.Configure<PluginSettings>(settings => settings.Address = "plugin")),
             "Weather",
             descriptor,
-            []);
+            [],
+            string.Empty);
 
         Assert.True(PluginRegistration.Add(services, own, own.Assembly).IsSuccess);
 
@@ -218,7 +219,8 @@ public sealed class PluginRegistrationTests
             Owned(s => s.PostConfigure<PluginOptions>(options => options.Enabled = false)),
             "Weather",
             descriptor,
-            []);
+            [],
+            string.Empty);
         var refused = PluginRegistration.Add(Host(), reaching, reaching.Assembly);
 
         Assert.True(refused.IsFailure);

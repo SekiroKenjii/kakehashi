@@ -87,6 +87,19 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
     /// <summary>What the pane would look like: the staged arrangement, or a role's saved one.</summary>
     public ObservableCollection<NavigationEntry> Preview { get; } = [];
 
+    /// <summary>
+    /// The screens this client places itself, which this screen cannot arrange.
+    /// </summary>
+    /// <remarks>
+    /// A destination with no id was never offered to the deployment, so there is no row here to
+    /// move: the account row, and any screen a plugin adds. Listed rather than hidden, because a
+    /// screen that is in the pane and absent from this page reads as a bug in this page.
+    /// </remarks>
+    public ObservableCollection<NavClientScreen> ClientScreens { get; } = [];
+
+    /// <summary>Whether anything is placed by this client, so the list can stay out of the way.</summary>
+    public bool HasClientScreens => ClientScreens.Count > 0;
+
     public string IconSearchHint =>
         IconQuery.Length == 0
             ? $"{SegoeFluentIcons.Count} icons. Type to narrow them."
@@ -665,10 +678,18 @@ public sealed partial class NavigationLayoutViewModel : ViewModel
     private void Draw(IReadOnlyList<NavigationEntry> entries)
     {
         Preview.Clear();
+        ClientScreens.Clear();
+
         foreach (var entry in entries)
         {
             Preview.Add(entry);
+
+            if (entry.Item.Id.Length == 0)
+            {
+                ClientScreens.Add(new NavClientScreen(entry.Item.Title, entry.Item.Group));
+            }
         }
+        OnPropertyChanged(nameof(HasClientScreens));
     }
 
     /// <summary>The staged arrangement in the shape the pane's own planner reads.</summary>

@@ -31,7 +31,12 @@
         </Style>
     </Page.Resources>
 
-    <Grid Padding="24,12,24,20" RowSpacing="12">
+    <!--
+        Margins rather than RowSpacing: a Grid charges its spacing between every adjacent row pair,
+        including the pair either side of a row whose content is collapsed. The staged-changes row is
+        collapsed whenever nothing is staged, which is most of the time.
+    -->
+    <Grid Padding="24,12,24,20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto" />
             <RowDefinition Height="Auto" />
@@ -92,6 +97,7 @@
         -->
         <Border
             Grid.Row="1"
+            Margin="0,12,0,0"
             Padding="14,8"
             Background="{ThemeResource SystemFillColorCautionBackgroundBrush}"
             BorderBrush="{ThemeResource SystemFillColorCautionBrush}"
@@ -149,7 +155,10 @@
         </Border>
 
         <!--  Roles on the left, the selected role's matrix on the right.  -->
-        <Grid Grid.Row="2" ColumnSpacing="12">
+        <Grid
+            Grid.Row="2"
+            Margin="0,12,0,0"
+            ColumnSpacing="12">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="300" />
                 <ColumnDefinition Width="*" />
@@ -185,6 +194,7 @@
                         Grid.Row="2"
                         Padding="4,0,4,8"
                         AutomationProperties.AutomationId="RoleList"
+                        AutomationProperties.Name="Roles"
                         ItemsSource="{x:Bind ViewModel.Roles}"
                         SelectedItem="{x:Bind ViewModel.SelectedRole, Mode=TwoWay}"
                         SelectionMode="Single">
@@ -402,6 +412,7 @@
                             x:Name="FilterBar"
                             Grid.Column="1"
                             VerticalAlignment="Center"
+                            AutomationProperties.Name="Filter permissions"
                             SelectionChanged="OnFilterChipChanged">
                             <SelectorBarItem x:Name="ChipAll" Text="All" />
                             <SelectorBarItem Text="Enabled" />
@@ -641,6 +652,7 @@
                     <ListView
                         Grid.Row="2"
                         AutomationProperties.AutomationId="AuditList"
+                        AutomationProperties.Name="Audit log"
                         ItemsSource="{x:Bind ViewModel.AuditEntries}"
                         SelectionMode="None"
                         Visibility="{x:Bind ViewModel.IsAuditOpen, Mode=OneWay}">

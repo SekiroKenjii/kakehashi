@@ -75,9 +75,9 @@ public sealed partial class RolePermissionsPage : Page
     public static string GroupGlyph(string category)
     {
         return category switch {
-            "Administration" => "",
-            "Module access" => "",
-            _ => "",
+            "Administration" => "\uE7EF",
+            "Module access" => "\uE71D",
+            _ => "\uE8F1",
         };
     }
 

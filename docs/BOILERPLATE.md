@@ -56,6 +56,8 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `templates/units/` | CORE | the removable-unit files; these ship, so a project can still remove the example |
 | `tools/check-comment-length.sh` | CORE | |
 | `tools/check-doc-comments.sh` | CORE | |
+| `tools/check-icon-escapes.sh` | CORE | |
+| `tools/check-navigation-icons.sh` | CORE | |
 | `tools/inventory/` | CORE | template repo only — the scanner and the coverage check |
 | `tools/rename/` | CORE | template repo only — the rename scripts, which delete themselves |
 | `tools/units/` | CORE | template repo only — applies a removable unit before the rename |
@@ -173,7 +175,7 @@ two drifting: a file added without a row fails it, and so does a row left behind
 | `client/src/App/__APP_NAME__.App/Services/NavigationAdminService.cs` | EXAMPLE | unit `admin-ui` |
 | `client/src/App/__APP_NAME__.App/UI/AdminFormat.cs` | EXAMPLE | unit `admin-ui` |
 | `client/src/App/__APP_NAME__.App/UI/HomePage.ViewModel.cs` | CORE | `_shippedModuleCount` counts the shipped modules by hand; Phase 1 derives it from `ModuleCatalog` |
-| `client/src/App/__APP_NAME__.App/UI/HostNavigation.cs` | CORE | its three entries belong to unit `admin-ui`; marked in Phase 1 |
+| `client/src/App/__APP_NAME__.App/UI/HostNavigation.cs` | CORE | its entries belong to unit `admin-ui`; marked in Phase 1 |
 | `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.Nodes.cs` | EXAMPLE | unit `admin-ui` |
 | `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.ViewModel.cs` | EXAMPLE | unit `admin-ui` |
 | `client/src/App/__APP_NAME__.App/UI/NavigationLayoutPage.xaml` | EXAMPLE | unit `admin-ui` |
@@ -374,6 +376,7 @@ tracked files became 590.
 | `go test ./...` | pass |
 | `go run ./tools/archlint` | pass — 53 packages, no boundary violations (61 with notes) |
 | `tools/check-comment-length.sh`, `tools/check-doc-comments.sh` | pass |
+| `tools/check-icon-escapes.sh`, `tools/check-navigation-icons.sh` | pass |
 | `client` build, `dotnet format`, `__APP_NAME__.ArchitectureTests` | **not run** — needs Windows and the .NET SDK |
 
 The client half of the proof is the marker edits plus deleting whole projects and their `.slnx`

@@ -51,6 +51,16 @@ func defaultTitle(appName string) string {
 }
 
 // defaultGoModule is where a project of this name would live under whoever this machine belongs to.
+// defaultPluginExt is what a project's plugin packages are named, without the dot. Derived from the
+// app name so it is distinctive per product: OrderDesk packages plugins as .orderdeskpkg.
+func defaultPluginExt(appName string) string {
+	name := strings.ToLower(strings.TrimSpace(appName))
+	if name == "" {
+		return ""
+	}
+	return name + "pkg"
+}
+
 func defaultGoModule(appName string) string {
 	return gitOwner() + "/" + strings.ToLower(appName)
 }

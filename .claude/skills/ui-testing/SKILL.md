@@ -143,9 +143,46 @@ about the harness (`'Discard drops the staged work'`, not `'invoke returns 0'`).
 `Elements -Interactive` returns the flat interactive tree, `AllOf` returns everything including text
 runs, `Find1` resolves one selector by name and type, and `Choose` works a ComboBox.
 
+## What the sweep cannot reach
+
+**Container controls are outside it, and cannot be added.** `Elements -Interactive` does not return
+a `ListView` or a `SelectorBar` at all, so a list with an `AutomationId` and no `Name` — announced as
+an unnamed list — is invisible to the sweep however the type filter is widened. Four of them shipped
+that way. They *are* in the full tree, so an audit can see them:
+
+```powershell
+winapp ui inspect -w $hwnd -d 20 | Select-String '\bList\b'
+```
+
+A sweep written over that would fail permanently on one row it cannot fix: WinUI's own `SelectorBar`
+template contains an `ItemsView` called `PART_ItemsView`, and that part name reaches UIA as the
+list's accessible name. Naming the `SelectorBar` gives the surrounding `Group` a name and is the
+right fix at this level; the inner part needs the control retemplated.
+
+
+**The account flyout and the Account screen behind it are not swept, and cannot be from here.** The
+flyout hangs off the footer avatar rather than the pane, and it opens on a gesture `winapp ui invoke`
+does not produce — the account row answers to `SelectionItemPattern`, whose `Select` on an
+already-selected item raises nothing, so the flyout stays shut and an `inspect` afterwards returns
+the main window. A sweep block written over that reads a clean page and reports zero, which is worse
+than not looking.
+
+Five unnamed interactive controls lived behind that gap until they were found by hand — *View
+profile*, *Settings* and *Sign out* in the flyout, *Edit profile* and *Change password* on the page.
+Until the flyout can be driven, those two surfaces need a manual pass: open the flyout, then
+
+```powershell
+winapp ui inspect -a $AppPid -i --json | ConvertFrom-Json |
+    ForEach-Object { $_.windows.elements } |
+    Where-Object { $_.type -in @('Button','Edit','ComboBox','CheckBox') -and -not $_.name -and -not $_.automationId }
+```
+
+and check the window count first — one window means the flyout never opened and the answer is
+meaningless.
+
 ## Known failures
 
-The suite stands at **87 passed, 2 failed** on a clean run against a freshly seeded database. Do not
+The suite stands at **90 passed, 2 failed** on a clean run against a freshly seeded database. Do not
 spend time re-diagnosing these:
 
 - **`a heading can be moved down`** — headings offer "move up" only. Every ordering is still

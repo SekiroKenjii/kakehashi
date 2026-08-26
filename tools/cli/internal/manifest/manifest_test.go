@@ -25,6 +25,7 @@ func sample() *manifest.Manifest {
 			Author:        "Me",
 			Year:          "2026",
 			Auth:          "inapp",
+			PluginExt:     "orderdeskpkg",
 			WithExample:   true,
 		},
 		Units: manifest.Units{Applied: []string{"notes"}, Removed: []string{}},
@@ -80,6 +81,7 @@ func TestWriteMatchesTheDocumentedShape(t *testing.T) {
     "author": "Me",
     "year": "2026",
     "auth": "inapp",
+    "pluginExt": "orderdeskpkg",
     "withExample": true
   },
   "units": {
