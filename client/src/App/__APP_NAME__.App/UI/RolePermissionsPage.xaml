@@ -194,6 +194,7 @@
                         Grid.Row="2"
                         Padding="4,0,4,8"
                         AutomationProperties.AutomationId="RoleList"
+                        AutomationProperties.Name="Roles"
                         ItemsSource="{x:Bind ViewModel.Roles}"
                         SelectedItem="{x:Bind ViewModel.SelectedRole, Mode=TwoWay}"
                         SelectionMode="Single">
@@ -411,6 +412,7 @@
                             x:Name="FilterBar"
                             Grid.Column="1"
                             VerticalAlignment="Center"
+                            AutomationProperties.Name="Filter permissions"
                             SelectionChanged="OnFilterChipChanged">
                             <SelectorBarItem x:Name="ChipAll" Text="All" />
                             <SelectorBarItem Text="Enabled" />
@@ -650,6 +652,7 @@
                     <ListView
                         Grid.Row="2"
                         AutomationProperties.AutomationId="AuditList"
+                        AutomationProperties.Name="Audit log"
                         ItemsSource="{x:Bind ViewModel.AuditEntries}"
                         SelectionMode="None"
                         Visibility="{x:Bind ViewModel.IsAuditOpen, Mode=OneWay}">

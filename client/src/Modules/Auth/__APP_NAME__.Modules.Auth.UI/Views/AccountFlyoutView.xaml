@@ -216,6 +216,7 @@
                 Spacing="4">
                 <ToggleButton
                     x:Name="LightThemeButton"
+                    AutomationProperties.Name="Light theme"
                     Click="OnThemeButtonClick"
                     Style="{StaticResource ThemeToggleStyle}"
                     Tag="1"
@@ -224,6 +225,7 @@
                 </ToggleButton>
                 <ToggleButton
                     x:Name="DarkThemeButton"
+                    AutomationProperties.Name="Dark theme"
                     Click="OnThemeButtonClick"
                     Style="{StaticResource ThemeToggleStyle}"
                     Tag="2"
@@ -232,6 +234,7 @@
                 </ToggleButton>
                 <ToggleButton
                     x:Name="SystemThemeButton"
+                    AutomationProperties.Name="System theme"
                     Click="OnThemeButtonClick"
                     Style="{StaticResource ThemeToggleStyle}"
                     Tag="0"

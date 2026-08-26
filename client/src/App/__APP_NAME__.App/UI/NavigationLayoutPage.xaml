@@ -584,7 +584,10 @@
 
                                             <StackPanel Grid.Column="0" Spacing="5">
                                                 <TextBlock Style="{StaticResource FieldLabelStyle}" Text="Name in the pane" />
-                                                <TextBox PlaceholderText="{x:Bind ViewModel.SelectedScreen.DefaultTitle, Mode=OneWay}" Text="{x:Bind ViewModel.SelectedScreen.Title, Mode=TwoWay}" />
+                                                <TextBox
+                                                    AutomationProperties.Name="Name in the pane"
+                                                    PlaceholderText="{x:Bind ViewModel.SelectedScreen.DefaultTitle, Mode=OneWay}"
+                                                    Text="{x:Bind ViewModel.SelectedScreen.Title, Mode=TwoWay}" />
                                                 <TextBlock Style="{StaticResource HintTextStyle}" Text="{x:Bind ViewModel.SelectedScreen.TitleHint, Mode=OneWay}" />
                                             </StackPanel>
 

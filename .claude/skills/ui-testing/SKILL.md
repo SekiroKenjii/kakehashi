@@ -145,6 +145,21 @@ runs, `Find1` resolves one selector by name and type, and `Choose` works a Combo
 
 ## What the sweep cannot reach
 
+**Container controls are outside it, and cannot be added.** `Elements -Interactive` does not return
+a `ListView` or a `SelectorBar` at all, so a list with an `AutomationId` and no `Name` — announced as
+an unnamed list — is invisible to the sweep however the type filter is widened. Four of them shipped
+that way. They *are* in the full tree, so an audit can see them:
+
+```powershell
+winapp ui inspect -w $hwnd -d 20 | Select-String '\bList\b'
+```
+
+A sweep written over that would fail permanently on one row it cannot fix: WinUI's own `SelectorBar`
+template contains an `ItemsView` called `PART_ItemsView`, and that part name reaches UIA as the
+list's accessible name. Naming the `SelectorBar` gives the surrounding `Group` a name and is the
+right fix at this level; the inner part needs the control retemplated.
+
+
 **The account flyout and the Account screen behind it are not swept, and cannot be from here.** The
 flyout hangs off the footer avatar rather than the pane, and it opens on a gesture `winapp ui invoke`
 does not produce — the account row answers to `SelectionItemPattern`, whose `Select` on an

@@ -219,6 +219,7 @@
                         x:Name="UserList"
                         Grid.Row="2"
                         AutomationProperties.AutomationId="UserList"
+                        AutomationProperties.Name="Users"
                         ItemsSource="{x:Bind ViewModel.Users}"
                         SelectedItem="{x:Bind ViewModel.SelectedUser, Mode=TwoWay}"
                         SelectionMode="Single">
@@ -651,6 +652,7 @@
                                         <ComboBox
                                             Grid.Column="0"
                                             HorizontalAlignment="Stretch"
+                                            AutomationProperties.Name="Add a role"
                                             ItemsSource="{x:Bind ViewModel.AssignableRoles}"
                                             PlaceholderText="Add a role..."
                                             SelectedItem="{x:Bind ViewModel.RoleToAssign, Mode=TwoWay}">

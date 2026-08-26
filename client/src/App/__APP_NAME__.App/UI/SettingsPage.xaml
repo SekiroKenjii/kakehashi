@@ -81,6 +81,7 @@
                             <Flyout Placement="Bottom">
                                 <Image
                                     Height="400"
+                                    AutomationProperties.Name="Donation QR code"
                                     Source="ms-appx:///Assets/QRCode.png"
                                     Stretch="Uniform" />
                             </Flyout>

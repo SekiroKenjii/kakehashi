@@ -511,8 +511,10 @@ Section 'Accessibility sweep across every page'
 $unnamed = @()
 foreach ($page in @('Home', 'Notes', 'Activity', 'Users', 'Role permissions', 'Navigation', 'Plugins', 'Settings')) {
     if (-not (GoTo $page)) { continue }
+    # An AutomationId does not excuse a missing name. It is a test hook: it never reaches a screen
+    # reader, and treating it as a label is how four named-less lists stayed invisible to this sweep.
     $bad = @(Elements -Interactive | Where-Object {
-        $_.type -in @('Button', 'Edit', 'ComboBox', 'CheckBox') -and -not $_.name -and -not $_.automationId
+        $_.type -in @('Button', 'Edit', 'ComboBox', 'CheckBox') -and -not $_.name
     })
     if ($bad.Count) { $unnamed += [pscustomobject]@{ page = $page; count = $bad.Count } }
     Write-Host ("  {0,-18} {1} unnamed interactive control(s)" -f $page, $bad.Count)

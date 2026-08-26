@@ -204,6 +204,7 @@
                 <ListView
                     x:Name="FeedList"
                     Grid.Row="1"
+                    AutomationProperties.Name="Activity feed"
                     IsItemClickEnabled="True"
                     ItemClick="OnRowClicked"
                     SelectionMode="None">
@@ -373,6 +374,8 @@
 
                                     <Button
                                         HorizontalAlignment="Left"
+                                        AutomationProperties.HelpText="{x:Bind Title}"
+                                        AutomationProperties.Name="Copy this event"
                                         Click="OnCopyClicked"
                                         Tag="{x:Bind}">
                                         <StackPanel
