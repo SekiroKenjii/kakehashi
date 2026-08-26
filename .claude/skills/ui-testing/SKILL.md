@@ -167,7 +167,7 @@ meaningless.
 
 ## Known failures
 
-The suite stands at **87 passed, 2 failed** on a clean run against a freshly seeded database. Do not
+The suite stands at **90 passed, 2 failed** on a clean run against a freshly seeded database. Do not
 spend time re-diagnosing these:
 
 - **`a heading can be moved down`** — headings offer "move up" only. Every ordering is still
