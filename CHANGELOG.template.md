@@ -14,6 +14,53 @@ What the numbers mean here is not what they mean for a library:
 A project is on the template version it was made with, recorded in `.kakehashi.json`. A release is
 not something you have to take: see [docs/faq.md](docs/faq.md).
 
+## template/v1.3.0 — 2026-08-26
+
+| | |
+| --- | --- |
+| Requires CLI | `>=1.3.0 <2.0.0` — **raised** |
+
+**This release needs CLI 1.3.0.** It asks one question older binaries do not know to ask, so a
+1.2.0 CLI is refused by name rather than left to produce a project with an unsubstituted token in
+it. Take CLI 1.3.0 first; `kakehashi` on 1.2.0 goes on resolving template 1.2.0 until you do.
+
+### Added
+
+- **A project names its own plugin package extension.** The scaffold asks, suggesting
+  `<appname>pkg`, so a packed plugin for Order Desk is `weather-0.1.0.orderdeskpkg` rather than the
+  generic `.plugin` every project used to share. The answer is recorded in `.kakehashi.json` with
+  the rest, and it is spelled once in the code.
+
+- **A plugin's screens can be filed under a heading you choose.** The Plugins screen offers the
+  headings the current pane actually has, and writes the choice to this machine's plugin state, so
+  a plugin no longer lands wherever its author happened to compile. Renaming a heading no longer
+  forks a second one under the old name. The Navigation screen lists plugin screens read-only under
+  *Placed by this client*, because they are arranged from the Plugins screen instead — that limit is
+  now visible rather than silent.
+
+### Fixed
+
+- **Plugins sits in the footer**, between the profile row and Settings, where an administrative
+  screen belongs rather than in the Administration group. The pane's permission gate now covers
+  footer items too — without it the move would have shown the screen to every signed-in account.
+
+- **Icons that resolve.** The Navigation screen is a map-directions sign on both the pane and the
+  Navigation screen, from one line; the Plugins icon is OEM everywhere, with no puzzle piece and no
+  ⓘ placeholder. Every glyph in the client is a `\uXXXX` escape, and two new CI gates keep it that
+  way — one refusing literal private-use characters, one refusing a server-declared icon name
+  nothing resolves.
+
+- **Dead space a Grid or a StackPanel was charging for things that render nothing.** A closed
+  `InfoBar` is not collapsed — it keeps its slot at zero height — and a `Grid` charges `RowSpacing`
+  between every adjacent row pair whether the row measures anything or not. Between them that cost
+  37px above the Plugins feed and 12px on Activity, Navigation, Role permissions, Account, Notes and
+  the sign-in form. Each fix is measured in the running app, in both directions.
+
+- **Fourteen controls that announced nothing** now have accessible names — including all four
+  buttons on the sign-in window, the account flyout's theme toggles, and four lists that carried an
+  AutomationId and no name. A control whose content is a panel derives no name from the text inside
+  it, and neither a tooltip nor an AutomationId is a label.
+
 ## template/v1.2.0 — 2026-08-24
 
 | | |
