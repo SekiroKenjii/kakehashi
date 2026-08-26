@@ -7,6 +7,33 @@ Ordinary semantic versioning for a tool. The interesting number is the range of 
 works with — stated by the binary and checked against each template's own `requiresCli`, in both
 directions.
 
+## tools/cli/v1.3.0 — 2026-08-26
+
+| | |
+| --- | --- |
+| Templates supported | `>=1.0.0 <2.0.0` — unchanged |
+
+**Template 1.3.0 requires this release.** Nothing here narrows what this binary accepts; the bound
+moved on the other side, because the template now carries a placeholder only this CLI answers. On
+1.2.0 the refusal is accurate and the resolver keeps serving template 1.2.0, so nothing breaks — but
+1.3.0 is the one that reads the current template.
+
+### Added
+
+- **`new` asks what a project calls its plugin packages**, suggesting `<appname>pkg` so pressing
+  Enter is the right answer. `--plugin-extension` is the flag for `--no-input` and for scripts. The
+  answer becomes `__PLUGIN_EXT__` throughout the generated project, so a packed plugin carries the
+  product's own extension rather than a generic one shared with every other project.
+
+### Fixed
+
+- **The scaffold manifest records the plugin extension.** `.kakehashi.json` held every answer except
+  the one that brands a project's plugin packages, so a later `upgrade` could not reproduce the
+  scaffold it was given.
+
+- **`add module` no longer writes the closed-error-bar gap into every new module.** The generator
+  derives its templates from the example module, and the fix to that module had to travel with them.
+
 ## tools/cli/v1.2.0 — 2026-08-24
 
 | | |
