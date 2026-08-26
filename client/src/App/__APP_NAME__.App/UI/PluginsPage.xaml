@@ -75,6 +75,7 @@
             Grid.Row="1"
             Margin="0,8,0,0"
             HorizontalAlignment="Left"
+            AutomationProperties.Name="Plugin views"
             SelectionChanged="OnTabChanged">
             <SelectorBarItem x:Name="TabInstalled" Text="Installed" />
             <SelectorBarItem Text="Browse catalog" />
@@ -181,6 +182,7 @@
                         x:Name="FilterBar"
                         Grid.Column="1"
                         VerticalAlignment="Center"
+                        AutomationProperties.Name="Filter modules"
                         SelectionChanged="OnFilterChanged">
                         <SelectorBarItem x:Name="FilterAll" Text="All" />
                         <SelectorBarItem Text="Built-in" />
